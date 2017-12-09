@@ -26,6 +26,15 @@ class Home
     {
         return compact('id');
     }
+
+    /**
+     * @param bool $open
+     * @return array
+     */
+    function bedroom($open = false)
+    {
+        return compact('open');
+    }
 }
 
 $r->addAPIClass('Home');
@@ -35,48 +44,8 @@ $loop = React\EventLoop\Factory::create();
 $server = new React\Http\Server(function (Psr\Http\Message\ServerRequestInterface $request) {
     echo $request->getUri() . PHP_EOL;
 
-    try {
-        $path = ltrim((string)$request->getUri()->getPath(), '/');
-        $route = Routes::find($path, $request->getMethod());
-        echo var_dump($route);
-        //return new Response(200, ['Content-Type' => 'text/json'], json_encode($route, JSON_PRETTY_PRINT));
-        $accessLevel = max(Defaults::$apiAccessLevel, $route->accessLevel);
-        $object =  Scope::get($route->className);
-        switch ($accessLevel) {
-            case 3 : //protected method
-                $reflectionMethod = new \ReflectionMethod(
-                    $object,
-                    $route->methodName
-                );
-                $reflectionMethod->setAccessible(true);
-                $result = $reflectionMethod->invokeArgs(
-                    $object,
-                    $route->parameters
-                );
-                break;
-            default :
-                $result = call_user_func_array(array(
-                    $object,
-                    $route->methodName
-                ), $route->parameters);
-        }
-        return new Response(200, ['Content-Type' => 'text/json'], json_encode($result, JSON_PRETTY_PRINT));
-
-    } catch (RestException $e) {
-        $compose = Scope::get(Defaults::$composeClass);
-        $message = json_encode(
-            $compose->message($e),
-            JSON_PRETTY_PRINT
-        );
-        return new Response($e->getCode(), ['Content-Type' => 'text/json'], $message);
-    }
-
-
-    return new React\Http\Response(
-        200,
-        array('Content-Type' => 'text/plain'),
-        "Hello World!\n"
-    );
+    $h = new Restle($request, new Response());
+    return $h->handle();
 });
 
 $socket = new React\Socket\Server(8080, $loop);

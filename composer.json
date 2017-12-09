@@ -15,5 +15,10 @@
             "name": "Luracast",
             "email": "arul@luracast.com"
         }
-    ]
+    ],
+    "autoload": {
+       "psr-4": {
+          "": "src"
+    }
+  }
 }
