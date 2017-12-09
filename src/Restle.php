@@ -16,10 +16,10 @@ use Psr\Http\Message\ServerRequestInterface;
 
 class Restle
 {
+    protected $rawRequestBody;
     protected $requestMethod = 'GET';
     protected $path = '';
     protected $requestData = [];
-
     /**
      * @var ApiMethodInfo
      */
@@ -34,8 +34,9 @@ class Restle
      */
     protected $response;
 
-    public function __construct(ServerRequestInterface $request, ResponseInterface $response)
+    public function __construct(ServerRequestInterface $request, ResponseInterface $response, $rawRequestBody = '')
     {
+        $this->rawRequestBody = $rawRequestBody;
         $this->path = ltrim((string)$request->getUri()->getPath(), '/');
         $this->requestMethod = $request->getMethod();
         $this->request = $request;
@@ -56,6 +57,10 @@ class Restle
             }
 
             //TODO: handle stream
+
+            $r = json_decode($this->rawRequestBody);
+
+            /*
             $r = $this->request->getParsedBody();
 
             if ($r == null) {
@@ -64,11 +69,12 @@ class Restle
                 $content = $body->read($body->getSize());
                 $r = json_decode($content);
             }
+            */
 
             $r = is_array($r)
                 ? array_merge($r, array(Defaults::$fullRequestDataName => $r))
                 : array(Defaults::$fullRequestDataName => $r);
-            return $includeQueryParameters
+            return $this->requestData = $includeQueryParameters
                 ? $r + $get
                 : $r;
         }
@@ -122,33 +128,39 @@ class Restle
         }
     }
 
+    public function call()
+    {
+        $this->route();
+        $this->validate();
+        $o = &$this->apiMethodInfo;
+        $accessLevel = max(Defaults::$apiAccessLevel, $o->accessLevel);
+        $object = Scope::get($o->className);
+        switch ($accessLevel) {
+            case 3 : //protected method
+                $reflectionMethod = new \ReflectionMethod(
+                    $object,
+                    $o->methodName
+                );
+                $reflectionMethod->setAccessible(true);
+                $result = $reflectionMethod->invokeArgs(
+                    $object,
+                    $o->parameters
+                );
+                break;
+            default :
+                $result = call_user_func_array(array(
+                    $object,
+                    $o->methodName
+                ), $o->parameters);
+        }
+        return $result;
+    }
+
     public function handle()
     {
         try {
-            $this->route();
-            $this->validate();
-            $o = &$this->apiMethodInfo;
-            $accessLevel = max(Defaults::$apiAccessLevel, $o->accessLevel);
-            $object = Scope::get($o->className);
-            switch ($accessLevel) {
-                case 3 : //protected method
-                    $reflectionMethod = new \ReflectionMethod(
-                        $object,
-                        $o->methodName
-                    );
-                    $reflectionMethod->setAccessible(true);
-                    $result = $reflectionMethod->invokeArgs(
-                        $object,
-                        $o->parameters
-                    );
-                    break;
-                default :
-                    $result = call_user_func_array(array(
-                        $object,
-                        $o->methodName
-                    ), $o->parameters);
-            }
-            $this->response->getBody()->write(json_encode($result, JSON_PRETTY_PRINT));
+            $this->getRequestData();
+            $this->response->getBody()->write(json_encode($this->call(), JSON_PRETTY_PRINT));
             return $this->response
                 ->withStatus(200)
                 ->withHeader('Content-Type', 'application/json');

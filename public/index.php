@@ -1,62 +1,42 @@
 <?php
 
-
-
-use Luracast\Restler\Defaults;
-use Luracast\Restler\RestException;
 use Luracast\Restler\Restler;
-use Luracast\Restler\Routes;
-use Luracast\Restler\Scope;
+use Psr\Http\Message\ServerRequestInterface;
 use React\Http\Response;
+use React\Http\Server;
+use React\Promise\Promise;
 
 include __DIR__ . "/../vendor/autoload.php";
 
 $r = new Restler();
 
-class Home
-{
-    function get()
-    {
-        return ['success' => true];
-    }
-
-    /**
-     * @param int $id
-     * @return array
-     */
-    function kitchen($id)
-    {
-        return compact('id');
-    }
-
-    /**
-     * @param bool $open
-     * @return array
-     */
-    function bedroom($open = false)
-    {
-        return compact('open');
-    }
-
-    /**
-     * @param array $param {@from body}
-     * @return array
-     */
-    function post(array $param)
-    {
-        return compact('param');
-    }
-}
-
 $r->addAPIClass('Home');
 
 $loop = React\EventLoop\Factory::create();
 
-$server = new React\Http\Server(function (Psr\Http\Message\ServerRequestInterface $request) {
-    echo $request->getUri() . PHP_EOL;
+$server = new Server(function (ServerRequestInterface $request) {
+    return new Promise(function ($resolve, $reject) use ($request) {
+        echo '      ' . $request->getMethod() . ' ' . $request->getUri()->getPath() . PHP_EOL;
+        $content = "";
+        $request->getBody()->on('data', function ($data) use (&$content) {
+            $content .= $data;
+        });
 
-    $h = new Restle($request, new Response());
-    return $h->handle();
+        $request->getBody()->on('end', function () use ($request, $resolve, &$content) {
+            $h = new Restle($request, new Response(), $content);
+            $resolve($h->handle());
+        });
+
+        // an error occures e.g. on invalid chunked encoded data or an unexpected 'end' event
+        $request->getBody()->on('error', function (\Exception $exception) use ($resolve, &$contentLength) {
+            $response = new Response(
+                400,
+                array('Content-Type' => 'text/plain'),
+                "An error occured while reading at length: " . $contentLength
+            );
+            $resolve($response);
+        });
+    });
 });
 
 $socket = new React\Socket\Server(8080, $loop);
