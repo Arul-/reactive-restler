@@ -1,0 +1,19 @@
+{
+    "name": "arul/reactphp-restler",
+    "description": "Running Restler on ReactPHP",
+    "type": "project",
+    "require": {
+        "react/event-loop": "^0.4.3",
+        "react/http": "^0.7.4",
+        "restler/framework": "3.0-RC6"
+    },
+    "require-dev": {
+    },
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Luracast",
+            "email": "arul@luracast.com"
+        }
+    ]
+}
