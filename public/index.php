@@ -1,5 +1,7 @@
 <?php
 
+
+
 use Luracast\Restler\Defaults;
 use Luracast\Restler\RestException;
 use Luracast\Restler\Restler;
@@ -34,6 +36,15 @@ class Home
     function bedroom($open = false)
     {
         return compact('open');
+    }
+
+    /**
+     * @param array $param {@from body}
+     * @return array
+     */
+    function post(array $param)
+    {
+        return compact('param');
     }
 }
 
