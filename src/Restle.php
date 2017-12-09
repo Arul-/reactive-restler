@@ -93,16 +93,26 @@ class Restle
             return $this->response
                 ->withStatus(200)
                 ->withHeader('Content-Type', 'application/json');
-        } catch (RestException $e) {
-            $compose = Scope::get(Defaults::$composeClass);
-            $message = json_encode(
-                $compose->message($e),
-                JSON_PRETTY_PRINT
-            );
-            $this->response->getBody()->write($message);
-            return $this->response
-                ->withStatus($e->getCode())
-                ->withHeader('Content-Type', 'application/json');
+        } catch (Exception $e) {
+            return $this->compose($e);
+        } catch (Throwable $error) {
+            return $this->compose($error);
         }
+    }
+
+    private function compose($e)
+    {
+        if (!$e instanceof RestException) {
+            $e = new RestException(500, $e->getMessage(), [], $e);
+        }
+        $compose = Scope::get(Defaults::$composeClass);
+        $message = json_encode(
+            $compose->message($e),
+            JSON_PRETTY_PRINT
+        );
+        $this->response->getBody()->write($message);
+        return $this->response
+            ->withStatus($e->getCode())
+            ->withHeader('Content-Type', 'application/json');
     }
 }
