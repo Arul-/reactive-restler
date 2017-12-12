@@ -3,6 +3,7 @@
 
 use Luracast\Restler\CommentParser;
 use Luracast\Restler\Data\ApiMethodInfo;
+use Luracast\Restler\Data\Obj;
 use Luracast\Restler\Data\ValidationInfo;
 use Luracast\Restler\Data\Validator;
 use Luracast\Restler\Defaults;
@@ -20,6 +21,7 @@ class Restle
     protected $requestMethod = 'GET';
     protected $path = '';
     protected $requestData = [];
+    protected $queryParams;
     /**
      * @var ApiMethodInfo
      */
@@ -45,20 +47,31 @@ class Restle
 
     protected function getRequestData($includeQueryParameters = true)
     {
-        $get = UrlEncodedFormat::decoderTypeFix($this->request->getQueryParams());
+        $this->queryParams = UrlEncodedFormat::decoderTypeFix($this->request->getQueryParams());
+        //parse defaults
+        foreach ($this->queryParams as $key => $value) {
+            if (isset(Defaults::$aliases[$key])) {
+                unset($this->queryParams[$key]);
+                $this->queryParams[Defaults::$aliases[$key]] = $value;
+                $key = Defaults::$aliases[$key];
+            }
+            if (in_array($key, Defaults::$overridables)) {
+                Defaults::setProperty($key, $value);
+            }
+        }
         if ($this->requestMethod == 'PUT'
             || $this->requestMethod == 'PATCH'
             || $this->requestMethod == 'POST'
         ) {
             if (!empty($this->requestData)) {
                 return $includeQueryParameters
-                    ? $this->requestData + $get
+                    ? $this->requestData + $this->queryParams
                     : $this->requestData;
             }
 
             //TODO: handle stream
 
-            $r = json_decode($this->rawRequestBody);
+            $r = Obj::toArray(json_decode($this->rawRequestBody));
 
             /*
             $r = $this->request->getParsedBody();
@@ -74,11 +87,11 @@ class Restle
             $r = is_array($r)
                 ? array_merge($r, array(Defaults::$fullRequestDataName => $r))
                 : array(Defaults::$fullRequestDataName => $r);
-            return $this->requestData = $includeQueryParameters
-                ? $r + $get
+            return $includeQueryParameters
+                ? $r + $this->queryParams
                 : $r;
         }
-        return $includeQueryParameters ? $get : array(); //no body
+        return $includeQueryParameters ? $this->queryParams : array(); //no body
     }
 
     protected function route()
@@ -159,7 +172,8 @@ class Restle
     public function handle()
     {
         try {
-            $this->getRequestData();
+            //$this->requestData = [Defaults::$fullRequestDataName => []];
+            $this->requestData = $this->getRequestData(false);
             $this->response->getBody()->write(json_encode($this->call(), JSON_PRETTY_PRINT));
             return $this->response
                 ->withStatus(200)

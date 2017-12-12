@@ -27,10 +27,10 @@ class Home
     }
 
     /**
-     * @param array $param {@from body}
+     * @param array $param {@from body} {@type object}
      * @return array
      */
-    function post(array $param)
+    function post($param)
     {
         return compact('param');
     }
