@@ -21,9 +21,14 @@
     "autoload": {
         "psr-4": {
             "": "src"
-        },
-        "psr-0": {
-            "": "api"
         }
-    }
+    },
+  "autoload-dev":{
+    "classmap":[
+      "api/tests/param/",
+      "api/examples/_001_helloworld/",
+      "api/examples/_002_minimal/",
+      "api/examples/_004_error_response/"
+    ]
+  }
 }
