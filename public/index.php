@@ -10,9 +10,12 @@ include __DIR__ . "/../vendor/autoload.php";
 
 $r = new Restler();
 
+
+
 //examples
 $r->addAPIClass('Say', 'examples/_001_helloworld/say');
 $r->addAPIClass('Math', 'examples/_002_minimal/math');
+$r->addAPIClass('BMI', 'examples/_003_multiformat/bmi');
 $r->addAPIClass('Currency', 'examples/_004_error_response/currency');
 
 //tests
@@ -33,6 +36,7 @@ $server = new Server(function (ServerRequestInterface $request) {
 
         $request->getBody()->on('end', function () use ($request, $resolve, &$content) {
             $h = new Restle($request, new Response(), $content);
+            $h->setSupportedFormats('JsonFormat', 'XmlFormat');
             $resolve($h->handle());
         });
 

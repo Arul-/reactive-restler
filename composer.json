@@ -28,6 +28,7 @@
       "api/tests/param/",
       "api/examples/_001_helloworld/",
       "api/examples/_002_minimal/",
+      "api/examples/_003_multiformat/",
       "api/examples/_004_error_response/"
     ]
   }
