@@ -20,9 +20,6 @@ use Psr\Http\Message\ServerRequestInterface;
 
 class Restle extends Core
 {
-    protected $queryParams;
-
-
     /**
      * @var ServerRequestInterface
      */
@@ -44,15 +41,16 @@ class Restle extends Core
     protected function get()
     {
         $this->getPath($this->request->getUri()->getPath());
-        $this->requestData = $this->getRequestData(false);
+        $this->getQuery($this->request->getQueryParams());
+        $this->getBody($this->rawRequestBody);
     }
 
-    protected function route()
+    protected function route(): void
     {
-        $this->apiMethodInfo = Routes::find($this->path, $this->requestMethod, 1, $this->getRequestData());
+        $this->apiMethodInfo = Routes::find($this->path, $this->requestMethod, 1, $this->body + $this->query);
     }
 
-    protected function negotiate()
+    protected function negotiate() : void
     {
         $this->responseFormat = $this->negotiateResponseFormat();
     }
@@ -139,7 +137,7 @@ class Restle extends Core
             $this->route();
             $this->negotiate();
             $this->validate();
-            $this->response->getBody()->write($this->responseFormat->encode($this->call(),true));
+            $this->response->getBody()->write($this->responseFormat->encode($this->call(), true));
             return $this->response
                 ->withStatus(200)
                 ->withHeader('Content-Type', $this->responseFormat->getMIME());
@@ -165,6 +163,4 @@ class Restle extends Core
             ->withStatus($e->getCode())
             ->withHeader('Content-Type', 'application/json');
     }
-
-
 }

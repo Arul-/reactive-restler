@@ -40,8 +40,9 @@ class Core
      * @var iFormat
      */
     protected $requestFormat;
-    protected $requestData = [];
+    protected $body = [];
     protected $formatMap = [];
+    protected $query = [];
 
     /**
      * @param array ...$formats
@@ -86,55 +87,6 @@ class Core
         }
         $this->formatMap['default'] = $formats[0];
         $this->formatMap['extensions'] = array_keys($extensions);
-    }
-
-    protected function getRequestData($includeQueryParameters = true)
-    {
-        $this->queryParams = UrlEncodedFormat::decoderTypeFix($this->request->getQueryParams());
-        //parse defaults
-        foreach ($this->queryParams as $key => $value) {
-            if (isset(Defaults::$aliases[$key])) {
-                unset($this->queryParams[$key]);
-                $this->queryParams[Defaults::$aliases[$key]] = $value;
-                $key = Defaults::$aliases[$key];
-            }
-            if (in_array($key, Defaults::$overridables)) {
-                Defaults::setProperty($key, $value);
-            }
-        }
-        if ($this->requestMethod == 'PUT'
-            || $this->requestMethod == 'PATCH'
-            || $this->requestMethod == 'POST'
-        ) {
-            if (!empty($this->requestData)) {
-                return $includeQueryParameters
-                    ? $this->requestData + $this->queryParams
-                    : $this->requestData;
-            }
-
-            //TODO: handle stream
-
-            $r = Obj::toArray(json_decode($this->rawRequestBody));
-
-            /*
-            $r = $this->request->getParsedBody();
-
-            if ($r == null) {
-                $body = $this->request->getBody();
-                $body->rewind();
-                $content = $body->read($body->getSize());
-                $r = json_decode($content);
-            }
-            */
-
-            $r = is_array($r)
-                ? array_merge($r, array(Defaults::$fullRequestDataName => $r))
-                : array(Defaults::$fullRequestDataName => $r);
-            return $includeQueryParameters
-                ? $r + $this->queryParams
-                : $r;
-        }
-        return $includeQueryParameters ? $this->queryParams : array(); //no body
     }
 
     protected function negotiateResponseFormat() //response format
@@ -245,7 +197,11 @@ class Core
         }
     }
 
-    protected function getPath(string $path)
+    /**
+     * Sets the cleaned up path without extensions and unwanted slashes
+     * @param string $path
+     */
+    protected function getPath(string $path): void
     {
         $this->path = str_replace(
             array_merge(
@@ -255,5 +211,50 @@ class Core
             '',
             trim($path, '/')
         );
+    }
+
+    protected function getQuery(array $get = []): void
+    {
+        $this->query = UrlEncodedFormat::decoderTypeFix($get);
+        //parse defaults
+        foreach ($this->query as $key => $value) {
+            if (isset(Defaults::$aliases[$key])) {
+                unset($this->query[$key]);
+                $this->query[Defaults::$aliases[$key]] = $value;
+                $key = Defaults::$aliases[$key];
+            }
+            if (in_array($key, Defaults::$overridables)) {
+                Defaults::setProperty($key, $value);
+            }
+        }
+    }
+
+    protected function getBody(string $raw = ''): void
+    {
+        $r = [];
+        if ($this->requestMethod == 'PUT'
+            || $this->requestMethod == 'PATCH'
+            || $this->requestMethod == 'POST'
+        ) {
+            //TODO: handle stream
+            //TODO: find and use request format
+            $r = Obj::toArray(json_decode($raw));
+
+            /*
+            $r = $this->request->getParsedBody();
+
+            if ($r == null) {
+                $body = $this->request->getBody();
+                $body->rewind();
+                $content = $body->read($body->getSize());
+                $r = json_decode($content);
+            }
+            */
+
+            $r = is_array($r)
+                ? array_merge($r, array(Defaults::$fullRequestDataName => $r))
+                : array(Defaults::$fullRequestDataName => $r);
+        }
+        $this->body = $r;
     }
 }
