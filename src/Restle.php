@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 
 use Luracast\Restler\CommentParser;
@@ -28,6 +28,7 @@ class Restle extends Core
      * @var ResponseInterface
      */
     protected $response;
+    protected $rawRequestBody = "";
 
 
     public function __construct(ServerRequestInterface $request, ResponseInterface $response, $rawRequestBody = '')
@@ -38,7 +39,7 @@ class Restle extends Core
         $this->response = $response;
     }
 
-    protected function get()
+    protected function get(): void
     {
         $this->getPath($this->request->getUri()->getPath());
         $this->getQuery($this->request->getQueryParams());
@@ -47,7 +48,7 @@ class Restle extends Core
 
     protected function route(): void
     {
-        $this->apiMethodInfo = Routes::find($this->path, $this->requestMethod, 1, $this->body + $this->query);
+        parent::route();
     }
 
     protected function negotiate() : void

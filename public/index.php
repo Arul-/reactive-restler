@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 use Luracast\Restler\Restler;
 use Psr\Http\Message\ServerRequestInterface;
@@ -9,7 +9,6 @@ use React\Promise\Promise;
 include __DIR__ . "/../vendor/autoload.php";
 
 $r = new Restler();
-
 
 
 //examples

@@ -1,4 +1,4 @@
-<?php
+<?php declare(strict_types=1);
 
 use Luracast\Restler\Data\ApiMethodInfo;
 use Luracast\Restler\Data\Obj;
@@ -6,13 +6,12 @@ use Luracast\Restler\Defaults;
 use Luracast\Restler\Format\iFormat;
 use Luracast\Restler\Format\UrlEncodedFormat;
 use Luracast\Restler\RestException;
+use Luracast\Restler\Routes;
 use Luracast\Restler\Scope;
 use Luracast\Restler\Util;
-use Psr\Http\Message\RequestInterface;
 
 class Core
 {
-    protected $rawRequestBody = "";
     protected $requestMethod = 'GET';
     /**
      * @var bool
@@ -43,6 +42,9 @@ class Core
     protected $body = [];
     protected $formatMap = [];
     protected $query = [];
+    protected $requestedApiVersion = 1;
+    protected $apiVersionMap = [];
+    protected $authClasses = [];
 
     /**
      * @param array ...$formats
@@ -256,5 +258,40 @@ class Core
                 : array(Defaults::$fullRequestDataName => $r);
         }
         $this->body = $r;
+    }
+
+    protected function route(): void
+    {
+        $this->apiMethodInfo = $o = Routes::find(
+            $this->path,
+            $this->requestMethod,
+            $this->requestedApiVersion,
+            $this->body + $this->query
+        );
+        //set defaults based on api method comments
+        if (isset($o->metadata)) {
+            foreach (Defaults::$fromComments as $key => $defaultsKey) {
+                if (array_key_exists($key, $o->metadata)) {
+                    $value = $o->metadata[$key];
+                    Defaults::setProperty($defaultsKey, $value);
+                }
+            }
+        }
+        if (!isset($o->className))
+            throw new RestException(404);
+
+        if (isset($this->apiVersionMap[$o->className])) {
+            Scope::$classAliases[Util::getShortName($o->className)]
+                = $this->apiVersionMap[$o->className][$this->requestedApiVersion];
+        }
+
+        foreach ($this->authClasses as $auth) {
+            if (isset($this->apiVersionMap[$auth])) {
+                Scope::$classAliases[$auth] = $this->apiVersionMap[$auth][$this->requestedApiVersion];
+            } elseif (isset($this->apiVersionMap[Scope::$classAliases[$auth]])) {
+                Scope::$classAliases[$auth]
+                    = $this->apiVersionMap[Scope::$classAliases[$auth]][$this->requestedApiVersion];
+            }
+        }
     }
 }
