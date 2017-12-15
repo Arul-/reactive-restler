@@ -5,6 +5,7 @@ use Luracast\Restler\CommentParser;
 use Luracast\Restler\Data\ValidationInfo;
 use Luracast\Restler\Data\Validator;
 use Luracast\Restler\Defaults;
+use Luracast\Restler\Format\JsonFormat;
 use Luracast\Restler\RestException;
 use Luracast\Restler\Scope;
 use Psr\Http\Message\ResponseInterface;
@@ -146,6 +147,9 @@ class Restle extends Core
      */
     protected function compose($response = []): void
     {
+        if(!$this->responseFormat) {
+            $this->responseFormat = new JsonFormat();
+        }
         $this->response->getBody()->write($this->responseFormat->encode($response), true);
         foreach ($this->responseHeaders as $name => $value) {
             $this->response = $this->response->withHeader($name, $value);
