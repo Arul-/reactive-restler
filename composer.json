@@ -3,6 +3,7 @@
     "description": "Running Restler on ReactPHP",
     "type": "project",
     "require": {
+        "php": "^7.1",
         "react/event-loop": "^0.4.3",
         "react/http": "^0.7.4",
         "restler/framework": "3.0-RC6"
@@ -31,5 +32,8 @@
       "api/examples/_003_multiformat/",
       "api/examples/_004_error_response/"
     ]
+  },
+  "config": {
+    "bin-dir": "./"
   }
 }
