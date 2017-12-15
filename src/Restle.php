@@ -2,18 +2,11 @@
 
 
 use Luracast\Restler\CommentParser;
-use Luracast\Restler\Data\ApiMethodInfo;
-use Luracast\Restler\Data\Obj;
 use Luracast\Restler\Data\ValidationInfo;
 use Luracast\Restler\Data\Validator;
 use Luracast\Restler\Defaults;
-use Luracast\Restler\Format\iFormat;
-use Luracast\Restler\Format\UrlEncodedFormat;
 use Luracast\Restler\RestException;
-use Luracast\Restler\Routes;
 use Luracast\Restler\Scope;
-use Luracast\Restler\Util;
-use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -51,9 +44,12 @@ class Restle extends Core
         parent::route();
     }
 
-    protected function negotiate() : void
+    protected function negotiate(): void
     {
-        $this->responseFormat = $this->negotiateResponseFormat();
+        $this->negotiateResponseFormat(
+            $this->request->getUri()->getPath(),
+            $this->request->getHeaderLine('accept')
+        );
     }
 
     protected function authenticate()
@@ -138,30 +134,35 @@ class Restle extends Core
             $this->route();
             $this->negotiate();
             $this->validate();
-            $this->response->getBody()->write($this->responseFormat->encode($this->call(), true));
-            return $this->response
-                ->withStatus(200)
-                ->withHeader('Content-Type', $this->responseFormat->getMIME());
-        } catch (Exception $e) {
-            return $this->compose($e);
+            $this->compose($this->call());
         } catch (Throwable $error) {
-            return $this->compose($error);
+            $this->composeMessage($error);
         }
+        return $this->response;
     }
 
-    private function compose($e)
+    /**
+     * @param array|string $response
+     */
+    protected function compose($response = []): void
+    {
+        $this->response->getBody()->write($this->responseFormat->encode($response), true);
+        foreach ($this->responseHeaders as $name => $value) {
+            $this->response = $this->response->withHeader($name, $value);
+        }
+        $this->response = $this->response
+            ->withStatus($this->responseCode)
+            ->withHeader('Content-Type', $this->responseFormat->getMIME());
+    }
+
+    protected function composeMessage(Throwable $e): void
     {
         if (!$e instanceof RestException) {
             $e = new RestException(500, $e->getMessage(), [], $e);
         }
+        $this->responseCode = $e->getCode();
         $compose = Scope::get(Defaults::$composeClass);
-        $message = json_encode(
-            $compose->message($e),
-            JSON_PRETTY_PRINT
-        );
-        $this->response->getBody()->write($message);
-        return $this->response
-            ->withStatus($e->getCode())
-            ->withHeader('Content-Type', 'application/json');
+        $this->compose($compose->message($e));
     }
+
 }

@@ -46,8 +46,12 @@ class Core
     protected $apiVersionMap = [];
     protected $authClasses = [];
 
+    protected $responseHeaders = [];
+    protected $responseCode = 200;
+    protected $apiVersion = 1;
+
     /**
-     * @param array ...$formats
+     * @param string[] ...$formats
      *
      * @throws Exception
      * @throws RestException
@@ -91,7 +95,7 @@ class Core
         $this->formatMap['extensions'] = array_keys($extensions);
     }
 
-    protected function negotiateResponseFormat() //response format
+    protected function negotiateResponseFormat(string $path, string $acceptHeader = ''): void
     {
         //check if the api method insists on response format using @format comment
         if (array_key_exists('format', $this->apiMethodInfo->metadata)) {
@@ -111,10 +115,7 @@ class Core
         // check if client has specified an extension
         /** @var $format iFormat */
         $format = null;
-        $extensions = explode(
-            '.',
-            parse_url($this->request->getUri()->getPath(), PHP_URL_PATH)
-        );
+        $extensions = explode('.', parse_url($path, PHP_URL_PATH));
         while ($extensions) {
             $extension = array_pop($extensions);
             $extension = explode('/', $extension);
@@ -123,21 +124,21 @@ class Core
                 $format = Scope::get($this->formatMap[$extension]);
                 $format->setExtension($extension);
                 // echo "Extension $extension";
-                return $format;
+                $this->responseFormat = $format;
+                return;
             }
         }
         // check if client has sent list of accepted data formats
-        if ($this->request->hasHeader('accept')) {
-            $acceptLine = $this->request->getHeaderLine('accept');
-            $acceptList = Util::sortByPriority($acceptLine);
+        if (!empty($acceptHeader)) {
+            $acceptList = Util::sortByPriority($acceptHeader);
             foreach ($acceptList as $accept => $quality) {
                 if (isset($this->formatMap[$accept])) {
                     $format = Scope::get($this->formatMap[$accept]);
                     $format->setMIME($accept);
                     // Tell cache content is based on Accept header
-                    $this->response = $this->response->withHeader('Vary', 'Accept');
-
-                    return $format;
+                    $this->responseHeaders['Vary'] = 'Accept';
+                    $this->responseFormat = $format;
+                    return;
 
                 } elseif (false !== ($index = strrpos($accept, '+'))) {
                     $mime = substr($accept, 0, $index);
@@ -156,9 +157,9 @@ class Core
                                 $format = Scope::get($this->formatMap[$extension]);
                                 $format->setExtension($extension);
                                 Defaults::$useVendorMIMEVersioning = true;
-                                $this->response = $this->response->withHeader('Vary', 'Accept');
-
-                                return $format;
+                                $this->responseHeaders['Vary'] = 'Accept';
+                                $this->responseFormat = $format;
+                                return;
                             }
                         }
                     }
@@ -169,14 +170,14 @@ class Core
             // RFC 2616: If no Accept header field is
             // present, then it is assumed that the
             // client accepts all media types.
-            $acceptLine = '*/*';
+            $acceptHeader = '*/*';
         }
-        if (strpos($acceptLine, '*') !== false) {
-            if (false !== strpos($acceptLine, 'application/*')) {
+        if (strpos($acceptHeader, '*') !== false) {
+            if (false !== strpos($acceptHeader, 'application/*')) {
                 $format = Scope::get('JsonFormat');
-            } elseif (false !== strpos($acceptLine, 'text/*')) {
+            } elseif (false !== strpos($acceptHeader, 'text/*')) {
                 $format = Scope::get('XmlFormat');
-            } elseif (false !== strpos($acceptLine, '*/*')) {
+            } elseif (false !== strpos($acceptHeader, '*/*')) {
                 $format = Scope::get($this->formatMap['default']);
             }
         }
@@ -194,8 +195,8 @@ class Core
             );
         } else {
             // Tell cache content is based at Accept header
-            $this->response = $this->response->withHeader('Vary', 'Accept');
-            return $format;
+            $this->responseHeaders['Vary'] = 'Accept';
+            $this->responseFormat = $format;
         }
     }
 
