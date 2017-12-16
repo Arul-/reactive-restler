@@ -5,13 +5,28 @@ use Luracast\Restler\Data\Obj;
 use Luracast\Restler\Defaults;
 use Luracast\Restler\Format\iFormat;
 use Luracast\Restler\Format\UrlEncodedFormat;
+use Luracast\Restler\InvalidAuthCredentials;
 use Luracast\Restler\RestException;
 use Luracast\Restler\Routes;
 use Luracast\Restler\Scope;
 use Luracast\Restler\Util;
 
-class Core
+abstract class Core
 {
+    protected $apiVersionMap = [];
+    /**
+     * @var int
+     */
+    protected $apiVersion = 1;
+    /**
+     * @var int
+     */
+    protected $requestedApiVersion = 1;
+    /**
+     * @var int
+     */
+    protected $apiMinimumVersion = 1;
+
     protected $requestMethod = 'GET';
     /**
      * @var bool
@@ -28,7 +43,7 @@ class Core
     /**
      * @var iFormat
      */
-    protected $responseFormat;
+    public $responseFormat;
     /**
      * @var array
      */
@@ -38,17 +53,117 @@ class Core
     /**
      * @var iFormat
      */
-    protected $requestFormat;
+    public $requestFormat;
     protected $body = [];
     protected $formatMap = [];
     protected $query = [];
-    protected $requestedApiVersion = 1;
-    protected $apiVersionMap = [];
     protected $authClasses = [];
 
     protected $responseHeaders = [];
     protected $responseCode = 200;
-    protected $apiVersion = 1;
+
+    /**
+     * protected methods will need at least one authentication class to be set
+     * in order to allow that method to be executed
+     *
+     * @param string $className     of the authentication class
+     * @param string $resourcePath  optional url prefix for mapping
+     */
+    public function addAuthenticationClass($className, $resourcePath = null)
+    {
+        $this->authClasses[] = $className;
+        $this->addAPIClass($className, $resourcePath);
+    }
+
+    public function addAPIClass($className, $resourcePath = null)
+    {
+        try {
+            if (isset(Scope::$classAliases[$className])) {
+                $className = Scope::$classAliases[$className];
+            }
+            $maxVersionMethod = '__getMaximumSupportedVersion';
+            if (class_exists($className)) {
+                if (method_exists($className, $maxVersionMethod)) {
+                    $max = $className::$maxVersionMethod();
+                    for ($i = 1; $i <= $max; $i++) {
+                        $this->apiVersionMap[$className][$i] = $className;
+                    }
+                } else {
+                    $this->apiVersionMap[$className][1] = $className;
+                }
+            }
+            //versioned api
+            if (false !== ($index = strrpos($className, '\\'))) {
+                $name = substr($className, 0, $index)
+                    . '\\v{$version}' . substr($className, $index);
+            } else {
+                if (false !== ($index = strrpos($className, '_'))) {
+                    $name = substr($className, 0, $index)
+                        . '_v{$version}' . substr($className, $index);
+                } else {
+                    $name = 'v{$version}\\' . $className;
+                }
+            }
+
+            for ($version = $this->apiMinimumVersion;
+                 $version <= $this->apiVersion;
+                 $version++) {
+
+                $versionedClassName = str_replace('{$version}', $version,
+                    $name);
+                if (class_exists($versionedClassName)) {
+                    Routes::addAPIClass($versionedClassName,
+                        Util::getResourcePath(
+                            $className,
+                            $resourcePath
+                        ),
+                        $version
+                    );
+                    if (method_exists($versionedClassName, $maxVersionMethod)) {
+                        $max = $versionedClassName::$maxVersionMethod();
+                        for ($i = $version; $i <= $max; $i++) {
+                            $this->apiVersionMap[$className][$i] = $versionedClassName;
+                        }
+                    } else {
+                        $this->apiVersionMap[$className][$version] = $versionedClassName;
+                    }
+                } elseif (isset($this->apiVersionMap[$className][$version])) {
+                    Routes::addAPIClass($this->apiVersionMap[$className][$version],
+                        Util::getResourcePath(
+                            $className,
+                            $resourcePath
+                        ),
+                        $version
+                    );
+                }
+            }
+        } catch (Exception $e) {
+            $e = new Exception(
+                "addAPIClass('$className') failed. " . $e->getMessage(),
+                $e->getCode(),
+                $e
+            );
+            $this->setSupportedFormats('JsonFormat');
+            $this->message($e);
+        }
+    }
+
+    /**
+     * @param int $version maximum version number supported
+     *                                     by  the api
+     * @param int $minimum minimum version number supported
+     * (optional)
+     *
+     * @throws InvalidArgumentException
+     * @return void
+     */
+    public function setAPIVersion(int $version = 1, int $minimum = 1): void
+    {
+        $this->apiVersion = $version;
+        if (is_int($minimum)) {
+            $this->apiMinimumVersion = $minimum;
+        }
+    }
 
     /**
      * @param string[] ...$formats
@@ -65,9 +180,10 @@ class Core
 
             $obj = Scope::get($className);
 
-            if (!$obj instanceof iFormat)
+            if (!$obj instanceof iFormat) {
                 throw new Exception('Invalid format class; must implement ' .
                     'iFormat interface');
+            }
             if ($throwException && get_class($obj) == get_class($this->requestFormat)) {
                 $throwException = false;
             }
@@ -77,12 +193,15 @@ class Core
                     $this->writableMimeTypes[] = $mime;
                     $extensions[".$extension"] = true;
                 }
-                if ($obj->isReadable())
+                if ($obj->isReadable()) {
                     $this->readableMimeTypes[] = $mime;
-                if (!isset($this->formatMap[$extension]))
+                }
+                if (!isset($this->formatMap[$extension])) {
                     $this->formatMap[$extension] = $className;
-                if (!isset($this->formatMap[$mime]))
+                }
+                if (!isset($this->formatMap[$mime])) {
                     $this->formatMap[$mime] = $className;
+                }
             }
         }
         if ($throwException) {
@@ -102,11 +221,12 @@ class Core
             $formats = explode(',', (string)$this->apiMethodInfo->metadata['format']);
             foreach ($formats as $i => $f) {
                 $f = trim($f);
-                if (!in_array($f, $this->formatOverridesMap))
+                if (!in_array($f, $this->formatOverridesMap)) {
                     throw new RestException(
                         500,
                         "Given @format is not present in overriding formats. Please call `\$r->setOverridingFormats('$f');` first."
                     );
+                }
                 $formats[$i] = $f;
             }
             call_user_func_array(array($this, 'setSupportedFormats'), $formats);
@@ -278,8 +398,9 @@ class Core
                 }
             }
         }
-        if (!isset($o->className))
+        if (!isset($o->className)) {
             throw new RestException(404);
+        }
 
         if (isset($this->apiVersionMap[$o->className])) {
             Scope::$classAliases[Util::getShortName($o->className)]
@@ -295,4 +416,56 @@ class Core
             }
         }
     }
+
+    protected function authenticate()
+    {
+        $o = &$this->apiMethodInfo;
+        $accessLevel = max(Defaults::$apiAccessLevel, $o->accessLevel);
+        if ($accessLevel) {
+            if (!count($this->authClasses) && $accessLevel > 1) {
+                throw new RestException(
+                    403,
+                    'at least one Authentication Class is required'
+                );
+            }
+            $unauthorized = false;
+            foreach ($this->authClasses as $authClass) {
+                try {
+                    $authObj = Scope::get($authClass);
+                    if (!method_exists($authObj, Defaults::$authenticationMethod)) {
+                        throw new RestException (
+                            500, 'Authentication Class ' .
+                            'should implement iAuthenticate');
+                    } elseif (
+                    !$authObj->{Defaults::$authenticationMethod}()
+                    ) {
+                        throw new RestException(401);
+                    }
+                    $unauthorized = false;
+                    break;
+                } catch (InvalidAuthCredentials $e) {
+                    $this->authenticated = false;
+                    throw $e;
+                } catch (RestException $e) {
+                    if (!$unauthorized) {
+                        $unauthorized = $e;
+                    }
+                }
+            }
+            $this->authVerified = true;
+            if ($unauthorized) {
+                if ($accessLevel > 1) { //when it is not a hybrid api
+                    throw $unauthorized;
+                } else {
+                    $this->authenticated = false;
+                }
+            } else {
+                $this->authenticated = true;
+            }
+        }
+    }
+
+    abstract protected function compose($response = []): void;
+
+    abstract protected function message(Throwable $e): void;
 }

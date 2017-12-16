@@ -2,6 +2,7 @@
 
 
 use Luracast\Restler\CommentParser;
+use Luracast\Restler\Data\Text;
 use Luracast\Restler\Data\ValidationInfo;
 use Luracast\Restler\Data\Validator;
 use Luracast\Restler\Defaults;
@@ -25,12 +26,13 @@ class Restle extends Core
     protected $rawRequestBody = "";
 
 
-    public function __construct(ServerRequestInterface $request, ResponseInterface $response, $rawRequestBody = '')
+    public function __construct(Restle $master = null)
     {
-        $this->rawRequestBody = $rawRequestBody;
-        $this->requestMethod = $request->getMethod();
-        $this->request = $request;
-        $this->response = $response;
+        if ($master) {
+            $this->authClasses = $master->authClasses;
+            $this->apiVersionMap = $master->apiVersionMap;
+            $this->formatMap = $master->formatMap;
+        }
     }
 
     protected function get(): void
@@ -51,10 +53,6 @@ class Restle extends Core
             $this->request->getUri()->getPath(),
             $this->request->getHeaderLine('accept')
         );
-    }
-
-    protected function authenticate()
-    {
     }
 
     protected function validate()
@@ -125,8 +123,15 @@ class Restle extends Core
         return $result;
     }
 
-    public function handle()
-    {
+    public function handle(
+        ServerRequestInterface $request,
+        ResponseInterface $response,
+        $rawRequestBody = ''
+    ): ResponseInterface {
+        $this->rawRequestBody = $rawRequestBody;
+        $this->requestMethod = $request->getMethod();
+        $this->request = $request;
+        $this->response = $response;
         try {
             if (empty($this->formatMap)) {
                 $this->setSupportedFormats('JsonFormat');
@@ -134,10 +139,11 @@ class Restle extends Core
             $this->get();
             $this->route();
             $this->negotiate();
+            $this->authenticate();
             $this->validate();
             $this->compose($this->call());
         } catch (Throwable $error) {
-            $this->composeMessage($error);
+            $this->message($error);
         }
         return $this->response;
     }
@@ -147,7 +153,7 @@ class Restle extends Core
      */
     protected function compose($response = []): void
     {
-        if(!$this->responseFormat) {
+        if (!$this->responseFormat) {
             $this->responseFormat = new JsonFormat();
         }
         $this->response->getBody()->write($this->responseFormat->encode($response), true);
@@ -159,7 +165,7 @@ class Restle extends Core
             ->withHeader('Content-Type', $this->responseFormat->getMIME());
     }
 
-    protected function composeMessage(Throwable $e): void
+    protected function message(Throwable $e): void
     {
         if (!$e instanceof RestException) {
             $e = new RestException(500, $e->getMessage(), [], $e);
@@ -169,4 +175,21 @@ class Restle extends Core
         $this->compose($compose->message($e));
     }
 
+    public function __call($name, $arguments)
+    {
+        if (isset($this->$name)) {
+            return $this->$name;
+        }
+        return null;
+    }
+
+    public function getEvents()
+    {
+        return [];
+    }
+
+    public function getProductionMode()
+    {
+        return false;
+    }
 }
