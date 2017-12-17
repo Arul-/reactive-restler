@@ -27,6 +27,7 @@
   "autoload-dev":{
     "classmap":[
       "api/tests/param/",
+      "api/tests/request_data/",
       "api/examples/_001_helloworld/",
       "api/examples/_002_minimal/",
       "api/examples/_003_multiformat/",

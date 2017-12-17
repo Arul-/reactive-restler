@@ -30,6 +30,7 @@ $r->addAPIClass('MinMax', 'tests/param/minmax');
 $r->addAPIClass('MinMaxFix', 'tests/param/minmaxfix');
 $r->addAPIClass('Type', 'tests/param/type');
 $r->addAPIClass('Validation', 'tests/param/validation');
+$r->addAPIClass('Data', 'tests/request_data');
 
 $loop = React\EventLoop\Factory::create();
 
