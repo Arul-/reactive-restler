@@ -66,8 +66,8 @@ abstract class Core
      * protected methods will need at least one authentication class to be set
      * in order to allow that method to be executed
      *
-     * @param string $className     of the authentication class
-     * @param string $resourcePath  optional url prefix for mapping
+     * @param string $className of the authentication class
+     * @param string $resourcePath optional url prefix for mapping
      */
     public function addAuthenticationClass($className, $resourcePath = null)
     {
@@ -352,6 +352,47 @@ abstract class Core
         }
     }
 
+    /**
+     * Parses the request to figure out format of the request data
+     *
+     * @throws RestException
+     * @return iFormat any class that implements iFormat
+     * @example JsonFormat
+     */
+    protected function getRequestFormat(string $contentType): void
+    {
+        $format = null;
+        // check if client has sent any information on request format
+        if (!empty($contentType)) {
+            $mime = $contentType;
+            if (false !== $pos = strpos($mime, ';')) {
+                $mime = substr($mime, 0, $pos);
+            }
+            if ($mime == UrlEncodedFormat::MIME) {
+                $format = Scope::get('UrlEncodedFormat');
+            } elseif (isset($this->formatMap[$mime])) {
+                $format = Scope::get($this->formatMap[$mime]);
+                $format->setMIME($mime);
+            } elseif (!$this->requestFormatDiffered && isset($this->formatOverridesMap[$mime])) {
+                //if our api method is not using an @format comment
+                //to point to this $mime, we need to throw 403 as in below
+                //but since we don't know that yet, we need to defer that here
+                $format = Scope::get($this->formatOverridesMap[$mime]);
+                $format->setMIME($mime);
+                $this->requestFormatDiffered = true;
+            } else {
+                throw new RestException(
+                    403,
+                    "Content type `$mime` is not supported."
+                );
+            }
+        }
+        if (!$format) {
+            $format = Scope::get($this->formatMap['default']);
+        }
+        $this->requestFormat = $format;
+    }
+
     protected function getBody(string $raw = ''): void
     {
         $r = [];
@@ -360,8 +401,7 @@ abstract class Core
             || $this->requestMethod == 'POST'
         ) {
             //TODO: handle stream
-            //TODO: find and use request format
-            $r = Obj::toArray(json_decode($raw));
+            $r = $this->requestFormat->decode($raw);
 
             /*
             $r = $this->request->getParsedBody();

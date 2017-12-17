@@ -38,6 +38,7 @@ class Restle extends Core
     {
         $this->getPath($this->request->getUri()->getPath());
         $this->getQuery($this->request->getQueryParams());
+        $this->getRequestFormat($this->request->getHeaderLine('content-type'));
         $this->getBody($this->rawRequestBody);
     }
 
@@ -125,7 +126,7 @@ class Restle extends Core
     public function handle(
         ServerRequestInterface $request,
         ResponseInterface $response,
-        $rawRequestBody = ''
+        string $rawRequestBody = ''
     ): ResponseInterface {
         $this->rawRequestBody = $rawRequestBody;
         $this->requestMethod = $request->getMethod();
