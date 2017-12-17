@@ -32,7 +32,11 @@
       "api/examples/_002_minimal/",
       "api/examples/_003_multiformat/",
       "api/examples/_004_error_response/",
-      "api/examples/_005_protected_api/"
+      "api/examples/_005_protected_api/",
+      "api/examples/_006_routing/",
+      "api/examples/_007_crud/",
+      "api/examples/_007_crud/DB",
+      "api/examples/_007_crud/DB/PDO"
     ]
   },
   "config": {

@@ -2,7 +2,6 @@
 
 
 use Luracast\Restler\CommentParser;
-use Luracast\Restler\Data\Text;
 use Luracast\Restler\Data\ValidationInfo;
 use Luracast\Restler\Data\Validator;
 use Luracast\Restler\Defaults;

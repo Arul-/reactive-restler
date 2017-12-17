@@ -25,6 +25,9 @@ $r->addAPIClass('Secured', 'examples/_005_protected_api/secured');
 
 $r->addAuthenticationClass('SimpleAuth', 'examples/_005_protected_api/SimpleAuth');
 
+$r->addAPIClass('Api', 'examples/_006_routing/api');
+$r->addAPIClass('Authors', 'examples/_007_crud/authors');
+
 //tests
 $r->addAPIClass('MinMax', 'tests/param/minmax');
 $r->addAPIClass('MinMaxFix', 'tests/param/minmaxfix');
