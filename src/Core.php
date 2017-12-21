@@ -214,114 +214,6 @@ abstract class Core
     }
 
     /**
-     * @param string $path
-     * @param string $acceptHeader
-     * @return iFormat
-     * @throws RestException
-     */
-    protected function negotiateResponseFormat(string $path, string $acceptHeader = ''): iFormat
-    {
-        //check if the api method insists on response format using @format comment
-        if (array_key_exists('format', $this->apiMethodInfo->metadata)) {
-            $formats = explode(',', (string)$this->apiMethodInfo->metadata['format']);
-            foreach ($formats as $i => $f) {
-                $f = trim($f);
-                if (!in_array($f, $this->formatOverridesMap)) {
-                    throw new RestException(
-                        500,
-                        "Given @format is not present in overriding formats. Please call `\$r->setOverridingFormats('$f');` first."
-                    );
-                }
-                $formats[$i] = $f;
-            }
-            call_user_func_array(array($this, 'setSupportedFormats'), $formats);
-        }
-
-        // check if client has specified an extension
-        /** @var $format iFormat */
-        $format = null;
-        $extensions = explode('.', parse_url($path, PHP_URL_PATH));
-        while ($extensions) {
-            $extension = array_pop($extensions);
-            $extension = explode('/', $extension);
-            $extension = array_shift($extension);
-            if ($extension && isset($this->formatMap[$extension])) {
-                $format = Scope::get($this->formatMap[$extension]);
-                $format->setExtension($extension);
-                return $format;
-            }
-        }
-        // check if client has sent list of accepted data formats
-        if (!empty($acceptHeader)) {
-            $acceptList = Util::sortByPriority($acceptHeader);
-            foreach ($acceptList as $accept => $quality) {
-                if (isset($this->formatMap[$accept])) {
-                    $format = Scope::get($this->formatMap[$accept]);
-                    $format->setMIME($accept);
-                    // Tell cache content is based on Accept header
-                    $this->responseHeaders['Vary'] = 'Accept';
-                    return $format;
-
-                } elseif (false !== ($index = strrpos($accept, '+'))) {
-                    $mime = substr($accept, 0, $index);
-                    if (is_string(Defaults::$apiVendor)
-                        && 0 === stripos($mime,
-                            'application/vnd.'
-                            . Defaults::$apiVendor . '-v')
-                    ) {
-                        $extension = substr($accept, $index + 1);
-                        if (isset($this->formatMap[$extension])) {
-                            //check the MIME and extract version
-                            $version = intval(substr($mime,
-                                18 + strlen(Defaults::$apiVendor)));
-                            if ($version > 0 && $version <= $this->apiVersion) {
-                                $this->requestedApiVersion = $version;
-                                $format = Scope::get($this->formatMap[$extension]);
-                                $format->setExtension($extension);
-                                Defaults::$useVendorMIMEVersioning = true;
-                                $this->responseHeaders['Vary'] = 'Accept';
-                                return $format;
-                            }
-                        }
-                    }
-
-                }
-            }
-        } else {
-            // RFC 2616: If no Accept header field is
-            // present, then it is assumed that the
-            // client accepts all media types.
-            $acceptHeader = '*/*';
-        }
-        if (strpos($acceptHeader, '*') !== false) {
-            if (false !== strpos($acceptHeader, 'application/*')) {
-                $format = Scope::get('JsonFormat');
-            } elseif (false !== strpos($acceptHeader, 'text/*')) {
-                $format = Scope::get('XmlFormat');
-            } elseif (false !== strpos($acceptHeader, '*/*')) {
-                $format = Scope::get($this->formatMap['default']);
-            }
-        }
-        if (empty($format)) {
-            // RFC 2616: If an Accept header field is present, and if the
-            // server cannot send a response which is acceptable according to
-            // the combined Accept field value, then the server SHOULD send
-            // a 406 (not acceptable) response.
-            $format = Scope::get($this->formatMap['default']);
-            $this->responseFormat = $format;
-            throw new RestException(
-                406,
-                'Content negotiation failed. ' .
-                'Try `' . $format->getMIME() . '` instead.'
-            );
-        } else {
-            // Tell cache content is based at Accept header
-            $this->responseHeaders['Vary'] = 'Accept';
-            return $format;
-        }
-    }
-
-    /**
      * Sets the cleaned up path without extensions and unwanted slashes
      * @param string $path
      * @return string
@@ -459,6 +351,197 @@ abstract class Core
             } elseif (isset($this->apiVersionMap[Scope::$classAliases[$auth]])) {
                 Scope::$classAliases[$auth]
                     = $this->apiVersionMap[Scope::$classAliases[$auth]][$this->requestedApiVersion];
+            }
+        }
+    }
+
+    /**
+     * @param string $path
+     * @param string $acceptHeader
+     * @return iFormat
+     * @throws RestException
+     */
+    protected function negotiateResponseFormat(string $path, string $acceptHeader = ''): iFormat
+    {
+        //check if the api method insists on response format using @format comment
+        if (array_key_exists('format', $this->apiMethodInfo->metadata)) {
+            $formats = explode(',', (string)$this->apiMethodInfo->metadata['format']);
+            foreach ($formats as $i => $f) {
+                $f = trim($f);
+                if (!in_array($f, $this->formatOverridesMap)) {
+                    throw new RestException(
+                        500,
+                        "Given @format is not present in overriding formats. Please call `\$r->setOverridingFormats('$f');` first."
+                    );
+                }
+                $formats[$i] = $f;
+            }
+            call_user_func_array(array($this, 'setSupportedFormats'), $formats);
+        }
+
+        // check if client has specified an extension
+        /** @var $format iFormat */
+        $format = null;
+        $extensions = explode('.', parse_url($path, PHP_URL_PATH));
+        while ($extensions) {
+            $extension = array_pop($extensions);
+            $extension = explode('/', $extension);
+            $extension = array_shift($extension);
+            if ($extension && isset($this->formatMap[$extension])) {
+                $format = Scope::get($this->formatMap[$extension]);
+                $format->setExtension($extension);
+                return $format;
+            }
+        }
+        // check if client has sent list of accepted data formats
+        if (!empty($acceptHeader)) {
+            $acceptList = Util::sortByPriority($acceptHeader);
+            foreach ($acceptList as $accept => $quality) {
+                if (isset($this->formatMap[$accept])) {
+                    $format = Scope::get($this->formatMap[$accept]);
+                    $format->setMIME($accept);
+                    // Tell cache content is based on Accept header
+                    $this->responseHeaders['Vary'] = 'Accept';
+                    return $format;
+
+                } elseif (false !== ($index = strrpos($accept, '+'))) {
+                    $mime = substr($accept, 0, $index);
+                    if (is_string(Defaults::$apiVendor)
+                        && 0 === stripos($mime,
+                            'application/vnd.'
+                            . Defaults::$apiVendor . '-v')
+                    ) {
+                        $extension = substr($accept, $index + 1);
+                        if (isset($this->formatMap[$extension])) {
+                            //check the MIME and extract version
+                            $version = intval(substr($mime,
+                                18 + strlen(Defaults::$apiVendor)));
+                            if ($version > 0 && $version <= $this->apiVersion) {
+                                $this->requestedApiVersion = $version;
+                                $format = Scope::get($this->formatMap[$extension]);
+                                $format->setExtension($extension);
+                                Defaults::$useVendorMIMEVersioning = true;
+                                $this->responseHeaders['Vary'] = 'Accept';
+                                return $format;
+                            }
+                        }
+                    }
+
+                }
+            }
+        } else {
+            // RFC 2616: If no Accept header field is
+            // present, then it is assumed that the
+            // client accepts all media types.
+            $acceptHeader = '*/*';
+        }
+        if (strpos($acceptHeader, '*') !== false) {
+            if (false !== strpos($acceptHeader, 'application/*')) {
+                $format = Scope::get('JsonFormat');
+            } elseif (false !== strpos($acceptHeader, 'text/*')) {
+                $format = Scope::get('XmlFormat');
+            } elseif (false !== strpos($acceptHeader, '*/*')) {
+                $format = Scope::get($this->formatMap['default']);
+            }
+        }
+        if (empty($format)) {
+            // RFC 2616: If an Accept header field is present, and if the
+            // server cannot send a response which is acceptable according to
+            // the combined Accept field value, then the server SHOULD send
+            // a 406 (not acceptable) response.
+            $format = Scope::get($this->formatMap['default']);
+            $this->responseFormat = $format;
+            throw new RestException(
+                406,
+                'Content negotiation failed. ' .
+                'Try `' . $format->getMIME() . '` instead.'
+            );
+        } else {
+            // Tell cache content is based at Accept header
+            $this->responseHeaders['Vary'] = 'Accept';
+            return $format;
+        }
+    }
+
+    /**
+     * @param string $requestMethod
+     * @param string $accessControlRequestMethod
+     * @param string $accessControlRequestHeaders
+     * @param string $origin
+     * @throws RestException
+     */
+    protected function negotiateCORS(
+        string $requestMethod,
+        string $accessControlRequestMethod = '',
+        string $accessControlRequestHeaders = '',
+        string $origin = ''
+    ): void {
+        if (Defaults::$crossOriginResourceSharing || $requestMethod != 'OPTIONS') {
+            return;
+        }
+        if (!empty($accessControlRequestMethod)) {
+            $this->responseHeaders['Access-Control-Allow-Methods'] = Defaults::$accessControlAllowMethods;
+        }
+        if (!empty($accessControlRequestHeaders)) {
+            $this->responseHeaders['Access-Control-Allow-Headers'] = $accessControlRequestHeaders;
+        }
+        $this->responseHeaders['Access-Control-Allow-Origin'] =
+            Defaults::$accessControlAllowOrigin == '*' && !empty($origin)
+                ? $origin : Defaults::$accessControlAllowOrigin;
+        $this->responseHeaders['Access-Control-Allow-Credentials'] = 'true';
+        throw new RestException(0);
+    }
+
+    /**
+     * @param string $acceptCharset
+     * @throws RestException
+     */
+    protected function negotiateCharset(string $acceptCharset = '*'): void
+    {
+        if (!empty($acceptCharset)) {
+            $found = false;
+            $charList = Util::sortByPriority($acceptCharset);
+            foreach ($charList as $charset => $quality) {
+                if (in_array($charset, Defaults::$supportedCharsets)) {
+                    $found = true;
+                    Defaults::$charset = $charset;
+                    break;
+                }
+            }
+            if (!$found) {
+                if (strpos($acceptCharset, '*') !== false) {
+                    //use default charset
+                } else {
+                    throw new RestException(
+                        406,
+                        'Content negotiation failed. ' .
+                        'Requested charset is not supported'
+                    );
+                }
+            }
+        }
+    }
+
+    protected function negotiateLanguage(string $acceptLanguage = ''): void
+    {
+        if (!empty($acceptLanguage)) {
+            $found = false;
+            $langList = Util::sortByPriority($acceptLanguage);
+            foreach ($langList as $lang => $quality) {
+                foreach (Defaults::$supportedLanguages as $supported) {
+                    if (strcasecmp($supported, $lang) == 0) {
+                        $found = true;
+                        Defaults::$language = $supported;
+                        break 2;
+                    }
+                }
+            }
+            if (!$found) {
+                if (strpos($acceptLanguage, '*') !== false) {
+                    //use default language
+                } else {
+                    //ignore for now! //TODO: find best response for language negotiation failure
+                }
             }
         }
     }

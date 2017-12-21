@@ -58,10 +58,18 @@ class Restle extends Core
      */
     protected function negotiate(): void
     {
+        $this->negotiateCORS(
+            $this->requestMethod,
+            $this->request->getHeaderLine('Access-Control-Request-Method'),
+            $this->request->getHeaderLine('Access-Control-Request-Headers'),
+            $this->request->getHeaderLine('origin')
+        );
         $this->responseFormat = $this->negotiateResponseFormat(
             $this->request->getUri()->getPath(),
             $this->request->getHeaderLine('accept')
         );
+        $this->negotiateCharset($this->request->getHeaderLine('accept-charset'));
+        $this->negotiateLanguage($this->request->getHeaderLine('accept-language'));
     }
 
     protected function validate()
