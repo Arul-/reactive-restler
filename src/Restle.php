@@ -36,10 +36,10 @@ class Restle extends Core
 
     protected function get(): void
     {
-        $this->getPath($this->request->getUri()->getPath());
-        $this->getQuery($this->request->getQueryParams());
-        $this->getRequestFormat($this->request->getHeaderLine('content-type'));
-        $this->getBody($this->rawRequestBody);
+        $this->path = $this->getPath($this->request->getUri()->getPath());
+        $this->query = $this->getQuery($this->request->getQueryParams());
+        $this->requestFormat = $this->getRequestFormat($this->request->getHeaderLine('content-type'));
+        $this->body = $this->getBody($this->rawRequestBody);
     }
 
     protected function route(): void
@@ -127,7 +127,8 @@ class Restle extends Core
         ServerRequestInterface $request,
         ResponseInterface $response,
         string $rawRequestBody = ''
-    ): ResponseInterface {
+    ): ResponseInterface
+    {
         $this->rawRequestBody = $rawRequestBody;
         $this->requestMethod = $request->getMethod();
         $this->request = $request;

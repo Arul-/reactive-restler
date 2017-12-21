@@ -324,9 +324,9 @@ abstract class Core
      * Sets the cleaned up path without extensions and unwanted slashes
      * @param string $path
      */
-    protected function getPath(string $path): void
+    protected function getPath(string $path): string
     {
-        $this->path = str_replace(
+        return str_replace(
             array_merge(
                 $this->formatMap['extensions'],
                 $this->formatOverridesMap['extensions']
@@ -336,20 +336,21 @@ abstract class Core
         );
     }
 
-    protected function getQuery(array $get = []): void
+    protected function getQuery(array $get = []): array
     {
-        $this->query = UrlEncodedFormat::decoderTypeFix($get);
+        $get = UrlEncodedFormat::decoderTypeFix($get);
         //parse defaults
-        foreach ($this->query as $key => $value) {
+        foreach ($get as $key => $value) {
             if (isset(Defaults::$aliases[$key])) {
-                unset($this->query[$key]);
-                $this->query[Defaults::$aliases[$key]] = $value;
+                unset($get[$key]);
+                $get[Defaults::$aliases[$key]] = $value;
                 $key = Defaults::$aliases[$key];
             }
             if (in_array($key, Defaults::$overridables)) {
                 Defaults::setProperty($key, $value);
             }
         }
+        return $get;
     }
 
     /**
@@ -359,7 +360,7 @@ abstract class Core
      * @return iFormat any class that implements iFormat
      * @example JsonFormat
      */
-    protected function getRequestFormat(string $contentType): void
+    protected function getRequestFormat(string $contentType): iFormat
     {
         $format = null;
         // check if client has sent any information on request format
@@ -390,10 +391,10 @@ abstract class Core
         if (!$format) {
             $format = Scope::get($this->formatMap['default']);
         }
-        $this->requestFormat = $format;
+        return $format;
     }
 
-    protected function getBody(string $raw = ''): void
+    protected function getBody(string $raw = ''): array
     {
         $r = [];
         if ($this->requestMethod == 'PUT'
@@ -418,7 +419,7 @@ abstract class Core
                 ? array_merge($r, array(Defaults::$fullRequestDataName => $r))
                 : array(Defaults::$fullRequestDataName => $r);
         }
-        $this->body = $r;
+        return $r;
     }
 
     protected function route(): void
