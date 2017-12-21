@@ -173,7 +173,7 @@ class Restle extends Core
         if (!$this->responseFormat) {
             $this->responseFormat = new JsonFormat();
         }
-        $this->response->getBody()->write($this->responseFormat->encode($response), true);
+        $this->response->getBody()->write($this->responseFormat->encode($response, true));
         foreach ($this->responseHeaders as $name => $value) {
             $this->response = $this->response->withHeader($name, $value);
         }
