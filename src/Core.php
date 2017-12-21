@@ -1,7 +1,6 @@
 <?php declare(strict_types=1);
 
 use Luracast\Restler\Data\ApiMethodInfo;
-use Luracast\Restler\Data\Obj;
 use Luracast\Restler\Defaults;
 use Luracast\Restler\Format\iFormat;
 use Luracast\Restler\Format\UrlEncodedFormat;
@@ -214,7 +213,13 @@ abstract class Core
         $this->formatMap['extensions'] = array_keys($extensions);
     }
 
-    protected function negotiateResponseFormat(string $path, string $acceptHeader = ''): void
+    /**
+     * @param string $path
+     * @param string $acceptHeader
+     * @return iFormat
+     * @throws RestException
+     */
+    protected function negotiateResponseFormat(string $path, string $acceptHeader = ''): iFormat
     {
         //check if the api method insists on response format using @format comment
         if (array_key_exists('format', $this->apiMethodInfo->metadata)) {
@@ -243,9 +248,7 @@ abstract class Core
             if ($extension && isset($this->formatMap[$extension])) {
                 $format = Scope::get($this->formatMap[$extension]);
                 $format->setExtension($extension);
-                // echo "Extension $extension";
-                $this->responseFormat = $format;
-                return;
+                return $format;
             }
         }
         // check if client has sent list of accepted data formats
@@ -257,8 +260,7 @@ abstract class Core
                     $format->setMIME($accept);
                     // Tell cache content is based on Accept header
                     $this->responseHeaders['Vary'] = 'Accept';
-                    $this->responseFormat = $format;
-                    return;
+                    return $format;
 
                 } elseif (false !== ($index = strrpos($accept, '+'))) {
                     $mime = substr($accept, 0, $index);
@@ -278,8 +280,7 @@ abstract class Core
                                 $format->setExtension($extension);
                                 Defaults::$useVendorMIMEVersioning = true;
                                 $this->responseHeaders['Vary'] = 'Accept';
-                                $this->responseFormat = $format;
-                                return;
+                                return $format;
                             }
                         }
                     }
@@ -316,13 +317,14 @@ abstract class Core
         } else {
             // Tell cache content is based at Accept header
             $this->responseHeaders['Vary'] = 'Accept';
-            $this->responseFormat = $format;
+            return $format;
         }
     }
 
     /**
      * Sets the cleaned up path without extensions and unwanted slashes
      * @param string $path
+     * @return string
      */
     protected function getPath(string $path): string
     {
@@ -422,6 +424,9 @@ abstract class Core
         return $r;
     }
 
+    /**
+     * @throws RestException
+     */
     protected function route(): void
     {
         $this->apiMethodInfo = $o = Routes::find(
@@ -458,6 +463,10 @@ abstract class Core
         }
     }
 
+    /**
+     * @throws InvalidAuthCredentials
+     * @throws RestException
+     */
     protected function authenticate()
     {
         $o = &$this->apiMethodInfo;

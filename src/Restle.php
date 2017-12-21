@@ -34,6 +34,9 @@ class Restle extends Core
         }
     }
 
+    /**
+     * @throws RestException
+     */
     protected function get(): void
     {
         $this->path = $this->getPath($this->request->getUri()->getPath());
@@ -42,14 +45,20 @@ class Restle extends Core
         $this->body = $this->getBody($this->rawRequestBody);
     }
 
+    /**
+     * @throws RestException
+     */
     protected function route(): void
     {
         parent::route();
     }
 
+    /**
+     * @throws RestException
+     */
     protected function negotiate(): void
     {
-        $this->negotiateResponseFormat(
+        $this->responseFormat = $this->negotiateResponseFormat(
             $this->request->getUri()->getPath(),
             $this->request->getHeaderLine('accept')
         );
@@ -127,8 +136,7 @@ class Restle extends Core
         ServerRequestInterface $request,
         ResponseInterface $response,
         string $rawRequestBody = ''
-    ): ResponseInterface
-    {
+    ): ResponseInterface {
         $this->rawRequestBody = $rawRequestBody;
         $this->requestMethod = $request->getMethod();
         $this->request = $request;
