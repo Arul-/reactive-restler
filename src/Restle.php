@@ -188,6 +188,12 @@ class Restle extends Core
             $e = new RestException(500, $e->getMessage(), [], $e);
         }
         $this->responseCode = $e->getCode();
+        if ($this->responseCode == 200 && empty($e->getMessage())) {
+            $this->response = $this->response
+                ->withStatus(200)
+                ->withHeader('Content-Type', $this->responseFormat->getMIME());
+            return;
+        }
         $compose = Scope::get(Defaults::$composeClass);
         $this->compose($compose->message($e));
     }
