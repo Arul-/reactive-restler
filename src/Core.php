@@ -12,6 +12,8 @@ use Luracast\Restler\Util;
 
 abstract class Core
 {
+    const VERSION = 4.0;
+
     protected $apiVersionMap = [];
     /**
      * @var int
@@ -74,6 +76,12 @@ abstract class Core
         $this->addAPIClass($className, $resourcePath);
     }
 
+    /**
+     * @param $className
+     * @param null|string $resourcePath
+     * @throws Exception
+     * @throws RestException
+     */
     public function addAPIClass($className, $resourcePath = null)
     {
         try {
@@ -598,7 +606,79 @@ abstract class Core
         }
     }
 
-    abstract protected function compose($response = []): void;
+    abstract protected function compose($response = null);
 
-    abstract protected function message(Throwable $e): void;
+    public function composeHeaders(
+        ?ApiMethodInfo $info,
+        string $origin = '',
+        string $protocolVersion = '1.1',
+        RestException $e = null
+    ): void {
+        //only GET method should be cached if allowed by API developer
+        $expires = $this->requestMethod == 'GET' ? Defaults::$headerExpires : 0;
+        if (!is_array(Defaults::$headerCacheControl)) {
+            Defaults::$headerCacheControl = [Defaults::$headerCacheControl];
+        }
+        $cacheControl = Defaults::$headerCacheControl[0];
+        if ($expires > 0) {
+            $cacheControl = $this->apiMethodInfo->accessLevel
+                ? 'private, ' : 'public, ';
+            $cacheControl .= end(Defaults::$headerCacheControl);
+            $cacheControl = str_replace('{expires}', $expires, $cacheControl);
+            $expires = gmdate('D, d M Y H:i:s \G\M\T', time() + $expires);
+        }
+        $this->responseHeaders['Cache-Control'] = $cacheControl;
+        $this->responseHeaders['Expires'] = $expires;
+        $this->responseHeaders['X-Powered-By'] = 'Luracast Restler v' . static::VERSION;
+
+        if (Defaults::$crossOriginResourceSharing
+            && !empty($origin)
+        ) {
+            $this->responseHeaders['Access-Control-Allow-Origin'] = Defaults::$accessControlAllowOrigin == '*'
+                ? $origin
+                : Defaults::$accessControlAllowOrigin;
+            $this->responseHeaders['Access-Control-Allow-Credentials'] = 'true';
+            $this->responseHeaders['Access-Control-Max-Age'] = 86400;
+        }
+
+        $this->responseHeaders['Content-Language'] = Defaults::$language;
+
+        if (isset($info->metadata['header'])) {
+            foreach ($info->metadata['header'] as $header) {
+                $parts = explode(': ', $header, 2);
+                $this->responseHeaders[$parts[0]] = $parts[1];
+            }
+        }
+
+        $code = 200;
+        if (!Defaults::$suppressResponseCode) {
+            if ($e) {
+                $code = $e->getCode();
+            } elseif ($this->responseCode) {
+                $code = $this->responseCode;
+            } elseif (isset($info->metadata['status'])) {
+                $code = $info->metadata['status'];
+            }
+        }
+        $this->responseCode = $code;
+        $this->responseHeaders["HTTP/$protocolVersion $code"] = isset(RestException::$codes[$code])
+            ? RestException::$codes[$code] : '';
+
+        $this->responseFormat->setCharset(Defaults::$charset);
+        $charset = $this->responseFormat->getCharset()
+            ?: Defaults::$charset;
+
+        $this->responseHeaders['Content-Type'] = (
+            Defaults::$useVendorMIMEVersioning
+                ? 'application/vnd.' . Defaults::$apiVendor
+                . "-v{$this->requestedApiVersion}+"
+                . $this->responseFormat->getExtension()
+                : $this->responseFormat->getMIME())
+            . "; charset=$charset";
+
+    }
+
+    abstract protected function message(Throwable $e);
+
+    abstract protected function respond($response = []);
 }

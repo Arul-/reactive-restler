@@ -158,44 +158,75 @@ class Restle extends Core
             $this->negotiate();
             $this->authenticate();
             $this->validate();
-            $this->compose($this->call());
+            if (!$this->responseFormat) {
+                $this->responseFormat = new JsonFormat();
+            }
+            return $this->respond($this->compose($this->call()));
         } catch (Throwable $error) {
-            $this->message($error);
+            if (!$this->responseFormat) {
+                $this->responseFormat = new JsonFormat();
+            }
+            return $this->respond($this->message($error));
         }
-        return $this->response;
     }
 
     /**
-     * @param array|string $response
+     * @param mixed $response
+     * @return mixed
      */
-    protected function compose($response = []): void
+    protected function compose($response = null)
     {
-        if (!$this->responseFormat) {
-            $this->responseFormat = new JsonFormat();
-        }
-        $this->response->getBody()->write($this->responseFormat->encode($response, true));
-        foreach ($this->responseHeaders as $name => $value) {
-            $this->response = $this->response->withHeader($name, $value);
-        }
-        $this->response = $this->response
-            ->withStatus($this->responseCode)
-            ->withHeader('Content-Type', $this->responseFormat->getMIME());
+        $this->composeHeaders(
+            $this->apiMethodInfo,
+            $this->request->getHeaderLine('origin'),
+            $this->request->getProtocolVersion()
+        );
+        /**
+         * @var iCompose Default Composer
+         */
+        $compose = Scope::get(Defaults::$composeClass);
+        return is_null($response) && Defaults::$emptyBodyForNullResponse
+            ? null
+            : $compose->response($response);
     }
 
-    protected function message(Throwable $e): void
+    protected function message(Throwable $e)
     {
         if (!$e instanceof RestException) {
             $e = new RestException(500, $e->getMessage(), [], $e);
         }
         $this->responseCode = $e->getCode();
         if ($this->responseCode == 200 && empty($e->getMessage())) {
-            $this->response = $this->response
-                ->withStatus(200)
-                ->withHeader('Content-Type', $this->responseFormat->getMIME());
-            return;
+            return null;
         }
+        $this->composeHeaders(
+            $this->apiMethodInfo,
+            $this->request->getHeaderLine('origin'),
+            $this->request->getProtocolVersion(),
+            $e
+        );
+        /**
+         * @var iCompose Default Composer
+         */
         $compose = Scope::get(Defaults::$composeClass);
-        $this->compose($compose->message($e));
+        return $compose->message($e);
+    }
+
+    protected function respond($response = []): ResponseInterface
+    {
+        if (!is_null($response)) {
+            $this->response->getBody()->write($this->responseFormat->encode($response, true));
+        }
+        if ($this->responseCode == 401 && !isset($this->responseHeaders['WWW-Authenticate'])) {
+            $authString = count($this->authClasses)
+                ? Scope::get($this->authClasses[0])->__getWWWAuthenticateString()
+                : 'Unknown';
+            $this->responseHeaders['WWW-Authenticate'] = $authString;
+        }
+        foreach ($this->responseHeaders as $name => $value) {
+            $this->response = $this->response->withHeader($name, $value);
+        }
+        return $this->response;//->withHeader('Content-Type', $this->responseFormat->getMIME());;
     }
 
     public function __call($name, $arguments)
