@@ -8,28 +8,29 @@ use React\Promise\Promise;
 
 include __DIR__ . "/../vendor/autoload.php";
 
-//examples
-Router::addAPI('Say', 'examples/_001_helloworld/say');
-Router::addAPI('Math', 'examples/_002_minimal/math');
-Router::addAPI('BMI', 'examples/_003_multiformat/bmi');
-Router::addAPI('Currency', 'examples/_004_error_response/currency');
-
-Router::setSupportedFormats('JsonFormat', 'XmlFormat');
-
-Router::addAPI('Simple', 'examples/_005_protected_api');
-Router::addAPI('Secured', 'examples/_005_protected_api/secured');
-
-Router::addAuthenticator('SimpleAuth', 'examples/_005_protected_api/SimpleAuth');
-
-Router::addAPI('Api', 'examples/_006_routing/api');
-Router::addAPI('Authors', 'examples/_007_crud/authors');
-
-//tests
-Router::addAPI('MinMax', 'tests/param/minmax');
-Router::addAPI('MinMaxFix', 'tests/param/minmaxfix');
-Router::addAPI('Type', 'tests/param/type');
-Router::addAPI('Validation', 'tests/param/validation');
-Router::addAPI('Data', 'tests/request_data');
+try {
+    Router::mapApiClasses([
+        //examples
+        Say::class => 'examples/_001_helloworld/say',
+        Math::class => 'examples/_002_minimal/math',
+        BMI::class => 'examples/_003_multiformat/bmi',
+        Currency::class => 'examples/_004_error_response/currency',
+        Simple::class => 'examples/_005_protected_api',
+        Secured::class => 'examples/_005_protected_api/secured',
+        Api::class => 'examples/_006_routing/api',
+        Authors::class => 'examples/_007_crud/authors',
+        //tests
+        MinMax::class => 'tests/param/minmax',
+        MinMaxFix::class => 'tests/param/minmaxfix',
+        Type::class => 'tests/param/type',
+        Validation::class => 'tests/param/validation',
+        Data::class => 'tests/request_data'
+    ]);
+    Router::setSupportedFormats('JsonFormat', 'XmlFormat');
+    Router::addAuthenticator('SimpleAuth', 'examples/_005_protected_api/simpleauth');
+} catch (Throwable $t) {
+    die($t->getMessage());
+}
 
 $loop = React\EventLoop\Factory::create();
 
