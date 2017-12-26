@@ -610,7 +610,6 @@ abstract class Core
     public function composeHeaders(
         ?ApiMethodInfo $info,
         string $origin = '',
-        string $protocolVersion = '1.1',
         RestException $e = null
     ): void {
         //only GET method should be cached if allowed by API developer
@@ -653,16 +652,11 @@ abstract class Core
         if (!Defaults::$suppressResponseCode) {
             if ($e) {
                 $code = $e->getCode();
-            } elseif ($this->responseCode) {
-                $code = $this->responseCode;
-            } elseif (isset($info->metadata['status'])) {
+            } elseif (!$this->responseCode && isset($info->metadata['status'])) {
                 $code = $info->metadata['status'];
             }
         }
         $this->responseCode = $code;
-        $this->responseHeaders["HTTP/$protocolVersion $code"] = isset(HttpException::$codes[$code])
-            ? HttpException::$codes[$code] : '';
-
         $this->responseFormat->setCharset(Defaults::$charset);
         $charset = $this->responseFormat->getCharset()
             ?: Defaults::$charset;

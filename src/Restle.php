@@ -178,8 +178,7 @@ class Restle extends Core
     {
         $this->composeHeaders(
             $this->apiMethodInfo,
-            $this->request->getHeaderLine('origin'),
-            $this->request->getProtocolVersion()
+            $this->request->getHeaderLine('origin')
         );
         /**
          * @var iCompose Default Composer
@@ -202,7 +201,6 @@ class Restle extends Core
         $this->composeHeaders(
             $this->apiMethodInfo,
             $this->request->getHeaderLine('origin'),
-            $this->request->getProtocolVersion(),
             $e
         );
         /**
@@ -226,7 +224,7 @@ class Restle extends Core
         foreach ($this->responseHeaders as $name => $value) {
             $this->response = $this->response->withHeader($name, $value);
         }
-        return $this->response;//->withHeader('Content-Type', $this->responseFormat->getMIME());;
+        return $this->response->withStatus($this->responseCode);//->withHeader('Content-Type', $this->responseFormat->getMIME());;
     }
 
     public function __call($name, $arguments)
