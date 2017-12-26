@@ -80,7 +80,7 @@ abstract class Core
      * @param $className
      * @param null|string $resourcePath
      * @throws Exception
-     * @throws RestException
+     * @throws HttpException
      */
     public function addAPIClass($className, $resourcePath = null)
     {
@@ -176,7 +176,7 @@ abstract class Core
      * @param string[] ...$formats
      *
      * @throws Exception
-     * @throws RestException
+     * @throws HttpException
      */
     public function setSupportedFormats(string ...$formats)
     {
@@ -212,7 +212,7 @@ abstract class Core
             }
         }
         if ($throwException) {
-            throw new RestException(
+            throw new HttpException(
                 403,
                 'Content type `' . $this->requestFormat->getMIME() . '` is not supported.'
             );
@@ -258,7 +258,7 @@ abstract class Core
     /**
      * Parses the request to figure out format of the request data
      *
-     * @throws RestException
+     * @throws HttpException
      * @return iFormat any class that implements iFormat
      * @example JsonFormat
      */
@@ -284,7 +284,7 @@ abstract class Core
                 $format->setMIME($mime);
                 $this->requestFormatDiffered = true;
             } else {
-                throw new RestException(
+                throw new HttpException(
                     403,
                     "Content type `$mime` is not supported."
                 );
@@ -325,7 +325,7 @@ abstract class Core
     }
 
     /**
-     * @throws RestException
+     * @throws HttpException
      */
     protected function route(): void
     {
@@ -345,7 +345,7 @@ abstract class Core
             }
         }
         if (!isset($o->className)) {
-            throw new RestException(404);
+            throw new HttpException(404);
         }
 
         if (isset($this->apiVersionMap[$o->className])) {
@@ -367,7 +367,7 @@ abstract class Core
      * @param string $path
      * @param string $acceptHeader
      * @return iFormat
-     * @throws RestException
+     * @throws HttpException
      */
     protected function negotiateResponseFormat(string $path, string $acceptHeader = ''): iFormat
     {
@@ -377,7 +377,7 @@ abstract class Core
             foreach ($formats as $i => $f) {
                 $f = trim($f);
                 if (!in_array($f, $this->formatOverridesMap)) {
-                    throw new RestException(
+                    throw new HttpException(
                         500,
                         "Given @format is not present in overriding formats. Please call `\$r->setOverridingFormats('$f');` first."
                     );
@@ -459,7 +459,7 @@ abstract class Core
             // a 406 (not acceptable) response.
             $format = Scope::get($this->formatMap['default']);
             $this->responseFormat = $format;
-            throw new RestException(
+            throw new HttpException(
                 406,
                 'Content negotiation failed. ' .
                 'Try `' . $format->getMIME() . '` instead.'
@@ -476,7 +476,7 @@ abstract class Core
      * @param string $accessControlRequestMethod
      * @param string $accessControlRequestHeaders
      * @param string $origin
-     * @throws RestException
+     * @throws HttpException
      */
     protected function negotiateCORS(
         string $requestMethod,
@@ -497,12 +497,12 @@ abstract class Core
             Defaults::$accessControlAllowOrigin == '*' && !empty($origin)
                 ? $origin : Defaults::$accessControlAllowOrigin;
         $this->responseHeaders['Access-Control-Allow-Credentials'] = 'true';
-        throw new RestException(200, '');
+        throw new HttpException(200, '');
     }
 
     /**
      * @param string $acceptCharset
-     * @throws RestException
+     * @throws HttpException
      */
     protected function negotiateCharset(string $acceptCharset = '*'): void
     {
@@ -520,7 +520,7 @@ abstract class Core
                 if (strpos($acceptCharset, '*') !== false) {
                     //use default charset
                 } else {
-                    throw new RestException(
+                    throw new HttpException(
                         406,
                         'Content negotiation failed. ' .
                         'Requested charset is not supported'
@@ -556,7 +556,7 @@ abstract class Core
 
     /**
      * @throws InvalidAuthCredentials
-     * @throws RestException
+     * @throws HttpException
      */
     protected function authenticate()
     {
@@ -564,7 +564,7 @@ abstract class Core
         $accessLevel = max(Defaults::$apiAccessLevel, $o->accessLevel);
         if ($accessLevel) {
             if (!count($this->authClasses) && $accessLevel > 1) {
-                throw new RestException(
+                throw new HttpException(
                     403,
                     'at least one Authentication Class is required'
                 );
@@ -574,20 +574,20 @@ abstract class Core
                 try {
                     $authObj = Scope::get($authClass);
                     if (!method_exists($authObj, Defaults::$authenticationMethod)) {
-                        throw new RestException (
+                        throw new HttpException (
                             500, 'Authentication Class ' .
                             'should implement iAuthenticate');
                     } elseif (
                     !$authObj->{Defaults::$authenticationMethod}()
                     ) {
-                        throw new RestException(401);
+                        throw new HttpException(401);
                     }
                     $unauthorized = false;
                     break;
                 } catch (InvalidAuthCredentials $e) {
                     $this->authenticated = false;
                     throw $e;
-                } catch (RestException $e) {
+                } catch (HttpException $e) {
                     if (!$unauthorized) {
                         $unauthorized = $e;
                     }
@@ -661,8 +661,8 @@ abstract class Core
             }
         }
         $this->responseCode = $code;
-        $this->responseHeaders["HTTP/$protocolVersion $code"] = isset(RestException::$codes[$code])
-            ? RestException::$codes[$code] : '';
+        $this->responseHeaders["HTTP/$protocolVersion $code"] = isset(HttpException::$codes[$code])
+            ? HttpException::$codes[$code] : '';
 
         $this->responseFormat->setCharset(Defaults::$charset);
         $charset = $this->responseFormat->getCharset()
@@ -675,7 +675,9 @@ abstract class Core
                 . $this->responseFormat->getExtension()
                 : $this->responseFormat->getMIME())
             . "; charset=$charset";
-
+        if ($e && $e instanceof HttpException) {
+            $this->responseHeaders = $e->getHeaders() + $this->responseHeaders;
+        }
     }
 
     abstract protected function message(Throwable $e);

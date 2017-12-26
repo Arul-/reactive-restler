@@ -35,7 +35,7 @@ class Restle extends Core
     }
 
     /**
-     * @throws RestException
+     * @throws HttpException
      */
     protected function get(): void
     {
@@ -46,7 +46,7 @@ class Restle extends Core
     }
 
     /**
-     * @throws RestException
+     * @throws HttpException
      */
     protected function route(): void
     {
@@ -54,7 +54,7 @@ class Restle extends Core
     }
 
     /**
-     * @throws RestException
+     * @throws HttpException
      */
     protected function negotiate(): void
     {
@@ -193,7 +193,7 @@ class Restle extends Core
     protected function message(Throwable $e)
     {
         if (!$e instanceof RestException) {
-            $e = new RestException(500, $e->getMessage(), [], $e);
+            $e = new HttpException(500, $e->getMessage(), [], $e);
         }
         $this->responseCode = $e->getCode();
         if ($this->responseCode == 200 && empty($e->getMessage())) {
