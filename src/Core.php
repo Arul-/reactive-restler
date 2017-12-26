@@ -6,7 +6,6 @@ use Luracast\Restler\Format\iFormat;
 use Luracast\Restler\Format\UrlEncodedFormat;
 use Luracast\Restler\InvalidAuthCredentials;
 use Luracast\Restler\RestException;
-use Luracast\Restler\Routes;
 use Luracast\Restler\Scope;
 use Luracast\Restler\Util;
 
@@ -119,7 +118,7 @@ abstract class Core
                 $versionedClassName = str_replace('{$version}', $version,
                     $name);
                 if (class_exists($versionedClassName)) {
-                    Routes::addAPIClass($versionedClassName,
+                    Router::addAPIClass($versionedClassName,
                         Util::getResourcePath(
                             $className,
                             $resourcePath
@@ -135,7 +134,7 @@ abstract class Core
                         $this->apiVersionMap[$className][$version] = $versionedClassName;
                     }
                 } elseif (isset($this->apiVersionMap[$className][$version])) {
-                    Routes::addAPIClass($this->apiVersionMap[$className][$version],
+                    Router::addAPIClass($this->apiVersionMap[$className][$version],
                         Util::getResourcePath(
                             $className,
                             $resourcePath
@@ -329,7 +328,7 @@ abstract class Core
      */
     protected function route(): void
     {
-        $this->apiMethodInfo = $o = Routes::find(
+        $this->apiMethodInfo = $o = Router::find(
             $this->path,
             $this->requestMethod,
             $this->requestedApiVersion,
