@@ -39,6 +39,7 @@ Feature: Testing CRUD Example
     And the request is sent as JSON
     When I request "/examples/_007_crud/authors"
     Then the response status code should be 405
+    And the response "Allow" header should be "GET, POST"
 
   Scenario: Deleting Author
     Given that I want to delete an "Author"
