@@ -1,6 +1,5 @@
 <?php declare(strict_types=1);
 
-use Luracast\Restler\Restler;
 use Luracast\Restler\Scope;
 use Psr\Http\Message\ServerRequestInterface;
 use React\Http\Response;
@@ -9,44 +8,41 @@ use React\Promise\Promise;
 
 include __DIR__ . "/../vendor/autoload.php";
 
-$r = new Restle();
-
-
 //examples
-$r->addAPIClass('Say', 'examples/_001_helloworld/say');
-$r->addAPIClass('Math', 'examples/_002_minimal/math');
-$r->addAPIClass('BMI', 'examples/_003_multiformat/bmi');
-$r->addAPIClass('Currency', 'examples/_004_error_response/currency');
+Router::addAPI('Say', 'examples/_001_helloworld/say');
+Router::addAPI('Math', 'examples/_002_minimal/math');
+Router::addAPI('BMI', 'examples/_003_multiformat/bmi');
+Router::addAPI('Currency', 'examples/_004_error_response/currency');
 
-$r->setSupportedFormats('JsonFormat', 'XmlFormat');
+Router::setSupportedFormats('JsonFormat', 'XmlFormat');
 
-$r->addAPIClass('Simple', 'examples/_005_protected_api');
-$r->addAPIClass('Secured', 'examples/_005_protected_api/secured');
+Router::addAPI('Simple', 'examples/_005_protected_api');
+Router::addAPI('Secured', 'examples/_005_protected_api/secured');
 
-$r->addAuthenticationClass('SimpleAuth', 'examples/_005_protected_api/SimpleAuth');
+Router::addAuthenticator('SimpleAuth', 'examples/_005_protected_api/SimpleAuth');
 
-$r->addAPIClass('Api', 'examples/_006_routing/api');
-$r->addAPIClass('Authors', 'examples/_007_crud/authors');
+Router::addAPI('Api', 'examples/_006_routing/api');
+Router::addAPI('Authors', 'examples/_007_crud/authors');
 
 //tests
-$r->addAPIClass('MinMax', 'tests/param/minmax');
-$r->addAPIClass('MinMaxFix', 'tests/param/minmaxfix');
-$r->addAPIClass('Type', 'tests/param/type');
-$r->addAPIClass('Validation', 'tests/param/validation');
-$r->addAPIClass('Data', 'tests/request_data');
+Router::addAPI('MinMax', 'tests/param/minmax');
+Router::addAPI('MinMaxFix', 'tests/param/minmaxfix');
+Router::addAPI('Type', 'tests/param/type');
+Router::addAPI('Validation', 'tests/param/validation');
+Router::addAPI('Data', 'tests/request_data');
 
 $loop = React\EventLoop\Factory::create();
 
-$server = new Server(function (ServerRequestInterface $request) use ($r) {
-    return new Promise(function ($resolve, $reject) use ($request, $r) {
+$server = new Server(function (ServerRequestInterface $request) {
+    return new Promise(function ($resolve, $reject) use ($request) {
         echo '      ' . $request->getMethod() . ' ' . $request->getUri()->getPath() . PHP_EOL;
         $content = "";
         $request->getBody()->on('data', function ($data) use (&$content) {
             $content .= $data;
         });
 
-        $request->getBody()->on('end', function () use ($r, $request, $resolve, &$content) {
-            $h = new Restle($r);
+        $request->getBody()->on('end', function () use ($request, $resolve, &$content) {
+            $h = new Restle();
             Scope::set('Restler', $h);
             $resolve($h->handle($request, new Response(), $content));
         });
