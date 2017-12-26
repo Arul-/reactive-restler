@@ -11,7 +11,7 @@ use Luracast\Restler\Util;
 
 abstract class Core
 {
-    const VERSION = 4.0;
+    const VERSION = '4.0.0';
 
     protected $apiVersionMap = [];
     /**
@@ -68,6 +68,8 @@ abstract class Core
      *
      * @param string $className of the authentication class
      * @param string $resourcePath optional url prefix for mapping
+     * @throws Exception
+     * @throws HttpException
      */
     public function addAuthenticationClass($className, $resourcePath = null)
     {
