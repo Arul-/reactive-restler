@@ -2,11 +2,190 @@
 
 
 use Luracast\Restler\Data\ApiMethodInfo;
+use Luracast\Restler\Format\iFormat;
 use Luracast\Restler\Routes;
+use Luracast\Restler\Scope;
 use Luracast\Restler\Util;
 
 class Router extends Routes
 {
+    public static $authClasses = [];
+    public static $formatMap = ['extensions' => []];
+    public static $versionMap = [];
+
+    public static $minimumVersion = 1;
+    public static $maximumVersion = 1;
+
+    protected static $readableMediaTypes = [];
+    protected static $writableMediaTypes = [];
+
+    public static function setApiVersion(int $maximum = 1, int $minimum = 1)
+    {
+        static::$maximumVersion = $maximum;
+        static::$minimumVersion = $minimum;
+    }
+
+    /**
+     * @param string[] ...$formats
+     *
+     * @throws Exception
+     * @throws HttpException
+     */
+    public static function setSupportedFormats(string ...$formats)
+    {
+        $extensions = [];
+        Router::$writableMediaTypes = Router::$readableMediaTypes = [];
+        foreach ($formats as $className) {
+
+            $obj = Scope::get($className);
+
+            if (!$obj instanceof iFormat) {
+                throw new Exception('Invalid format class; must implement ' .
+                    'iFormat interface');
+            }
+
+            foreach ($obj->getMIMEMap() as $mime => $extension) {
+                if ($obj->isWritable()) {
+                    Router::$writableMediaTypes[] = $mime;
+                    $extensions[".$extension"] = true;
+                }
+                if ($obj->isReadable()) {
+                    Router::$readableMediaTypes[] = $mime;
+                }
+                if (!isset(Router::$formatMap[$extension])) {
+                    Router::$formatMap[$extension] = $className;
+                }
+                if (!isset(Router::$formatMap[$mime])) {
+                    Router::$formatMap[$mime] = $className;
+                }
+            }
+        }
+        Router::$formatMap['default'] = $formats[0];
+        Router::$formatMap['extensions'] = array_keys($extensions);
+    }
+
+    /**
+     * Add multiple api classes through this method.
+     *
+     * This method provides better performance when large number
+     * of API classes are in use as it processes them all at once,
+     * as opposed to hundreds (or more) addAPIClass calls.
+     *
+     *
+     * All the public methods that do not start with _ (underscore)
+     * will be will be exposed as the public api by default.
+     *
+     * All the protected methods that do not start with _ (underscore)
+     * will exposed as protected api which will require authentication
+     *
+     * @param array $map [$className => $resourcePath, $className2 ...]
+     *                   array of associative arrays containing the
+     *                   class name & optional url prefix for mapping.
+     *
+     * @throws Exception
+     */
+    public static function mapApiClasses(array $map): void
+    {
+        try {
+            $maxVersionMethod = '__getMaximumSupportedVersion';
+            foreach ($map as $className => $resourcePath) {
+                if (is_numeric($className)) {
+                    $className = $resourcePath;
+                    $resourcePath = null;
+                }
+                if (isset(Scope::$classAliases[$className])) {
+                    $className = Scope::$classAliases[$className];
+                }
+                if (class_exists($className)) {
+                    if (method_exists($className, $maxVersionMethod)) {
+                        $max = $className::$maxVersionMethod();
+                        for ($i = 1; $i <= $max; $i++) {
+                            static::$versionMap[$className][$i] = $className;
+                        }
+                    } else {
+                        static::$versionMap[$className][1] = $className;
+                    }
+                }
+                //versioned api
+                if (false !== ($index = strrpos($className, '\\'))) {
+                    $name = substr($className, 0, $index)
+                        . '\\v{$version}' . substr($className, $index);
+                } else {
+                    if (false !== ($index = strrpos($className, '_'))) {
+                        $name = substr($className, 0, $index)
+                            . '_v{$version}' . substr($className, $index);
+                    } else {
+                        $name = 'v{$version}\\' . $className;
+                    }
+                }
+
+                for ($version = static::$minimumVersion;
+                     $version <= static::$maximumVersion;
+                     $version++) {
+
+                    $versionedClassName = str_replace('{$version}', $version,
+                        $name);
+                    if (class_exists($versionedClassName)) {
+                        Routes::addAPIClass($versionedClassName,
+                            Util::getResourcePath(
+                                $className,
+                                $resourcePath
+                            ),
+                            $version
+                        );
+                        if (method_exists($versionedClassName, $maxVersionMethod)) {
+                            $max = $versionedClassName::$maxVersionMethod();
+                            for ($i = $version; $i <= $max; $i++) {
+                                static::$versionMap[$className][$i] = $versionedClassName;
+                            }
+                        } else {
+                            static::$versionMap[$className][$version] = $versionedClassName;
+                        }
+                    } elseif (isset(static::$versionMap[$className][$version])) {
+                        Routes::addAPIClass(static::$versionMap[$className][$version],
+                            Util::getResourcePath(
+                                $className,
+                                $resourcePath
+                            ),
+                            $version
+                        );
+                    }
+                }
+            }
+        } catch (Throwable $e) {
+            throw new Exception(
+                "mapAPIClasses failed. " . $e->getMessage(),
+                $e->getCode(),
+                $e
+            );
+        }
+    }
+
+    /**
+     * @param string $className
+     * @param string|null $resourcePath
+     * @throws Exception
+     */
+    public static function addAPI(string $className, string $resourcePath = null)
+    {
+        static::mapApiClasses([$className => $resourcePath]);
+    }
+
+    /**
+     * protected methods will need at least one authentication class to be set
+     * in order to allow that method to be executed
+     *
+     * @param string $className of the authentication class
+     * @param string $resourcePath optional url for mapping
+     *
+     * @throws Exception
+     */
+    public static function addAuthenticator(string $className, string $resourcePath = null)
+    {
+        static::$authClasses[] = $className;
+        static::mapApiClasses([$className => $resourcePath]);
+    }
+
     /**
      * @param string $path
      * @param string $httpMethod

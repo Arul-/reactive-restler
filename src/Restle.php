@@ -24,16 +24,6 @@ class Restle extends Core
     protected $response;
     protected $rawRequestBody = "";
 
-
-    public function __construct(Restle $master = null)
-    {
-        if ($master) {
-            $this->authClasses = $master->authClasses;
-            $this->apiVersionMap = $master->apiVersionMap;
-            $this->formatMap = $master->formatMap;
-        }
-    }
-
     /**
      * @throws HttpException
      */
