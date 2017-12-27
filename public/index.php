@@ -5,6 +5,7 @@ use Psr\Http\Message\ServerRequestInterface;
 use React\Http\Response;
 use React\Http\Server;
 use React\Promise\Promise;
+use v3\Explorer;
 
 include __DIR__ . "/../vendor/autoload.php";
 
@@ -24,7 +25,8 @@ try {
         MinMaxFix::class => 'tests/param/minmaxfix',
         Type::class => 'tests/param/type',
         Validation::class => 'tests/param/validation',
-        Data::class => 'tests/request_data'
+        Data::class => 'tests/request_data',
+        Explorer::class,
     ]);
     Router::setSupportedFormats('JsonFormat', 'XmlFormat');
     Router::addAuthenticator('SimpleAuth', 'examples/_005_protected_api/simpleauth');
