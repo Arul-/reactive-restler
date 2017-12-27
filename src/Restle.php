@@ -190,7 +190,7 @@ class Restle extends Core
             $e = new HttpException(500, $e->getMessage(), [], $e);
         }
         $this->responseCode = $e->getCode();
-        if ($this->responseCode == 200 && empty($e->getMessage())) {
+        if ($e->emptyMessageBody) {
             return null;
         }
         $this->composeHeaders(

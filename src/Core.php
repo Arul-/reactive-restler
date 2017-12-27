@@ -326,7 +326,9 @@ abstract class Core
             Defaults::$accessControlAllowOrigin == '*' && !empty($origin)
                 ? $origin : Defaults::$accessControlAllowOrigin;
         $this->responseHeaders['Access-Control-Allow-Credentials'] = 'true';
-        throw new HttpException(200, '');
+        $e = new HttpException(200);
+        $e->emptyMessageBody = true;
+        throw $e;
     }
 
     /**

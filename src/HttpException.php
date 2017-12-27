@@ -6,6 +6,7 @@ use Luracast\Restler\RestException;
 class HttpException extends RestException
 {
     private $headers = [];
+    public $emptyMessageBody = false;
 
     /**
      * @return array
@@ -14,7 +15,6 @@ class HttpException extends RestException
     {
         return $this->headers;
     }
-
 
     public function setHeader(string $name, string $value): void
     {
