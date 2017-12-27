@@ -153,6 +153,9 @@ class Restle extends Core
                 $this->responseFormat = new JsonFormat();
             }
             $data = $this->call();
+            if ($data instanceof ResponseInterface) {
+                return $data;
+            }
             if (is_resource($data) && get_resource_type($data) == 'stream') {
                 return $this->stream($data);
             }
