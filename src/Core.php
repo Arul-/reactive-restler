@@ -12,6 +12,7 @@ use Luracast\Restler\Util;
 abstract class Core
 {
     const VERSION = '4.0.0';
+    protected $authenticated = false;
     /**
      * @var int
      */
@@ -394,14 +395,14 @@ abstract class Core
         $o = &$this->apiMethodInfo;
         $accessLevel = max(Defaults::$apiAccessLevel, $o->accessLevel);
         if ($accessLevel) {
-            if (!count($this->authClasses) && $accessLevel > 1) {
+            if (!count(Router::$authClasses) && $accessLevel > 1) {
                 throw new HttpException(
                     403,
                     'at least one Authentication Class is required'
                 );
             }
             $unauthorized = false;
-            foreach ($this->authClasses as $authClass) {
+            foreach (Router::$authClasses as $authClass) {
                 try {
                     $authObj = Scope::get($authClass);
                     if (!method_exists($authObj, Defaults::$authenticationMethod)) {
