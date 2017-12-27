@@ -10,6 +10,7 @@ use Luracast\Restler\RestException;
 use Luracast\Restler\Scope;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use RingCentral\Psr7\Stream;
 
 
 class Restle extends Core
@@ -151,7 +152,11 @@ class Restle extends Core
             if (!$this->responseFormat) {
                 $this->responseFormat = new JsonFormat();
             }
-            return $this->respond($this->compose($this->call()));
+            $data = $this->call();
+            if (is_resource($data) && get_resource_type($data) == 'stream') {
+                return $this->stream($data);
+            }
+            return $this->respond($this->compose($data));
         } catch (Throwable $error) {
             if (!$this->responseFormat) {
                 $this->responseFormat = new JsonFormat();
@@ -217,6 +222,16 @@ class Restle extends Core
         return $this->response->withStatus($this->responseCode);//->withHeader('Content-Type', $this->responseFormat->getMIME());;
     }
 
+    protected function stream($data): ResponseInterface
+    {
+        foreach ($this->responseHeaders as $name => $value) {
+            $this->response = $this->response->withHeader($name, $value);
+        }
+        return $this->response
+            ->withStatus($this->responseCode)
+            ->withBody(new Stream($data));
+    }
+
     public function __call($name, $arguments)
     {
         if (isset($this->$name)) {
@@ -233,5 +248,10 @@ class Restle extends Core
     public function getProductionMode()
     {
         return false;
+    }
+
+    public function requestHeader(string $name): string
+    {
+        return $this->request->getHeaderLine($name);
     }
 }

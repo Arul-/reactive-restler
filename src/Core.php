@@ -42,6 +42,14 @@ abstract class Core
     protected $responseHeaders = [];
     protected $responseCode = 200;
 
+    public function modifyResponse(array $headers, $responseCode = 200)
+    {
+        $this->responseHeaders = $headers;
+        $this->responseCode = $responseCode;
+    }
+
+    abstract public function requestHeader(string $name): string;
+
     /**
      * Sets the cleaned up path without extensions and unwanted slashes
      * @param string $path
@@ -498,4 +506,6 @@ abstract class Core
     abstract protected function message(Throwable $e);
 
     abstract protected function respond($response = []);
+
+    abstract protected function stream($data);
 }
