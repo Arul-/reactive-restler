@@ -1,11 +1,13 @@
-<?php declare(strict_types=1);
+<?php namespace Luracast\Restler;
 
 
+use Exception;
+use Luracast\Restler\Contracts\MediaTypeInterface;
+use Luracast\Restler\Contracts\RequestMediaTypeInterface;
+use Luracast\Restler\Contracts\ResponseMediaTypeInterface;
 use Luracast\Restler\Data\ApiMethodInfo;
 use Luracast\Restler\Format\iFormat;
-use Luracast\Restler\Routes;
-use Luracast\Restler\Scope;
-use Luracast\Restler\Util;
+use Throwable;
 
 class Router extends Routes
 {
@@ -25,42 +27,88 @@ class Router extends Routes
         static::$minimumVersion = $minimum;
     }
 
-    /**
-     * @param string[] ...$formats
-     *
-     * @throws Exception
-     * @throws HttpException
-     */
-    public static function setSupportedFormats(string ...$formats)
+    public static function setMediaTypes(string ...$types): void
     {
         $extensions = [];
         Router::$writableMediaTypes = Router::$readableMediaTypes = [];
-        foreach ($formats as $className) {
-
-            $obj = Scope::get($className);
-
-            if (!$obj instanceof iFormat) {
-                throw new Exception('Invalid format class; must implement ' .
-                    'iFormat interface');
+        Router::$formatMap = [];
+        foreach ($types as $type) {
+            $implements = class_implements($type);
+            if (!$implements[MediaTypeInterface::class]) {
+                throw new Exception($type . 'is an invalid media type class; it must implement ' .
+                    'MediaTypeInterface interface');
             }
-
-            foreach ($obj->getMIMEMap() as $mime => $extension) {
-                if ($obj->isWritable()) {
+            $either = false;
+            foreach ($type::supportedMediaTypes() as $mime => $extension) {
+                if ($implements[ResponseMediaTypeInterface::class]) {
+                    $either = true;
                     Router::$writableMediaTypes[] = $mime;
                     $extensions[".$extension"] = true;
+                    if (!isset(Router::$formatMap['default'])) {
+                        Router::$formatMap['default'] = $type;
+                    }
+                    if (!isset(Router::$formatMap[$extension])) {
+                        Router::$formatMap[$extension] = $type;
+                    }
+                    if (!isset(Router::$formatMap[$mime])) {
+                        Router::$formatMap[$mime] = $type;
+                    }
                 }
-                if ($obj->isReadable()) {
+                if ($implements[RequestMediaTypeInterface::class]) {
+                    $either = true;
                     Router::$readableMediaTypes[] = $mime;
+                    if (!isset(Router::$formatMap[$mime])) {
+                        Router::$formatMap[$mime] = $type;
+                    }
                 }
-                if (!isset(Router::$formatMap[$extension])) {
-                    Router::$formatMap[$extension] = $className;
-                }
+            }
+            if (!$either) {
+                throw new Exception($type . 'is an invalid media type class; it must implement ' .
+                    'either RequestMediaTypeInterface or ResponseMediaTypeInterface interface');
+            }
+        }
+        Router::$formatMap['extensions'] = array_keys($extensions);
+    }
+
+    public static function setRequestMediaTypes(string ...$types): void
+    {
+        Router::$readableMediaTypes = [];
+        foreach ($types as $type) {
+            if (!class_implements($type)[RequestMediaTypeInterface::class]) {
+                throw new Exception($type . 'is an invalid media type class; it must implement ' .
+                    'RequestMediaTypeInterface interface');
+            }
+            foreach ($type::supportedMediaTypes() as $mime => $extension) {
+                Router::$readableMediaTypes[] = $mime;
                 if (!isset(Router::$formatMap[$mime])) {
-                    Router::$formatMap[$mime] = $className;
+                    Router::$formatMap[$mime] = $type;
                 }
             }
         }
-        Router::$formatMap['default'] = $formats[0];
+    }
+
+    public static function setResponseMediaTypes(string ...$types): void
+    {
+        $extensions = [];
+        Router::$writableMediaTypes = [];
+
+        foreach ($types as $type) {
+            if (!class_implements($type)[ResponseMediaTypeInterface::class]) {
+                throw new Exception($type . 'is an invalid media type class; it must implement ' .
+                    'ResponseMediaTypeInterface interface');
+            }
+            foreach ($type::supportedMediaTypes() as $mime => $extension) {
+                Router::$writableMediaTypes[] = $mime;
+                $extensions[".$extension"] = true;
+                if (!isset(Router::$formatMap[$extension])) {
+                    Router::$formatMap[$extension] = $type;
+                }
+                if (!isset(Router::$formatMap[$mime])) {
+                    Router::$formatMap[$mime] = $type;
+                }
+            }
+        }
+        Router::$formatMap['default'] = $types[0];
         Router::$formatMap['extensions'] = array_keys($extensions);
     }
 
@@ -199,7 +247,8 @@ class Router extends Routes
         $httpMethod,
         $version = 1,
         array $data = []
-    ) {
+    )
+    {
         $p = Util::nestedValue(static::$routes, "v$version");
         if (!$p) {
             throw new HttpException(

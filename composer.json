@@ -1,31 +1,31 @@
 {
-    "name": "arul/reactphp-restler",
-    "description": "Running Restler on ReactPHP",
-    "type": "project",
-    "require": {
-        "php": "^7.1",
-        "react/event-loop": "^0.4.3",
-        "react/http": "^0.7.4",
-        "restler/framework": "3.0-RC6"
-    },
-    "require-dev": {
-        "behat/behat": "2.5.*@stable",
-        "guzzlehttp/guzzle": "3.8.1"
-    },
-    "license": "MIT",
-    "authors": [
-        {
-            "name": "Luracast",
-            "email": "arul@luracast.com"
-        }
-    ],
-    "autoload": {
-        "psr-4": {
-            "": "src"
-        }
-    },
-  "autoload-dev":{
-    "classmap":[
+  "name": "arul/reactphp-restler",
+  "description": "Running Restler on ReactPHP",
+  "type": "project",
+  "require": {
+    "php": "^7.1",
+    "react/event-loop": "^0.4.3",
+    "react/http": "^0.7.4",
+    "restler/framework": "3.0-RC6"
+  },
+  "require-dev": {
+    "behat/behat": "2.5.*@stable",
+    "guzzlehttp/guzzle": "3.8.1"
+  },
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Luracast",
+      "email": "arul@luracast.com"
+    }
+  ],
+  "autoload": {
+    "psr-4": {
+      "Luracast\\Restler\\": "src"
+    }
+  },
+  "autoload-dev": {
+    "classmap": [
       "api/tests/param/",
       "api/tests/request_data/",
       "api/examples/_001_helloworld/",

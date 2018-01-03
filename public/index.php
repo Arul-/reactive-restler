@@ -1,5 +1,9 @@
 <?php declare(strict_types=1);
 
+use Luracast\Restler\MediaTypes\Json;
+use Luracast\Restler\MediaTypes\Xml;
+use Luracast\Restler\Reactler;
+use Luracast\Restler\Router;
 use Luracast\Restler\Scope;
 use Psr\Http\Message\ServerRequestInterface;
 use React\Http\Response;
@@ -28,7 +32,7 @@ try {
         Data::class => 'tests/request_data',
         Explorer::class,
     ]);
-    Router::setSupportedFormats('JsonFormat', 'XmlFormat');
+    Router::setMediaTypes(Json::class, Xml::class);
     Router::addAuthenticator('SimpleAuth', 'examples/_005_protected_api/simpleauth');
 } catch (Throwable $t) {
     die($t->getMessage());
@@ -45,13 +49,13 @@ $server = new Server(function (ServerRequestInterface $request) {
         });
 
         $request->getBody()->on('end', function () use ($request, $resolve, &$content) {
-            $h = new Restle();
+            $h = new Reactler();
             Scope::set('Restler', $h);
             $resolve($h->handle($request, new Response(), $content));
         });
 
-        // an error occurs e.g. on invalid chucked encoded data or an unexpected 'end' event
-        $request->getBody()->on('error', function (\Exception $exception) use ($resolve, &$contentLength) {
+        /* an error occurs e.g. on invalid chucked encoded data or an unexpected 'end' event
+        $request->getBody()->on('error', function (Exception $exception) use ($resolve, &$contentLength) {
             $response = new Response(
                 400,
                 ['Content-Type' => 'text/plain'],
@@ -59,6 +63,7 @@ $server = new Server(function (ServerRequestInterface $request) {
             );
             $resolve($response);
         });
+        */
     });
 });
 
