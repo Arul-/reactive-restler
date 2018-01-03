@@ -37,6 +37,62 @@ Feature: Type Attribute
     When I request "/tests/param/type/boolean?value=not_boolean"
     Then the response status code should be 400
 
+  Scenario: Fix "true" string as true
+    When I request "/tests/param/type/boolfix?value=true"
+    Then the response status code should be 200
+    And the response is JSON
+    And the type is "bool"
+    And the response equals true
+
+  Scenario: Fix "false" string as false
+    When I request "/tests/param/type/boolfix?value=true"
+    Then the response status code should be 200
+    And the response is JSON
+    And the type is "bool"
+    And the response equals true
+
+  Scenario: Fix number 1 as true
+    When I request "/tests/param/type/boolfix?value=1"
+    Then the response status code should be 200
+    And the response is JSON
+    And the type is "bool"
+    And the response equals true
+
+  Scenario: Fix number 0 as false
+    When I request "/tests/param/type/boolfix?value=0"
+    Then the response status code should be 200
+    And the response is JSON
+    And the type is "bool"
+    And the response equals false
+
+  Scenario: Fix positive numbers as a boolean true
+    When I request "/tests/param/type/boolfix?value=30873"
+    Then the response status code should be 200
+    And the response is JSON
+    And the type is "bool"
+    And the response equals true
+
+  Scenario: Fix negative numbers as a boolean true
+    When I request "/tests/param/type/boolfix?value=-23"
+    Then the response status code should be 200
+    And the response is JSON
+    And the type is "bool"
+    And the response equals true
+
+  Scenario: Fix non empty string as a boolean true
+    When I request "/tests/param/type/boolfix?value=not_empty"
+    Then the response status code should be 200
+    And the response is JSON
+    And the type is "bool"
+    And the response equals true
+
+  Scenario: Fix empty string as a boolean false
+    When I request "/tests/param/type/boolfix?value="
+    Then the response status code should be 200
+    And the response is JSON
+    And the type is "bool"
+    And the response equals false
+
   Scenario Outline: Email
     Given that I send {"email":<email>}
     And the request is sent as JSON

@@ -13,6 +13,16 @@ class Type
     }
 
     /**
+     * Make sure string is converted properly to bool
+     * @param bool $value {@from query}{@fix true}
+     * @return bool
+     */
+    function getBoolfix($value)
+    {
+        return $value;
+    }
+
+    /**
      * Email validation
      *
      * @param string $email {@from body}{@type email}

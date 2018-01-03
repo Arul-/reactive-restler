@@ -185,6 +185,10 @@ class Validator extends OldValidator
                             return false;
                         }
                     }
+                    if($info->fix)
+                    {
+                        return $input ? true : false;
+                    }
                     $error .= '. Expecting boolean value';
                     break;
                 case 'array':
