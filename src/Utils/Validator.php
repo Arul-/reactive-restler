@@ -12,6 +12,17 @@ use Luracast\Restler\Util;
 
 class Validator extends OldValidator
 {
+    public static $preFilters = array(
+        //'*'             => 'some_global_filter',
+        'string'         => 'trim',
+        //'string'       => 'strip_tags',
+        //'string'       => 'htmlspecialchars',
+        //'int'          => 'abs',
+        //'float'        => 'abs',
+        //'CustomClass'  => 'MyFilterClass::custom',
+        //                  please note that you wont get an instance
+        //                  of CustomClass. you will get an array instead
+    );
     public static function validate($input, ValidationInfo $info, $full = null)
     {
         $html = Scope::get('Restler')->responseFormat instanceof HtmlFormat;
@@ -174,8 +185,8 @@ class Validator extends OldValidator
 
                 case 'bool':
                 case 'boolean':
-                    if ($input === 'true' || $input === true) {
-                        return true;
+                    if (is_bool($input)) {
+                        return $input;
                     }
                     if (is_numeric($input)) {
                         if ($input == 1) {
@@ -184,9 +195,15 @@ class Validator extends OldValidator
                         if ($input == 0) {
                             return false;
                         }
+                    } elseif (is_string($input)) {
+                        switch (strtolower($input)) {
+                            case 'true':
+                                return true;
+                            case 'false':
+                                return false;
+                        }
                     }
-                    if($info->fix)
-                    {
+                    if ($info->fix) {
                         return $input ? true : false;
                     }
                     $error .= '. Expecting boolean value';
