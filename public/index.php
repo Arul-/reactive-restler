@@ -1,10 +1,12 @@
 <?php declare(strict_types=1);
 
+use Luracast\Restler\Defaults;
 use Luracast\Restler\MediaTypes\Json;
 use Luracast\Restler\MediaTypes\Xml;
 use Luracast\Restler\Reactler;
 use Luracast\Restler\Router;
 use Luracast\Restler\Scope;
+use Luracast\Restler\Utils\Validator;
 use Psr\Http\Message\ServerRequestInterface;
 use React\Http\Response;
 use React\Http\Server;
@@ -12,6 +14,8 @@ use React\Promise\Promise;
 use v3\Explorer;
 
 include __DIR__ . "/../vendor/autoload.php";
+
+Defaults::$validatorClass = Validator::class;
 
 try {
     Router::mapApiClasses([
