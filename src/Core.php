@@ -108,7 +108,7 @@ abstract class Core
             }
         }
         if (!$format) {
-            $format = Scope::get(Router::$formatMap['default']);
+            $format = new Router::$formatMap['default'];
         }
         return $format;
     }
@@ -237,7 +237,7 @@ abstract class Core
                                 18 + strlen(Defaults::$apiVendor)));
                             if ($version >= Router::$minimumVersion && $version <= Router::$maximumVersion) {
                                 $this->requestedApiVersion = $version;
-                                $format = Scope::get(Router::$formatMap[$extension]);
+                                $format = new Router::$formatMap[$extension];
                                 $format->extension($extension);
                                 Defaults::$useVendorMIMEVersioning = true;
                                 $this->responseHeaders['Vary'] = 'Accept';
@@ -282,8 +282,12 @@ abstract class Core
         }
     }
 
-    protected function negotiateCORS(string $requestMethod, string $accessControlRequestMethod = '', string $accessControlRequestHeaders = '', string $origin = ''): void
-    {
+    protected function negotiateCORS(
+        string $requestMethod,
+        string $accessControlRequestMethod = '',
+        string $accessControlRequestHeaders = '',
+        string $origin = ''
+    ): void {
         if (Defaults::$crossOriginResourceSharing || $requestMethod != 'OPTIONS') {
             return;
         }
@@ -366,7 +370,7 @@ abstract class Core
             $unauthorized = false;
             foreach (Router::$authClasses as $authClass) {
                 try {
-                    $authObj = Scope::get($authClass);
+                    $authObj = new $authClass;
                     if (!method_exists($authObj, Defaults::$authenticationMethod)) {
                         throw new HttpException (
                             500, 'Authentication Class ' .
@@ -413,12 +417,12 @@ abstract class Core
                 || $info['validate'] != false
             ) {
                 if (isset($info['method'])) {
-                    $info ['apiClassInstance'] = Scope::get($o->className);
+                    $info ['apiClassInstance'] = new $o->className;
                 }
                 //convert to instance of ValidationInfo
                 $info = new ValidationInfo($param);
                 //initialize validator
-                Scope::get(Defaults::$validatorClass);
+                new Defaults::$validatorClass;
                 $validator = Defaults::$validatorClass;
                 //if(!is_subclass_of($validator, 'Luracast\\Restler\\Data\\iValidate')) {
                 //changed the above test to below for addressing this php bug
@@ -446,7 +450,7 @@ abstract class Core
     {
         $o = &$this->apiMethodInfo;
         $accessLevel = max(Defaults::$apiAccessLevel, $o->accessLevel);
-        $object = Scope::get($o->className);
+        $object = new $o->className;
         switch ($accessLevel) {
             case 3 : //protected method
                 $reflectionMethod = new \ReflectionMethod(
@@ -553,7 +557,7 @@ abstract class Core
         /**
          * @var iCompose Default Composer
          */
-        $compose = Scope::get(Defaults::$composeClass);
+        $compose = new Defaults::$composeClass;
         return $compose->message($e);
     }
 
@@ -563,5 +567,9 @@ abstract class Core
     abstract protected function stream($data): ResponseInterface;
 
 
-    abstract public function handle(ServerRequestInterface $request, ResponseInterface $response, string $rawRequestBody = ''): ResponseInterface;
+    abstract public function handle(
+        ServerRequestInterface $request,
+        ResponseInterface $response,
+        string $rawRequestBody = ''
+    ): ResponseInterface;
 }
