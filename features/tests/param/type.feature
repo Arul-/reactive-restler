@@ -1,25 +1,41 @@
 @param @type
 Feature: Type Attribute
 
-  Scenario: Bool true
+  Scenario: Consider "true" string as true
     When I request "/tests/param/type/boolean?value=true"
     Then the response status code should be 200
     And the response is JSON
     And the type is "bool"
     And the response equals true
 
-  Scenario: Bool false
+  Scenario: Consider "false" string as false
     When I request "/tests/param/type/boolean?value=true"
     Then the response status code should be 200
     And the response is JSON
     And the type is "bool"
     And the response equals true
 
+  Scenario: Consider number 1 as true
+    When I request "/tests/param/type/boolean?value=1"
+    Then the response status code should be 200
+    And the response is JSON
+    And the type is "bool"
+    And the response equals true
 
-  Scenario: Invalid boolean
-    When I request "/tests/param/type/boolean?value=not_boolean"
+  Scenario: Consider number 0 as false
+    When I request "/tests/param/type/boolean?value=0"
+    Then the response status code should be 200
+    And the response is JSON
+    And the type is "bool"
+    And the response equals false
+
+  Scenario: Don't accept any number for a boolean
+    When I request "/tests/param/type/boolean?value=30873"
     Then the response status code should be 400
 
+  Scenario: Don't accept any string for a boolean
+    When I request "/tests/param/type/boolean?value=not_boolean"
+    Then the response status code should be 400
 
   Scenario Outline: Email
     Given that I send {"email":<email>}

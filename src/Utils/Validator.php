@@ -178,7 +178,12 @@ class Validator extends OldValidator
                         return true;
                     }
                     if (is_numeric($input)) {
-                        return $input > 0;
+                        if ($input == 1) {
+                            return true;
+                        }
+                        if ($input == 0) {
+                            return false;
+                        }
                     }
                     $error .= '. Expecting boolean value';
                     break;
