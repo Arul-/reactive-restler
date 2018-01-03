@@ -33,6 +33,10 @@ Feature: Type Attribute
     When I request "/tests/param/type/boolean?value=30873"
     Then the response status code should be 400
 
+  Scenario: Don't accept fractional number for a boolean
+    When I request "/tests/param/type/boolean?value=0.234"
+    Then the response status code should be 400
+
   Scenario: Don't accept any string for a boolean
     When I request "/tests/param/type/boolean?value=not_boolean"
     Then the response status code should be 400
@@ -74,6 +78,13 @@ Feature: Type Attribute
 
   Scenario: Fix negative numbers as a boolean true
     When I request "/tests/param/type/boolfix?value=-23"
+    Then the response status code should be 200
+    And the response is JSON
+    And the type is "bool"
+    And the response equals true
+
+  Scenario: Fix fractional numbers as a boolean true
+    When I request "/tests/param/type/boolfix?value=0.3"
     Then the response status code should be 200
     And the response is JSON
     And the type is "bool"
