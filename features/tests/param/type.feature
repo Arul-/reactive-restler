@@ -145,7 +145,6 @@ Feature: Type Attribute
 
   Scenario Outline: Time Stamp
     Given that I send {"timestamp":<timestamp>}
-    When I request "/examples/_001_helloworld/say/hi{?to}"
     And the request is sent as JSON
     When I request "/tests/param/type/timestamp"
     Then the response status code should be 200
