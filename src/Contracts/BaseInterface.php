@@ -6,7 +6,12 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Throwable;
 
-
+/**
+ * Used only to quickly create a skeleton base app
+ *
+ * Interface BaseInterface
+ * @package Luracast\Restler\Contracts
+ */
 interface BaseInterface
 {
     function get(): void;
@@ -27,7 +32,12 @@ interface BaseInterface
 
     function negotiateResponseMediaType(string $path, string $acceptHeader = ''): ResponseMediaTypeInterface;
 
-    function negotiateCORS(string $requestMethod, string $accessControlRequestMethod = '', string $accessControlRequestHeaders = '', string $origin = ''): void;
+    function negotiateCORS(
+        string $requestMethod,
+        string $accessControlRequestMethod = '',
+        string $accessControlRequestHeaders = '',
+        string $origin = ''
+    ): void;
 
     function negotiateCharset(string $acceptCharset = '*'): void;
 
@@ -55,5 +65,9 @@ interface BaseInterface
     function stream($data): ResponseInterface;
 
 
-    function handle(ServerRequestInterface $request, ResponseInterface $response, string $rawRequestBody = ''): ResponseInterface;
+    function handle(
+        ServerRequestInterface $request,
+        ResponseInterface $response,
+        string $rawRequestBody = ''
+    ): ResponseInterface;
 }

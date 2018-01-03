@@ -27,6 +27,9 @@ class Reactler extends Core
     protected $rawRequestBody = "";
 
 
+    /**
+     * @throws HttpException
+     */
     protected function get(): void
     {
         $this->path = $this->getPath($this->request->getUri()->getPath());
@@ -35,6 +38,9 @@ class Reactler extends Core
         $this->body = $this->getBody($this->rawRequestBody);
     }
 
+    /**
+     * @throws HttpException
+     */
     protected function negotiate(): void
     {
         $this->negotiateCORS(
@@ -67,6 +73,10 @@ class Reactler extends Core
             : $compose->response($response);
     }
 
+    /**
+     * @param array $response
+     * @return ResponseInterface
+     */
     protected function respond($response = []): ResponseInterface
     {
         if (!is_null($response)) {
