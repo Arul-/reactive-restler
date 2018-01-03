@@ -3,6 +3,16 @@
 class Type
 {
     /**
+     * Make sure string is converted properly to bool
+     * @param bool $value {@from query}
+     * @return bool
+     */
+    function getBoolean($value)
+    {
+        return $value;
+    }
+
+    /**
      * Email validation
      *
      * @param string $email {@from body}{@type email}

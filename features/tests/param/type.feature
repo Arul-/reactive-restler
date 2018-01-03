@@ -1,6 +1,26 @@
 @param @type
 Feature: Type Attribute
 
+  Scenario: Bool true
+    When I request "/tests/param/type/boolean?value=true"
+    Then the response status code should be 200
+    And the response is JSON
+    And the type is "bool"
+    And the response equals true
+
+  Scenario: Bool false
+    When I request "/tests/param/type/boolean?value=true"
+    Then the response status code should be 200
+    And the response is JSON
+    And the type is "bool"
+    And the response equals true
+
+
+  Scenario: Invalid boolean
+    When I request "/tests/param/type/boolean?value=not_boolean"
+    Then the response status code should be 400
+
+
   Scenario Outline: Email
     Given that I send {"email":<email>}
     And the request is sent as JSON
@@ -145,6 +165,7 @@ Feature: Type Attribute
 
   Scenario Outline: Time Stamp
     Given that I send {"timestamp":<timestamp>}
+    When I request "/examples/_001_helloworld/say/hi{?to}"
     And the request is sent as JSON
     When I request "/tests/param/type/timestamp"
     Then the response status code should be 200
