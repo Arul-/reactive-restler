@@ -13,7 +13,7 @@ use Luracast\Restler\Util;
 class Validator extends OldValidator
 {
     public static $preFilters = array(
-        //'*'             => 'some_global_filter',
+        //'*'             => 'some_global_filter', //applied to all parameters
         'string'         => 'trim',
         //'string'       => 'strip_tags',
         //'string'       => 'htmlspecialchars',
@@ -23,6 +23,7 @@ class Validator extends OldValidator
         //                  please note that you wont get an instance
         //                  of CustomClass. you will get an array instead
     );
+    
     public static function validate($input, ValidationInfo $info, $full = null)
     {
         $html = Scope::get('Restler')->responseFormat instanceof HtmlFormat;
@@ -34,7 +35,13 @@ class Validator extends OldValidator
         ) {
             $input = $func($input);
         }
-
+        if (
+            isset(static::$preFilters[$info->type]) &&
+            (is_scalar($input) || !empty($info->children)) &&
+            is_callable($func = static::$preFilters[$info->type])
+        ) {
+            $input = $func($input);
+        }
         try {
             if (is_null($input)) {
                 if ($info->required) {
