@@ -14,7 +14,7 @@ class Validator extends OldValidator
 {
     public static $preFilters = array(
         //'*'             => 'some_global_filter', //applied to all parameters
-        'string'         => 'trim',
+        'string'          => 'trim', //apply filter function by type (string)
         //'string'       => 'strip_tags',
         //'string'       => 'htmlspecialchars',
         //'int'          => 'abs',
@@ -23,7 +23,7 @@ class Validator extends OldValidator
         //                  please note that you wont get an instance
         //                  of CustomClass. you will get an array instead
     );
-    
+
     public static function validate($input, ValidationInfo $info, $full = null)
     {
         $html = Scope::get('Restler')->responseFormat instanceof HtmlFormat;
@@ -265,6 +265,8 @@ class Validator extends OldValidator
                             $name = $info->name;
                             $info->type = $contentType;
                             unset($info->contentType);
+                            unset($info->min);
+                            unset($info->max);
                             foreach ($input as $key => $chinput) {
                                 $info->name = "{$name}[$key]";
                                 $input[$key] = static::validate($chinput, $info);

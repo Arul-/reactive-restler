@@ -9,7 +9,7 @@ class MinMax
     /**
      * Restrict the number of items in an array
      *
-     * @param array $array {@min 2}{@max 5}
+     * @param array $array {@min 2}{@max 5}{@type int}
      *
      * @return array
      */
