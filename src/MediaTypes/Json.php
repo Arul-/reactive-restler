@@ -14,23 +14,39 @@ class Json extends MediaType implements RequestMediaTypeInterface, ResponseMedia
     public static $encodeOptions = 0;
     public static $decodeOptions = JSON_BIGINT_AS_STRING;
 
+    /**
+     * @param string $data
+     * @return array|mixed
+     * @throws HttpException
+     */
     public function decode(string $data)
     {
         $decoded = json_decode($data, static::$decodeOptions);
         if (json_last_error() != JSON_ERROR_NONE) {
             throw new HttpException(400, 'JSON Parser: ' . json_last_error_msg());
         }
-
+        if (strlen($data) && $decoded === null || $decoded === $data) {
+            throw new HttpException(400, 'Error parsing JSON');
+        }
         return Convert::toArray($decoded);
     }
 
+    /**
+     * @param $data
+     * @param bool $humanReadable
+     * @return string
+     * @throws HttpException
+     */
     public function encode($data, bool $humanReadable = false): string
     {
         $options = static::$encodeOptions;
         if ($humanReadable) {
             $options |= JSON_PRETTY_PRINT;
         }
-
-        return json_encode(Convert::toArray($data, true), $options);
+        $encoded = json_encode(Convert::toArray($data, true), $options);
+        if (json_last_error() != JSON_ERROR_NONE) {
+            throw new HttpException(500, 'JSON Parser: ' . json_last_error_msg());
+        }
+        return $encoded;
     }
 }

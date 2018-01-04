@@ -1,6 +1,7 @@
 <?php namespace Luracast\Restler\MediaTypes;
 
 use Luracast\Restler\Contracts\ResponseMediaTypeInterface;
+use Luracast\Restler\HttpException;
 use Luracast\Restler\Utils\Convert;
 
 class Js extends MediaType implements ResponseMediaTypeInterface
@@ -13,6 +14,12 @@ class Js extends MediaType implements ResponseMediaTypeInterface
     public static $callbackOverrideQueryString = 'callback';
     public static $includeHeaders = true;
 
+    /**
+     * @param $data
+     * @param bool $humanReadable
+     * @return string
+     * @throws HttpException
+     */
     public function encode($data, bool $humanReadable = false): string
     {
         $r = array();
@@ -33,7 +40,11 @@ class Js extends MediaType implements ResponseMediaTypeInterface
             $options |= JSON_PRETTY_PRINT;
         }
 
-        return static::$callbackMethodName . '('
-            . json_encode(Convert::toArray($r, true), $options) . ');';
+        $encoded = json_encode(Convert::toArray($r, true), $options);
+        if (json_last_error() != JSON_ERROR_NONE) {
+            throw new HttpException(500, 'JSON Parser: ' . json_last_error_msg());
+        }
+
+        return static::$callbackMethodName . '(' . $encoded . ');';
     }
 }
