@@ -1,11 +1,12 @@
 <?php
 use Luracast\Restler\iAuthenticate;
+use Luracast\Restler\Reactler;
 
 class SimpleAuth implements iAuthenticate
 {
     const KEY = 'rEsTlEr2';
     /**
-     * @var Restle
+     * @var Reactler
      */
     public $restler;
 

@@ -13,9 +13,14 @@ use React\Http\Server;
 use React\Promise\Promise;
 use v3\Explorer;
 
+use improved\Authors as ImprovedAuthors;
+use ratelimited\Authors as RateLimitedAuthors;
+
 include __DIR__ . "/../vendor/autoload.php";
 
 Defaults::$validatorClass = Validator::class;
+
+Defaults::$useUrlBasedVersioning = true;
 
 try {
     Router::mapApiClasses([
@@ -28,6 +33,10 @@ try {
         Secured::class => 'examples/_005_protected_api/secured',
         Api::class => 'examples/_006_routing/api',
         Authors::class => 'examples/_007_crud/authors',
+        ImprovedAuthors::class => 'examples/_008_documentation/authors',
+        RateLimitedAuthors::class => 'examples/_009_rate_limiting/authors',
+        Access::class => 'examples/_010_access_control',
+        'BMI' => 'examples/_011_versioning/bmi',
         //tests
         MinMax::class => 'tests/param/minmax',
         MinMaxFix::class => 'tests/param/minmaxfix',
@@ -37,7 +46,9 @@ try {
         Explorer::class,
     ]);
     Router::setMediaTypes(Json::class, Xml::class);
-    Router::addAuthenticator('SimpleAuth', 'examples/_005_protected_api/simpleauth');
+    Router::addAuthenticator(SimpleAuth::class, 'examples/_005_protected_api/simpleauth');
+    Router::addAuthenticator(KeyAuth::class, 'examples/_009_rate_limiting/keyauth');
+    Router::addAuthenticator(AccessControl::class, 'examples/_010_access_control/accesscontrol');
 } catch (Throwable $t) {
     die($t->getMessage());
 }
