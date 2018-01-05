@@ -2,11 +2,11 @@
 
 
 use Exception;
+use Luracast\Restler\Contracts\AuthenticationInterface;
 use Luracast\Restler\Contracts\MediaTypeInterface;
 use Luracast\Restler\Contracts\RequestMediaTypeInterface;
 use Luracast\Restler\Contracts\ResponseMediaTypeInterface;
 use Luracast\Restler\Data\ApiMethodInfo;
-use Luracast\Restler\Format\iFormat;
 use Throwable;
 
 class Router extends Routes
@@ -34,8 +34,8 @@ class Router extends Routes
         Router::$formatMap = [];
         foreach ($types as $type) {
             $implements = class_implements($type);
-            if (!$implements[MediaTypeInterface::class]) {
-                throw new Exception($type . 'is an invalid media type class; it must implement ' .
+            if (!isset($implements[MediaTypeInterface::class])) {
+                throw new Exception($type . ' is an invalid media type class; it must implement ' .
                     'MediaTypeInterface interface');
             }
             $either = false;
@@ -63,7 +63,7 @@ class Router extends Routes
                 }
             }
             if (!$either) {
-                throw new Exception($type . 'is an invalid media type class; it must implement ' .
+                throw new Exception($type . ' is an invalid media type class; it must implement ' .
                     'either RequestMediaTypeInterface or ResponseMediaTypeInterface interface');
             }
         }
@@ -74,8 +74,8 @@ class Router extends Routes
     {
         Router::$readableMediaTypes = [];
         foreach ($types as $type) {
-            if (!class_implements($type)[RequestMediaTypeInterface::class]) {
-                throw new Exception($type . 'is an invalid media type class; it must implement ' .
+            if (!isset(class_implements($type)[RequestMediaTypeInterface::class])) {
+                throw new Exception($type . ' is an invalid media type class; it must implement ' .
                     'RequestMediaTypeInterface interface');
             }
             foreach ($type::supportedMediaTypes() as $mime => $extension) {
@@ -93,8 +93,8 @@ class Router extends Routes
         Router::$writableMediaTypes = [];
 
         foreach ($types as $type) {
-            if (!class_implements($type)[ResponseMediaTypeInterface::class]) {
-                throw new Exception($type . 'is an invalid media type class; it must implement ' .
+            if (!isset(class_implements($type)[ResponseMediaTypeInterface::class])) {
+                throw new Exception($type . ' is an invalid media type class; it must implement ' .
                     'ResponseMediaTypeInterface interface');
             }
             foreach ($type::supportedMediaTypes() as $mime => $extension) {
@@ -230,6 +230,10 @@ class Router extends Routes
      */
     public static function addAuthenticator(string $className, string $resourcePath = null)
     {
+        if (!isset(class_implements($className)[AuthenticationInterface::class])) {
+            throw new Exception($className . ' is an invalid authenticator class; it must implement ' .
+                'AuthenticationInterface.');
+        }
         static::$authClasses[] = $className;
         static::mapApiClasses([$className => $resourcePath]);
     }
