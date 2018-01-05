@@ -17,7 +17,7 @@ interface FilterInterface
      *
      * @abstract
      *
-     * @param RequestInterface $request
+     * @param ServerRequestInterface $request
      *
      * @return boolean true when api access is allowed false otherwise
      */

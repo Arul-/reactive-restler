@@ -1,5 +1,6 @@
 <?php namespace Luracast\Restler;
 
+use Luracast\Restler\Contracts\AuthenticationInterface;
 use Luracast\Restler\Contracts\RequestMediaTypeInterface;
 use Luracast\Restler\Contracts\ResponseMediaTypeInterface;
 use Luracast\Restler\Data\ApiMethodInfo;
@@ -356,7 +357,7 @@ abstract class Core
         }
     }
 
-    protected function authenticate()
+    protected function authenticate(ServerRequestInterface $request)
     {
         $o = &$this->apiMethodInfo;
         $accessLevel = max(Defaults::$apiAccessLevel, $o->accessLevel);
@@ -370,14 +371,11 @@ abstract class Core
             $unauthorized = false;
             foreach (Router::$authClasses as $authClass) {
                 try {
+                    /**
+                     * @var AuthenticationInterface
+                     */
                     $authObj = new $authClass;
-                    if (!method_exists($authObj, Defaults::$authenticationMethod)) {
-                        throw new HttpException (
-                            500, 'Authentication Class ' .
-                            'should implement iAuthenticate');
-                    } elseif (
-                    !$authObj->{Defaults::$authenticationMethod}()
-                    ) {
+                    if (!$authObj->__isAllowed($request)) {
                         throw new HttpException(401);
                     }
                     $unauthorized = false;

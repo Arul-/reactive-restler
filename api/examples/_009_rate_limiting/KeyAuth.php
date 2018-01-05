@@ -1,22 +1,23 @@
 <?php
 
-use Luracast\Restler\iAuthenticate;
-use Luracast\Restler\Reactler;
+use Luracast\Restler\Contracts\AuthenticationInterface;
+use Psr\Http\Message\ServerRequestInterface;
 
-class KeyAuth implements iAuthenticate
+class KeyAuth implements AuthenticationInterface
 {
-    /**
-     * @var Reactler
-     */
-    public $restler;
-
-    public function __isAllowed()
+    public function __isAllowed(ServerRequestInterface $request): bool
     {
-        $query = $this->restler->query();
+        $query = $request->getQueryParams();
         return isset($query['api_key']) && $query['api_key'] == 'r3rocks';
     }
 
-    public function __getWWWAuthenticateString()
+    /**
+     * @return string string to be used with WWW-Authenticate header
+     * @example Basic
+     * @example Digest
+     * @example OAuth
+     */
+    public static function __getWWWAuthenticateString(): string
     {
         return 'Query name="api_key"';
     }

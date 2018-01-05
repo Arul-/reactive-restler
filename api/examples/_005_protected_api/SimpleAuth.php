@@ -24,7 +24,7 @@ class SimpleAuth implements AuthenticationInterface
      * @example Digest
      * @example OAuth
      */
-    public function __getWWWAuthenticateString(): string
+    public static function __getWWWAuthenticateString(): string
     {
         return 'Query name="key"';
     }

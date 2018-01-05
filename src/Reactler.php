@@ -83,8 +83,8 @@ class Reactler extends Core
             $this->response->getBody()->write($this->responseFormat->encode($response, true));
         }
         if ($this->responseCode == 401 && !isset($this->responseHeaders['WWW-Authenticate'])) {
-            $authString = count($this->authClasses)
-                ? (new $this->authClasses[0])->__getWWWAuthenticateString()
+            $authString = count(Router::$authClasses)
+                ? Router::$authClasses[0]::__getWWWAuthenticateString()
                 : 'Unknown';
             $this->responseHeaders['WWW-Authenticate'] = $authString;
         }
@@ -117,7 +117,7 @@ class Reactler extends Core
             $this->get();
             $this->route();
             $this->negotiate();
-            $this->authenticate();
+            $this->authenticate($this->request);
             $this->validate();
             if (!$this->responseFormat) {
                 $this->responseFormat = new Json();
