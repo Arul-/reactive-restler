@@ -1,34 +1,34 @@
 <?php
-use \Luracast\Restler\iAuthenticate;
-use \Luracast\Restler\Resources;
+
+use Luracast\Restler\Contracts\AuthenticationInterface;
+use Psr\Http\Message\ServerRequestInterface;
 use \Luracast\Restler\Defaults;
 
-class AccessControl implements iAuthenticate
+class AccessControl implements AuthenticationInterface
 {
     public static $requires = 'user';
     public static $role = 'user';
 
-    public function __isAllowed()
+    public function __isAllowed(ServerRequestInterface $request): bool
     {
         //hardcoded api_key=>role for brevity
         $roles = array('12345' => 'user', '67890' => 'admin');
         $userClass = Defaults::$userIdentifierClass;
 
-        if (isset($_GET['api_key'])) {
-            if (!array_key_exists($_GET['api_key'], $roles)) {
-                $userClass::setCacheIdentifier($_GET['api_key']);
-                return false;
-            }
-        } else {
+        if (!$api_key = $request->getQueryParams()['api_key'] ?? false) {
             return false;
         }
-        static::$role = $roles[$_GET['api_key']];
-        $userClass::setCacheIdentifier(static::$role);
+        if (!$role = $roles[$api_key] ?? false) {
+            $userClass::setCacheIdentifier($api_key);
+            return false;
+        }
+        $userClass::setCacheIdentifier($role);
+        static::$role = $role;
         Defaults::$accessControlFunction = 'AccessControl::verifyAccess';
-        return static::$requires == static::$role || static::$role == 'admin';
+        return static::$requires == $role || $role == 'admin';
     }
 
-    public function __getWWWAuthenticateString()
+    public static function __getWWWAuthenticateString(): string
     {
         return 'Query name="api_key"';
     }
@@ -46,4 +46,5 @@ class AccessControl implements iAuthenticate
             ? static::$role == 'admin' || static::$role == $requires
             : true;
     }
+
 }
