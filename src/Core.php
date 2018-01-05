@@ -3,6 +3,7 @@
 use Luracast\Restler\Contracts\AuthenticationInterface;
 use Luracast\Restler\Contracts\RequestMediaTypeInterface;
 use Luracast\Restler\Contracts\ResponseMediaTypeInterface;
+use Luracast\Restler\Contracts\UsesAuthenticationInterface;
 use Luracast\Restler\Data\ApiMethodInfo;
 use Luracast\Restler\Data\ValidationInfo;
 use Luracast\Restler\Data\Validator;
@@ -18,6 +19,7 @@ abstract class Core
     const VERSION = '4.0.0';
 
     protected $authenticated = false;
+    protected $authVerified = false;
     /**
      * @var int
      */
@@ -47,6 +49,36 @@ abstract class Core
 
     protected $responseHeaders = [];
     protected $responseCode = 200;
+
+
+    public function init($instance)
+    {
+        if ($m = $this->apiMethodInfo->metadata ?? false) {
+            $fullName = get_class($instance);
+            $shortName = Util::getShortName($fullName);
+            $properties = Util::nestedValue(
+                $m, 'class', $fullName,
+                CommentParser::$embeddedDataName
+            ) ?: (Util::nestedValue(
+                $m, 'class', $shortName,
+                CommentParser::$embeddedDataName
+            ) ?: []);
+            $objectVars = get_object_vars($instance);
+            foreach ($properties as $property => $value) {
+                if (property_exists($fullName, $property)) {
+                    //if not a static property
+                    array_key_exists($property, $objectVars)
+                        ? $instance->{$property} = $value
+                        : $instance::$$property = $value;
+                }
+            }
+        }
+        if ($instance instanceof UsesAuthenticationInterface) {
+            $instance->__setAuthenticationStatus($this->authenticated, $this->authVerified);
+        }
+
+        return $instance;
+    }
 
     abstract protected function get(): void;
 
@@ -288,7 +320,8 @@ abstract class Core
         string $accessControlRequestMethod = '',
         string $accessControlRequestHeaders = '',
         string $origin = ''
-    ): void {
+    ): void
+    {
         if (Defaults::$crossOriginResourceSharing || $requestMethod != 'OPTIONS') {
             return;
         }
@@ -374,7 +407,7 @@ abstract class Core
                     /**
                      * @var AuthenticationInterface
                      */
-                    $authObj = new $authClass;
+                    $authObj = $this->init(new $authClass);
                     if (!$authObj->__isAllowed($request)) {
                         throw new HttpException(401);
                     }
@@ -420,7 +453,7 @@ abstract class Core
                 //convert to instance of ValidationInfo
                 $info = new ValidationInfo($param);
                 //initialize validator
-                new Defaults::$validatorClass;
+                $this->init(new Defaults::$validatorClass);
                 $validator = Defaults::$validatorClass;
                 //if(!is_subclass_of($validator, 'Luracast\\Restler\\Data\\iValidate')) {
                 //changed the above test to below for addressing this php bug
