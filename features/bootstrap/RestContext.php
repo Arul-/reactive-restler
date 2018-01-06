@@ -2,7 +2,14 @@
 
 use Behat\Behat\Context\Context;
 use Behat\Gherkin\Node\PyStringNode;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\ClientException;
+use GuzzleHttp\HandlerStack;
+use GuzzleHttp\Middleware;
+use GuzzleHttp\UriTemplate;
 use Luracast\Restler\Data\Text;
+use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
 
 /**
  * Rest context.
@@ -18,6 +25,7 @@ use Luracast\Restler\Data\Text;
 class RestContext implements Context
 {
 
+    private $_request_debug_stream = null;
     private $_startTime = null;
     private $_restObject = null;
     private $_headers = array();
@@ -45,7 +53,14 @@ class RestContext implements Context
 
         $this->_restObject = new stdClass();
         $this->baseUrl = $baseUrl;
-        $this->_client = new Guzzle\Service\Client();
+        $handler = HandlerStack::create();
+        $handler->push(Middleware::mapRequest(function (RequestInterface $request) {
+            // Notice that we have to return a request object
+            $this->_request = $request;
+            return $request;
+        }));
+        $this->_client = new Client(['base_uri' => $baseUrl, 'handler' => $handler]);
+        /*
         //suppress few errors
         $this->_client
             ->getEventDispatcher()
@@ -60,9 +75,13 @@ class RestContext implements Context
                             $event->stopPropagation();
                     }
                 });
+        */
         $timezone = ini_get('date.timezone');
-        if (empty($timezone))
+        if (empty($timezone)) {
             date_default_timezone_set('UTC');
+        }
+        global $argv;
+        $options = $argv;
     }
 
     /**
@@ -115,9 +134,10 @@ class RestContext implements Context
     public function theResponseContains($response)
     {
         $data = json_encode($this->_data);
-        if (!Text::contains($data, $response))
+        if (!Text::contains($data, $response)) {
             throw new Exception("Response value does not contain '$response' only\n\n"
                 . $this->echoLastResponse());
+        }
     }
 
     /**
@@ -139,9 +159,10 @@ class RestContext implements Context
     public function theResponseEquals($response)
     {
         $data = json_encode($this->_data);
-        if ($data !== $response)
+        if ($data !== $response) {
             throw new Exception("Response value does not match '$response'\n\n"
                 . $this->echoLastResponse());
+        }
     }
 
     /**
@@ -270,65 +291,43 @@ class RestContext implements Context
      */
     public function iRequest($pageUrl)
     {
-        $this->_startTime = microtime(true);
-        $baseUrl = $this->baseUrl;
-        $this->_requestUrl = $baseUrl . $pageUrl;
-        $url = false !== strpos($pageUrl, '{')
-            ? array($this->_requestUrl, (array)$this->_restObject)
-            : $this->_requestUrl;
+        try {
+            $this->_startTime = microtime(true);
+            $this->_requestUrl = $this->baseUrl . $pageUrl;
+            $url = false !== strpos($pageUrl, '{')
+                ? (new UriTemplate)->expand($pageUrl, (array)$this->_restObject)
+                : $pageUrl;
 
-        switch (strtoupper($this->_restObjectMethod)) {
-            case 'HEAD':
+            $method = strtoupper($this->_restObjectMethod);
 
-                $this->_request = $this->_client
-                    ->head($url, $this->_headers);
-                $this->_response = $this->_request->send();
-                break;
-            case 'GET':
-                $this->_request = $this->_client
-                    ->get($url, $this->_headers);
-                $this->_response = $this->_request->send();
-                break;
-            case 'POST':
-                $postFields = is_object($this->_restObject)
-                    ? (array)$this->_restObject
-                    : $this->_restObject;
-                $this->_request = $this->_client
-                    ->post($url, $this->_headers,
-                        (empty($this->_requestBody) ? $postFields :
-                            $this->_requestBody));
-                $this->_response = $this->_request->send();
-                break;
-            case 'PUT' :
-                $putFields = is_object($this->_restObject)
-                    ? (array)$this->_restObject
-                    : $this->_restObject;
-                $this->_request = $this->_client
-                    ->put($url, $this->_headers,
-                        (empty($this->_requestBody) ? $putFields :
-                            $this->_requestBody));
-                $this->_response = $this->_request->send();
-                break;
-            case 'PATCH' :
-                $putFields = is_object($this->_restObject)
-                    ? (array)$this->_restObject
-                    : $this->_restObject;
-                $this->_request = $this->_client
-                    ->patch($url, $this->_headers,
-                        (empty($this->_requestBody) ? $putFields :
-                            $this->_requestBody));
-                $this->_response = $this->_request->send();
-                break;
-            case 'DELETE':
-                $this->_request = $this->_client
-                    ->delete($url, $this->_headers);
-                $this->_response = $this->_request->send();
-                break;
+            $this->_request_debug_stream = fopen('php://temp/', 'r+');
+
+            $options = array(
+                'headers' => $this->_headers,
+                'http_errors' => false,
+                'decode_content' => false,
+                'debug' => $this->_request_debug_stream,
+                //'curl' => array(CURLOPT_VERBOSE => true),
+            );
+            if (in_array($method, array('POST', 'PUT', 'PATCH'))) {
+                if (empty($this->_requestBody)) {
+                    $postFields = is_object($this->_restObject)
+                        ? (array)$this->_restObject
+                        : $this->_restObject;
+                    $options['form_params'] = $postFields;
+                } else {
+                    $options['body'] = $this->_requestBody;
+                }
+            }
+            $this->_response = $this->_client->request($method, $url, $options);
+        } catch (ClientException $ce) {
+            $this->_request = $ce->getRequest();
+            $this->_response = $ce->getResponse();
         }
         //detect type, extract data
-        $this->_language = $this->_response->getHeader('Content-Language');
+        $this->_language = $this->_response->getHeaderLine('Content-Language');
 
-        $cType = explode('; ', $this->_response->getHeader('Content-type'));
+        $cType = explode('; ', $this->_response->getHeaderLine('Content-type'));
         if (count($cType) > 1) {
             $charset = $cType[1];
             $this->_charset = substr($charset, strpos($charset, '=') + 1);
@@ -433,9 +432,9 @@ class RestContext implements Context
             throw new Exception("Response header $header was not found\n\n"
                 . $this->echoLastResponse());
         }
-        if ((string)$this->_response->getHeader($header) !== $value) {
+        if ((string)$this->_response->getHeaderLine($header) !== $value) {
             throw new Exception("Response header $header ("
-                . (string)$this->_response->getHeader($header)
+                . (string)$this->_response->getHeaderLine($header)
                 . ") does not match `$value`\n\n"
                 . $this->echoLastResponse());
         }
@@ -446,10 +445,11 @@ class RestContext implements Context
      */
     public function theResponseExpiresHeaderShouldBeDatePlusGivenSeconds($seconds)
     {
-        $server_time = strtotime($this->_response->getHeader('Date')) + $seconds;
-        $expires_time = strtotime($this->_response->getHeader('Expires'));
-        if ($expires_time === $server_time || $expires_time === $server_time + 1)
+        $server_time = strtotime($this->_response->getHeaderLine('Date')) + $seconds;
+        $expires_time = strtotime($this->_response->getHeaderLine('Expires'));
+        if ($expires_time === $server_time || $expires_time === $server_time + 1) {
             return;
+        }
         return $this->theResponseHeaderShouldBe(
             'Expires',
             gmdate('D, d M Y H:i:s \G\M\T', $server_time)
@@ -481,19 +481,33 @@ class RestContext implements Context
         switch ($type) {
             case 'bool':
             case 'boolean':
-                if (is_bool($data)) return;
+                if (is_bool($data)) {
+                    return;
+                }
             case 'string':
-                if (is_string($data)) return;
+                if (is_string($data)) {
+                    return;
+                }
             case 'int':
-                if (is_int($data)) return;
+                if (is_int($data)) {
+                    return;
+                }
             case 'float':
-                if (is_float($data)) return;
+                if (is_float($data)) {
+                    return;
+                }
             case 'array' :
-                if (is_array($data)) return;
+                if (is_array($data)) {
+                    return;
+                }
             case 'object' :
-                if (is_object($data)) return;
+                if (is_object($data)) {
+                    return;
+                }
             case 'null' :
-                if (is_null($data)) return;
+                if (is_null($data)) {
+                    return;
+                }
         }
 
         throw new Exception("Response is not of type '$type'\n\n" .
@@ -506,9 +520,10 @@ class RestContext implements Context
     public function theValueEquals($sample)
     {
         $data = $this->_data;
-        if ($data !== $sample)
+        if ($data !== $sample) {
             throw new Exception("Response value does not match '$sample'\n\n"
                 . $this->echoLastResponse());
+        }
     }
 
     /**
@@ -542,17 +557,29 @@ class RestContext implements Context
 
         switch ($type) {
             case 'string':
-                if (is_string($data)) return;
+                if (is_string($data)) {
+                    return;
+                }
             case 'int':
-                if (is_int($data)) return;
+                if (is_int($data)) {
+                    return;
+                }
             case 'float':
-                if (is_float($data)) return;
+                if (is_float($data)) {
+                    return;
+                }
             case 'array' :
-                if (is_array($data)) return;
+                if (is_array($data)) {
+                    return;
+                }
             case 'object' :
-                if (is_object($data)) return;
+                if (is_object($data)) {
+                    return;
+                }
             case 'null' :
-                if (is_null($data)) return;
+                if (is_null($data)) {
+                    return;
+                }
         }
 
         throw new Exception("Response was JSON\n but not of type '$type'\n\n" .
@@ -670,6 +697,37 @@ class RestContext implements Context
      */
     public function echoLastResponse()
     {
-        echo "$this->_request\n$this->_response";
+        global $argv;
+        $level = 1;
+        if (in_array('-v', $argv) || in_array('--verbose=1', $argv)) {
+            $level = 2;
+        } elseif (in_array('-vv', $argv) || in_array('--verbose=2', $argv)) {
+            $level = 3;
+        } elseif (in_array('-vvv', $argv) || in_array('--verbose=3', $argv)) {
+            $level = 4;
+        }
+        //echo "$this->_request\n$this->_response";
+        if ($level >= 2 && is_resource($this->_request_debug_stream)) {
+            rewind($this->_request_debug_stream);
+            echo stream_get_contents($this->_request_debug_stream) . PHP_EOL . PHP_EOL;
+        }
+        if ($level >= 1) {
+            /** @var RequestInterface $req */
+            $req = $this->_request;
+            echo $req->getMethod() . ' ' . $req->getUri() . ' HTTP/' . $req->getProtocolVersion() . PHP_EOL;
+            foreach ($req->getHeaders() as $k => $v) {
+                echo ucwords($k) . ': ' . implode(', ', $v) . PHP_EOL;
+            }
+            echo PHP_EOL;
+            echo urldecode((string)$req->getBody()) . PHP_EOL . PHP_EOL;
+        }
+        /** @var ResponseInterface $res */
+        $res = $this->_response;
+        echo 'HTTP/' . $res->getProtocolVersion() . ' ' . $res->getStatusCode() . ' ' . $res->getReasonPhrase() . PHP_EOL;
+        foreach ($res->getHeaders() as $k => $v) {
+            echo ucwords($k) . ': ' . implode(', ', $v) . PHP_EOL;
+        }
+        echo PHP_EOL;
+        echo (string)$res->getBody();
     }
 }
