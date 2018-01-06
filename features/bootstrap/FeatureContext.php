@@ -1,66 +1,22 @@
 <?php
 
-use Behat\Behat\Context\ClosuredContextInterface,
-Behat\Behat\Context\TranslatedContextInterface,
-Behat\Behat\Context\BehatContext,
-Behat\Behat\Exception\PendingException;
-use Behat\Gherkin\Node\PyStringNode,
-Behat\Gherkin\Node\TableNode;
-
-//
-// Require 3rd-party libraries here:
-//
-//   require_once 'PHPUnit/Autoload.php';
-//   require_once 'PHPUnit/Framework/Assert/Functions.php';
-//
+use Behat\Behat\Context\Context;
+use Behat\Gherkin\Node\PyStringNode;
+use Behat\Gherkin\Node\TableNode;
 
 /**
- * Features context.
+ * Defines application features from the specific context.
  */
-class FeatureContext extends BehatContext
+class FeatureContext implements Context
 {
     /**
      * Initializes context.
-     * Every scenario gets it's own context object.
      *
-     * @param array $parameters context parameters (set them up through behat.yml)
+     * Every scenario gets its own context instance.
+     * You can also pass arbitrary arguments to the
+     * context constructor through behat.yml.
      */
-    public function __construct(array $parameters)
+    public function __construct()
     {
-        // Initialize your context here
-        $this->useContext('RestContext', new RestContext($parameters));
     }
-
-    /**
-     * @When /^I run "([^"]*)"$/
-     */
-    public function iRun($command)
-    {
-        exec($command, $result);
-        $this->output = $result;
-
-    }
-
-    /**
-     * @Then /^I should see the file "([^"]*)"$/
-     */
-    public function iShouldSeeTheFile($fileName)
-    {
-        if (!in_array($fileName, $this->output)) {
-            throw new Exception('File named ' . $fileName . ' not found!');
-        }
-
-    }
-
-//
-// Place your definition and hook methods here:
-//
-//    /**
-//     * @Given /^I have done something with "([^"]*)"$/
-//     */
-//    public function iHaveDoneSomethingWith($argument)
-//    {
-//        doSomethingWith($argument);
-//    }
-//
 }
