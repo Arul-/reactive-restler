@@ -1,5 +1,6 @@
 <?php
-use Behat\Behat\Context\BehatContext;
+
+use Behat\Behat\Context\Context;
 use Behat\Gherkin\Node\PyStringNode;
 use Luracast\Restler\Data\Text;
 
@@ -14,7 +15,7 @@ use Luracast\Restler\Data\Text;
  * @link       http://luracast.com/products/restler/
  * @version    3.0.0
  */
-class RestContext extends BehatContext
+class RestContext implements Context
 {
 
     private $_startTime = null;
@@ -32,18 +33,18 @@ class RestContext extends BehatContext
     private $_language = null;
     private $_data = null;
 
-    private $_parameters = array();
+    protected $baseUrl = '';
 
     /**
      * Initializes context.
      * Every scenario gets it's own context object.
      */
-    public function __construct(array $parameters)
+    public function __construct($baseUrl)
     {
         // Initialize your context here
 
         $this->_restObject = new stdClass();
-        $this->_parameters = $parameters;
+        $this->baseUrl = $baseUrl;
         $this->_client = new Guzzle\Service\Client();
         //suppress few errors
         $this->_client
@@ -62,19 +63,6 @@ class RestContext extends BehatContext
         $timezone = ini_get('date.timezone');
         if (empty($timezone))
             date_default_timezone_set('UTC');
-    }
-
-    public function getParameter($name)
-    {
-        if (count($this->_parameters) === 0) {
-
-
-            throw new \Exception('Parameters not loaded!');
-        } else {
-
-            $parameters = $this->_parameters;
-            return (isset($parameters[$name])) ? $parameters[$name] : null;
-        }
     }
 
     /**
@@ -283,7 +271,7 @@ class RestContext extends BehatContext
     public function iRequest($pageUrl)
     {
         $this->_startTime = microtime(true);
-        $baseUrl = $this->getParameter('base_url');
+        $baseUrl = $this->baseUrl;
         $this->_requestUrl = $baseUrl . $pageUrl;
         $url = false !== strpos($pageUrl, '{')
             ? array($this->_requestUrl, (array)$this->_restObject)
@@ -682,6 +670,6 @@ class RestContext extends BehatContext
      */
     public function echoLastResponse()
     {
-        $this->printDebug("$this->_request\n$this->_response");
+        echo "$this->_request\n$this->_response";
     }
 }

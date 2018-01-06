@@ -9,7 +9,7 @@
     "restler/framework": "3.0-RC6"
   },
   "require-dev": {
-    "behat/behat": "2.5.*@stable",
+    "behat/behat": "3.4.*@stable",
     "guzzlehttp/guzzle": "3.8.1"
   },
   "license": "MIT",

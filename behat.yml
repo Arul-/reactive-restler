@@ -1,5 +1,7 @@
 # behat.yml
 default:
-    context:
-        parameters:
-            base_url: http://localhost:8080
+    suites:
+        default:
+          contexts:
+            - RestContext:
+                - http://localhost:8080
