@@ -2,6 +2,7 @@
 
 use Behat\Behat\Context\Context;
 use Behat\Gherkin\Node\PyStringNode;
+use Behat\Testwork\Hook\Scope\BeforeSuiteScope;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\HandlerStack;
@@ -43,6 +44,21 @@ class RestContext implements Context
 
     protected $baseUrl = '';
 
+
+    /**
+     * @BeforeSuite
+     */
+    public static function prepare(BeforeSuiteScope $scope)
+    {
+        $environment = $scope->getEnvironment();
+        $contexts = $environment->getContextClassesWithArguments();
+        $baseUrl = $contexts[static::class][0];
+        // prepare system for test suite
+        // before it runs
+        $client = new Client(['base_uri' => $baseUrl]);
+        $result = $client->put('/__cleanup_db');
+    }
+
     /**
      * Initializes context.
      * Every scenario gets it's own context object.
@@ -80,8 +96,6 @@ class RestContext implements Context
         if (empty($timezone)) {
             date_default_timezone_set('UTC');
         }
-        global $argv;
-        $options = $argv;
     }
 
     /**
