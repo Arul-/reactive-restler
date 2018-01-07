@@ -22,11 +22,21 @@ Defaults::$validatorClass = Validator::class;
 
 Defaults::$useUrlBasedVersioning = true;
 
+
+define('DATA_STORE_IMPLEMENTATION', DB_PDO_MySQL::class);
+
+
+//$class = DATA_STORE_IMPLEMENTATION;
+/** @var DataStoreInterface $i */
+//$instance = new $class('db2');
+
+
 class ResetDB
 {
     function put()
     {
-        ArrayDB::$data = [];
+        $class = DATA_STORE_IMPLEMENTATION;
+        $class::reset();
     }
 }
 

@@ -1,21 +1,30 @@
 <?php
+
 namespace improved;
+
 use ArrayDB;
-use Luracast\Restler\RestException;
+use DataStoreInterface;
+use DB_Serialized_File;
+use Luracast\Restler\HttpException;
 
 class Authors
 {
+    /**
+     * @var DataStoreInterface
+     */
     public $dp;
 
     function __construct()
     {
         /**
-         * $this->dp = new DB_PDO_Sqlite();
-         * $this->dp = new DB_PDO_MySQL();
-         * $this->dp = new DB_Serialized_File();
-         * $this->dp = new DB_Session();
+         * $this->dp = new DB_PDO_Sqlite('db2');
+         * $this->dp = new DB_PDO_MySQL('db2');
+         * $this->dp = new DB_Serialized_File('db2');
+         * $this->dp = new DB_Session('db2');
+         * $this->dp = new ArrayDB('db2');
          */
-        $this->dp = new ArrayDB();
+        $class = DATA_STORE_IMPLEMENTATION;
+        $this->dp = new $class('db2');
     }
 
     function index()
@@ -27,19 +36,21 @@ class Authors
      * @param int $id
      *
      * @return array
+     * @throws HttpException
      */
     function get($id)
     {
         $r = $this->dp->get($id);
-        if ($r === false)
-            throw new RestException(404);
+        if ($r === false) {
+            throw new HttpException(404);
+        }
         return $r;
     }
 
     /**
      * @status 201
      *
-     * @param string $name  {@from body}
+     * @param string $name {@from body}
      * @param string $email {@type email} {@from body}
      *
      * @return mixed
@@ -50,32 +61,36 @@ class Authors
     }
 
     /**
-     * @param int    $id
-     * @param string $name  {@from body}
+     * @param int $id
+     * @param string $name {@from body}
      * @param string $email {@type email} {@from body}
      *
      * @return mixed
+     * @throws HttpException
      */
     function put($id, $name, $email)
     {
         $r = $this->dp->update($id, compact('name', 'email'));
-        if ($r === false)
-            throw new RestException(404);
+        if ($r === false) {
+            throw new HttpException(404);
+        }
         return $r;
     }
 
     /**
-     * @param int    $id
-     * @param string $name  {@from body}
+     * @param int $id
+     * @param string $name {@from body}
      * @param string $email {@type email} {@from body}
      *
      * @return mixed
+     * @throws HttpException
      */
     function patch($id, $name = null, $email = null)
     {
         $patch = $this->dp->get($id);
-        if ($patch === false)
-            throw new RestException(404);
+        if ($patch === false) {
+            throw new HttpException(404);
+        }
         $modified = false;
         if (isset($name)) {
             $patch['name'] = $name;
@@ -86,11 +101,12 @@ class Authors
             $modified = true;
         }
         if (!$modified) {
-            throw new RestException(304); //not modified
+            throw new HttpException(304); //not modified
         }
         $r = $this->dp->update($id, $patch);
-        if ($r === false)
-            throw new RestException(404);
+        if ($r === false) {
+            throw new HttpException(404);
+        }
         return $r;
     }
 
@@ -98,10 +114,15 @@ class Authors
      * @param int $id
      *
      * @return array
+     * @throws HttpException
      */
     function delete($id)
     {
-        return $this->dp->delete($id);
+        $r = $this->dp->delete($id);
+        if ($r === false) {
+            throw new HttpException(404);
+        }
+        return $r;
     }
 }
 

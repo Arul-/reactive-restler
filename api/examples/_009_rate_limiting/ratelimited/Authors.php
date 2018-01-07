@@ -1,22 +1,28 @@
 <?php
 namespace ratelimited;
 use ArrayDB;
+use DataStoreInterface;
 use Luracast\Restler\RestException;
 use Author;
 
 class Authors
 {
+    /**
+     * @var DataStoreInterface
+     */
     public $dp;
 
     function __construct()
     {
         /**
-         * $this->dp = new DB_PDO_Sqlite();
-         * $this->dp = new DB_PDO_MySQL();
-         * $this->dp = new DB_Serialized_File();
-         * $this->dp = new DB_Session();
+         * $this->dp = new DB_PDO_Sqlite('db3');
+         * $this->dp = new DB_PDO_MySQL('db3');
+         * $this->dp = new DB_Serialized_File('db3');
+         * $this->dp = new DB_Session('db3');
+         * $this->dp = new ArrayDB('db3');
          */
-        $this->dp = new ArrayDB();
+        $class = DATA_STORE_IMPLEMENTATION;
+        $this->dp = new $class('db3');
     }
 
     /**

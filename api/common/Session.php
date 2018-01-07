@@ -1,29 +1,26 @@
 <?php
 
-
-class ArrayDB implements iStoreData
+/**
+ * Fake Database. All records are stored in $_SESSION
+ */
+class DB_Session implements DataStoreInterface
 {
-
-    public static $data = [];
-
-    /**
-     * ArrayDB constructor.
-     */
-    public function __construct()
+    function __construct()
     {
-        if (empty(static::$data)) {
+        @session_start();
+        if (!isset($_SESSION['pk'])) {
             $this->install();
         }
     }
 
     private function pk()
     {
-        return static::$data['pk']++;
+        return $_SESSION['pk']++;
     }
 
     private function find($id)
     {
-        foreach (static::$data['rs'] as $index => $rec) {
+        foreach ($_SESSION['rs'] as $index => $rec) {
             if ($rec['id'] == $id) {
                 return $index;
             }
@@ -37,29 +34,29 @@ class ArrayDB implements iStoreData
         if ($index === false) {
             return false;
         }
-        return static::$data['rs'][$index];
+        return $_SESSION['rs'][$index];
     }
 
     function getAll()
     {
-        return static::$data['rs'];
+        return $_SESSION['rs'];
     }
 
     function insert($rec)
     {
         $rec['id'] = $this->pk();
-        array_push(static::$data['rs'], $rec);
+        array_push($_SESSION['rs'], $rec);
         return $rec;
     }
 
-    function update($id, $rec)
+    function update($id, $rec, $create = true)
     {
         $index = $this->find($id);
-        if ($index === false) {
+        if (!$create && $index === false) {
             return false;
         }
         $rec['id'] = $id;
-        static::$data['rs'][$index] = $rec;
+        $_SESSION['rs'][$index] = $rec;
         return $rec;
     }
 
@@ -69,25 +66,26 @@ class ArrayDB implements iStoreData
         if ($index === false) {
             return false;
         }
-        $record = array_splice(static::$data['rs'], $index, 1);
+        $record = array_splice($_SESSION['rs'], $index, 1);
         return array_shift($record);
     }
 
     private function install()
     {
         /** install initial data **/
-        static::$data['pk'] = 5;
-        static::$data['rs'] = [
-            [
+        $_SESSION['pk'] = 5;
+        $_SESSION['rs'] = array(
+            array(
                 'id' => 1,
                 'name' => 'Jac Wright',
                 'email' => 'jacwright@gmail.com'
-            ],
-            [
+            ),
+            array(
                 'id' => 2,
                 'name' => 'Arul Kumaran',
                 'email' => 'arul@luracast.com'
-            ]
-        ];
+            )
+        );
     }
 }
+

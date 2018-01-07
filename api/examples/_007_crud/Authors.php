@@ -2,7 +2,7 @@
 class Authors
 {
     /**
-     * @var iStoreData
+     * @var DataStoreInterface
      */
     public $dp;
 
@@ -11,12 +11,14 @@ class Authors
     function __construct()
     {
         /**
-         * $this->dp = new DB_PDO_Sqlite();
-         * $this->dp = new DB_PDO_MySQL();
-         * $this->dp = new DB_Serialized_File();
-         * $this->dp = new DB_Session();
+         * $this->dp = new DB_PDO_Sqlite('db1');
+         * $this->dp = new DB_PDO_MySQL('db1');
+         * $this->dp = new DB_Serialized_File('db1');
+         * $this->dp = new DB_Session('db1');
+         * $this->dp = new ArrayDB('db1');
          */
-        $this->dp = new ArrayDB();
+        $class = DATA_STORE_IMPLEMENTATION;
+        $this->dp = new $class('db1');
     }
 
     function index()

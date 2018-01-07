@@ -1,5 +1,5 @@
-@example7 @crud
-Feature: Testing CRUD Example
+@example8 @documentation
+Feature: Testing Documentation Example
 
   Scenario: Creating new Author by POSTing vars
     Given that I want to make a new "Author"
@@ -48,3 +48,10 @@ Feature: Testing CRUD Example
     Then the response status code should be 200
     And the response should be JSON
     And the response has an "id" property
+
+  Scenario: Deleting with invalid author id
+    Given that I want to delete an "Author"
+    And his "id" is 1
+    When I request "/examples/_008_documentation/authors/{id}"
+    Then the response status code should be 404
+    And the response should be JSON

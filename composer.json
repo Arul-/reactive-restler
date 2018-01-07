@@ -28,6 +28,7 @@
     "classmap": [
       "api/tests/param/",
       "api/tests/request_data/",
+      "api/common/",
       "api/examples/_001_helloworld/",
       "api/examples/_002_minimal/",
       "api/examples/_003_multiformat/",
@@ -35,8 +36,6 @@
       "api/examples/_005_protected_api/",
       "api/examples/_006_routing/",
       "api/examples/_007_crud/",
-      "api/examples/_007_crud/DB",
-      "api/examples/_007_crud/DB/PDO",
       "api/examples/_008_documentation/improved",
       "api/examples/_009_rate_limiting",
       "api/examples/_009_rate_limiting/ratelimited",
