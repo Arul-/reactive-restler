@@ -21,6 +21,9 @@ class Json extends MediaType implements RequestMediaTypeInterface, ResponseMedia
      */
     public function decode(string $data)
     {
+        if (!strlen($data)) {
+            return [];
+        }
         $decoded = json_decode($data, static::$decodeOptions);
         if (json_last_error() != JSON_ERROR_NONE) {
             throw new HttpException(400, 'JSON Parser: ' . json_last_error_msg());
