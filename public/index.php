@@ -22,8 +22,18 @@ Defaults::$validatorClass = Validator::class;
 
 Defaults::$useUrlBasedVersioning = true;
 
+class ResetDB
+{
+    function put()
+    {
+        ArrayDB::$data = [];
+    }
+}
+
 try {
     Router::mapApiClasses([
+        //clean up db for tests
+        ResetDB::class => '__cleanup_db',
         //examples
         Say::class => 'examples/_001_helloworld/say',
         Math::class => 'examples/_002_minimal/math',
@@ -36,7 +46,7 @@ try {
         ImprovedAuthors::class => 'examples/_008_documentation/authors',
         RateLimitedAuthors::class => 'examples/_009_rate_limiting/authors',
         Access::class => 'examples/_010_access_control',
-        'BMI' => 'examples/_011_versioning/bmi',
+        //'BMI' => 'examples/_011_versioning/bmi',
         //tests
         MinMax::class => 'tests/param/minmax',
         MinMaxFix::class => 'tests/param/minmaxfix',
@@ -52,7 +62,7 @@ try {
 } catch (Throwable $t) {
     die($t->getMessage());
 }
-
+$routes = Router::toArray();
 $loop = React\EventLoop\Factory::create();
 
 $server = new Server(function (ServerRequestInterface $request) {
