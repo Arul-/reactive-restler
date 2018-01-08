@@ -20,8 +20,8 @@ use ratelimited\Authors as RateLimitedAuthors;
 include __DIR__ . "/../vendor/autoload.php";
 
 Defaults::$validatorClass = Validator::class;
-
 Defaults::$useUrlBasedVersioning = true;
+Defaults::$cacheDirectory = __DIR__ . '/../api/common/store';
 
 
 define('DATA_STORE_IMPLEMENTATION', ArrayDB::class);
@@ -42,6 +42,7 @@ class ResetDB
 }
 
 RateLimiter::setLimit('hour', 10);
+RateLimiter::$includedPaths = ['examples/_009_rate_limiting'];
 
 try {
     Router::mapApiClasses([
