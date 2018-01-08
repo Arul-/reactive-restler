@@ -104,8 +104,11 @@ class Reactler extends Core
             ->withBody($data);
     }
 
-    public function handle(ServerRequestInterface $request, ResponseInterface $response, string $rawRequestBody = ''): ResponseInterface
-    {
+    public function handle(
+        ServerRequestInterface $request,
+        ResponseInterface $response,
+        string $rawRequestBody = ''
+    ): ResponseInterface {
         $this->rawRequestBody = $rawRequestBody;
         $this->requestMethod = $request->getMethod();
         $this->request = $request;
@@ -117,7 +120,9 @@ class Reactler extends Core
             $this->get();
             $this->route();
             $this->negotiate();
+            $this->filter($this->request);
             $this->authenticate($this->request);
+            $this->filter($this->request, true);
             $this->validate();
             if (!$this->responseFormat) {
                 $this->responseFormat = new Json();
