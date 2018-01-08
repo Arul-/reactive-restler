@@ -31,6 +31,10 @@ class Router extends Routes
         static::$minimumVersion = $minimum;
     }
 
+    /**
+     * @param string[] ...$types
+     * @throws Exception
+     */
     public static function setMediaTypes(string ...$types): void
     {
         $extensions = [];
@@ -74,6 +78,10 @@ class Router extends Routes
         Router::$formatMap['extensions'] = array_keys($extensions);
     }
 
+    /**
+     * @param string[] ...$types
+     * @throws Exception
+     */
     public static function setRequestMediaTypes(string ...$types): void
     {
         Router::$readableMediaTypes = [];
@@ -91,6 +99,10 @@ class Router extends Routes
         }
     }
 
+    /**
+     * @param string[] ...$types
+     * @throws Exception
+     */
     public static function setResponseMediaTypes(string ...$types): void
     {
         $extensions = [];

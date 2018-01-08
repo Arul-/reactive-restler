@@ -213,6 +213,12 @@ abstract class Core
 
     abstract protected function negotiate(): void;
 
+    /**
+     * @param string $path
+     * @param string $acceptHeader
+     * @return ResponseMediaTypeInterface
+     * @throws HttpException
+     */
     protected function negotiateResponseMediaType(string $path, string $acceptHeader = ''): ResponseMediaTypeInterface
     {
         //check if the api method insists on response format using @format comment
@@ -321,8 +327,7 @@ abstract class Core
         string $accessControlRequestMethod = '',
         string $accessControlRequestHeaders = '',
         string $origin = ''
-    ): void
-    {
+    ): void {
         if (Defaults::$crossOriginResourceSharing || $requestMethod != 'OPTIONS') {
             return;
         }
@@ -341,6 +346,10 @@ abstract class Core
         throw $e;
     }
 
+    /**
+     * @param string $acceptCharset
+     * @throws HttpException
+     */
     protected function negotiateCharset(string $acceptCharset = '*'): void
     {
         if (!empty($acceptCharset)) {
