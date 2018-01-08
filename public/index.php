@@ -23,7 +23,7 @@ Defaults::$validatorClass = Validator::class;
 Defaults::$useUrlBasedVersioning = true;
 
 
-define('DATA_STORE_IMPLEMENTATION', DB_PDO_MySQL::class);
+define('DATA_STORE_IMPLEMENTATION', ArrayDB::class);
 
 
 //$class = DATA_STORE_IMPLEMENTATION;
