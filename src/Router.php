@@ -7,6 +7,7 @@ use Luracast\Restler\Contracts\FilterInterface;
 use Luracast\Restler\Contracts\MediaTypeInterface;
 use Luracast\Restler\Contracts\RequestMediaTypeInterface;
 use Luracast\Restler\Contracts\ResponseMediaTypeInterface;
+use Luracast\Restler\Contracts\UsesAuthenticationInterface;
 use Luracast\Restler\Data\ApiMethodInfo;
 use Throwable;
 
@@ -14,6 +15,7 @@ class Router extends Routes
 {
     public static $authClasses = [];
     public static $filterClasses = [];
+    public static $postAuthFilterClasses = [];
     public static $formatMap = ['extensions' => []];
     public static $versionMap = [];
 
@@ -252,12 +254,18 @@ class Router extends Routes
      */
     public static function setFilters(string ...$classNames)
     {
+        static::$postAuthFilterClasses = [];
+        static::$filterClasses = [];
         foreach ($classNames as $className) {
             if (!isset(class_implements($className)[FilterInterface::class])) {
                 throw new Exception($className . ' is an invalid filter class; it must implement ' .
                     'FilterInterface.');
             }
-            static::$authClasses[] = $className;
+            if (isset(class_implements($className)[UsesAuthenticationInterface::class])) {
+                static::$postAuthFilterClasses[] = $className;
+            } else {
+                static::$filterClasses[] = $className;
+            }
         }
     }
 
