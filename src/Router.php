@@ -14,7 +14,7 @@ use Throwable;
 class Router extends Routes
 {
     public static $authClasses = [];
-    public static $filterClasses = [];
+    public static $preAuthFilterClasses = [];
     public static $postAuthFilterClasses = [];
     public static $formatMap = ['extensions' => []];
     public static $versionMap = [];
@@ -255,7 +255,7 @@ class Router extends Routes
     public static function setFilters(string ...$classNames)
     {
         static::$postAuthFilterClasses = [];
-        static::$filterClasses = [];
+        static::$preAuthFilterClasses = [];
         foreach ($classNames as $className) {
             if (!isset(class_implements($className)[FilterInterface::class])) {
                 throw new Exception($className . ' is an invalid filter class; it must implement ' .
@@ -264,7 +264,7 @@ class Router extends Routes
             if (isset(class_implements($className)[UsesAuthenticationInterface::class])) {
                 static::$postAuthFilterClasses[] = $className;
             } else {
-                static::$filterClasses[] = $className;
+                static::$preAuthFilterClasses[] = $className;
             }
         }
     }

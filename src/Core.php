@@ -1,6 +1,7 @@
 <?php namespace Luracast\Restler;
 
 use Luracast\Restler\Contracts\AuthenticationInterface;
+use Luracast\Restler\Contracts\FilterInterface;
 use Luracast\Restler\Contracts\RequestMediaTypeInterface;
 use Luracast\Restler\Contracts\ResponseMediaTypeInterface;
 use Luracast\Restler\Contracts\UsesAuthenticationInterface;
@@ -320,8 +321,7 @@ abstract class Core
         string $accessControlRequestMethod = '',
         string $accessControlRequestHeaders = '',
         string $origin = ''
-    ): void
-    {
+    ): void {
         if (Defaults::$crossOriginResourceSharing || $requestMethod != 'OPTIONS') {
             return;
         }
@@ -390,6 +390,29 @@ abstract class Core
         }
     }
 
+    /**
+     * Filer api calls before authentication
+     * @param ServerRequestInterface $request
+     * @param bool $postAuth
+     * @throws HttpException
+     */
+    protected function filter(ServerRequestInterface $request, bool $postAuth = false)
+    {
+        $filterClasses = $postAuth ? Router::$postAuthFilterClasses : Router::$preAuthFilterClasses;
+        foreach ($filterClasses as $filerClass) {
+            /** @var FilterInterface $filter */
+            $filter = $this->init(new $filerClass);
+            if (!$filter->__isAllowed($request)) {
+                throw new HttpException(403);
+            }
+        }
+    }
+
+    /**
+     * @param ServerRequestInterface $request
+     * @throws HttpException
+     * @throws InvalidAuthCredentials
+     */
     protected function authenticate(ServerRequestInterface $request)
     {
         $o = &$this->apiMethodInfo;
