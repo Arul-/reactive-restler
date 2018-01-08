@@ -3,6 +3,7 @@
 
 use Exception;
 use Luracast\Restler\Contracts\AuthenticationInterface;
+use Luracast\Restler\Contracts\FilterInterface;
 use Luracast\Restler\Contracts\MediaTypeInterface;
 use Luracast\Restler\Contracts\RequestMediaTypeInterface;
 use Luracast\Restler\Contracts\ResponseMediaTypeInterface;
@@ -12,6 +13,7 @@ use Throwable;
 class Router extends Routes
 {
     public static $authClasses = [];
+    public static $filterClasses = [];
     public static $formatMap = ['extensions' => []];
     public static $versionMap = [];
 
@@ -239,6 +241,27 @@ class Router extends Routes
     }
 
     /**
+     * Classes implementing FilterInterface can be added for filtering out
+     * the api consumers.
+     *
+     * It can be used for rate limiting based on usage from a specific ip
+     * address or filter by country, device etc.
+     *
+     * @param string[] ...$classNames
+     * @throws Exception
+     */
+    public static function setFilters(string ...$classNames)
+    {
+        foreach ($classNames as $className) {
+            if (!isset(class_implements($className)[FilterInterface::class])) {
+                throw new Exception($className . ' is an invalid filter class; it must implement ' .
+                    'FilterInterface.');
+            }
+            static::$authClasses[] = $className;
+        }
+    }
+
+    /**
      * @param string $path
      * @param string $httpMethod
      * @param int $version
@@ -251,8 +274,7 @@ class Router extends Routes
         $httpMethod,
         $version = 1,
         array $data = []
-    )
-    {
+    ) {
         $p = Util::nestedValue(static::$routes, "v$version");
         if (!$p) {
             throw new HttpException(
