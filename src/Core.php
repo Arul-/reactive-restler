@@ -49,7 +49,7 @@ abstract class Core
     protected $query = [];
 
     protected $responseHeaders = [];
-    protected $responseCode = 200;
+    protected $responseCode = null;
 
 
     public function init($instance)
@@ -548,7 +548,7 @@ abstract class Core
         }
         $cacheControl = Defaults::$headerCacheControl[0];
         if ($expires > 0) {
-            $cacheControl = $this->apiMethodInfo->accessLevel
+            $cacheControl = !isset($this->apiMethodInfo->accessLevel) || $this->apiMethodInfo->accessLevel
                 ? 'private, ' : 'public, ';
             $cacheControl .= end(Defaults::$headerCacheControl);
             $cacheControl = str_replace('{expires}', $expires, $cacheControl);
