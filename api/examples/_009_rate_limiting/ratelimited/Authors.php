@@ -1,8 +1,10 @@
 <?php
 namespace ratelimited;
+
 use ArrayDB;
 use DataStoreInterface;
 use Luracast\Restler\RestException;
+use Luracast\Restler\Filters\RateLimiter;
 use Author;
 
 class Authors
@@ -32,7 +34,7 @@ class Authors
      * @cache max-age={expires}, max-stale=3000, must-revalidate
      * @expires 30
      * @throttle 200
-     * @class RateLimit {@unit second} {@usagePerUnit 1}
+     * @class RateLimiter {@unit second} {@usagePerUnit 1}
      * @return array {@type Author}
      */
     function index()

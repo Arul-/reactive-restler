@@ -5,7 +5,7 @@ use Psr\Http\Message\ServerRequestInterface;
 
 class KeyAuth implements AuthenticationInterface
 {
-    public function __isAllowed(ServerRequestInterface $request): bool
+    public function __isAllowed(ServerRequestInterface $request, array &$responseHeaders = []): bool
     {
         $query = $request->getQueryParams();
         return isset($query['api_key']) && $query['api_key'] == 'r3rocks';

@@ -9,7 +9,7 @@ class AccessControl implements AuthenticationInterface
     public static $requires = 'user';
     public static $role = 'user';
 
-    public function __isAllowed(ServerRequestInterface $request): bool
+    public function __isAllowed(ServerRequestInterface $request, array &$responseHeaders = []): bool
     {
         //hardcoded api_key=>role for brevity
         $roles = array('12345' => 'user', '67890' => 'admin');

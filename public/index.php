@@ -1,6 +1,7 @@
 <?php declare(strict_types=1);
 
 use Luracast\Restler\Defaults;
+use Luracast\Restler\Filters\RateLimiter;
 use Luracast\Restler\MediaTypes\Json;
 use Luracast\Restler\MediaTypes\Xml;
 use Luracast\Restler\Reactler;
@@ -40,6 +41,8 @@ class ResetDB
     }
 }
 
+RateLimiter::setLimit('hour', 10);
+
 try {
     Router::mapApiClasses([
         //clean up db for tests
@@ -69,6 +72,7 @@ try {
     Router::addAuthenticator(SimpleAuth::class, 'examples/_005_protected_api/simpleauth');
     Router::addAuthenticator(KeyAuth::class, 'examples/_009_rate_limiting/keyauth');
     Router::addAuthenticator(AccessControl::class, 'examples/_010_access_control/accesscontrol');
+    Router::setFilters(RateLimiter::class);
 } catch (Throwable $t) {
     die($t->getMessage());
 }
@@ -89,7 +93,7 @@ $server = new Server(function (ServerRequestInterface $request) {
             $resolve($h->handle($request, new Response(), $content));
         });
 
-        /* an error occurs e.g. on invalid chucked encoded data or an unexpected 'end' event
+        // an error occurs e.g. on invalid chucked encoded data or an unexpected 'end' event
         $request->getBody()->on('error', function (Exception $exception) use ($resolve, &$contentLength) {
             $response = new Response(
                 400,
@@ -98,7 +102,6 @@ $server = new Server(function (ServerRequestInterface $request) {
             );
             $resolve($response);
         });
-        */
     });
 });
 

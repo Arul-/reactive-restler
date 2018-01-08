@@ -19,7 +19,8 @@ interface FilterInterface
      *
      * @param ServerRequestInterface $request
      *
+     * @param array $responseHeaders
      * @return boolean true when api access is allowed false otherwise
      */
-    public function __isAllowed(ServerRequestInterface $request): bool;
+    public function __isAllowed(ServerRequestInterface $request, array &$responseHeaders): bool;
 }

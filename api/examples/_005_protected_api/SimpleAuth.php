@@ -12,7 +12,7 @@ class SimpleAuth implements AuthenticationInterface
         return SimpleAuth::KEY;
     }
 
-    public function __isAllowed(ServerRequestInterface $request): bool
+    public function __isAllowed(ServerRequestInterface $request, array &$responseHeaders = []): bool
     {
         $query = $request->getQueryParams();
         return isset($query['key']) && $query['key'] == SimpleAuth::KEY ? true : false;

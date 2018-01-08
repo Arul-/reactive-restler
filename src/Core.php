@@ -321,7 +321,8 @@ abstract class Core
         string $accessControlRequestMethod = '',
         string $accessControlRequestHeaders = '',
         string $origin = ''
-    ): void {
+    ): void
+    {
         if (Defaults::$crossOriginResourceSharing || $requestMethod != 'OPTIONS') {
             return;
         }
@@ -402,7 +403,7 @@ abstract class Core
         foreach ($filterClasses as $filerClass) {
             /** @var FilterInterface $filter */
             $filter = $this->init(new $filerClass);
-            if (!$filter->__isAllowed($request)) {
+            if (!$filter->__isAllowed($request, $this->responseHeaders)) {
                 throw new HttpException(403);
             }
         }
@@ -431,7 +432,7 @@ abstract class Core
                      * @var AuthenticationInterface
                      */
                     $authObj = $this->init(new $authClass);
-                    if (!$authObj->__isAllowed($request)) {
+                    if (!$authObj->__isAllowed($request, $this->responseHeaders)) {
                         throw new HttpException(401);
                     }
                     $unauthorized = false;
