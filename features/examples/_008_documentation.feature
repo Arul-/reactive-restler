@@ -6,7 +6,7 @@ Feature: Testing Documentation Example
     And his "name" is "Chris"
     And his "email" is "chris@world.com"
     When I request "/examples/_008_documentation/authors"
-    Then the response status code should be 200
+    Then the response status code should be 201
     And the response should be JSON
     And the response has a "id" property
 
@@ -16,7 +16,7 @@ Feature: Testing Documentation Example
     And his "email" is "chris@world.com"
     And the request is sent as JSON
     When I request "/examples/_008_documentation/authors"
-    Then the response status code should be 200
+    Then the response status code should be 201
     And the response should be JSON
     And the response has a "id" property
 
