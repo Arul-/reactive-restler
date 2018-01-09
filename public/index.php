@@ -1,6 +1,7 @@
 <?php declare(strict_types=1);
 
 use Illuminate\Container\Container;
+use Luracast\Config\Config;
 use Luracast\Restler\Defaults;
 use Luracast\Restler\Filters\RateLimiter;
 use Luracast\Restler\MediaTypes\Json;
@@ -24,7 +25,7 @@ Defaults::$validatorClass = Validator::class;
 Defaults::$useUrlBasedVersioning = true;
 Defaults::$cacheDirectory = __DIR__ . '/../api/common/store';
 
-
+define('BASE', dirname(__DIR__));
 define('DATA_STORE_IMPLEMENTATION', ArrayDB::class);
 
 
@@ -90,8 +91,15 @@ $server = new Server(function (ServerRequestInterface $request) {
         });
 
         $request->getBody()->on('end', function () use ($request, $resolve, &$content) {
-            $c = new Container();
-            $h = new Reactler($c);
+            $container = new Container();
+            $config = new Config(BASE . '/config');
+            $config['defaults'] = get_class_vars(Defaults::class);
+                /*
+                array_replace_recursive(
+                get_class_vars(Defaults::class),
+                $config['app']
+            ); */
+            $h = new Reactler($container, $config);
             $request = $request->withAttribute('reactler', $h);
             Scope::set('Restler', $h);
             $resolve($h->handle($request, new Response(), $content));
