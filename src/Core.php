@@ -1,5 +1,6 @@
 <?php namespace Luracast\Restler;
 
+use Illuminate\Contracts\Container\Container as ContainerContract;
 use Luracast\Restler\Contracts\AuthenticationInterface;
 use Luracast\Restler\Contracts\FilterInterface;
 use Luracast\Restler\Contracts\RequestMediaTypeInterface;
@@ -50,7 +51,21 @@ abstract class Core
 
     protected $responseHeaders = [];
     protected $responseCode = null;
+    /**
+     * @var ContainerContract
+     */
+    private $container;
 
+
+    public function __construct(ContainerContract $container)
+    {
+        $this->container = $container;
+    }
+
+    public function make($className)
+    {
+        return $this->init($this->container->make($className));
+    }
 
     public function init($instance)
     {
@@ -123,15 +138,15 @@ abstract class Core
                 $mime = substr($mime, 0, $pos);
             }
             if ($mime == UrlEncoded::MIME) {
-                $format = new UrlEncoded();
+                $format = $this->make(UrlEncoded::class);
             } elseif (isset(Router::$formatMap[$mime])) {
-                $format = new Router::$formatMap[$mime];
+                $format = $this->make(Router::$formatMap[$mime]);
                 $format->mediaType($mime);
             } elseif (!$this->requestFormatDiffered && isset($this->formatOverridesMap[$mime])) {
                 //if our api method is not using an @format comment
                 //to point to this $mime, we need to throw 403 as in below
                 //but since we don't know that yet, we need to defer that here
-                $format = new $this->formatOverridesMap[$mime];
+                $format = $this->make($this->formatOverridesMap[$mime]);
                 $format->mediaType($mime);
                 $this->requestFormatDiffered = true;
             } else {
@@ -142,7 +157,7 @@ abstract class Core
             }
         }
         if (!$format) {
-            $format = new Router::$formatMap['default'];
+            $format = $this->make(Router::$formatMap['default']);
         }
         return $format;
     }
@@ -175,6 +190,9 @@ abstract class Core
         return $r;
     }
 
+    /**
+     * @throws HttpException
+     */
     protected function route(): void
     {
         $this->apiMethodInfo = $o = Router::find(
@@ -247,7 +265,7 @@ abstract class Core
             $extension = explode('/', $extension);
             $extension = array_shift($extension);
             if ($extension && isset(Router::$formatMap[$extension])) {
-                $format = new Router::$formatMap[$extension];
+                $format = $this->make(Router::$formatMap[$extension]);
                 $format->extension($extension);
                 return $format;
             }
@@ -257,7 +275,7 @@ abstract class Core
             $acceptList = Util::sortByPriority($acceptHeader);
             foreach ($acceptList as $accept => $quality) {
                 if (isset(Router::$formatMap[$accept])) {
-                    $format = new Router::$formatMap[$accept];
+                    $format = $this->make(Router::$formatMap[$accept]);
                     $format->mediaType($accept);
                     // Tell cache content is based on Accept header
                     $this->responseHeaders['Vary'] = 'Accept';
@@ -277,7 +295,7 @@ abstract class Core
                                 18 + strlen(Defaults::$apiVendor)));
                             if ($version >= Router::$minimumVersion && $version <= Router::$maximumVersion) {
                                 $this->requestedApiVersion = $version;
-                                $format = new Router::$formatMap[$extension];
+                                $format = $this->make(Router::$formatMap[$extension]);
                                 $format->extension($extension);
                                 Defaults::$useVendorMIMEVersioning = true;
                                 $this->responseHeaders['Vary'] = 'Accept';
@@ -296,11 +314,11 @@ abstract class Core
         }
         if (strpos($acceptHeader, '*') !== false) {
             if (false !== strpos($acceptHeader, 'application/*')) {
-                $format = new Json();
+                $format = $this->make(Json::class);
             } elseif (false !== strpos($acceptHeader, 'text/*')) {
-                $format = new Xml();
+                $format = $this->make(Xml::class);
             } elseif (false !== strpos($acceptHeader, '*/*')) {
-                $format = new Router::$formatMap['default'];
+                $format = $this->make(Router::$formatMap['default']);
             }
         }
         if (empty($format)) {
@@ -308,7 +326,7 @@ abstract class Core
             // server cannot send a response which is acceptable according to
             // the combined Accept field value, then the server SHOULD send
             // a 406 (not acceptable) response.
-            $format = new Router::$formatMap['default'];
+            $format = $this->make(Router::$formatMap['default']);
             $this->responseFormat = $format;
             throw new HttpException(
                 406,
@@ -411,7 +429,7 @@ abstract class Core
         $filterClasses = $postAuth ? Router::$postAuthFilterClasses : Router::$preAuthFilterClasses;
         foreach ($filterClasses as $filerClass) {
             /** @var FilterInterface $filter */
-            $filter = $this->init(new $filerClass);
+            $filter = $this->make($filerClass);
             if (!$filter->__isAllowed($request, $this->responseHeaders)) {
                 throw new HttpException(403);
             }
@@ -440,7 +458,7 @@ abstract class Core
                     /**
                      * @var AuthenticationInterface
                      */
-                    $authObj = $this->init(new $authClass);
+                    $authObj = $this->make($authClass);
                     if (!$authObj->__isAllowed($request, $this->responseHeaders)) {
                         throw new HttpException(401);
                     }
@@ -481,13 +499,13 @@ abstract class Core
                 || $info['validate'] != false
             ) {
                 if (isset($info['method'])) {
-                    $info ['apiClassInstance'] = new $o->className;
+                    $info ['apiClassInstance'] = $this->make($o->className);
                 }
                 //convert to instance of ValidationInfo
                 $info = new ValidationInfo($param);
                 //initialize validator
-                $this->init(new Defaults::$validatorClass);
                 $validator = Defaults::$validatorClass;
+                $this->make($validator);
                 //if(!is_subclass_of($validator, 'Luracast\\Restler\\Data\\iValidate')) {
                 //changed the above test to below for addressing this php bug
                 //https://bugs.php.net/bug.php?id=53727
@@ -514,7 +532,7 @@ abstract class Core
     {
         $o = &$this->apiMethodInfo;
         $accessLevel = max(Defaults::$apiAccessLevel, $o->accessLevel);
-        $object = new $o->className;
+        $object = $this->make($o->className);
         switch ($accessLevel) {
             case 3 : //protected method
                 $reflectionMethod = new \ReflectionMethod(
@@ -621,7 +639,7 @@ abstract class Core
         /**
          * @var iCompose Default Composer
          */
-        $compose = new Defaults::$composeClass;
+        $compose = $this->make(Defaults::$composeClass);
         return $compose->message($e);
     }
 
