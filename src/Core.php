@@ -1,6 +1,7 @@
 <?php namespace Luracast\Restler;
 
 use Illuminate\Contracts\Container\Container as ContainerContract;
+use Luracast\Config\Config;
 use Luracast\Restler\Contracts\AuthenticationInterface;
 use Luracast\Restler\Contracts\FilterInterface;
 use Luracast\Restler\Contracts\RequestMediaTypeInterface;
@@ -55,11 +56,16 @@ abstract class Core
      * @var ContainerContract
      */
     private $container;
+    /**
+     * @var Config
+     */
+    private $config;
 
 
-    public function __construct(ContainerContract $container)
+    public function __construct(ContainerContract $container, Config $config)
     {
         $this->container = $container;
+        $this->config = $config;
     }
 
     public function make($className)
@@ -116,13 +122,13 @@ abstract class Core
         //parse defaults
         //TODO: copy all properties of defaults and apply changes there
         foreach ($get as $key => $value) {
-            if (isset(Defaults::$aliases[$key])) {
+            if ($alias = $this->config['defaults.aliases.' . $key]) {
                 unset($get[$key]);
-                $get[Defaults::$aliases[$key]] = $value;
-                $key = Defaults::$aliases[$key];
+                $get[$alias] = $value;
+                $key = $alias;
             }
-            if (in_array($key, Defaults::$overridables)) {
-                Defaults::setProperty($key, $value);
+            if ($this->config['defaults.overridables.' . $key]) {
+                $this->config['defaults.' . $key] = $value;
             }
         }
         return $get;
@@ -184,8 +190,8 @@ abstract class Core
             */
 
             $r = is_array($r)
-                ? array_merge($r, array(Defaults::$fullRequestDataName => $r))
-                : array(Defaults::$fullRequestDataName => $r);
+                ? array_merge($r, array($this->config['defaults.fullRequestDataName'] => $r))
+                : array($this->config['defaults.fullRequestDataName'] => $r);
         }
         return $r;
     }
@@ -203,10 +209,10 @@ abstract class Core
         );
         //set defaults based on api method comments
         if (isset($o->metadata)) {
-            foreach (Defaults::$fromComments as $key => $defaultsKey) {
+            foreach ($this->config['defaults.fromComments'] as $key => $defaultsKey) {
                 if (array_key_exists($key, $o->metadata)) {
                     $value = $o->metadata[$key];
-                    Defaults::setProperty($defaultsKey, $value);
+                    $this->config['defaults.' . $defaultsKey] = $value;
                 }
             }
         }
@@ -283,21 +289,21 @@ abstract class Core
 
                 } elseif (false !== ($index = strrpos($accept, '+'))) {
                     $mime = substr($accept, 0, $index);
-                    if (is_string(Defaults::$apiVendor)
+                    if (is_string($this->config['defaults.apiVendor'])
                         && 0 === stripos($mime,
                             'application/vnd.'
-                            . Defaults::$apiVendor . '-v')
+                            . $this->config['defaults.apiVendor'] . '-v')
                     ) {
                         $extension = substr($accept, $index + 1);
                         if (isset(Router::$formatMap[$extension])) {
                             //check the MIME and extract version
                             $version = intval(substr($mime,
-                                18 + strlen(Defaults::$apiVendor)));
+                                18 + strlen($this->config['defaults.apiVendor'])));
                             if ($version >= Router::$minimumVersion && $version <= Router::$maximumVersion) {
                                 $this->requestedApiVersion = $version;
                                 $format = $this->make(Router::$formatMap[$extension]);
                                 $format->extension($extension);
-                                Defaults::$useVendorMIMEVersioning = true;
+                                $this->config['defaults.useVendorMIMEVersioning'] = true;
                                 $this->responseHeaders['Vary'] = 'Accept';
                                 return $format;
                             }
@@ -340,24 +346,31 @@ abstract class Core
         }
     }
 
+    /**
+     * @param string $requestMethod
+     * @param string $accessControlRequestMethod
+     * @param string $accessControlRequestHeaders
+     * @param string $origin
+     * @throws HttpException
+     */
     protected function negotiateCORS(
         string $requestMethod,
         string $accessControlRequestMethod = '',
         string $accessControlRequestHeaders = '',
         string $origin = ''
     ): void {
-        if (Defaults::$crossOriginResourceSharing || $requestMethod != 'OPTIONS') {
+        if ($this->config['defaults.crossOriginResourceSharing'] || $requestMethod != 'OPTIONS') {
             return;
         }
         if (!empty($accessControlRequestMethod)) {
-            $this->responseHeaders['Access-Control-Allow-Methods'] = Defaults::$accessControlAllowMethods;
+            $this->responseHeaders['Access-Control-Allow-Methods'] = $this->config['defaults.accessControlAllowMethods'];
         }
         if (!empty($accessControlRequestHeaders)) {
             $this->responseHeaders['Access-Control-Allow-Headers'] = $accessControlRequestHeaders;
         }
         $this->responseHeaders['Access-Control-Allow-Origin'] =
-            Defaults::$accessControlAllowOrigin == '*' && !empty($origin)
-                ? $origin : Defaults::$accessControlAllowOrigin;
+            $this->config['defaults.accessControlAllowOrigin'] == '*' && !empty($origin)
+                ? $origin : $this->config['defaults.accessControlAllowOrigin'];
         $this->responseHeaders['Access-Control-Allow-Credentials'] = 'true';
         $e = new HttpException(200);
         $e->emptyMessageBody = true;
@@ -374,9 +387,9 @@ abstract class Core
             $found = false;
             $charList = Util::sortByPriority($acceptCharset);
             foreach ($charList as $charset => $quality) {
-                if (in_array($charset, Defaults::$supportedCharsets)) {
+                if (in_array($charset, $this->config['defaults.supportedCharsets'])) {
                     $found = true;
-                    Defaults::$charset = $charset;
+                    $this->config['defaults.charset'] = $charset;
                     break;
                 }
             }
@@ -400,10 +413,10 @@ abstract class Core
             $found = false;
             $langList = Util::sortByPriority($acceptLanguage);
             foreach ($langList as $lang => $quality) {
-                foreach (Defaults::$supportedLanguages as $supported) {
+                foreach ($this->config['defaults.supportedLanguages'] as $supported) {
                     if (strcasecmp($supported, $lang) == 0) {
                         $found = true;
-                        Defaults::$language = $supported;
+                        $this->config['defaults.language'] = $supported;
                         break 2;
                     }
                 }
@@ -444,7 +457,7 @@ abstract class Core
     protected function authenticate(ServerRequestInterface $request)
     {
         $o = &$this->apiMethodInfo;
-        $accessLevel = max(Defaults::$apiAccessLevel, $o->accessLevel);
+        $accessLevel = max($this->config['defaults.apiAccessLevel'], $o->accessLevel);
         if ($accessLevel) {
             if (!count(Router::$authClasses) && $accessLevel > 1) {
                 throw new HttpException(
@@ -488,7 +501,7 @@ abstract class Core
 
     protected function validate()
     {
-        if (!Defaults::$autoValidationEnabled) {
+        if (!$this->config['defaults.autoValidationEnabled']) {
             return;
         }
 
@@ -504,7 +517,7 @@ abstract class Core
                 //convert to instance of ValidationInfo
                 $info = new ValidationInfo($param);
                 //initialize validator
-                $validator = Defaults::$validatorClass;
+                $validator = $this->config['defaults.validatorClass'];
                 $this->make($validator);
                 //if(!is_subclass_of($validator, 'Luracast\\Restler\\Data\\iValidate')) {
                 //changed the above test to below for addressing this php bug
@@ -531,7 +544,7 @@ abstract class Core
     protected function call()
     {
         $o = &$this->apiMethodInfo;
-        $accessLevel = max(Defaults::$apiAccessLevel, $o->accessLevel);
+        $accessLevel = max($this->config['defaults.apiAccessLevel'], $o->accessLevel);
         $object = $this->make($o->className);
         switch ($accessLevel) {
             case 3 : //protected method
@@ -560,15 +573,15 @@ abstract class Core
     protected function composeHeaders(?ApiMethodInfo $info, string $origin = '', RestException $e = null): void
     {
         //only GET method should be cached if allowed by API developer
-        $expires = $this->requestMethod == 'GET' ? Defaults::$headerExpires : 0;
-        if (!is_array(Defaults::$headerCacheControl)) {
-            Defaults::$headerCacheControl = [Defaults::$headerCacheControl];
+        $expires = $this->requestMethod == 'GET' ? $this->config['defaults.headerExpires'] : 0;
+        if (!is_array($this->config['defaults.headerCacheControl'])) {
+            $this->config['defaults.headerCacheControl'] = [$this->config['defaults.headerCacheControl']];
         }
-        $cacheControl = Defaults::$headerCacheControl[0];
+        $cacheControl = $this->config['defaults.headerCacheControl.0'];
         if ($expires > 0) {
             $cacheControl = !isset($this->apiMethodInfo->accessLevel) || $this->apiMethodInfo->accessLevel
                 ? 'private, ' : 'public, ';
-            $cacheControl .= end(Defaults::$headerCacheControl);
+            $cacheControl .= end($this->config['defaults.headerCacheControl']);
             $cacheControl = str_replace('{expires}', $expires, $cacheControl);
             $expires = gmdate('D, d M Y H:i:s \G\M\T', time() + $expires);
         }
@@ -576,17 +589,18 @@ abstract class Core
         $this->responseHeaders['Expires'] = $expires;
         $this->responseHeaders['X-Powered-By'] = 'Luracast Restler v' . static::VERSION;
 
-        if (Defaults::$crossOriginResourceSharing
+        if ($this->config['defaults.crossOriginResourceSharing']
             && !empty($origin)
         ) {
-            $this->responseHeaders['Access-Control-Allow-Origin'] = Defaults::$accessControlAllowOrigin == '*'
+            $this->responseHeaders['Access-Control-Allow-Origin']
+                = $this->config['defaults.accessControlAllowOrigin'] == '*'
                 ? $origin
-                : Defaults::$accessControlAllowOrigin;
+                : $this->config['defaults.accessControlAllowOrigin'];
             $this->responseHeaders['Access-Control-Allow-Credentials'] = 'true';
             $this->responseHeaders['Access-Control-Max-Age'] = 86400;
         }
 
-        $this->responseHeaders['Content-Language'] = Defaults::$language;
+        $this->responseHeaders['Content-Language'] = $this->config['defaults.language'];
 
         if (isset($info->metadata['header'])) {
             foreach ($info->metadata['header'] as $header) {
@@ -596,7 +610,7 @@ abstract class Core
         }
 
         $code = 200;
-        if (!Defaults::$suppressResponseCode) {
+        if (!$this->config['defaults.suppressResponseCode']) {
             if ($e) {
                 $code = $e->getCode();
             } elseif (!$this->responseCode && isset($info->metadata['status'])) {
@@ -604,13 +618,13 @@ abstract class Core
             }
         }
         $this->responseCode = $code;
-        $this->responseFormat->charset(Defaults::$charset);
+        $this->responseFormat->charset($this->config['defaults.charset']);
         $charset = $this->responseFormat->charset()
-            ?: Defaults::$charset;
+            ?: $this->config['defaults.charset'];
 
         $this->responseHeaders['Content-Type'] = (
-            Defaults::$useVendorMIMEVersioning
-                ? 'application/vnd.' . Defaults::$apiVendor
+            $this->config['defaults.useVendorMIMEVersioning']
+                ? 'application/vnd.' . $this->config['defaults.apiVendor']
                 . "-v{$this->requestedApiVersion}+"
                 . $this->responseFormat->extension()
                 : $this->responseFormat->mediaType())
@@ -639,7 +653,7 @@ abstract class Core
         /**
          * @var iCompose Default Composer
          */
-        $compose = $this->make(Defaults::$composeClass);
+        $compose = $this->make($this->config['defaults.composeClass']);
         return $compose->message($e);
     }
 
