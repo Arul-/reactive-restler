@@ -8,7 +8,7 @@
     "react/http": "^0.7.4",
     "restler/framework": "3.0-RC6",
     "illuminate/container": "^5.5",
-    "luracast/config": "^2.0"
+    "illuminate/config": "^5.5"
   },
   "require-dev": {
     "behat/behat": "~3",

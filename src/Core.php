@@ -1,7 +1,7 @@
 <?php namespace Luracast\Restler;
 
 use Illuminate\Contracts\Container\Container as ContainerContract;
-use Luracast\Config\Config;
+use Illuminate\Config\Repository as Config;
 use Luracast\Restler\Contracts\AuthenticationInterface;
 use Luracast\Restler\Contracts\FilterInterface;
 use Luracast\Restler\Contracts\RequestMediaTypeInterface;
@@ -116,6 +116,11 @@ abstract class Core
         );
     }
 
+    /**
+     * @param array $get
+     * @return array
+     * @throws \Exception
+     */
     protected function getQuery(array $get = []): array
     {
         $get = UrlEncoded::decoderTypeFix($get);
@@ -127,7 +132,11 @@ abstract class Core
                 $get[$alias] = $value;
                 $key = $alias;
             }
-            if ($this->config['defaults.overridables.' . $key]) {
+            if (in_array($key, $this->config['defaults.overridables'])) {
+                if (@is_array(Defaults::$validation[$key])) {
+                    $info = new ValidationInfo(Defaults::$validation[$key]);
+                    $value = Validator::validate($value, $info);
+                }
                 $this->config['defaults.' . $key] = $value;
             }
         }
@@ -198,6 +207,7 @@ abstract class Core
 
     /**
      * @throws HttpException
+     * @throws \Exception
      */
     protected function route(): void
     {
@@ -213,6 +223,11 @@ abstract class Core
                 if (array_key_exists($key, $o->metadata)) {
                     $value = $o->metadata[$key];
                     $this->config['defaults.' . $defaultsKey] = $value;
+                    if (@is_array(Defaults::$validation[$key])) {
+                        $info = new ValidationInfo(Defaults::$validation[$key]);
+                        $value = Validator::validate($value, $info);
+                    }
+                    $this->config['defaults.' . $key] = $value;
                 }
             }
         }

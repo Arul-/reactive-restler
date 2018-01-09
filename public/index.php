@@ -1,7 +1,7 @@
 <?php declare(strict_types=1);
 
 use Illuminate\Container\Container;
-use Luracast\Config\Config;
+use Illuminate\Config\Repository as Config;
 use Luracast\Restler\Defaults;
 use Luracast\Restler\Filters\RateLimiter;
 use Luracast\Restler\MediaTypes\Json;
@@ -92,7 +92,7 @@ $server = new Server(function (ServerRequestInterface $request) {
 
         $request->getBody()->on('end', function () use ($request, $resolve, &$content) {
             $container = new Container();
-            $config = new Config(BASE . '/config');
+            $config = new Config(); //new Config(BASE . '/config');
             $config['defaults'] = get_class_vars(Defaults::class);
                 /*
                 array_replace_recursive(
