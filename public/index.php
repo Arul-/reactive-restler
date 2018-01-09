@@ -1,5 +1,6 @@
 <?php declare(strict_types=1);
 
+use Illuminate\Container\Container;
 use Luracast\Restler\Defaults;
 use Luracast\Restler\Filters\RateLimiter;
 use Luracast\Restler\MediaTypes\Json;
@@ -89,7 +90,9 @@ $server = new Server(function (ServerRequestInterface $request) {
         });
 
         $request->getBody()->on('end', function () use ($request, $resolve, &$content) {
-            $h = new Reactler();
+            $c = new Container();
+            $h = new Reactler($c);
+            $request = $request->withAttribute('reactler', $h);
             Scope::set('Restler', $h);
             $resolve($h->handle($request, new Response(), $content));
         });
