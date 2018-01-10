@@ -34,12 +34,18 @@ define('DATA_STORE_IMPLEMENTATION', ArrayDB::class);
 //$instance = new $class('db2');
 
 
-class ResetDB
+class ResetForTests
 {
     function put()
     {
+        //reset database
         $class = DATA_STORE_IMPLEMENTATION;
         $class::reset();
+        //reset cache
+        $folder = BASE . '/api/common/store/';
+        foreach (glob($folder . "*.php") as $filename) {
+            unlink($filename);
+        }
     }
 }
 
@@ -49,7 +55,7 @@ RateLimiter::$includedPaths = ['examples/_009_rate_limiting'];
 try {
     Router::mapApiClasses([
         //clean up db for tests
-        ResetDB::class => '__cleanup_db',
+        ResetForTests::class => '__cleanup_db',
         //examples
         Say::class => 'examples/_001_helloworld/say',
         Math::class => 'examples/_002_minimal/math',
@@ -94,12 +100,12 @@ $server = new Server(function (ServerRequestInterface $request) {
             $container = new Container();
             //$config = new Config(); //new Config(BASE . '/config');
             //$config['defaults'] = get_class_vars(Defaults::class);
-                /*
-                array_replace_recursive(
-                get_class_vars(Defaults::class),
-                $config['app']
-            ); */
-            $h = new Reactler($container,[]);//, $config);
+            /*
+            array_replace_recursive(
+            get_class_vars(Defaults::class),
+            $config['app']
+        ); */
+            $h = new Reactler($container, []);//, $config);
             $request = $request->withAttribute('reactler', $h);
             Scope::set('Restler', $h);
             $resolve($h->handle($request, new Response(), $content));
