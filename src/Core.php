@@ -16,6 +16,7 @@ use Luracast\Restler\MediaTypes\Xml;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Throwable;
+use TypeError;
 
 abstract class Core
 {
@@ -66,11 +67,17 @@ abstract class Core
     private $defaults;
 
 
-    public function __construct(ContainerInterface $container, iterable $config = [])
+    /**
+     * Core constructor.
+     * @param ContainerInterface $container
+     * @param array $config
+     * @throws TypeError
+     */
+    public function __construct(ContainerInterface $container, $config = [])
     {
         $this->container = $container;
         if (!is_array($config) && !$config instanceof ArrayAccess) {
-            $config = iterator_to_array($config);
+            throw new TypeError('Argument 2 passed to ' . __CLASS__ . '::__construct() must be an array or implement ArrayAccess');
         }
         $this->config = $config ?? [];
         $config['defaults'] = $this->defaults = $config['defaults']
@@ -79,7 +86,7 @@ abstract class Core
 
     public function make($className)
     {
-        return $this->init($this->container->make($className));
+        return $this->init($this->container->make($className, (array)$this->config));
     }
 
     public function init($instance)
