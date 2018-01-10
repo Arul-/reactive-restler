@@ -92,14 +92,14 @@ $server = new Server(function (ServerRequestInterface $request) {
 
         $request->getBody()->on('end', function () use ($request, $resolve, &$content) {
             $container = new Container();
-            $config = new Config(); //new Config(BASE . '/config');
-            $config['defaults'] = get_class_vars(Defaults::class);
+            //$config = new Config(); //new Config(BASE . '/config');
+            //$config['defaults'] = get_class_vars(Defaults::class);
                 /*
                 array_replace_recursive(
                 get_class_vars(Defaults::class),
                 $config['app']
             ); */
-            $h = new Reactler($container, $config);
+            $h = new Reactler($container,[]);//, $config);
             $request = $request->withAttribute('reactler', $h);
             Scope::set('Restler', $h);
             $resolve($h->handle($request, new Response(), $content));

@@ -1,7 +1,7 @@
 <?php namespace Luracast\Restler;
 
-use Illuminate\Contracts\Container\Container as ContainerContract;
-use Illuminate\Config\Repository as Config;
+use ArrayAccess;
+use Illuminate\Contracts\Container\Container as ContainerInterface;
 use Luracast\Restler\Contracts\AuthenticationInterface;
 use Luracast\Restler\Contracts\FilterInterface;
 use Luracast\Restler\Contracts\RequestMediaTypeInterface;
@@ -53,19 +53,28 @@ abstract class Core
     protected $responseHeaders = [];
     protected $responseCode = null;
     /**
-     * @var ContainerContract
+     * @var ContainerInterface
      */
     private $container;
     /**
-     * @var Config
+     * @var ArrayAccess
      */
     private $config;
+    /**
+     * @var ArrayAccess
+     */
+    private $defaults;
 
 
-    public function __construct(ContainerContract $container, Config $config)
+    public function __construct(ContainerInterface $container, iterable $config = [])
     {
         $this->container = $container;
-        $this->config = $config;
+        if (!is_array($config) && !$config instanceof ArrayAccess) {
+            $config = iterator_to_array($config);
+        }
+        $this->config = $config ?? [];
+        $config['defaults'] = $this->defaults = $config['defaults']
+            ?? get_class_vars(Defaults::class);
     }
 
     public function make($className)
@@ -127,17 +136,17 @@ abstract class Core
         //parse defaults
         //TODO: copy all properties of defaults and apply changes there
         foreach ($get as $key => $value) {
-            if ($alias = $this->config['defaults.aliases.' . $key]) {
+            if ($alias = $this->defaults['aliases'][$key] ?? false) {
                 unset($get[$key]);
                 $get[$alias] = $value;
                 $key = $alias;
             }
-            if (in_array($key, $this->config['defaults.overridables'])) {
+            if (in_array($key, $this->defaults['overridables'])) {
                 if (@is_array(Defaults::$validation[$key])) {
                     $info = new ValidationInfo(Defaults::$validation[$key]);
                     $value = Validator::validate($value, $info);
                 }
-                $this->config['defaults.' . $key] = $value;
+                $this->defaults[$key] = $value;
             }
         }
         return $get;
@@ -199,8 +208,8 @@ abstract class Core
             */
 
             $r = is_array($r)
-                ? array_merge($r, array($this->config['defaults.fullRequestDataName'] => $r))
-                : array($this->config['defaults.fullRequestDataName'] => $r);
+                ? array_merge($r, array($this->defaults['fullRequestDataName'] => $r))
+                : array($this->defaults['fullRequestDataName'] => $r);
         }
         return $r;
     }
@@ -219,15 +228,15 @@ abstract class Core
         );
         //set defaults based on api method comments
         if (isset($o->metadata)) {
-            foreach ($this->config['defaults.fromComments'] as $key => $defaultsKey) {
+            foreach ($this->defaults['fromComments'] as $key => $defaultsKey) {
                 if (array_key_exists($key, $o->metadata)) {
                     $value = $o->metadata[$key];
-                    $this->config['defaults.' . $defaultsKey] = $value;
+                    $this->defaults[$defaultsKey] = $value;
                     if (@is_array(Defaults::$validation[$key])) {
                         $info = new ValidationInfo(Defaults::$validation[$key]);
                         $value = Validator::validate($value, $info);
                     }
-                    $this->config['defaults.' . $key] = $value;
+                    $this->defaults[$key] = $value;
                 }
             }
         }
@@ -304,21 +313,21 @@ abstract class Core
 
                 } elseif (false !== ($index = strrpos($accept, '+'))) {
                     $mime = substr($accept, 0, $index);
-                    if (is_string($this->config['defaults.apiVendor'])
+                    if (is_string($this->defaults['apiVendor'])
                         && 0 === stripos($mime,
                             'application/vnd.'
-                            . $this->config['defaults.apiVendor'] . '-v')
+                            . $this->defaults['apiVendor'] . '-v')
                     ) {
                         $extension = substr($accept, $index + 1);
                         if (isset(Router::$formatMap[$extension])) {
                             //check the MIME and extract version
                             $version = intval(substr($mime,
-                                18 + strlen($this->config['defaults.apiVendor'])));
+                                18 + strlen($this->defaults['apiVendor'])));
                             if ($version >= Router::$minimumVersion && $version <= Router::$maximumVersion) {
                                 $this->requestedApiVersion = $version;
                                 $format = $this->make(Router::$formatMap[$extension]);
                                 $format->extension($extension);
-                                $this->config['defaults.useVendorMIMEVersioning'] = true;
+                                $this->defaults['useVendorMIMEVersioning'] = true;
                                 $this->responseHeaders['Vary'] = 'Accept';
                                 return $format;
                             }
@@ -374,18 +383,18 @@ abstract class Core
         string $accessControlRequestHeaders = '',
         string $origin = ''
     ): void {
-        if ($this->config['defaults.crossOriginResourceSharing'] || $requestMethod != 'OPTIONS') {
+        if ($this->defaults['crossOriginResourceSharing'] || $requestMethod != 'OPTIONS') {
             return;
         }
         if (!empty($accessControlRequestMethod)) {
-            $this->responseHeaders['Access-Control-Allow-Methods'] = $this->config['defaults.accessControlAllowMethods'];
+            $this->responseHeaders['Access-Control-Allow-Methods'] = $this->defaults['accessControlAllowMethods'];
         }
         if (!empty($accessControlRequestHeaders)) {
             $this->responseHeaders['Access-Control-Allow-Headers'] = $accessControlRequestHeaders;
         }
         $this->responseHeaders['Access-Control-Allow-Origin'] =
-            $this->config['defaults.accessControlAllowOrigin'] == '*' && !empty($origin)
-                ? $origin : $this->config['defaults.accessControlAllowOrigin'];
+            $this->defaults['accessControlAllowOrigin'] == '*' && !empty($origin)
+                ? $origin : $this->defaults['accessControlAllowOrigin'];
         $this->responseHeaders['Access-Control-Allow-Credentials'] = 'true';
         $e = new HttpException(200);
         $e->emptyMessageBody = true;
@@ -402,9 +411,9 @@ abstract class Core
             $found = false;
             $charList = Util::sortByPriority($acceptCharset);
             foreach ($charList as $charset => $quality) {
-                if (in_array($charset, $this->config['defaults.supportedCharsets'])) {
+                if (in_array($charset, $this->defaults['supportedCharsets'])) {
                     $found = true;
-                    $this->config['defaults.charset'] = $charset;
+                    $this->defaults['charset'] = $charset;
                     break;
                 }
             }
@@ -428,10 +437,10 @@ abstract class Core
             $found = false;
             $langList = Util::sortByPriority($acceptLanguage);
             foreach ($langList as $lang => $quality) {
-                foreach ($this->config['defaults.supportedLanguages'] as $supported) {
+                foreach ($this->defaults['supportedLanguages'] as $supported) {
                     if (strcasecmp($supported, $lang) == 0) {
                         $found = true;
-                        $this->config['defaults.language'] = $supported;
+                        $this->defaults['language'] = $supported;
                         break 2;
                     }
                 }
@@ -472,7 +481,7 @@ abstract class Core
     protected function authenticate(ServerRequestInterface $request)
     {
         $o = &$this->apiMethodInfo;
-        $accessLevel = max($this->config['defaults.apiAccessLevel'], $o->accessLevel);
+        $accessLevel = max($this->defaults['apiAccessLevel'], $o->accessLevel);
         if ($accessLevel) {
             if (!count(Router::$authClasses) && $accessLevel > 1) {
                 throw new HttpException(
@@ -516,7 +525,7 @@ abstract class Core
 
     protected function validate()
     {
-        if (!$this->config['defaults.autoValidationEnabled']) {
+        if (!$this->defaults['autoValidationEnabled']) {
             return;
         }
 
@@ -532,7 +541,7 @@ abstract class Core
                 //convert to instance of ValidationInfo
                 $info = new ValidationInfo($param);
                 //initialize validator
-                $validator = $this->config['defaults.validatorClass'];
+                $validator = $this->defaults['validatorClass'];
                 $this->make($validator);
                 //if(!is_subclass_of($validator, 'Luracast\\Restler\\Data\\iValidate')) {
                 //changed the above test to below for addressing this php bug
@@ -559,7 +568,7 @@ abstract class Core
     protected function call()
     {
         $o = &$this->apiMethodInfo;
-        $accessLevel = max($this->config['defaults.apiAccessLevel'], $o->accessLevel);
+        $accessLevel = max($this->defaults['apiAccessLevel'], $o->accessLevel);
         $object = $this->make($o->className);
         switch ($accessLevel) {
             case 3 : //protected method
@@ -588,15 +597,15 @@ abstract class Core
     protected function composeHeaders(?ApiMethodInfo $info, string $origin = '', RestException $e = null): void
     {
         //only GET method should be cached if allowed by API developer
-        $expires = $this->requestMethod == 'GET' ? $this->config['defaults.headerExpires'] : 0;
-        if (!is_array($this->config['defaults.headerCacheControl'])) {
-            $this->config['defaults.headerCacheControl'] = [$this->config['defaults.headerCacheControl']];
+        $expires = $this->requestMethod == 'GET' ? $this->defaults['headerExpires'] : 0;
+        if (!is_array($this->defaults['headerCacheControl'])) {
+            $this->defaults['headerCacheControl'] = [$this->defaults['headerCacheControl']];
         }
-        $cacheControl = $this->config['defaults.headerCacheControl.0'];
+        $cacheControl = $this->defaults['headerCacheControl'][0];
         if ($expires > 0) {
             $cacheControl = !isset($this->apiMethodInfo->accessLevel) || $this->apiMethodInfo->accessLevel
                 ? 'private, ' : 'public, ';
-            $cacheControl .= end($this->config['defaults.headerCacheControl']);
+            $cacheControl .= end($this->defaults['headerCacheControl']);
             $cacheControl = str_replace('{expires}', $expires, $cacheControl);
             $expires = gmdate('D, d M Y H:i:s \G\M\T', time() + $expires);
         }
@@ -604,18 +613,18 @@ abstract class Core
         $this->responseHeaders['Expires'] = $expires;
         $this->responseHeaders['X-Powered-By'] = 'Luracast Restler v' . static::VERSION;
 
-        if ($this->config['defaults.crossOriginResourceSharing']
+        if ($this->defaults['crossOriginResourceSharing']
             && !empty($origin)
         ) {
             $this->responseHeaders['Access-Control-Allow-Origin']
-                = $this->config['defaults.accessControlAllowOrigin'] == '*'
+                = $this->defaults['accessControlAllowOrigin'] == '*'
                 ? $origin
-                : $this->config['defaults.accessControlAllowOrigin'];
+                : $this->defaults['accessControlAllowOrigin'];
             $this->responseHeaders['Access-Control-Allow-Credentials'] = 'true';
             $this->responseHeaders['Access-Control-Max-Age'] = 86400;
         }
 
-        $this->responseHeaders['Content-Language'] = $this->config['defaults.language'];
+        $this->responseHeaders['Content-Language'] = $this->defaults['language'];
 
         if (isset($info->metadata['header'])) {
             foreach ($info->metadata['header'] as $header) {
@@ -625,7 +634,7 @@ abstract class Core
         }
 
         $code = 200;
-        if (!$this->config['defaults.suppressResponseCode']) {
+        if (!$this->defaults['suppressResponseCode']) {
             if ($e) {
                 $code = $e->getCode();
             } elseif (!$this->responseCode && isset($info->metadata['status'])) {
@@ -633,13 +642,13 @@ abstract class Core
             }
         }
         $this->responseCode = $code;
-        $this->responseFormat->charset($this->config['defaults.charset']);
+        $this->responseFormat->charset($this->defaults['charset']);
         $charset = $this->responseFormat->charset()
-            ?: $this->config['defaults.charset'];
+            ?: $this->defaults['charset'];
 
         $this->responseHeaders['Content-Type'] = (
-            $this->config['defaults.useVendorMIMEVersioning']
-                ? 'application/vnd.' . $this->config['defaults.apiVendor']
+            $this->defaults['useVendorMIMEVersioning']
+                ? 'application/vnd.' . $this->defaults['apiVendor']
                 . "-v{$this->requestedApiVersion}+"
                 . $this->responseFormat->extension()
                 : $this->responseFormat->mediaType())
@@ -668,7 +677,7 @@ abstract class Core
         /**
          * @var iCompose Default Composer
          */
-        $compose = $this->make($this->config['defaults.composeClass']);
+        $compose = $this->make($this->defaults['composeClass']);
         return $compose->message($e);
     }
 
