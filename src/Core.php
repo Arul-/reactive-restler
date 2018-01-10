@@ -1,20 +1,19 @@
 <?php namespace Luracast\Restler;
 
 use ArrayAccess;
-use Illuminate\Contracts\Container\Container as ContainerInterface;
-use Luracast\Restler\Contracts\AuthenticationInterface;
-use Luracast\Restler\Contracts\FilterInterface;
-use Luracast\Restler\Contracts\RequestMediaTypeInterface;
-use Luracast\Restler\Contracts\ResponseMediaTypeInterface;
-use Luracast\Restler\Contracts\UsesAuthenticationInterface;
-use Luracast\Restler\Data\ApiMethodInfo;
-use Luracast\Restler\Data\ValidationInfo;
-use Luracast\Restler\Data\Validator;
-use Luracast\Restler\MediaTypes\Json;
-use Luracast\Restler\MediaTypes\UrlEncoded;
-use Luracast\Restler\MediaTypes\Xml;
-use Psr\Http\Message\ResponseInterface;
-use Psr\Http\Message\ServerRequestInterface;
+use Luracast\Restler\Contracts\{
+    AuthenticationInterface, ContainerInterface, FilterInterface, RequestMediaTypeInterface, ResponseMediaTypeInterface, UsesAuthenticationInterface
+};
+use Luracast\Restler\Data\{
+    ApiMethodInfo, ValidationInfo, Validator
+};
+use Luracast\Restler\MediaTypes\{
+    Json, UrlEncoded, Xml
+};
+use Psr\{
+    Http\Message\ResponseInterface,
+    Http\Message\ServerRequestInterface
+};
 use Throwable;
 use TypeError;
 
@@ -73,7 +72,7 @@ abstract class Core
      * @param array $config
      * @throws TypeError
      */
-    public function __construct(ContainerInterface $container, $config = [])
+    public function __construct(ContainerInterface $container, &$config = [])
     {
         $this->container = $container;
         if (!is_array($config) && !$config instanceof ArrayAccess) {
