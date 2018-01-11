@@ -18,7 +18,7 @@ class Container extends LaravelContainer implements ContainerInterface
     {
         $this->aliases = $aliases;
         $this->abstractAliases = $abstractAliases;
-        $this->config = $config;
+        $this->config = &$config;
     }
 
     public function has($id)
@@ -48,10 +48,11 @@ class Container extends LaravelContainer implements ContainerInterface
         }
 
         if ($parameter->isArray()) {
-            if ($value = &$config[$parameter->name] ?? false) {
+            if ($value = $this->config[$parameter->name] ?? false) {
                 return $value;
             } elseif ($class = $this->aliases[ucfirst($parameter->name)] ?? false) {
-                return $config[$parameter->name] = get_class_vars($class);
+                $value = $this->config[$parameter->name] = get_class_vars($class);
+                return $value;
             }
         }
         if ($parameter->isDefaultValueAvailable()) {
