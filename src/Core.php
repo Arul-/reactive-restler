@@ -33,7 +33,7 @@ abstract class Core
     /**
      * @var int
      */
-    protected $requestedApiVersion = 1;
+    public $requestedApiVersion = 1;
 
     protected $requestMethod = 'GET';
     /**
@@ -94,7 +94,13 @@ abstract class Core
         $config['app'] = $this->app = $config['app']
             ?? get_class_vars(App::class);
         $this->config = &$config;
+        foreach ($this->app['implementations'] as $abstract => $implementations) {
+            if (!isset($this->app['aliases'][$abstract])) {
+                $this->app['aliases'][$abstract] = $implementations[0];
+            }
+        }
         $this->container = $container ?? new Container($this->app['aliases'], $this->app['implementations'], $config);
+        $this->container->instance(Core::class, $this);
     }
 
     public function make($className)
@@ -240,6 +246,7 @@ abstract class Core
             $this->requestedApiVersion,
             $this->body + $this->query
         );
+        $this->container->instance(ApiMethodInfo::class, $o);
         //set defaults based on api method comments
         if (isset($o->metadata)) {
             foreach ($this->app['fromComments'] as $key => $property) {

@@ -109,6 +109,8 @@ class Reactler extends Core
         ResponseInterface $response,
         string $rawRequestBody = ''
     ): ResponseInterface {
+        $this->container->instance(ServerRequestInterface::class, $request);
+        $this->container->instance(ResponseInterface::class, $response);
         $this->rawRequestBody = $rawRequestBody;
         $this->requestMethod = $request->getMethod();
         $this->request = $request;
