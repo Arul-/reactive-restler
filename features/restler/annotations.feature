@@ -23,3 +23,16 @@ Feature: Annotations
   Scenario: @throttle should correctly delay the response
     When I request "/examples/_009_rate_limiting/authors"
     Then the response time should at least be 200 milliseconds
+
+  Scenario: Normal call should default to RateLimiter class static values
+    When I request "/examples/_009_rate_limiting/authors/1"
+    Then the response "X-RateLimit-Limit" header should be "10 per hour"
+
+  Scenario: @class RateLimiter properties should reflect in the header
+    When I request "/examples/_009_rate_limiting/authors"
+    Then the response "X-RateLimit-Limit" header should be "1 per second"
+
+  Scenario: Normal call should default to RateLimiter class static values
+    When I request "/examples/_009_rate_limiting/authors/1"
+    Then the response "X-RateLimit-Limit" header should be "10 per hour"
+
