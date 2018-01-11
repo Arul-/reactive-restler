@@ -2,6 +2,7 @@
 
 
 use Exception;
+use Luracast\Restler\Contracts\AccessControlInterface;
 use Luracast\Restler\Contracts\AuthenticationInterface;
 use Luracast\Restler\Contracts\FilterInterface;
 use Luracast\Restler\Contracts\MediaTypeInterface;
@@ -186,8 +187,8 @@ class Router
                     $className = $resourcePath;
                     $resourcePath = null;
                 }
-                if (isset(App::$classAliases[$className])) {
-                    $className = App::$classAliases[$className];
+                if (isset(App::$aliases[$className])) {
+                    $className = App::$aliases[$className];
                 }
                 if (class_exists($className)) {
                     if (method_exists($className, $maxVersionMethod)) {
@@ -219,7 +220,7 @@ class Router
                     $versionedClassName = str_replace('{$version}', $version,
                         $name);
                     if (class_exists($versionedClassName)) {
-                        Routes::addAPIClass($versionedClassName,
+                        static::addAPIClass($versionedClassName,
                             Util::getResourcePath(
                                 $className,
                                 $resourcePath
@@ -489,7 +490,7 @@ class Router
                             $match = trim($matches[0], '{}:');
                             $index = $copy['arguments'][$match];
                             return '{' .
-                                Routes::typeChar(isset(
+                                static::typeChar(isset(
                                     $copy['metadata']['param'][$index]['type'])
                                     ? $copy['metadata']['param'][$index]['type']
                                     : null)
@@ -555,9 +556,18 @@ class Router
      */
     public static function addAuthenticator(string $className, string $resourcePath = null)
     {
-        if (!isset(class_implements($className)[AuthenticationInterface::class])) {
-            throw new Exception($className . ' is an invalid authenticator class; it must implement ' .
+        $implements = class_implements($className);
+        if (!isset($implements[AuthenticationInterface::class])) {
+            throw new Exception($className .
+                ' is an invalid authenticator class; it must implement ' .
                 'AuthenticationInterface.');
+        }
+        if (!in_array($className, App::$implementations[AuthenticationInterface::class])) {
+            App::$implementations[AuthenticationInterface::class][] = $className;
+        }
+        if (isset($implements[AccessControlInterface::class]) &&
+            !in_array($className, App::$implementations[AccessControlInterface::class])) {
+            App::$implementations[AccessControlInterface::class][] = $className;
         }
         static::$authClasses[] = $className;
         static::mapApiClasses([$className => $resourcePath]);
@@ -731,8 +741,20 @@ class Router
         }
     }
 
-    public static function findAll(array $excludedPaths = array(), array $excludedHttpMethods = array(), $version = 1)
-    {
+    /**
+     * @param array $excludedPaths
+     * @param array $excludedHttpMethods
+     * @param int $version
+     * @param bool $authenticated
+     * @return array
+     * @throws HttpException
+     */
+    public static function findAll(
+        array $excludedPaths = array(),
+        array $excludedHttpMethods = array(),
+        $version = 1,
+        $authenticated = false
+    ) {
         $map = array();
         $all = Util::nestedValue(self::$routes, "v$version");
         $filter = array();
@@ -758,8 +780,11 @@ class Router
                     $hash = "$httpMethod " . $route['url'];
                     if (!isset($filter[$hash])) {
                         $route['httpMethod'] = $httpMethod;
-                        $map[$route['metadata']['resourcePath']][]
-                            = array('access' => static::verifyAccess($route), 'route' => $route, 'hash' => $hash);
+                        $map[$route['metadata']['resourcePath']][] = [
+                            'access' => static::verifyAccess($route, $authenticated),
+                            'route' => $route,
+                            'hash' => $hash
+                        ];
                         $filter[$hash] = true;
                     }
                 }
@@ -768,21 +793,25 @@ class Router
         return $map;
     }
 
-    public static function verifyAccess($route)
+    /**
+     * @param array $route
+     * @param $authenticated
+     * @return bool
+     * @throws HttpException
+     */
+    public static function verifyAccess(array $route, $authenticated)
     {
         if ($route['accessLevel'] < 2) {
             return true;
         }
-        /** @var Restler $r */
-        $r = Scope::get('Restler');
-        $authenticated = $r->_authenticated;
         if (!$authenticated && $route['accessLevel'] > 1) {
             return false;
         }
+        /** @var AccessControlInterface $class */
         if (
             $authenticated &&
-            Defaults::$accessControlFunction &&
-            (!call_user_func(Defaults::$accessControlFunction, $route['metadata']))
+            $class = App::getClass(AccessControlInterface::class) &&
+                $class::__verifyAccess(ApiMethodInfo::__set_state($route))
         ) {
             return false;
         }
@@ -841,16 +870,7 @@ class Router
                 }
             }
         }
-        $r = ApiMethodInfo::__set_state($call);
-        $modifier = "_modify_{$r->methodName}_api";
-        if (method_exists($r->className, $modifier)) {
-            $stage = end(Scope::get('Restler')->getEvents());
-            if (empty($stage)) {
-                $stage = 'setup';
-            }
-            $r = Scope::get($r->className)->$modifier($r, $stage) ?: $r;
-        }
-        return $r;
+        return ApiMethodInfo::__set_state($call);
     }
 
     /**
