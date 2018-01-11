@@ -1,9 +1,12 @@
-<?php
+<?php namespace Luracast\Restler\Utils;
 
 
+use Luracast\Restler\Core;
 use Luracast\Restler\Defaults;
+use Luracast\Restler\HttpException;
 use Luracast\Restler\Scope;
 use Luracast\Restler\Util;
+use React\Http\Response;
 
 class PassThrough
 {
@@ -26,6 +29,7 @@ class PassThrough
      */
     public static function file(
         string $filePath,
+        string $IfModifiedSinceHeader = '',
         bool $forceDownload = false,
         float $expires = 0,
         bool $isPublic = true
@@ -60,10 +64,6 @@ class PassThrough
             Defaults::$headerCacheControl = array(Defaults::$headerCacheControl);
         }
         $cacheControl = Defaults::$headerCacheControl[0];
-        /**
-         * @var Restle
-         */
-        $r = Scope::get('Restler');
 
         if ($expires > 0) {
             $cacheControl = $isPublic ? 'public' : 'private';
@@ -76,9 +76,9 @@ class PassThrough
             'Content-Type' => $mime,
             'Cache-Control' => $cacheControl,
             'Expires' => $expires,
-            'X-Powered-By' => 'Luracast Restler v' . $r::VERSION,
+            'X-Powered-By' => 'Luracast Restler v' . Core::VERSION,
         ];
-        $modifiedSince = $r->requestHeader('If-Modified-Since');
+        $modifiedSince = $IfModifiedSinceHeader;//$r->requestHeader('If-Modified-Since');
         if (
             !empty($modifiedSince) &&
             strtotime($modifiedSince) >= $lastModified
@@ -96,7 +96,6 @@ class PassThrough
             $headers['Content-Transfer-Encoding'] = 'binary';
             $headers['Content-Disposition'] = 'attachment; filename="' . $filePath . '"';
         }
-        $r->modifyResponse($headers);
-        return $stream;
+        return new Response(200, $headers, $stream);
     }
 }
