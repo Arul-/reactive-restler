@@ -7,4 +7,6 @@ interface ContainerInterface extends PsrContainer
     public function __construct(array $aliases = [], array $abstractAliases = []);
 
     public function make($abstract, array $parameters = []);
+
+    public function instance($abstract, $instance);
 }

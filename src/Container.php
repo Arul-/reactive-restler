@@ -4,7 +4,6 @@
 use Closure;
 use Illuminate\Container\Container as LaravelContainer;
 use Luracast\Restler\Contracts\ContainerInterface;
-use Luracast\Restler\Filters\RateLimiter;
 use ReflectionParameter;
 
 class Container extends LaravelContainer implements ContainerInterface
