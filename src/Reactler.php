@@ -1,14 +1,6 @@
-<?php
-/**
- * Created by PhpStorm.
- * User: Arul
- * Date: 2/1/18
- * Time: 6:48 PM
- */
+<?php namespace Luracast\Restler;
 
-namespace Luracast\Restler;
-
-
+use Exception;
 use Luracast\Restler\MediaTypes\Json;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -29,6 +21,7 @@ class Reactler extends Core
 
     /**
      * @throws HttpException
+     * @throws Exception
      */
     protected function get(): void
     {
