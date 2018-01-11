@@ -95,7 +95,7 @@ abstract class Core
             ?? get_class_vars(App::class);
         $this->config = &$config;
         foreach ($this->app['implementations'] as $abstract => $implementations) {
-            if (!isset($this->app['aliases'][$abstract])) {
+            if (!isset($this->app['aliases'][$abstract]) && count($implementations)) {
                 $this->app['aliases'][$abstract] = $implementations[0];
             }
         }
