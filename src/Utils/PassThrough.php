@@ -1,12 +1,12 @@
 <?php namespace Luracast\Restler\Utils;
 
 
+use Luracast\Restler\App;
 use Luracast\Restler\Core;
 use Luracast\Restler\Defaults;
 use Luracast\Restler\HttpException;
-use Luracast\Restler\Scope;
 use Luracast\Restler\Util;
-use React\Http\Response;
+use Psr\Http\Message\ResponseInterface;
 
 class PassThrough
 {
@@ -21,10 +21,11 @@ class PassThrough
 
     /**
      * @param string $filePath
+     * @param string $IfModifiedSinceHeader
      * @param bool $forceDownload
      * @param float $expires
      * @param bool $isPublic
-     * @return resource
+     * @return Response
      * @throws HttpException
      */
     public static function file(
@@ -78,7 +79,7 @@ class PassThrough
             'Expires' => $expires,
             'X-Powered-By' => 'Luracast Restler v' . Core::VERSION,
         ];
-        $modifiedSince = $IfModifiedSinceHeader;//$r->requestHeader('If-Modified-Since');
+        $modifiedSince = $IfModifiedSinceHeader;//requestHeader('If-Modified-Since');
         if (
             !empty($modifiedSince) &&
             strtotime($modifiedSince) >= $lastModified
@@ -96,6 +97,13 @@ class PassThrough
             $headers['Content-Transfer-Encoding'] = 'binary';
             $headers['Content-Disposition'] = 'attachment; filename="' . $filePath . '"';
         }
-        return new Response(200, $headers, $stream);
+        if ($class = App::$implementations[ResponseInterface::class][0] ?? false
+            && class_implements($class)[ResponseInterface::class] ?? false) {
+            return new $class(200, $headers, $stream);
+        }
+        throw new HttpException(
+            501,
+            'App::$implementations should contain at least one PSR ResponseInterface implementation'
+        );
     }
 }
