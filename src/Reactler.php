@@ -82,6 +82,13 @@ class Reactler extends Core
         if (!is_null($response)) {
             $this->response->getBody()->write($this->responseFormat->encode($response, true));
         }
+        //handle throttling
+        if ($throttle = $this->app['throttle'] ?? 0) {
+            $elapsed = time() - $this->startTime;
+            if ($throttle / 1e3 > $elapsed) {
+                usleep(1e6 * ($throttle / 1e3 - $elapsed));
+            }
+        }
         if ($this->responseCode == 401 && !isset($this->responseHeaders['WWW-Authenticate'])) {
             $authString = count(Router::$authClasses)
                 ? Router::$authClasses[0]::__getWWWAuthenticateString()

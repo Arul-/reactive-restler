@@ -64,13 +64,18 @@ abstract class Core
      */
     protected $container;
     /**
-     * @var ArrayAccess
+     * @var iterable
      */
     protected $config;
     /**
-     * @var ArrayAccess
+     * @var iterable
      */
-    private $app;
+    protected $app;
+
+    /**
+     * @var int for calculating execution time
+     */
+    protected $startTime;
 
 
     /**
@@ -84,6 +89,7 @@ abstract class Core
         if (!is_array($config) && !$config instanceof ArrayAccess) {
             throw new TypeError('Argument 2 passed to ' . __CLASS__ . '::__construct() must be an array or implement ArrayAccess');
         }
+        $this->startTime = time();
         $config = $config ?? [];
         $config['app'] = $this->app = $config['app']
             ?? get_class_vars(App::class);
