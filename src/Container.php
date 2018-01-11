@@ -46,16 +46,11 @@ class Container extends LaravelContainer implements ContainerInterface
         if (!is_null($concrete = $this->getContextualConcrete('$' . $parameter->name))) {
             return $concrete instanceof Closure ? $concrete($this) : $concrete;
         }
-        $configClasses = [
-            'defaults' => Defaults::class,
-            'router' => Router::class,
-            'ratelimiter' => RateLimiter::class,
-            'passthrough' => PassThrough::class
-        ];
+
         if ($parameter->isArray()) {
             if ($value = &$config[$parameter->name] ?? false) {
                 return $value;
-            } elseif ($class = $configClasses[$parameter->name] ?? false) {
+            } elseif ($class = $this->aliases[ucfirst($parameter->name)] ?? false) {
                 return $config[$parameter->name] = get_class_vars($class);
             }
         }
