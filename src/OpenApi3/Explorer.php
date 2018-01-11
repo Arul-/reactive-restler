@@ -1,17 +1,17 @@
-<?php declare(strict_types=1);
-
-
-namespace v3;
+<?php namespace Luracast\Restler\OpenApi3;
 
 use ExplorerInfo;
-use HttpException;
+use Luracast\Restler\Core;
+use Luracast\Restler\Data\ApiMethodInfo;
+use Luracast\Restler\HttpException;
 use Luracast\Restler\Data\ValidationInfo;
 use Luracast\Restler\iProvideMultiVersionApi;
+use Luracast\Restler\Router;
 use Luracast\Restler\Routes;
 use Luracast\Restler\Util;
-use PassThrough;
-use Restle;
-use Router;
+
+use Luracast\Restler\Utils\PassThrough;
+use Psr\Http\Message\ServerRequestInterface;
 use stdClass;
 
 class Explorer implements iProvideMultiVersionApi
@@ -31,11 +31,11 @@ class Explorer implements iProvideMultiVersionApi
     );
 
     protected static $prefixes = array(
-        'get'    => 'retrieve',
-        'index'  => 'list',
-        'post'   => 'create',
-        'put'    => 'update',
-        'patch'  => 'modify',
+        'get' => 'retrieve',
+        'index' => 'list',
+        'post' => 'create',
+        'put' => 'update',
+        'patch' => 'modify',
         'delete' => 'remove',
     );
 
@@ -43,22 +43,44 @@ class Explorer implements iProvideMultiVersionApi
 
     public static $dataTypeAlias = array(
         //'string' => 'string',
-        'int'      => 'integer',
-        'number'   => 'number',
-        'float'    => array('number', 'float'),
-        'bool'     => 'boolean',
+        'int' => 'integer',
+        'number' => 'number',
+        'float' => array('number', 'float'),
+        'bool' => 'boolean',
         //'boolean' => 'boolean',
         //'NULL' => 'null',
-        'array'    => 'array',
+        'array' => 'array',
         //'object'  => 'object',
         'stdClass' => 'object',
-        'mixed'    => 'string',
-        'date'     => array('string', 'date'),
+        'mixed' => 'string',
+        'date' => array('string', 'date'),
         'datetime' => array('string', 'date-time'),
 
-        'time'      => 'string',
+        'time' => 'string',
         'timestamp' => 'string',
     );
+    /**
+     * @var ServerRequestInterface
+     */
+    private $request;
+    /**
+     * @var PassThrough
+     */
+    private $passThrough;
+    /**
+     * @var Core
+     */
+    private $restler;
+
+    public function __construct(
+        ServerRequestInterface $request,
+        Core $restler,
+        PassThrough $passThrough
+    ) {
+        $this->request = $request;
+        $this->passThrough = $passThrough;
+        $this->restler = $restler;
+    }
 
     /**
      * Serve static files for explorer
@@ -74,7 +96,7 @@ class Explorer implements iProvideMultiVersionApi
             $filename = 'index.html';
         }
         $file = __DIR__ . '/client/' . $filename;
-        return PassThrough::file($file);
+        return PassThrough::file($file, $this->request->getHeaderLine('If-Modified-Since'));
     }
 
     public function swagger()
@@ -82,8 +104,8 @@ class Explorer implements iProvideMultiVersionApi
         $s = new stdClass();
         $s->openapi = static::SWAGGER;
 
-        $r = new Restle();
-        $version = (string)$r->requestedApiVersion();
+        $r = $this->restler;
+        $version = (string)$r->requestedApiVersion;
 
         $s->paths = $this->paths($version);
 
@@ -225,9 +247,9 @@ class Explorer implements iProvideMultiVersionApi
                 $name = $this->modelName($route);
                 $r[] = $this->parameter(
                     new ValidationInfo(array(
-                        'name'     => $name,
-                        'type'     => $name,
-                        'from'     => 'body',
+                        'name' => $name,
+                        'type' => $name,
+                        'from' => 'body',
                         'required' => $required,
                         'children' => $children
                     )),
@@ -283,7 +305,7 @@ class Explorer implements iProvideMultiVersionApi
         $r = array(
             $code => (object)array(
                 'description' => 'Success',
-                'schema'      => new stdClass()
+                'schema' => new stdClass()
             )
         );
         $return = Util::nestedValue($route, 'metadata', 'return');
@@ -356,10 +378,10 @@ class Explorer implements iProvideMultiVersionApi
                 unset($info->contentType);
                 $this->model($info->type = 'Object', array(
                     array(
-                        'name'        => 'property',
-                        'type'        => 'string',
-                        'default'     => '',
-                        'required'    => false,
+                        'name' => 'property',
+                        'type' => 'string',
+                        'default' => '',
+                        'required' => false,
                         'description' => ''
                     )
                 ));
@@ -368,7 +390,7 @@ class Explorer implements iProvideMultiVersionApi
                         strtolower($info->contentType))) {
                     if (is_array($t)) {
                         $object->items = (object)array(
-                            'type'   => $t[0],
+                            'type' => $t[0],
                             'format' => $t[1],
                         );
                     } else {
@@ -450,7 +472,7 @@ class Explorer implements iProvideMultiVersionApi
         $r->api_key = (object)array(
             'type' => 'apiKey',
             'name' => 'api_key',
-            'in'   => 'query',
+            'in' => 'query',
         );
 
         return $r;
