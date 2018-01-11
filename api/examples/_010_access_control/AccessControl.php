@@ -1,19 +1,30 @@
 <?php
 
+use Luracast\Restler\App;
+use Luracast\Restler\Contracts\AccessControlInterface;
 use Luracast\Restler\Contracts\AuthenticationInterface;
+use Luracast\Restler\Data\ApiMethodInfo;
+use Luracast\Restler\HttpException;
+use Luracast\Restler\iIdentifyUser;
 use Psr\Http\Message\ServerRequestInterface;
 use \Luracast\Restler\Defaults;
 
-class AccessControl implements AuthenticationInterface
+class AccessControl implements AccessControlInterface
 {
     public static $requires = 'user';
     public static $role = 'user';
 
+    /**
+     * @param ServerRequestInterface $request
+     * @param array $responseHeaders
+     * @return bool
+     * @throws HttpException
+     */
     public function __isAllowed(ServerRequestInterface $request, array &$responseHeaders = []): bool
     {
         //hardcoded api_key=>role for brevity
         $roles = array('12345' => 'user', '67890' => 'admin');
-        $userClass = Defaults::$userIdentifierClass;
+        $userClass = App::getClass(iIdentifyUser::class);
 
         if (!$api_key = $request->getQueryParams()['api_key'] ?? false) {
             return false;
@@ -24,7 +35,6 @@ class AccessControl implements AuthenticationInterface
         }
         $userClass::setCacheIdentifier($role);
         static::$role = $role;
-        Defaults::$accessControlFunction = 'AccessControl::verifyAccess';
         return static::$requires == $role || $role == 'admin';
     }
 
@@ -33,18 +43,11 @@ class AccessControl implements AuthenticationInterface
         return 'Query name="api_key"';
     }
 
-    /**
-     * @access private
-     */
-    public static function verifyAccess(array $m)
+    public static function __verifyAccess(ApiMethodInfo $info): bool
     {
-        $requires =
-            isset($m['class']['AccessControl']['properties']['requires'])
-                ? $m['class']['AccessControl']['properties']['requires']
-                : false;
+        $requires = $info->metadata['class']['AccessControl']['properties']['requires'] ?? false;
         return $requires
             ? static::$role == 'admin' || static::$role == $requires
             : true;
     }
-
 }
