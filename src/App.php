@@ -355,4 +355,32 @@ class App
         'JsFormat' => Js::class,
         'XmlFormat' => Xml::class,
     ];
+
+    /**
+     * Find valid class name from an abstract name
+     *
+     * @param string $abstract
+     * @return string
+     * @throws HttpException
+     */
+    public static function getClass(string $abstract)
+    {
+        $interface = static::$aliases[$abstract] ?? $abstract;
+        if ($class = App::$implementations[$interface][0] ?? false) {
+            if (interface_exists($interface) && class_implements($class)[$interface] ?? false) {
+                return $class;
+            }
+            throw new HttpException(
+                501,
+                'App::$implementations should contain at least one valid implementation for ' . $interface
+            );
+        }
+        if (class_exists($interface)) {
+            return $interface;
+        }
+        throw new HttpException(
+            501,
+            'Could not find a class for ' . $interface
+        );
+    }
 }

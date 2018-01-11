@@ -97,13 +97,7 @@ class PassThrough
             $headers['Content-Transfer-Encoding'] = 'binary';
             $headers['Content-Disposition'] = 'attachment; filename="' . $filePath . '"';
         }
-        if ($class = App::$implementations[ResponseInterface::class][0] ?? false
-            && class_implements($class)[ResponseInterface::class] ?? false) {
-            return new $class(200, $headers, $stream);
-        }
-        throw new HttpException(
-            501,
-            'App::$implementations should contain at least one PSR ResponseInterface implementation'
-        );
+        $class = App::getClass(ResponseInterface::class);
+        return new $class(200, $headers, $stream);
     }
 }
