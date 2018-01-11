@@ -72,13 +72,9 @@ class Explorer implements iProvideMultiVersionApi
      */
     private $restler;
 
-    public function __construct(
-        ServerRequestInterface $request,
-        Core $restler,
-        PassThrough $passThrough
-    ) {
+    public function __construct(ServerRequestInterface $request, Core $restler)
+    {
         $this->request = $request;
-        $this->passThrough = $passThrough;
         $this->restler = $restler;
     }
 
