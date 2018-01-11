@@ -34,16 +34,16 @@ return [
     |
     */
     'implementations' => [
-        iCache::class => HumanReadableCache::class,
-        iCompose::class => Compose::class,
-        iValidate::class => Validator::class,
-        iIdentifyUser::class => User::class,
-        RequestMediaTypeInterface::class => Json::class,
-        ResponseMediaTypeInterface::class => Json::class,
-        ServerRequestInterface::class => ServerRequest::class,
-        ResponseInterface::class => Response::class,
-        FilterInterface::class => RateLimiter::class,
-        AuthenticationInterface::class => SimpleAuth::class
+        iCache::class => [HumanReadableCache::class],
+        iCompose::class => [Compose::class],
+        iValidate::class => [Validator::class],
+        iIdentifyUser::class => [User::class],
+        RequestMediaTypeInterface::class => [Json::class],
+        ResponseMediaTypeInterface::class => [Json::class],
+        ServerRequestInterface::class => [ServerRequest::class],
+        ResponseInterface::class => [Response::class],
+        FilterInterface::class => [RateLimiter::class],
+        AuthenticationInterface::class => [SimpleAuth::class]
     ],
     /*
     |--------------------------------------------------------------------------
