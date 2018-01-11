@@ -344,6 +344,8 @@ class App
         'UrlEncoded' => UrlEncoded::class,
         'Xml' => Xml::class,
         'Yaml' => Yaml::class,
+        //Filters,
+        'RateLimiter' => RateLimiter::class,
         // Exception
         'HttpException' => HttpException::class,
         // Backward Compatibility
