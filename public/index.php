@@ -1,7 +1,8 @@
 <?php declare(strict_types=1);
 
-use Illuminate\Container\Container;
 use Illuminate\Config\Repository as Config;
+use Luracast\Restler\App;
+use Luracast\Restler\Container;
 use Luracast\Restler\Defaults;
 use Luracast\Restler\Filters\RateLimiter;
 use Luracast\Restler\MediaTypes\Json;
@@ -97,15 +98,16 @@ $server = new Server(function (ServerRequestInterface $request) {
         });
 
         $request->getBody()->on('end', function () use ($request, $resolve, &$content) {
-            $container = new Container();
-            $config = new Config(); //new Config(BASE . '/config');
-            $config['defaults'] = get_class_vars(Defaults::class);
             /*
+             * $container = new Container();
+            $config = new Config(); //new Config(BASE . '/config');
+            $config['app'] = get_class_vars(App::class);
+
             array_replace_recursive(
             get_class_vars(Defaults::class),
             $config['app']
         ); */
-            $h = new Reactler($container, $config);
+            $h = new Reactler();
             $request = $request->withAttribute('reactler', $h);
             Scope::set('Restler', $h);
             $resolve($h->handle($request, new Response(), $content));

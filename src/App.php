@@ -242,23 +242,21 @@ class App
      * override the properties here with their values
      */
     public static $fromQuery = [
+        /**
+         * suppress_response_codes=true as an URL parameter to force
+         * a HTTP 200 status code on all responses
+         */
+        'suppress_response_codes' => 'suppressResponseCode',
     ];
-    /**
-     * @var array determines the defaults that can be overridden by the api
-     * user by passing them as URL parameters
-     */
-    public static $overridables = array(
-        'suppressResponseCode',
-    );
 
     /**
      * @var array contains validation details for defaults to be used when
      * set through URL parameters
      */
-    public static $validation = array(
-        'suppressResponseCode' => array('type' => 'bool'),
-        'headerExpires' => array('type' => 'int', 'min' => 0),
-    );
+    public static $propertyValidations = [
+        'suppressResponseCode' => ['type' => 'bool'],
+        'headerExpires' => ['type' => 'int', 'min' => 0],
+    ];
 
     // ==================================================================
     //
