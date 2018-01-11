@@ -67,8 +67,8 @@ class Router
     public static function setMediaTypes(string ...$types): void
     {
         $extensions = [];
-        Router::$writableMediaTypes = Router::$readableMediaTypes = [];
-        Router::$formatMap = [];
+        static::$writableMediaTypes = static::$readableMediaTypes = [];
+        static::$formatMap = [];
         foreach ($types as $type) {
             $implements = class_implements($type);
             if (!isset($implements[MediaTypeInterface::class])) {
@@ -79,23 +79,23 @@ class Router
             foreach ($type::supportedMediaTypes() as $mime => $extension) {
                 if ($implements[ResponseMediaTypeInterface::class]) {
                     $either = true;
-                    Router::$writableMediaTypes[] = $mime;
+                    static::$writableMediaTypes[] = $mime;
                     $extensions[".$extension"] = true;
-                    if (!isset(Router::$formatMap['default'])) {
-                        Router::$formatMap['default'] = $type;
+                    if (!isset(static::$formatMap['default'])) {
+                        static::$formatMap['default'] = $type;
                     }
-                    if (!isset(Router::$formatMap[$extension])) {
-                        Router::$formatMap[$extension] = $type;
+                    if (!isset(static::$formatMap[$extension])) {
+                        static::$formatMap[$extension] = $type;
                     }
-                    if (!isset(Router::$formatMap[$mime])) {
-                        Router::$formatMap[$mime] = $type;
+                    if (!isset(static::$formatMap[$mime])) {
+                        static::$formatMap[$mime] = $type;
                     }
                 }
                 if ($implements[RequestMediaTypeInterface::class]) {
                     $either = true;
-                    Router::$readableMediaTypes[] = $mime;
-                    if (!isset(Router::$formatMap[$mime])) {
-                        Router::$formatMap[$mime] = $type;
+                    static::$readableMediaTypes[] = $mime;
+                    if (!isset(static::$formatMap[$mime])) {
+                        static::$formatMap[$mime] = $type;
                     }
                 }
             }
@@ -104,7 +104,7 @@ class Router
                     'either RequestMediaTypeInterface or ResponseMediaTypeInterface interface');
             }
         }
-        Router::$formatMap['extensions'] = array_keys($extensions);
+        static::$formatMap['extensions'] = array_keys($extensions);
     }
 
     /**
@@ -113,16 +113,16 @@ class Router
      */
     public static function setRequestMediaTypes(string ...$types): void
     {
-        Router::$readableMediaTypes = [];
+        static::$readableMediaTypes = [];
         foreach ($types as $type) {
             if (!isset(class_implements($type)[RequestMediaTypeInterface::class])) {
                 throw new Exception($type . ' is an invalid media type class; it must implement ' .
                     'RequestMediaTypeInterface interface');
             }
             foreach ($type::supportedMediaTypes() as $mime => $extension) {
-                Router::$readableMediaTypes[] = $mime;
-                if (!isset(Router::$formatMap[$mime])) {
-                    Router::$formatMap[$mime] = $type;
+                static::$readableMediaTypes[] = $mime;
+                if (!isset(static::$formatMap[$mime])) {
+                    static::$formatMap[$mime] = $type;
                 }
             }
         }
@@ -135,7 +135,7 @@ class Router
     public static function setResponseMediaTypes(string ...$types): void
     {
         $extensions = [];
-        Router::$writableMediaTypes = [];
+        static::$writableMediaTypes = [];
 
         foreach ($types as $type) {
             if (!isset(class_implements($type)[ResponseMediaTypeInterface::class])) {
@@ -143,18 +143,18 @@ class Router
                     'ResponseMediaTypeInterface interface');
             }
             foreach ($type::supportedMediaTypes() as $mime => $extension) {
-                Router::$writableMediaTypes[] = $mime;
+                static::$writableMediaTypes[] = $mime;
                 $extensions[".$extension"] = true;
-                if (!isset(Router::$formatMap[$extension])) {
-                    Router::$formatMap[$extension] = $type;
+                if (!isset(static::$formatMap[$extension])) {
+                    static::$formatMap[$extension] = $type;
                 }
-                if (!isset(Router::$formatMap[$mime])) {
-                    Router::$formatMap[$mime] = $type;
+                if (!isset(static::$formatMap[$mime])) {
+                    static::$formatMap[$mime] = $type;
                 }
             }
         }
-        Router::$formatMap['default'] = $types[0];
-        Router::$formatMap['extensions'] = array_keys($extensions);
+        static::$formatMap['default'] = $types[0];
+        static::$formatMap['extensions'] = array_keys($extensions);
     }
 
     /**
@@ -186,8 +186,8 @@ class Router
                     $className = $resourcePath;
                     $resourcePath = null;
                 }
-                if (isset(Scope::$classAliases[$className])) {
-                    $className = Scope::$classAliases[$className];
+                if (isset(App::$classAliases[$className])) {
+                    $className = App::$classAliases[$className];
                 }
                 if (class_exists($className)) {
                     if (method_exists($className, $maxVersionMethod)) {
@@ -343,7 +343,7 @@ class Router
                 $metadata['param'] = array();
             }
             if (isset($metadata['return']['type'])) {
-                if ($qualified = Scope::resolve($metadata['return']['type'], $scope)) {
+                if ($qualified = App::resolve($metadata['return']['type'], $scope)) {
                     list($metadata['return']['type'], $metadata['return']['children']) =
                         static::getTypeAndModel(new ReflectionClass($qualified), $scope);
                 }
@@ -379,7 +379,7 @@ class Router
                 $m ['default'] = $defaults [$position];
                 $m ['required'] = !$param->isOptional();
                 $contentType = Util::nestedValue($p, 'type');
-                if ($type == 'array' && $contentType && $qualified = Scope::resolve($contentType, $scope)) {
+                if ($type == 'array' && $contentType && $qualified = App::resolve($contentType, $scope)) {
                     list($p['type'], $children, $modelName) = static::getTypeAndModel(
                         new ReflectionClass($qualified), $scope,
                         $className . Text::title($methodUrl), $p
@@ -388,7 +388,7 @@ class Router
                 if ($type instanceof ReflectionClass) {
                     list($type, $children, $modelName) = static::getTypeAndModel($type, $scope,
                         $className . Text::title($methodUrl), $p);
-                } elseif ($type && is_string($type) && $qualified = Scope::resolve($type, $scope)) {
+                } elseif ($type && is_string($type) && $qualified = App::resolve($type, $scope)) {
                     list($type, $children, $modelName)
                         = static::getTypeAndModel(new ReflectionClass($qualified), $scope,
                         $className . Text::title($methodUrl), $p);
@@ -974,12 +974,12 @@ class Router
                     isset($child[$dataName])
                         ? $child[$dataName] += array('required' => true)
                         : $child[$dataName]['required'] = true;
-                    if ($prop->class != $className && $qualified = Scope::resolve($child['type'], $scope)) {
+                    if ($prop->class != $className && $qualified = App::resolve($child['type'], $scope)) {
                         list($child['type'], $child['children'])
                             = static::getTypeAndModel(new ReflectionClass($qualified), $scope);
                     } elseif (
                         ($contentType = Util::nestedValue($child, $dataName, 'type')) &&
-                        ($qualified = Scope::resolve($contentType, $scope))
+                        ($qualified = App::resolve($contentType, $scope))
                     ) {
                         list($child['contentType'], $child['children'])
                             = static::getTypeAndModel(new ReflectionClass($qualified), $scope);
