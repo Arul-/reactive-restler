@@ -1,8 +1,7 @@
 <?php namespace Luracast\Restler;
 
-
 use Luracast\Restler\Contracts\{
-    AuthenticationInterface, FilterInterface, RequestMediaTypeInterface, ResponseMediaTypeInterface
+    AccessControlInterface, AuthenticationInterface, ComposerInterface, FilterInterface, RequestMediaTypeInterface, ResponseMediaTypeInterface
 };
 use Luracast\Restler\Data\iValidate;
 use Luracast\Restler\Data\Validator;
@@ -23,7 +22,6 @@ use Psr\{
 use React\Http\{
     ServerRequest, Response
 };
-use SimpleAuth;
 
 class App
 {
@@ -115,12 +113,6 @@ class App
      */
     public static $autoValidationEnabled = true;
 
-    /**
-     * @var string name of the class that implements iUser interface to identify
-     *             the user for caching purposes
-     */
-    public static $userIdentifierClass = 'Luracast\\Restler\\User';
-
     // ==================================================================
     //
     // Response
@@ -201,14 +193,6 @@ class App
     // ------------------------------------------------------------------
 
     /**
-     * @var null|callable if the api methods are under access control mechanism
-     * you can attach a function here that returns true or false to determine
-     * visibility of a protected api method. this function will receive method
-     * info as the only parameter.
-     */
-    public static $accessControlFunction = null;
-
-    /**
      * @var int set the default api access mode
      *      value of 0 = public api
      *      value of 1 = hybrid api using `@access hybrid` comment
@@ -216,12 +200,6 @@ class App
      *      value of 3 = protected api using `protected function` method
      */
     public static $apiAccessLevel = 0;
-
-    /**
-     * @var string authentication method to be called in iAuthenticate
-     * Interface
-     */
-    public static $authenticationMethod = '__isAllowed';
 
     /**
      * @var int time in milliseconds for bandwidth throttling,
@@ -272,27 +250,21 @@ class App
 
         /**
          * use PHPDoc comments such as the following
-         * `
-         *
-         * @cache no-cache, must-revalidate` to set the Cache-Control header
+         * `@cache no-cache, must-revalidate` to set the Cache-Control header
          *        for a specific api method
          */
         'cache' => 'headerCacheControl',
 
         /**
          * use PHPDoc comments such as the following
-         * `
-         *
-         * @expires 50` to set the Expires header
+         * `@expires 50` to set the Expires header
          *          for a specific api method
          */
         'expires' => 'headerExpires',
 
         /**
          * use PHPDoc comments such as the following
-         * `
-         *
-         * @throttle 300`
+         * `@throttle 300`
          *           to set the bandwidth throttling for 300 milliseconds
          *           for a specific api method
          */
@@ -317,11 +289,14 @@ class App
         iCompose::class => [Compose::class],
         iValidate::class => [Validator::class],
         iIdentifyUser::class => [User::class],
+        AccessControlInterface::class => [ /* YOUR_CLASS_NAME_HERE */],
+        AuthenticationInterface::class => [ /* YOUR_CLASS_NAME_HERE */],
+        ComposerInterface::class => [],
+        FilterInterface::class => [RateLimiter::class],
         RequestMediaTypeInterface::class => [Json::class],
         ResponseMediaTypeInterface::class => [Json::class],
         ServerRequestInterface::class => [ServerRequest::class],
         ResponseInterface::class => [Response::class],
-        FilterInterface::class => [RateLimiter::class],
     ];
     /**
      * Class Aliases
