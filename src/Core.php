@@ -62,11 +62,11 @@ abstract class Core
     /**
      * @var ContainerInterface
      */
-    private $container;
+    protected $container;
     /**
      * @var ArrayAccess
      */
-    private $config;
+    protected $config;
     /**
      * @var ArrayAccess
      */
@@ -84,21 +84,18 @@ abstract class Core
         if (!is_array($config) && !$config instanceof ArrayAccess) {
             throw new TypeError('Argument 2 passed to ' . __CLASS__ . '::__construct() must be an array or implement ArrayAccess');
         }
-        $this->config = $config ?? [];
+        $config = $config ?? [];
         $config['app'] = $this->app = $config['app']
             ?? get_class_vars(App::class);
+        $this->config = &$config;
         $this->container = $container ?? new Container($this->app['aliases'], $this->app['implementations'], $config);
     }
 
     public function make($className)
     {
-        return $this->init($this->container->make($className, (array)$this->config));
-    }
-
-    public function init($instance)
-    {
+        $properties = [];
         if ($m = $this->apiMethodInfo->metadata ?? false) {
-            $fullName = get_class($instance);
+            $fullName = $className;
             $shortName = Util::getShortName($fullName);
             $properties = Util::nestedValue(
                 $m, 'class', $fullName,
@@ -107,14 +104,22 @@ abstract class Core
                 $m, 'class', $shortName,
                 CommentParser::$embeddedDataName
             ) ?: []);
-            $objectVars = get_object_vars($instance);
+            $name = lcfirst($shortName);
+            if (!isset($this->config[$name])) {
+                $this->config[$name] = get_class_vars($fullName);
+            }
             foreach ($properties as $property => $value) {
-                if (property_exists($fullName, $property)) {
-                    //if not a static property
-                    array_key_exists($property, $objectVars)
-                        ? $instance->{$property} = $value
-                        : $instance::$$property = $value;
+                if (isset($this->config[$name][$property])) {
+                    $this->config[$name][$property] = $value;
                 }
+            }
+        }
+        $instance = $this->container->make($className);
+        $objectVars = get_object_vars($instance);
+        foreach ($properties as $property => $value) {
+            if (property_exists($fullName, $property) && array_key_exists($property, $objectVars)) {
+                //if not a static property
+                $instance->{$property} = $value;
             }
         }
         if ($instance instanceof UsesAuthenticationInterface) {
