@@ -1,20 +1,18 @@
 <?php namespace Luracast\Restler\OpenApi3;
 
+use Luracast\Restler\Contracts\ProvidesMultiVersionApiInterface;
+use Luracast\Restler\Contracts\UsesAuthenticationInterface;
 use Luracast\Restler\Core;
-use Luracast\Restler\Data\ApiMethodInfo;
+use Luracast\Restler\Data\ValidationInfo;
 use Luracast\Restler\ExplorerInfo;
 use Luracast\Restler\HttpException;
-use Luracast\Restler\Data\ValidationInfo;
-use Luracast\Restler\iProvideMultiVersionApi;
 use Luracast\Restler\Router;
-use Luracast\Restler\Routes;
 use Luracast\Restler\Util;
-
 use Luracast\Restler\Utils\PassThrough;
 use Psr\Http\Message\ServerRequestInterface;
 use stdClass;
 
-class Explorer implements iProvideMultiVersionApi
+class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationInterface
 {
     const SWAGGER = '3.0';
     public static $infoClass = ExplorerInfo::class;
@@ -29,6 +27,7 @@ class Explorer implements iProvideMultiVersionApi
         1 => ' ◑', //'&nbsp; <i class="fa fa-lg fa-adjust"></i>', //hybrid api
         2 => ' 🔐', //'&nbsp; <i class="fa fa-lg fa-lock"></i>', //protected api
     );
+    public static $allowScalarValueOnRequestBody = false;
 
     protected static $prefixes = array(
         'get' => 'retrieve',
@@ -38,6 +37,7 @@ class Explorer implements iProvideMultiVersionApi
         'patch' => 'modify',
         'delete' => 'remove',
     );
+    protected $authenticated = false;
 
     protected $models = array();
 
@@ -113,11 +113,15 @@ class Explorer implements iProvideMultiVersionApi
         return $s;
     }
 
+    /**
+     * @param int $version
+     * @throws HttpException
+     */
     private function paths($version = 1)
     {
-        $map = Routes::findAll(
+        $map = Router::findAll(
             static::$excludedPaths + array($this->base()),
-            static::$excludedHttpMethods, $version
+            static::$excludedHttpMethods, $version, $this->authenticated
         );
         $paths = array();
         foreach ($map as $path => $data) {
@@ -139,6 +143,7 @@ class Explorer implements iProvideMultiVersionApi
 
     private function base()
     {
+        //TODO: do not hard code
         return 'localhost:8080';
     }
 
@@ -474,12 +479,13 @@ class Explorer implements iProvideMultiVersionApi
         return $r;
     }
 
-    /**
-     * Maximum api version supported by the api class
-     * @return int
-     */
-    public static function __getMaximumSupportedVersion()
+    public static function __getMaximumSupportedVersion(): int
     {
         return Router::$maximumVersion;
+    }
+
+    public function __setAuthenticationStatus(bool $isAuthenticated = false, bool $isAuthFinished = false)
+    {
+        $this->authenticated = $isAuthenticated;
     }
 }
