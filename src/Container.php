@@ -50,7 +50,9 @@ class Container extends LaravelContainer implements ContainerInterface
         if ($parameter->isArray()) {
             if ($value = $this->config[$parameter->name] ?? false) {
                 return $value;
-            } elseif ($class = $this->aliases[ucfirst($parameter->name)] ?? false) {
+            }
+            $class = ucfirst($parameter->name);
+            if (class_exists($class) || $class = $this->aliases[$class] ?? false) {
                 $value = $this->config[$parameter->name] = get_class_vars($class);
                 return $value;
             }
