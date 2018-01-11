@@ -1,8 +1,8 @@
 <?php namespace Luracast\Restler\OpenApi3;
 
-use ExplorerInfo;
 use Luracast\Restler\Core;
 use Luracast\Restler\Data\ApiMethodInfo;
+use Luracast\Restler\ExplorerInfo;
 use Luracast\Restler\HttpException;
 use Luracast\Restler\Data\ValidationInfo;
 use Luracast\Restler\iProvideMultiVersionApi;

@@ -1,4 +1,4 @@
-<?php
+<?php namespace Luracast\Restler;
 
 
 class ExplorerInfo
