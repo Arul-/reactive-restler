@@ -7,3 +7,5 @@ composer.lock
 Thumbs.db
 .idea
 behat
+php-parse
+psysh
