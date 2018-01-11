@@ -46,6 +46,7 @@ class RateLimiter implements FilterInterface, UsesAuthenticationInterface
         'week' => 604800, // 60*60*24*7 seconds
         'month' => 2592000, // 60*60*24*30 seconds
     );
+    private $runtimeValues = [];
 
     /**
      * @var iCache
@@ -56,9 +57,9 @@ class RateLimiter implements FilterInterface, UsesAuthenticationInterface
      */
     protected $authenticated = false;
 
-    public function __construct()
+    public function __construct(array $rateLimiter)
     {
-
+        $this->runtimeValues = $rateLimiter;
         $this->cache = new Defaults::$cacheClass;
     }
 
@@ -108,18 +109,20 @@ class RateLimiter implements FilterInterface, UsesAuthenticationInterface
                 return true;
             }
         }
-        static::validate(static::$unit);
-        $timeUnit = static::$units[static::$unit];
+        $unit = $this->runtimeValues['unit'];
+        $group = $this->runtimeValues['group'];
+        static::validate($unit);
+        $timeUnit = static::$units[$unit];
         $maxPerUnit = $authenticated
-            ? static::$authenticatedUsagePerUnit
-            : static::$usagePerUnit;
+            ? $this->runtimeValues['authenticatedUsagePerUnit']
+            : $this->runtimeValues['usagePerUnit'];
         if ($maxPerUnit) {
             $user = Defaults::$userIdentifierClass;
             if (!method_exists($user, 'getUniqueIdentifier')) {
                 throw new \UnexpectedValueException('`Defaults::$userIdentifierClass` must implement `iIdentifyUser` interface');
             }
-            $id = "RateLimit_" . $maxPerUnit . '_per_' . static::$unit
-                . '_for_' . static::$group
+            $id = "RateLimit_" . $maxPerUnit . '_per_' . $unit
+                . '_for_' . $group
                 . '_' . $user::getUniqueIdentifier();
             $lastRequest = $this->cache->get($id, true)
                 ?: array('time' => 0, 'used' => 0);
@@ -127,7 +130,7 @@ class RateLimiter implements FilterInterface, UsesAuthenticationInterface
             $diff = time() - $time; # in seconds
             $used = $lastRequest['used'];
 
-            $responseHeaders['X-RateLimit-Limit'] = "$maxPerUnit per " . static::$unit;
+            $responseHeaders['X-RateLimit-Limit'] = "$maxPerUnit per " . $unit;
             if ($diff >= $timeUnit) {
                 $used = 1;
                 $time = time();
@@ -138,7 +141,7 @@ class RateLimiter implements FilterInterface, UsesAuthenticationInterface
                 throw new HttpException(429,
                     'Rate limit of ' . $maxPerUnit . ' request' .
                     ($maxPerUnit > 1 ? 's' : '') . ' per '
-                    . static::$unit . ' exceeded. Please wait for '
+                    . $unit . ' exceeded. Please wait for '
                     . static::duration($wait) . '.'
                 );
             } else {
