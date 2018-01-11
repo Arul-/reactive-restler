@@ -7,6 +7,7 @@ use Luracast\Restler\Defaults;
 use Luracast\Restler\Filters\RateLimiter;
 use Luracast\Restler\MediaTypes\Json;
 use Luracast\Restler\MediaTypes\Xml;
+use Luracast\Restler\OpenApi3\Explorer;
 use Luracast\Restler\Reactler;
 use Luracast\Restler\Router;
 use Luracast\Restler\Scope;
@@ -15,16 +16,16 @@ use Psr\Http\Message\ServerRequestInterface;
 use React\Http\Response;
 use React\Http\Server;
 use React\Promise\Promise;
-use v3\Explorer;
+
 
 use improved\Authors as ImprovedAuthors;
 use ratelimited\Authors as RateLimitedAuthors;
 
 include __DIR__ . "/../vendor/autoload.php";
 
-Defaults::$validatorClass = Validator::class;
-Defaults::$useUrlBasedVersioning = true;
-Defaults::$cacheDirectory = __DIR__ . '/../api/common/store';
+//Defaults::$validatorClass = Validator::class;
+//App::$useUrlBasedVersioning = true;
+App::$cacheDirectory = __DIR__ . '/../api/common/store';
 
 define('BASE', dirname(__DIR__));
 define('DATA_STORE_IMPLEMENTATION', ArrayDB::class);
@@ -37,6 +38,16 @@ define('DATA_STORE_IMPLEMENTATION', ArrayDB::class);
 
 class ResetForTests
 {
+    /**
+     * @param string $folder {@from path}
+     * @param int $version
+     * @return array
+     */
+    function get($folder = 'explorer', $version = 1)
+    {
+        return Router::toArray();//["v$version"];//[$folder] ?? [];
+    }
+
     function put()
     {
         //reset database
@@ -76,7 +87,8 @@ try {
         Type::class => 'tests/param/type',
         Validation::class => 'tests/param/validation',
         Data::class => 'tests/request_data',
-        Explorer::class,
+        //Explorer
+        Explorer::class => 'explorer',
     ]);
     Router::setMediaTypes(Json::class, Xml::class);
     Router::addAuthenticator(SimpleAuth::class, 'examples/_005_protected_api/simpleauth');
@@ -110,7 +122,13 @@ $server = new Server(function (ServerRequestInterface $request) {
             $h = new Reactler();
             $request = $request->withAttribute('reactler', $h);
             Scope::set('Restler', $h);
-            $resolve($h->handle($request, new Response(), $content));
+            try{
+                $response = $h->handle($request, new Response(), $content);
+                $resolve($response);
+            }catch (Throwable $throwable){
+                var_dump($throwable);
+                die();
+            }
         });
 
         // an error occurs e.g. on invalid chucked encoded data or an unexpected 'end' event
