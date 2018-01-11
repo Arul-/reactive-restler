@@ -5,6 +5,7 @@ use Luracast\Restler\App;
 use Luracast\Restler\Container;
 use Luracast\Restler\Defaults;
 use Luracast\Restler\Filters\RateLimiter;
+use Luracast\Restler\HumanReadableCache;
 use Luracast\Restler\MediaTypes\Json;
 use Luracast\Restler\MediaTypes\Xml;
 use Luracast\Restler\OpenApi3\Explorer;
@@ -25,7 +26,7 @@ include __DIR__ . "/../vendor/autoload.php";
 
 //Defaults::$validatorClass = Validator::class;
 //App::$useUrlBasedVersioning = true;
-App::$cacheDirectory = __DIR__ . '/../api/common/store';
+App::$cacheDirectory = HumanReadableCache::$cacheDir = __DIR__ . '/../api/common/store';
 
 define('BASE', dirname(__DIR__));
 define('DATA_STORE_IMPLEMENTATION', ArrayDB::class);
@@ -99,6 +100,7 @@ try {
     die($t->getMessage());
 }
 $routes = Router::toArray();
+
 $loop = React\EventLoop\Factory::create();
 
 $server = new Server(function (ServerRequestInterface $request) {
@@ -122,10 +124,10 @@ $server = new Server(function (ServerRequestInterface $request) {
             $h = new Reactler();
             $request = $request->withAttribute('reactler', $h);
             Scope::set('Restler', $h);
-            try{
+            try {
                 $response = $h->handle($request, new Response(), $content);
                 $resolve($response);
-            }catch (Throwable $throwable){
+            } catch (Throwable $throwable) {
                 var_dump($throwable);
                 die();
             }
