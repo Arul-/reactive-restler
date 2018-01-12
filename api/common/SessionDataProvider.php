@@ -1,27 +1,31 @@
 <?php
 
+use Luracast\Restler\Data\Text;
 
-class ArrayDB implements DataStoreInterface
+/**
+ * Fake Database. All records are stored in $_SESSION
+ */
+class SessionDataProvider implements DataStoreInterface
 {
     private $name;
-    public static $data = [];
 
     function __construct(string $name)
     {
-        $this->name = $name;
-        if (empty(static::$data[$this->name])) {
+        $this->name = "_sdp_$name";
+        @session_start();
+        if (empty($_SESSION[$this->name])) {
             $this->install();
         }
     }
 
     private function pk()
     {
-        return static::$data[$this->name]['pk']++;
+        return $_SESSION[$this->name]['pk']++;
     }
 
     private function find($id)
     {
-        foreach (static::$data[$this->name]['rs'] as $index => $rec) {
+        foreach ($_SESSION[$this->name]['rs'] as $index => $rec) {
             if ($rec['id'] == $id) {
                 return $index;
             }
@@ -35,18 +39,18 @@ class ArrayDB implements DataStoreInterface
         if ($index === false) {
             return false;
         }
-        return static::$data[$this->name]['rs'][$index];
+        return $_SESSION[$this->name]['rs'][$index];
     }
 
     function getAll()
     {
-        return static::$data[$this->name]['rs'];
+        return $_SESSION[$this->name]['rs'];
     }
 
     function insert($rec)
     {
         $rec['id'] = $this->pk();
-        array_push(static::$data[$this->name]['rs'], $rec);
+        array_push($_SESSION[$this->name]['rs'], $rec);
         return $rec;
     }
 
@@ -57,7 +61,7 @@ class ArrayDB implements DataStoreInterface
             return false;
         }
         $rec['id'] = $id;
-        static::$data[$this->name]['rs'][$index] = $rec;
+        $_SESSION[$this->name]['rs'][$index] = $rec;
         return $rec;
     }
 
@@ -67,14 +71,14 @@ class ArrayDB implements DataStoreInterface
         if ($index === false) {
             return false;
         }
-        $record = array_splice(static::$data[$this->name]['rs'], $index, 1);
+        $record = array_splice($_SESSION[$this->name]['rs'], $index, 1);
         return array_shift($record);
     }
 
     private function install()
     {
         /** install initial data **/
-        static::$data[$this->name] = [
+        $_SESSION[$this->name] = [
             'pk' => 5,
             'rs' => [
                 [
@@ -93,6 +97,11 @@ class ArrayDB implements DataStoreInterface
 
     static function reset()
     {
-        static::$data = [];
+        foreach ($_SESSION as $key => $value) {
+            if (Text::beginsWith($key, '_sdp_')) {
+                unset($_SESSION[$key]);
+            }
+        }
     }
 }
+

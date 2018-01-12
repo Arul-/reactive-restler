@@ -1,4 +1,7 @@
 <?php
+
+use Luracast\Restler\HttpException;
+
 class Authors
 {
     /**
@@ -8,17 +11,16 @@ class Authors
 
     static $FIELDS = array('name', 'email');
 
-    function __construct()
+    function __construct(DataStoreInterface $dp)
     {
         /**
-         * $this->dp = new DB_PDO_Sqlite('db1');
-         * $this->dp = new DB_PDO_MySQL('db1');
-         * $this->dp = new DB_Serialized_File('db1');
-         * $this->dp = new DB_Session('db1');
+         * $this->dp = new SqliteDB('db1');
+         * $this->dp = new MySQLDataProvider('db1');
+         * $this->dp = new SerializedFileDB('db1');
+         * $this->dp = new SessionDataProvider('db1');
          * $this->dp = new ArrayDB('db1');
          */
-        $class = DATA_STORE_IMPLEMENTATION;
-        $this->dp = new $class('db1');
+        $this->dp = $dp;
     }
 
     function index()
@@ -31,12 +33,12 @@ class Authors
         return $this->dp->get($id);
     }
 
-    function post($request_data = NULL)
+    function post($request_data = null)
     {
         return $this->dp->insert($this->_validate($request_data));
     }
 
-    function put($id, $request_data = NULL)
+    function put($id, $request_data = null)
     {
         return $this->dp->update($id, $this->_validate($request_data));
     }
@@ -50,9 +52,10 @@ class Authors
     {
         $author = array();
         foreach (authors::$FIELDS as $field) {
-//you may also validate the data here
-            if (!isset($data[$field]))
-                throw new RestException(400, "$field field missing");
+            //you may also validate the data here
+            if (!isset($data[$field])) {
+                throw new HttpException(400, "$field field missing");
+            }
             $author[$field] = $data[$field];
         }
         return $author;

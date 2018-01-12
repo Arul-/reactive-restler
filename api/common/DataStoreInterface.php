@@ -2,7 +2,6 @@
 
 interface DataStoreInterface
 {
-
     function __construct(string $name);
 
     static function reset();

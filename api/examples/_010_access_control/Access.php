@@ -1,4 +1,5 @@
 <?php
+
 class Access
 {
     public function all()

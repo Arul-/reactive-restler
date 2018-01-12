@@ -12,7 +12,7 @@
 use Luracast\Restler\HttpException;
 use Luracast\Restler\RestException;
 
-class DB_PDO_MySQL implements DataStoreInterface
+class MySQLDataProvider implements DataStoreInterface
 {
     private $db;
     private $name;
@@ -47,7 +47,7 @@ class DB_PDO_MySQL implements DataStoreInterface
     }
 
     /**
-     * DB_PDO_MySQL constructor.
+     * MySQLDataProvider constructor.
      * @throws HttpException
      */
     function __construct(string $name)

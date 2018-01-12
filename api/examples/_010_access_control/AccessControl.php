@@ -2,12 +2,10 @@
 
 use Luracast\Restler\App;
 use Luracast\Restler\Contracts\AccessControlInterface;
-use Luracast\Restler\Contracts\AuthenticationInterface;
 use Luracast\Restler\Data\ApiMethodInfo;
 use Luracast\Restler\HttpException;
 use Luracast\Restler\iIdentifyUser;
 use Psr\Http\Message\ServerRequestInterface;
-use \Luracast\Restler\Defaults;
 
 class AccessControl implements AccessControlInterface
 {
@@ -24,11 +22,11 @@ class AccessControl implements AccessControlInterface
     {
         //hardcoded api_key=>role for brevity
         $roles = array('12345' => 'user', '67890' => 'admin');
-        $userClass = App::getClass(iIdentifyUser::class);
 
         if (!$api_key = $request->getQueryParams()['api_key'] ?? false) {
             return false;
         }
+        $userClass = App::getClass(iIdentifyUser::class);
         if (!$role = $roles[$api_key] ?? false) {
             $userClass::setCacheIdentifier($api_key);
             return false;

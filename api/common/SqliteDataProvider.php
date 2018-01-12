@@ -6,7 +6,7 @@
  * for this page to create the file.
  */
 
-class DB_PDO_Sqlite implements DataStoreInterface
+class SqliteDataProvider implements DataStoreInterface
 {
     private $db;
     private static $folder;

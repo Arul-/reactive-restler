@@ -1,9 +1,9 @@
 <?php
+
 namespace ratelimited;
 
-use ArrayDB;
 use DataStoreInterface;
-use Luracast\Restler\RestException;
+use Luracast\Restler\HttpException;
 use Luracast\Restler\Filters\RateLimiter;
 use Author;
 
@@ -14,17 +14,16 @@ class Authors
      */
     public $dp;
 
-    function __construct()
+    function __construct(DataStoreInterface $dp)
     {
         /**
-         * $this->dp = new DB_PDO_Sqlite('db3');
-         * $this->dp = new DB_PDO_MySQL('db3');
-         * $this->dp = new DB_Serialized_File('db3');
-         * $this->dp = new DB_Session('db3');
+         * $this->dp = new SqliteDB('db3');
+         * $this->dp = new MySQLDataProvider('db3');
+         * $this->dp = new SerializedFileDB('db3');
+         * $this->dp = new SessionDataProvider('db3');
          * $this->dp = new ArrayDB('db3');
          */
-        $class = DATA_STORE_IMPLEMENTATION;
-        $this->dp = new $class('db3');
+        $this->dp = $dp;
     }
 
     /**
@@ -56,8 +55,9 @@ class Authors
     function get($id)
     {
         $r = $this->dp->get($id);
-        if ($r === false)
-            throw new RestException(404);
+        if ($r === false) {
+            throw new HttpException(404);
+        }
         return $r;
     }
 
@@ -69,18 +69,18 @@ class Authors
      *
      * @status 201
      *
-     * @param string $name  {@from body} {@max 100} name of the Author
+     * @param string $name {@from body} {@max 100} name of the Author
      * not exceeding 100 characters
      * @param string $email {@type email} {@from body} email id of the Author
      *
-     * @throws RestException
+     * @throws HttpException
      * @return Author
      */
     function post($name, $email)
     {
         $r = $this->dp->insert(compact('name', 'email'));
         if ($r == false) {
-            throw new RestException(304); //not modified
+            throw new HttpException(304); //not modified
         }
         return $r;
     }
@@ -92,19 +92,20 @@ class Authors
      *
      * @access protected
      *
-     * @param int    $id    AuthorID
-     * @param string $name  {@from body} {@max 100} name of the Author
+     * @param int $id AuthorID
+     * @param string $name {@from body} {@max 100} name of the Author
      *                      not exceeding 100 characters
      * @param string $email {@type email} {@from body} email id of the Author
      *
-     * @throws RestException
+     * @throws HttpException
      * @return Author
      */
     function put($id, $name, $email)
     {
         $r = $this->dp->update($id, compact('name', 'email'));
-        if ($r === false)
-            throw new RestException(404);
+        if ($r === false) {
+            throw new HttpException(404);
+        }
         return $r;
     }
 
@@ -115,19 +116,20 @@ class Authors
      *
      * @access protected
      *
-     * @param int    $id    AuthorID
-     * @param string $name  {@from body} {@max 100} name of the Author
+     * @param int $id AuthorID
+     * @param string $name {@from body} {@max 100} name of the Author
      *                      not exceeding 100 characters
      * @param string $email {@type email} {@from body} email id of the Author
      *
-     * @throws RestException
+     * @throws HttpException
      * @return Author
      */
     function patch($id, $name = null, $email = null)
     {
         $patch = $this->dp->get($id);
-        if ($patch === false)
-            throw new RestException(404);
+        if ($patch === false) {
+            throw new HttpException(404);
+        }
         $modified = false;
         if (isset($name)) {
             $patch['name'] = $name;
@@ -138,11 +140,12 @@ class Authors
             $modified = true;
         }
         if (!$modified) {
-            throw new RestException(304); //not modified
+            throw new HttpException(304); //not modified
         }
         $r = $this->dp->update($id, $patch);
-        if ($r === false)
-            throw new RestException(404);
+        if ($r === false) {
+            throw new HttpException(404);
+        }
         return $r;
     }
 
@@ -155,14 +158,15 @@ class Authors
      *
      * @param int $id AuthorID
      *
-     * @throws RestException
+     * @throws HttpException
      * @return Author
      */
     function delete($id)
     {
         $r = $this->dp->delete($id);
-        if ($r === false)
-            throw new RestException(404);
+        if ($r === false) {
+            throw new HttpException(404);
+        }
         return $r;
     }
 }

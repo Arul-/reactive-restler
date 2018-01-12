@@ -6,7 +6,7 @@
  * Make sure this folder has sufficient write permission
  * for this script to create the file.
  */
-class DB_Serialized_File implements DataStoreInterface
+class SerializedFileDataProvider implements DataStoreInterface
 {
     private $arr;
     private $modified = false;

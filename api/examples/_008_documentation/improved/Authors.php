@@ -2,9 +2,7 @@
 
 namespace improved;
 
-use ArrayDB;
 use DataStoreInterface;
-use DB_Serialized_File;
 use Luracast\Restler\HttpException;
 
 class Authors
@@ -14,17 +12,16 @@ class Authors
      */
     public $dp;
 
-    function __construct()
+    function __construct(DataStoreInterface $dp)
     {
         /**
-         * $this->dp = new DB_PDO_Sqlite('db2');
-         * $this->dp = new DB_PDO_MySQL('db2');
-         * $this->dp = new DB_Serialized_File('db2');
-         * $this->dp = new DB_Session('db2');
+         * $this->dp = new SqliteDB('db2');
+         * $this->dp = new MySQLDataProvider('db2');
+         * $this->dp = new SerializedFileDB('db2');
+         * $this->dp = new SessionDataProvider('db2');
          * $this->dp = new ArrayDB('db2');
          */
-        $class = DATA_STORE_IMPLEMENTATION;
-        $this->dp = new $class('db2');
+        $this->dp = $dp;
     }
 
     function index()
