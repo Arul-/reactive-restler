@@ -278,20 +278,6 @@ abstract class Core
         if (!isset($o->className)) {
             throw new HttpException(404);
         }
-
-        if (isset(Router::$versionMap[$o->className])) {
-            Scope::$classAliases[Util::getShortName($o->className)]
-                = Router::$versionMap[$o->className][$this->requestedApiVersion];
-        }
-
-        foreach (Router::$authClasses as $auth) {
-            if (isset(Router::$versionMap[$auth])) {
-                Scope::$classAliases[$auth] = Router::$versionMap[$auth][$this->requestedApiVersion];
-            } elseif (isset(Router::$versionMap[Scope::$classAliases[$auth]])) {
-                Scope::$classAliases[$auth]
-                    = Router::$versionMap[Scope::$classAliases[$auth]][$this->requestedApiVersion];
-            }
-        }
     }
 
     abstract protected function negotiate(): void;
