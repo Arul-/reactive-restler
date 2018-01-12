@@ -2,7 +2,8 @@
 
 namespace ratelimited;
 
-use DataStoreInterface;
+use DataProviderInterface;
+use Luracast\Restler\App;
 use Luracast\Restler\HttpException;
 use Luracast\Restler\Filters\RateLimiter;
 use Author;
@@ -10,11 +11,11 @@ use Author;
 class Authors
 {
     /**
-     * @var DataStoreInterface
+     * @var DataProviderInterface
      */
     public $dp;
 
-    function __construct(DataStoreInterface $dp)
+    function __construct()
     {
         /**
          * $this->dp = new SqliteDB('db3');
@@ -23,7 +24,8 @@ class Authors
          * $this->dp = new SessionDataProvider('db3');
          * $this->dp = new ArrayDB('db3');
          */
-        $this->dp = $dp;
+        $class = App::getClass(DataProviderInterface::class);
+        $this->dp = new $class('db1');
     }
 
     /**

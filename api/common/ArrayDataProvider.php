@@ -1,7 +1,7 @@
 <?php
 
 
-class ArrayDataProvider implements DataStoreInterface
+class ArrayDataProvider implements DataProviderInterface
 {
     private $name;
     public static $data = [];

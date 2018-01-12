@@ -3,7 +3,6 @@
 use Illuminate\Config\Repository as Config;
 use Luracast\Restler\App;
 use Luracast\Restler\Container;
-use Luracast\Restler\Defaults;
 use Luracast\Restler\Filters\RateLimiter;
 use Luracast\Restler\HumanReadableCache;
 use Luracast\Restler\MediaTypes\Json;
@@ -12,13 +11,10 @@ use Luracast\Restler\OpenApi3\Explorer;
 use Luracast\Restler\Reactler;
 use Luracast\Restler\Router;
 use Luracast\Restler\Scope;
-use Luracast\Restler\Utils\Validator;
 use Psr\Http\Message\ServerRequestInterface;
 use React\Http\Response;
 use React\Http\Server;
 use React\Promise\Promise;
-
-
 use improved\Authors as ImprovedAuthors;
 use ratelimited\Authors as RateLimitedAuthors;
 
@@ -29,11 +25,11 @@ include __DIR__ . "/../vendor/autoload.php";
 App::$cacheDirectory = HumanReadableCache::$cacheDir = __DIR__ . '/../api/common/store';
 
 define('BASE', dirname(__DIR__));
-define('DATA_STORE_IMPLEMENTATION', ArrayDB::class);
+App::$implementations[DataProviderInterface::class] = [ArrayDataProvider::class];
 
 
 //$class = DATA_STORE_IMPLEMENTATION;
-/** @var DataStoreInterface $i */
+/** @var DataProviderInterface $i */
 //$instance = new $class('db2');
 
 
@@ -52,7 +48,7 @@ class ResetForTests
     function put()
     {
         //reset database
-        $class = DATA_STORE_IMPLEMENTATION;
+        $class = App::getClass(DataProviderInterface::class);
         $class::reset();
         //reset cache
         $folder = BASE . '/api/common/store/';
@@ -112,16 +108,8 @@ $server = new Server(function (ServerRequestInterface $request) {
         });
 
         $request->getBody()->on('end', function () use ($request, $resolve, &$content) {
-            /*
-             * $container = new Container();
-            $config = new Config(); //new Config(BASE . '/config');
-            $config['app'] = get_class_vars(App::class);
-
-            array_replace_recursive(
-            get_class_vars(Defaults::class),
-            $config['app']
-        ); */
-            $h = new Reactler();
+            $c = new Container();
+            $h = new Reactler($c);
             $request = $request->withAttribute('reactler', $h);
             Scope::set('Restler', $h);
             try {

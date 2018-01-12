@@ -12,7 +12,7 @@
 use Luracast\Restler\HttpException;
 use Luracast\Restler\RestException;
 
-class MySQLDataProvider implements DataStoreInterface
+class MySQLDataProvider implements DataProviderInterface
 {
     private $db;
     private $name;

@@ -1,17 +1,18 @@
 <?php
 
+use Luracast\Restler\App;
 use Luracast\Restler\HttpException;
 
 class Authors
 {
     /**
-     * @var DataStoreInterface
+     * @var DataProviderInterface
      */
     public $dp;
 
     static $FIELDS = array('name', 'email');
 
-    function __construct(DataStoreInterface $dp)
+    function __construct()
     {
         /**
          * $this->dp = new SqliteDB('db1');
@@ -20,7 +21,8 @@ class Authors
          * $this->dp = new SessionDataProvider('db1');
          * $this->dp = new ArrayDB('db1');
          */
-        $this->dp = $dp;
+        $class = App::getClass(DataProviderInterface::class);
+        $this->dp = new $class('db1');
     }
 
     function index()

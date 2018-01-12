@@ -5,7 +5,7 @@ use Luracast\Restler\Data\Text;
 /**
  * Fake Database. All records are stored in $_SESSION
  */
-class SessionDataProvider implements DataStoreInterface
+class SessionDataProvider implements DataProviderInterface
 {
     private $name;
 

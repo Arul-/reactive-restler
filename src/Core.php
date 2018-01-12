@@ -99,7 +99,15 @@ abstract class Core
                 $this->app['aliases'][$abstract] = $implementations[0];
             }
         }
-        $this->container = $container ?? new Container($this->app['aliases'], $this->app['implementations'], $config);
+        if ($container) {
+            $container->setAliases($this->app['aliases']);
+            $container->setAbstractAliases($this->app['implementations']);
+            $container->setConfig($config);
+            $this->container = $container;
+        } else {
+            $this->container = new Container(
+                $this->app['aliases'], $this->app['implementations'], $config);
+        }
         $this->container->instance(Core::class, $this);
     }
 

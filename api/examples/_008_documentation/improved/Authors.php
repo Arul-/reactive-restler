@@ -2,17 +2,18 @@
 
 namespace improved;
 
-use DataStoreInterface;
+use DataProviderInterface;
+use Luracast\Restler\App;
 use Luracast\Restler\HttpException;
 
 class Authors
 {
     /**
-     * @var DataStoreInterface
+     * @var DataProviderInterface
      */
     public $dp;
 
-    function __construct(DataStoreInterface $dp)
+    function __construct()
     {
         /**
          * $this->dp = new SqliteDB('db2');
@@ -21,7 +22,8 @@ class Authors
          * $this->dp = new SessionDataProvider('db2');
          * $this->dp = new ArrayDB('db2');
          */
-        $this->dp = $dp;
+        $class = App::getClass(DataProviderInterface::class);
+        $this->dp = new $class('db1');
     }
 
     function index()

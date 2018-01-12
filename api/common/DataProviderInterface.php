@@ -1,6 +1,6 @@
 <?php
 
-interface DataStoreInterface
+interface DataProviderInterface
 {
     function __construct(string $name);
 

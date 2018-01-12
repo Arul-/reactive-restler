@@ -6,7 +6,7 @@
  * for this page to create the file.
  */
 
-class SqliteDataProvider implements DataStoreInterface
+class SqliteDataProvider implements DataProviderInterface
 {
     private $db;
     private static $folder;

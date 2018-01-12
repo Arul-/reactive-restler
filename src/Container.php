@@ -25,9 +25,14 @@ class Container extends LaravelContainer implements ContainerInterface
         $this->aliases = $clear ? $aliases : $aliases + $this->aliases;
     }
 
-    public function abstractAliases(array $abstractAliases, bool $clear = false)
+    public function setAbstractAliases(array $abstractAliases, bool $clear = false)
     {
         $this->abstractAliases = $clear ? $abstractAliases : $abstractAliases + $this->abstractAliases;
+    }
+
+    public function setConfig(&$config)
+    {
+        $this->config = &$config;
     }
 
     public function has($id)

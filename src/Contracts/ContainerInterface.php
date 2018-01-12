@@ -8,7 +8,9 @@ interface ContainerInterface extends PsrContainer
 
     public function setAliases(array $aliases, bool $clear = false);
 
-    public function abstractAliases(array $abstractAliases, bool $clear = false);
+    public function setAbstractAliases(array $abstractAliases, bool $clear = false);
+
+    public function setConfig(&$config);
 
     public function make($abstract, array $parameters = []);
 
