@@ -9,6 +9,7 @@ use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
 use GuzzleHttp\UriTemplate;
 use Luracast\Restler\Data\Text;
+use Luracast\Restler\Util;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
@@ -628,12 +629,17 @@ class RestContext implements Context
         $data = $this->_data;
 
         if (!empty($data)) {
-            if (!isset($data->$propertyName)) {
-                throw new Exception("Property '"
-                    . $propertyName . "' is not set!\n\n"
-                    . $this->echoLastResponse());
+            $p = $data;
+            $properties = explode('.',$propertyName);
+            foreach ($properties as $property){
+                if (!isset($p->$property)) {
+                    throw new Exception("Property '"
+                        . $propertyName . "' is not set!\n\n"
+                        . $this->echoLastResponse());
+                }
+                $p = $p->$property;
             }
-            if ($data->$propertyName != $propertyValue) {
+            if ($p != $propertyValue) {
                 throw new \Exception('Property value mismatch! (given: '
                     . $propertyValue . ', match: '
                     . $data->$propertyName . ")\n\n"
