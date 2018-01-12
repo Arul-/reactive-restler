@@ -20,6 +20,16 @@ class Container extends LaravelContainer implements ContainerInterface
         $this->config = &$config;
     }
 
+    public function setAliases(array $aliases, bool $clear = false)
+    {
+        $this->aliases = $clear ? $aliases : $aliases + $this->aliases;
+    }
+
+    public function abstractAliases(array $abstractAliases, bool $clear = false)
+    {
+        $this->abstractAliases = $clear ? $abstractAliases : $abstractAliases + $this->abstractAliases;
+    }
+
     public function has($id)
     {
         return parent::has($id);
@@ -62,5 +72,4 @@ class Container extends LaravelContainer implements ContainerInterface
 
         $this->unresolvablePrimitive($parameter);
     }
-
 }
