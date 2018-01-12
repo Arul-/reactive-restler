@@ -61,6 +61,10 @@ class ResetForTests
 RateLimiter::setLimit('hour', 10);
 RateLimiter::$includedPaths = ['examples/_009_rate_limiting'];
 
+App::$useUrlBasedVersioning = true;
+
+Router::setApiVersion(2);
+
 try {
     Router::mapApiClasses([
         //clean up db for tests
@@ -77,7 +81,7 @@ try {
         ImprovedAuthors::class => 'examples/_008_documentation/authors',
         RateLimitedAuthors::class => 'examples/_009_rate_limiting/authors',
         Access::class => 'examples/_010_access_control',
-        //'BMI' => 'examples/_011_versioning/bmi',
+        'BMI' => 'examples/_011_versioning/bmi',
         //tests
         MinMax::class => 'tests/param/minmax',
         MinMaxFix::class => 'tests/param/minmaxfix',
@@ -96,6 +100,8 @@ try {
     die($t->getMessage());
 }
 $routes = Router::toArray();
+
+//var_dump(Router::$versionMap);
 
 $loop = React\EventLoop\Factory::create();
 
