@@ -153,7 +153,7 @@ abstract class Core
 
     protected function getPath(string $path): string
     {
-        return str_replace(
+        $path = str_replace(
             array_merge(
                 Router::$formatMap['extensions'],
                 $this->formatOverridesMap['extensions']
@@ -161,6 +161,17 @@ abstract class Core
             '',
             trim($path, '/')
         );
+        if (App::$useUrlBasedVersioning && strlen($path) && $path{0} == 'v') {
+            $version = intval(substr($path, 1));
+            if ($version && $version <= Router::$maximumVersion) {
+                $this->requestedApiVersion = $version;
+                $path = explode('/', $path, 2);
+                $path = count($path) == 2 ? $path[1] : '';
+            }
+        } else {
+            $this->requestedApiVersion = Router::$minimumVersion;
+        }
+        return $path;
     }
 
     /**
