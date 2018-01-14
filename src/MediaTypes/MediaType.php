@@ -1,12 +1,14 @@
 <?php namespace Luracast\Restler\MediaTypes;
 
-
 use Luracast\Restler\Contracts\MediaTypeInterface;
+use Luracast\Restler\Contracts\SelectivePathsInterface;
+use Luracast\Restler\Contracts\SelectivePathsTrait;
 use Luracast\Restler\Data\Text;
 use Luracast\Restler\HttpException;
 
-abstract class MediaType implements MediaTypeInterface
+abstract class MediaType implements MediaTypeInterface, SelectivePathsInterface
 {
+    use SelectivePathsTrait;
     /**
      * override in the extending class
      */
