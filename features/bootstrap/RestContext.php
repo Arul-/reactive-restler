@@ -348,6 +348,12 @@ class RestContext implements Context
             $this->_charset = substr($charset, strpos($charset, '=') + 1);
         }
         $cType = $cType[0];
+        if (strpos($cType, '+') > 0) {
+            //look for vendor mime
+            //example 'application/vnd.SomeVendor-v1+json','application/vnd.SomeVendor-v2+json'
+            list($app, $vendor, $extension) = [strtok($cType, '/'), strtok('+'), strtok('')];
+            $cType = "$app/$extension";
+        }
         switch ($cType) {
             case 'application/json':
                 $this->_type = 'json';
