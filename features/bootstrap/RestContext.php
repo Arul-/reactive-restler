@@ -446,6 +446,7 @@ class RestContext implements Context
 
     /**
      * @Then /^the response "([^"]*)" header should be "([^"]*)"$/
+     * @Then /^the response "([^"]*)" header should be '([^']*)'$/
      */
     public function theResponseHeaderShouldBe($header, $value)
     {
