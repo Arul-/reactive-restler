@@ -116,9 +116,6 @@ class Reactler extends Core
         $this->request = $request;
         $this->response = $response;
         try {
-            if (empty(Router::$formatMap)) {
-                Router::setMediaTypes(Json::class);
-            }
             $this->get();
             $this->route();
             $this->negotiate();
@@ -126,9 +123,6 @@ class Reactler extends Core
             $this->authenticate($this->request);
             $this->filter($this->request, true);
             $this->validate();
-            if (!$this->responseFormat) {
-                $this->responseFormat = new Json();
-            }
             $data = $this->call();
             if ($data instanceof ResponseInterface) {
                 return $data;
