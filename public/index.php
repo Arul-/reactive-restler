@@ -18,20 +18,17 @@ use React\Promise\Promise;
 use improved\Authors as ImprovedAuthors;
 use ratelimited\Authors as RateLimitedAuthors;
 
+define('BASE', dirname(__DIR__));
 include __DIR__ . "/../vendor/autoload.php";
 
-//Defaults::$validatorClass = Validator::class;
-//App::$useUrlBasedVersioning = true;
 App::$cacheDirectory = HumanReadableCache::$cacheDir = __DIR__ . '/../api/common/store';
-
-define('BASE', dirname(__DIR__));
 App::$implementations[DataProviderInterface::class] = [ArrayDataProvider::class];
-
-
-//$class = DATA_STORE_IMPLEMENTATION;
-/** @var DataProviderInterface $i */
-//$instance = new $class('db2');
-
+RateLimiter::setLimit('hour', 10);
+RateLimiter::$includedPaths = ['examples/_009_rate_limiting'];
+App::$useUrlBasedVersioning = true;
+App::$apiVendor = "SomeVendor";
+App::$useVendorMIMEVersioning = true;
+Router::setApiVersion(2);
 
 class ResetForTests
 {
@@ -58,38 +55,31 @@ class ResetForTests
     }
 }
 
-RateLimiter::setLimit('hour', 10);
-RateLimiter::$includedPaths = ['examples/_009_rate_limiting'];
-
-App::$useUrlBasedVersioning = true;
-
-Router::setApiVersion(2);
-
 try {
     Router::mapApiClasses([
         //clean up db for tests
-        ResetForTests::class => '__cleanup_db',
+        '__cleanup_db' => ResetForTests::class,
         //examples
-        Say::class => 'examples/_001_helloworld/say',
-        Math::class => 'examples/_002_minimal/math',
-        BMI::class => 'examples/_003_multiformat/bmi',
-        Currency::class => 'examples/_004_error_response/currency',
-        Simple::class => 'examples/_005_protected_api',
-        Secured::class => 'examples/_005_protected_api/secured',
-        Api::class => 'examples/_006_routing/api',
-        Authors::class => 'examples/_007_crud/authors',
-        ImprovedAuthors::class => 'examples/_008_documentation/authors',
-        RateLimitedAuthors::class => 'examples/_009_rate_limiting/authors',
-        Access::class => 'examples/_010_access_control',
-        'BMI' => 'examples/_011_versioning/bmi',
+        'examples/_001_helloworld/say' => Say::class,
+        'examples/_002_minimal/math' => Math::class,
+        'examples/_003_multiformat/bmi' => BMI::class,
+        'examples/_004_error_response/currency' => Currency::class,
+        'examples/_005_protected_api' => Simple::class,
+        'examples/_005_protected_api/secured' => Secured::class,
+        'examples/_006_routing/api' => Api::class,
+        'examples/_007_crud/authors' => Authors::class,
+        'examples/_008_documentation/authors' => ImprovedAuthors::class,
+        'examples/_009_rate_limiting/authors' => RateLimitedAuthors::class,
+        'examples/_010_access_control' => Access::class,
+        'examples/_011_versioning/bmi' => 'BMI',
         //tests
-        MinMax::class => 'tests/param/minmax',
-        MinMaxFix::class => 'tests/param/minmaxfix',
-        Type::class => 'tests/param/type',
-        Validation::class => 'tests/param/validation',
-        Data::class => 'tests/request_data',
+        'tests/param/minmax' => MinMax::class,
+        'tests/param/minmaxfix' => MinMaxFix::class,
+        'tests/param/type' => Type::class,
+        'tests/param/validation' => Validation::class,
+        'tests/request_data' => Data::class,
         //Explorer
-        Explorer::class => 'explorer',
+        'explorer' => Explorer::class,
     ]);
     Router::setMediaTypes(Json::class, Xml::class);
     Router::addAuthenticator(SimpleAuth::class, 'examples/_005_protected_api/simpleauth');
@@ -101,6 +91,9 @@ try {
 }
 $routes = Router::toArray();
 
+//var_export(array_sort(array_keys($routes['v1'])));
+//die();
+//var_export(Router::$formatMap);
 //var_dump(Router::$versionMap);
 
 $loop = React\EventLoop\Factory::create();

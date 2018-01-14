@@ -44,13 +44,14 @@ class Router
     public static $preAuthFilterClasses = [];
     public static $postAuthFilterClasses = [];
     public static $formatMap = ['extensions' => []];
+    public static $formatOverridesMap = ['extensions' => []];
     public static $versionMap = [];
 
     public static $minimumVersion = 1;
     public static $maximumVersion = 1;
 
-    protected static $readableMediaTypes = [];
-    protected static $writableMediaTypes = [];
+    public static $readableMediaTypes = [];
+    public static $writableMediaTypes = [];
 
     protected static $routes = [];
     protected static $models = [];
@@ -135,27 +136,48 @@ class Router
      */
     public static function setResponseMediaTypes(string ...$types): void
     {
-        $extensions = [];
         static::$writableMediaTypes = [];
+        static::_setResponseMediaTypes($types, static::$formatMap, static::$writableMediaTypes);
+    }
 
+    /**
+     * @param string[] ...$types
+     * @throws Exception
+     */
+    public static function setOverridingResponseMediaTypes(string ...$types): void
+    {
+        $ignore = [];
+        static::_setResponseMediaTypes($types, static::$formatOverridesMap, $ignore);
+    }
+
+    /**
+     * @param array $types
+     * @param array $formatMap
+     * @param array $writableMediaTypes
+     * @throws Exception
+     * @internal
+     */
+    public static function _setResponseMediaTypes(array $types, array &$formatMap, array &$writableMediaTypes): void
+    {
+        $extensions = [];
         foreach ($types as $type) {
             if (!isset(class_implements($type)[ResponseMediaTypeInterface::class])) {
                 throw new Exception($type . ' is an invalid media type class; it must implement ' .
                     'ResponseMediaTypeInterface interface');
             }
             foreach ($type::supportedMediaTypes() as $mime => $extension) {
-                static::$writableMediaTypes[] = $mime;
+                $writableMediaTypes[] = $mime;
                 $extensions[".$extension"] = true;
-                if (!isset(static::$formatMap[$extension])) {
-                    static::$formatMap[$extension] = $type;
+                if (!isset($formatMap[$extension])) {
+                    $formatMap[$extension] = $type;
                 }
-                if (!isset(static::$formatMap[$mime])) {
-                    static::$formatMap[$mime] = $type;
+                if (!isset($formatMap[$mime])) {
+                    $formatMap[$mime] = $type;
                 }
             }
         }
-        static::$formatMap['default'] = $types[0];
-        static::$formatMap['extensions'] = array_keys($extensions);
+        $formatMap['default'] = $types[0];
+        $formatMap['extensions'] = array_keys($extensions);
     }
 
     /**
@@ -172,7 +194,7 @@ class Router
      * All the protected methods that do not start with _ (underscore)
      * will exposed as protected api which will require authentication
      *
-     * @param array $map [$className => $resourcePath, $className2 ...]
+     * @param array $map [$resourcePath => $className, $className2 ...]
      *                   array of associative arrays containing the
      *                   class name & optional url prefix for mapping.
      *
@@ -182,10 +204,9 @@ class Router
     {
         try {
             $maxVersionMethod = '__getMaximumSupportedVersion';
-            foreach ($map as $className => $resourcePath) {
-                if (is_numeric($className)) {
-                    $className = $resourcePath;
-                    $resourcePath = null;
+            foreach ($map as $resourcePath => $className) {
+                if (is_numeric($resourcePath)) {
+                    $resourcePath = strtolower($className);
                 }
                 if (isset(App::$aliases[$className])) {
                     $className = App::$aliases[$className];
@@ -220,7 +241,7 @@ class Router
                     $versionedClassName = str_replace('{$version}', $version,
                         $name);
                     if (class_exists($versionedClassName)) {
-                        static::addAPIClass($versionedClassName,
+                        static::addAPIForVersion($versionedClassName,
                             Util::getResourcePath(
                                 $className,
                                 $resourcePath
@@ -236,7 +257,7 @@ class Router
                             static::$versionMap[$className][$version] = $versionedClassName;
                         }
                     } elseif (isset(static::$versionMap[$className][$version])) {
-                        static::addAPIClass(static::$versionMap[$className][$version],
+                        static::addAPIForVersion(static::$versionMap[$className][$version],
                             Util::getResourcePath(
                                 $className,
                                 $resourcePath
@@ -262,7 +283,7 @@ class Router
      */
     public static function addAPI(string $className, string $resourcePath = null)
     {
-        static::mapApiClasses([$className => $resourcePath]);
+        static::mapApiClasses([$resourcePath => $className]);
     }
 
     /**
@@ -275,7 +296,7 @@ class Router
      * @throws Exception
      * @throws RestException
      */
-    protected static function addAPIClass(string $className, string $resourcePath = '', int $version = 1): void
+    protected static function addAPIForVersion(string $className, string $resourcePath = '', int $version = 1): void
     {
 
         /*
