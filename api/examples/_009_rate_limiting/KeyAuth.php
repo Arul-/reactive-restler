@@ -1,10 +1,14 @@
 <?php
 
 use Luracast\Restler\Contracts\AuthenticationInterface;
+use Luracast\Restler\Contracts\SelectivePathsFilterInterface;
+use Luracast\Restler\Contracts\SelectivePathsTrait;
 use Psr\Http\Message\ServerRequestInterface;
 
-class KeyAuth implements AuthenticationInterface
+class KeyAuth implements AuthenticationInterface, SelectivePathsFilterInterface
 {
+    use SelectivePathsTrait;
+
     public function __isAllowed(ServerRequestInterface $request, array &$responseHeaders = []): bool
     {
         $query = $request->getQueryParams();

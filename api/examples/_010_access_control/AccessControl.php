@@ -2,13 +2,17 @@
 
 use Luracast\Restler\App;
 use Luracast\Restler\Contracts\AccessControlInterface;
+use Luracast\Restler\Contracts\SelectivePathsFilterInterface;
+use Luracast\Restler\Contracts\SelectivePathsTrait;
 use Luracast\Restler\Data\ApiMethodInfo;
 use Luracast\Restler\HttpException;
 use Luracast\Restler\iIdentifyUser;
 use Psr\Http\Message\ServerRequestInterface;
 
-class AccessControl implements AccessControlInterface
+class AccessControl implements AccessControlInterface, SelectivePathsFilterInterface
 {
+    use SelectivePathsTrait;
+
     public static $requires = 'user';
     public static $role = 'user';
 
