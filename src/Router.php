@@ -11,6 +11,7 @@ use Luracast\Restler\Contracts\ResponseMediaTypeInterface;
 use Luracast\Restler\Contracts\UsesAuthenticationInterface;
 use Luracast\Restler\Data\ApiMethodInfo;
 use Luracast\Restler\Data\Text;
+use Luracast\Restler\MediaTypes\Json;
 use ReflectionClass;
 use ReflectionMethod;
 use ReflectionProperty;
@@ -40,18 +41,54 @@ class Router
         'colour' => 'color',
     ];
 
+    /**
+     * @var array
+     * @internal
+     */
     public static $authClasses = [];
+    /**
+     * @var array
+     * @internal
+     */
     public static $preAuthFilterClasses = [];
+    /**
+     * @var array
+     * @internal
+     */
     public static $postAuthFilterClasses = [];
-    public static $formatMap = ['extensions' => []];
+    /**
+     * @var array
+     * @internal
+     */
+    public static $formatMap = [
+        'default' => Json::class,
+        'json' => Json::class,
+        'application/json' => Json::class,
+        'extensions' => ['.json'],
+    ];
+    /**
+     * @var array
+     * @internal
+     */
     public static $formatOverridesMap = ['extensions' => []];
+    /**
+     * @var array
+     * @internal
+     */
     public static $versionMap = [];
-
+    /**
+     * @var array
+     * @internal
+     */
     public static $minimumVersion = 1;
+    /**
+     * @var array
+     * @internal
+     */
     public static $maximumVersion = 1;
 
-    public static $readableMediaTypes = [];
-    public static $writableMediaTypes = [];
+    public static $readableMediaTypes = [Json::class];
+    public static $writableMediaTypes = [Json::class];
 
     protected static $routes = [];
     protected static $models = [];
