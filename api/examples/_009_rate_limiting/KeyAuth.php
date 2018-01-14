@@ -1,11 +1,11 @@
 <?php
 
 use Luracast\Restler\Contracts\AuthenticationInterface;
-use Luracast\Restler\Contracts\SelectivePathsFilterInterface;
+use Luracast\Restler\Contracts\SelectivePathsInterface;
 use Luracast\Restler\Contracts\SelectivePathsTrait;
 use Psr\Http\Message\ServerRequestInterface;
 
-class KeyAuth implements AuthenticationInterface, SelectivePathsFilterInterface
+class KeyAuth implements AuthenticationInterface, SelectivePathsInterface
 {
     use SelectivePathsTrait;
 

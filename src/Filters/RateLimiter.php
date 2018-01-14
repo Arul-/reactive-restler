@@ -2,14 +2,14 @@
 
 
 use Luracast\Restler\Contracts\FilterInterface;
-use Luracast\Restler\Contracts\SelectivePathsFilterInterface;
+use Luracast\Restler\Contracts\SelectivePathsInterface;
 use Luracast\Restler\Contracts\UsesAuthenticationInterface;
 use Luracast\Restler\Defaults;
 use Luracast\Restler\HttpException;
 use Luracast\Restler\iCache;
 use Psr\Http\Message\ServerRequestInterface;
 
-class RateLimiter implements FilterInterface, SelectivePathsFilterInterface, UsesAuthenticationInterface
+class RateLimiter implements FilterInterface, SelectivePathsInterface, UsesAuthenticationInterface
 {
     /**
      * @var array paths where rate limit has to be applied

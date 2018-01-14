@@ -3,7 +3,7 @@
 use ArrayAccess;
 use Exception;
 use Luracast\Restler\Contracts\{
-    AuthenticationInterface, ContainerInterface, FilterInterface, SelectivePathsFilterInterface, RequestMediaTypeInterface, ResponseMediaTypeInterface, UsesAuthenticationInterface
+    AuthenticationInterface, ContainerInterface, FilterInterface, SelectivePathsInterface, RequestMediaTypeInterface, ResponseMediaTypeInterface, UsesAuthenticationInterface
 };
 use Luracast\Restler\Data\{
     ApiMethodInfo, iValidate, ValidationInfo, Validator
@@ -482,7 +482,7 @@ abstract class Core
     {
         $filterClasses = $postAuth ? $this->router['postAuthFilterClasses'] : $this->router['preAuthFilterClasses'];
         foreach ($filterClasses as $filerClass) {
-            if (isset(class_implements($filerClass)[SelectivePathsFilterInterface::class])) {
+            if (isset(class_implements($filerClass)[SelectivePathsInterface::class])) {
                 $notInPath = true;
                 foreach ($filerClass::getIncludedPaths() as $include) {
                     if (empty($include) || 0 === strpos($this->path, $include)) {
@@ -528,7 +528,7 @@ abstract class Core
             $unauthorized = false;
             foreach ($this->router['authClasses'] as $i => $authClass) {
                 try {
-                    if (isset(class_implements($authClass)[SelectivePathsFilterInterface::class])) {
+                    if (isset(class_implements($authClass)[SelectivePathsInterface::class])) {
                         $notInPath = true;
                         foreach ($authClass::getIncludedPaths() as $include) {
                             if (empty($include) || 0 === strpos($this->path, $include)) {
