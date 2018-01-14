@@ -2,7 +2,7 @@
 
 
 use Luracast\Restler\Contracts\MediaTypeInterface;
-use Exception;
+use Luracast\Restler\Data\Text;
 use Luracast\Restler\HttpException;
 
 abstract class MediaType implements MediaTypeInterface
@@ -42,7 +42,15 @@ abstract class MediaType implements MediaTypeInterface
             $this->extension = $types[$type];
             return $this;
         }
-        throw new HttpException("Invalid Media Type `$type`");
+        //support for vendor MIME types
+        foreach ($types as $mime => $extension) {
+            if (Text::endsWith($type, "+$extension")) {
+                $this->mime = $type;
+                $this->extension = $extension;
+                return $this;
+            }
+        }
+        throw new HttpException(500, "Invalid Media Type `$type`");
     }
 
     public function extension(string $extension = null)
@@ -55,7 +63,7 @@ abstract class MediaType implements MediaTypeInterface
             $this->extension = $extension;
             return $this;
         }
-        throw new HttpException("Invalid Extension `$extension`");
+        throw new HttpException(500, "Invalid Extension `$extension`");
     }
 
     public function charset(string $charset = null)
