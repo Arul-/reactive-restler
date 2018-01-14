@@ -3,7 +3,7 @@
 use ArrayAccess;
 use Exception;
 use Luracast\Restler\Contracts\{
-    AuthenticationInterface, ContainerInterface, FilterInterface, LimitedPathsInterface, RequestMediaTypeInterface, ResponseMediaTypeInterface, UsesAuthenticationInterface
+    AuthenticationInterface, ContainerInterface, FilterInterface, SelectivePathsFilterInterface, RequestMediaTypeInterface, ResponseMediaTypeInterface, UsesAuthenticationInterface
 };
 use Luracast\Restler\Data\{
     ApiMethodInfo, iValidate, ValidationInfo, Validator
@@ -482,7 +482,7 @@ abstract class Core
     {
         $filterClasses = $postAuth ? $this->router['postAuthFilterClasses'] : $this->router['preAuthFilterClasses'];
         foreach ($filterClasses as $filerClass) {
-            if (isset(class_implements($filerClass)[LimitedPathsInterface::class])) {
+            if (isset(class_implements($filerClass)[SelectivePathsFilterInterface::class])) {
                 $notInPath = true;
                 foreach ($filerClass::getIncludedPaths() as $include) {
                     if (empty($include) || 0 === strpos($this->path, $include)) {
@@ -495,9 +495,9 @@ abstract class Core
                 }
                 foreach ($filerClass::getExcludedPaths() as $exclude) {
                     if (empty($exclude) && empty($this->path)) {
-                        continue;
+                        continue 2;
                     } elseif (0 === strpos($this->path, $exclude)) {
-                        continue;
+                        continue 2;
                     }
                 }
             }
@@ -528,6 +528,28 @@ abstract class Core
             $unauthorized = false;
             foreach ($this->router['authClasses'] as $i => $authClass) {
                 try {
+                    if (isset(class_implements($authClass)[SelectivePathsFilterInterface::class])) {
+                        $notInPath = true;
+                        foreach ($authClass::getIncludedPaths() as $include) {
+                            if (empty($include) || 0 === strpos($this->path, $include)) {
+                                $notInPath = false;
+                                break;
+                            }
+                        }
+                        if ($notInPath) {
+                            array_splice($this->router['authClasses'], $i, 1);
+                            continue;
+                        }
+                        foreach ($authClass::getExcludedPaths() as $exclude) {
+                            if (empty($exclude) && empty($this->path)) {
+                                array_splice($this->router['authClasses'], $i, 1);
+                                continue 2;
+                            } elseif (0 === strpos($this->path, $exclude)) {
+                                array_splice($this->router['authClasses'], $i, 1);
+                                continue 2;
+                            }
+                        }
+                    }
                     /**
                      * @var AuthenticationInterface
                      */
@@ -548,6 +570,13 @@ abstract class Core
                         $unauthorized = $e;
                     }
                 }
+            }
+            //when none of the auth classes apply and it's not a hybrid api
+            if (!count($this->router['authClasses']) && $accessLevel > 1) {
+                throw new HttpException(
+                    403,
+                    'at least one Authentication Class should apply to path `' . $this->path . '`'
+                );
             }
             $this->authVerified = true;
             if ($unauthorized) {

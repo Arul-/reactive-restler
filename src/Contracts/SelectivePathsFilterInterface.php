@@ -1,7 +1,7 @@
 <?php namespace Luracast\Restler\Contracts;
 
 
-interface LimitedPathsInterface
+interface SelectivePathsFilterInterface extends FilterInterface
 {
     /**
      * Paths to be included in the process
