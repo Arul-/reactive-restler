@@ -2,24 +2,25 @@
 
 
 use Luracast\Restler\Contracts\FilterInterface;
+use Luracast\Restler\Contracts\LimitedPathsInterface;
 use Luracast\Restler\Contracts\UsesAuthenticationInterface;
 use Luracast\Restler\Defaults;
 use Luracast\Restler\HttpException;
 use Luracast\Restler\iCache;
 use Psr\Http\Message\ServerRequestInterface;
 
-class RateLimiter implements FilterInterface, UsesAuthenticationInterface
+class RateLimiter implements FilterInterface, UsesAuthenticationInterface, LimitedPathsInterface
 {
     /**
      * @var array paths where rate limit has to be applied
      */
-    public static $includedPaths = [''];
+    private static $includedPaths = [''];
 
     /**
      * @var array all paths beginning with any of the following will be excluded
-     * from documentation
+     * from rate limiting
      */
-    public static $excludedPaths = array('explorer');
+    private static $excludedPaths = ['explorer'];
 
     /**
      * @var int
@@ -196,5 +197,25 @@ class RateLimiter implements FilterInterface, UsesAuthenticationInterface
             $ret[$i] = 'and ' . $ret[$i];
         }
         return implode(' ', $ret);
+    }
+
+    public static function getIncludedPaths(): array
+    {
+        return static::$includedPaths;
+    }
+
+    public static function getExcludedPaths(): array
+    {
+        return static::$excludedPaths;
+    }
+
+    static function setIncludedPaths(string ...$included): void
+    {
+        static::$includedPaths = $included;
+    }
+
+    static function setExcludedPaths(string ...$excluded): void
+    {
+        static::$includedPaths = $excluded;
     }
 }

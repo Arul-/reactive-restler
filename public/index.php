@@ -24,7 +24,7 @@ include __DIR__ . "/../vendor/autoload.php";
 App::$cacheDirectory = HumanReadableCache::$cacheDir = __DIR__ . '/../api/common/store';
 App::$implementations[DataProviderInterface::class] = [ArrayDataProvider::class];
 RateLimiter::setLimit('hour', 10);
-RateLimiter::$includedPaths = ['examples/_009_rate_limiting'];
+RateLimiter::setIncludedPaths('examples/_009_rate_limiting');
 App::$useUrlBasedVersioning = true;
 App::$apiVendor = "SomeVendor";
 App::$useVendorMIMEVersioning = true;
