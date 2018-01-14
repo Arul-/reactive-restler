@@ -512,7 +512,7 @@ abstract class Core
                 );
             }
             $unauthorized = false;
-            foreach ($this->router['authClasses'] as $authClass) {
+            foreach ($this->router['authClasses'] as $i => $authClass) {
                 try {
                     /**
                      * @var AuthenticationInterface
@@ -522,6 +522,9 @@ abstract class Core
                         throw new HttpException(401);
                     }
                     $unauthorized = false;
+                    //make this auth class as the first one
+                    array_splice($this->router['authClasses'], $i, 1);
+                    array_unshift($this->router['authClasses'], $authClass);
                     break;
                 } catch (InvalidAuthCredentials $e) {
                     $this->authenticated = false;
