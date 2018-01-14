@@ -49,7 +49,6 @@ abstract class Core
      */
     public $responseFormat;
     protected $path = '';
-    protected $formatOverridesMap = ['extensions' => []];
     /**
      * @var RequestMediaTypeInterface
      */
@@ -71,7 +70,10 @@ abstract class Core
      * @var iterable
      */
     protected $app;
-
+    /**
+     * @var iterable
+     */
+    protected $router;
     /**
      * @var int for calculating execution time
      */
@@ -93,6 +95,8 @@ abstract class Core
         $config = $config ?? [];
         $config['app'] = $this->app = $config['app']
             ?? get_class_vars(App::class);
+        $config['router'] = $this->router = $config['router']
+            ?? get_class_vars(Router::class);
         $this->config = &$config;
         foreach ($this->app['implementations'] as $abstract => $implementations) {
             if (!isset($this->app['aliases'][$abstract]) && count($implementations)) {
@@ -155,21 +159,21 @@ abstract class Core
     {
         $path = str_replace(
             array_merge(
-                Router::$formatMap['extensions'],
-                $this->formatOverridesMap['extensions']
+                $this->router['formatMap']['extensions'],
+                $this->router['formatOverridesMap']['extensions']
             ),
             '',
             trim($path, '/')
         );
         if (App::$useUrlBasedVersioning && strlen($path) && $path{0} == 'v') {
             $version = intval(substr($path, 1));
-            if ($version && $version <= Router::$maximumVersion) {
+            if ($version && $version <= $this->router['maximumVersion']) {
                 $this->requestedApiVersion = $version;
                 $path = explode('/', $path, 2);
                 $path = count($path) == 2 ? $path[1] : '';
             }
         } else {
-            $this->requestedApiVersion = Router::$minimumVersion;
+            $this->requestedApiVersion = $this->router['minimumVersion'];
         }
         return $path;
     }
@@ -202,14 +206,14 @@ abstract class Core
             }
             if ($mime == UrlEncoded::MIME) {
                 $format = $this->make(UrlEncoded::class);
-            } elseif (isset(Router::$formatMap[$mime])) {
-                $format = $this->make(Router::$formatMap[$mime]);
+            } elseif (isset($this->router['formatMap'][$mime])) {
+                $format = $this->make($this->router['formatMap'][$mime]);
                 $format->mediaType($mime);
-            } elseif (!$this->requestFormatDiffered && isset($this->formatOverridesMap[$mime])) {
+            } elseif (!$this->requestFormatDiffered && isset($this->router['formatOverridesMap'][$mime])) {
                 //if our api method is not using an @format comment
                 //to point to this $mime, we need to throw 403 as in below
                 //but since we don't know that yet, we need to defer that here
-                $format = $this->make($this->formatOverridesMap[$mime]);
+                $format = $this->make($this->router['formatOverridesMap'][$mime]);
                 $format->mediaType($mime);
                 $this->requestFormatDiffered = true;
             } else {
@@ -220,7 +224,7 @@ abstract class Core
             }
         }
         if (!$format) {
-            $format = $this->make(Router::$formatMap['default']);
+            $format = $this->make($this->router['formatMap']['default']);
         }
         return $format;
     }
@@ -287,24 +291,24 @@ abstract class Core
      * @param string $acceptHeader
      * @return ResponseMediaTypeInterface
      * @throws HttpException
+     * @throws Exception
      */
     protected function negotiateResponseMediaType(string $path, string $acceptHeader = ''): ResponseMediaTypeInterface
     {
         //check if the api method insists on response format using @format comment
-        if (array_key_exists('format', $this->apiMethodInfo->metadata)) {
-            $formats = explode(',', (string)$this->apiMethodInfo->metadata['format']);
+        if ($formats = $this->apiMethodInfo->metadata['format'] ?? false) {
+            $formats = explode(',', (string)$formats);
             foreach ($formats as $i => $f) {
                 $f = trim($f);
-                if (!in_array($f, $this->formatOverridesMap)) {
+                if (!in_array($f, $this->router['formatOverridesMap'])) {
                     throw new HttpException(
                         500,
-                        "Given @format is not present in overriding formats. Please call `\$r->setOverridingFormats('$f');` first."
+                        "Given @format is not present in overriding formats. Please call `Router::\$setOverridingResponseMediaTypes('$f');` first."
                     );
                 }
                 $formats[$i] = $f;
             }
-            //TODO: fix this
-            //call_user_func_array(array($this, 'setSupportedFormats'), $formats); //TODO: Fix this
+            Router::_setResponseMediaTypes($formats, $this->router['formatMap'], $this->router['writableMediaTypes']);
         }
 
         // check if client has specified an extension
@@ -315,8 +319,8 @@ abstract class Core
             $extension = array_pop($extensions);
             $extension = explode('/', $extension);
             $extension = array_shift($extension);
-            if ($extension && isset(Router::$formatMap[$extension])) {
-                $format = $this->make(Router::$formatMap[$extension]);
+            if ($extension && isset($this->router['formatMap'][$extension])) {
+                $format = $this->make($this->router['formatMap'][$extension]);
                 $format->extension($extension);
                 return $format;
             }
@@ -325,8 +329,8 @@ abstract class Core
         if (!empty($acceptHeader)) {
             $acceptList = Util::sortByPriority($acceptHeader);
             foreach ($acceptList as $accept => $quality) {
-                if (isset(Router::$formatMap[$accept])) {
-                    $format = $this->make(Router::$formatMap[$accept]);
+                if (isset($this->router['formatMap'][$accept])) {
+                    $format = $this->make($this->router['formatMap'][$accept]);
                     $format->mediaType($accept);
                     // Tell cache content is based on Accept header
                     $this->responseHeaders['Vary'] = 'Accept';
@@ -334,21 +338,18 @@ abstract class Core
 
                 } elseif (false !== ($index = strrpos($accept, '+'))) {
                     $mime = substr($accept, 0, $index);
-                    if (is_string($this->app['apiVendor'])
-                        && 0 === stripos($mime,
-                            'application/vnd.'
-                            . $this->app['apiVendor'] . '-v')
-                    ) {
+                    $vendor = 'application/vnd.'
+                        . $this->app['apiVendor'] . '-v';
+                    if (is_string($this->app['apiVendor']) && 0 === stripos($mime, $vendor)) {
                         $extension = substr($accept, $index + 1);
-                        if (isset(Router::$formatMap[$extension])) {
+                        if (isset($this->router['formatMap'][$extension])) {
                             //check the MIME and extract version
-                            $version = intval(substr($mime,
-                                18 + strlen($this->app['apiVendor'])));
-                            if ($version >= Router::$minimumVersion && $version <= Router::$maximumVersion) {
+                            $version = intval(substr($mime, strlen($vendor)));
+                            if ($version >= $this->router['minimumVersion'] && $version <= $this->router['maximumVersion']) {
                                 $this->requestedApiVersion = $version;
-                                $format = $this->make(Router::$formatMap[$extension]);
-                                $format->extension($extension);
-                                $this->app['useVendorMIMEVersioning'] = true;
+                                $format = $this->make($this->router['formatMap'][$extension]);
+                                $format->mediaType("$vendor$version+$extension");
+                                //$this->app['useVendorMIMEVersioning'] = true;
                                 $this->responseHeaders['Vary'] = 'Accept';
                                 return $format;
                             }
@@ -369,7 +370,7 @@ abstract class Core
             } elseif (false !== strpos($acceptHeader, 'text/*')) {
                 $format = $this->make(Xml::class);
             } elseif (false !== strpos($acceptHeader, '*/*')) {
-                $format = $this->make(Router::$formatMap['default']);
+                $format = $this->make($this->router['formatMap']['default']);
             }
         }
         if (empty($format)) {
@@ -377,7 +378,7 @@ abstract class Core
             // server cannot send a response which is acceptable according to
             // the combined Accept field value, then the server SHOULD send
             // a 406 (not acceptable) response.
-            $format = $this->make(Router::$formatMap['default']);
+            $format = $this->make($this->router['formatMap']['default']);
             $this->responseFormat = $format;
             throw new HttpException(
                 406,
@@ -484,7 +485,7 @@ abstract class Core
      */
     protected function filter(ServerRequestInterface $request, bool $postAuth = false)
     {
-        $filterClasses = $postAuth ? Router::$postAuthFilterClasses : Router::$preAuthFilterClasses;
+        $filterClasses = $postAuth ? $this->router['postAuthFilterClasses'] : $this->router['preAuthFilterClasses'];
         foreach ($filterClasses as $filerClass) {
             /** @var FilterInterface $filter */
             $filter = $this->make($filerClass);
@@ -504,14 +505,14 @@ abstract class Core
         $o = &$this->apiMethodInfo;
         $accessLevel = max($this->app['apiAccessLevel'], $o->accessLevel);
         if ($accessLevel) {
-            if (!count(Router::$authClasses) && $accessLevel > 1) {
+            if (!count($this->router['authClasses']) && $accessLevel > 1) {
                 throw new HttpException(
                     403,
                     'at least one Authentication Class is required'
                 );
             }
             $unauthorized = false;
-            foreach (Router::$authClasses as $authClass) {
+            foreach ($this->router['authClasses'] as $authClass) {
                 try {
                     /**
                      * @var AuthenticationInterface
@@ -666,13 +667,8 @@ abstract class Core
         $charset = $this->responseFormat->charset()
             ?: $this->app['charset'];
 
-        $this->responseHeaders['Content-Type'] = (
-            $this->app['useVendorMIMEVersioning']
-                ? 'application/vnd.' . $this->app['apiVendor']
-                . "-v{$this->requestedApiVersion}+"
-                . $this->responseFormat->extension()
-                : $this->responseFormat->mediaType())
-            . "; charset=$charset";
+        $this->responseHeaders['Content-Type'] =
+            $this->responseFormat->mediaType() . "; charset=$charset";
         if ($e && $e instanceof HttpException) {
             $this->responseHeaders = $e->getHeaders() + $this->responseHeaders;
         }
