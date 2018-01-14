@@ -88,28 +88,8 @@ class RateLimiter implements FilterInterface, UsesAuthenticationInterface, Limit
      */
     public function __isAllowed(ServerRequestInterface $request, array &$responseHeaders): bool
     {
-        $path = trim($request->getUri()->getPath(), '/');
         $authenticated = $this->authenticated;
-
-        $notInPath = true;
-        foreach (static::$includedPaths as $include) {
-            if (empty($include) || 0 === strpos($path, $include)) {
-                $notInPath = false;
-                break;
-            }
-        }
-        if ($notInPath) {
-            return true;
-        }
-
         $responseHeaders['X-Auth-Status'] = ($authenticated ? 'true' : 'false');
-        foreach (static::$excludedPaths as $exclude) {
-            if (empty($exclude) && empty($path)) {
-                return true;
-            } elseif (0 === strpos($path, $exclude)) {
-                return true;
-            }
-        }
         $unit = $this->runtimeValues['unit'];
         $group = $this->runtimeValues['group'];
         static::validate($unit);

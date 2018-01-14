@@ -3,12 +3,7 @@
 use ArrayAccess;
 use Exception;
 use Luracast\Restler\Contracts\{
-    AuthenticationInterface,
-    ContainerInterface,
-    FilterInterface,
-    RequestMediaTypeInterface,
-    ResponseMediaTypeInterface,
-    UsesAuthenticationInterface
+    AuthenticationInterface, ContainerInterface, FilterInterface, LimitedPathsInterface, RequestMediaTypeInterface, ResponseMediaTypeInterface, UsesAuthenticationInterface
 };
 use Luracast\Restler\Data\{
     ApiMethodInfo, iValidate, ValidationInfo, Validator
@@ -487,6 +482,25 @@ abstract class Core
     {
         $filterClasses = $postAuth ? $this->router['postAuthFilterClasses'] : $this->router['preAuthFilterClasses'];
         foreach ($filterClasses as $filerClass) {
+            if (isset(class_implements($filerClass)[LimitedPathsInterface::class])) {
+                $notInPath = true;
+                foreach ($filerClass::getIncludedPaths() as $include) {
+                    if (empty($include) || 0 === strpos($this->path, $include)) {
+                        $notInPath = false;
+                        break;
+                    }
+                }
+                if ($notInPath) {
+                    continue;
+                }
+                foreach ($filerClass::getExcludedPaths() as $exclude) {
+                    if (empty($exclude) && empty($this->path)) {
+                        continue;
+                    } elseif (0 === strpos($this->path, $exclude)) {
+                        continue;
+                    }
+                }
+            }
             /** @var FilterInterface $filter */
             $filter = $this->make($filerClass);
             if (!$filter->__isAllowed($request, $this->responseHeaders)) {
