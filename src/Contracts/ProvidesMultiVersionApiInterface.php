@@ -12,5 +12,5 @@ interface ProvidesMultiVersionApiInterface
      * Maximum api version supported by the api class
      * @return int
      */
-    public static function __getMaximumSupportedVersion(): int;
+    public static function getMaximumSupportedVersion(): int;
 }

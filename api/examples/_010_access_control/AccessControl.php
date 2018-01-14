@@ -36,12 +36,12 @@ class AccessControl implements AccessControlInterface
         return static::$requires == $role || $role == 'admin';
     }
 
-    public static function __getWWWAuthenticateString(): string
+    public static function getWWWAuthenticateString(): string
     {
         return 'Query name="api_key"';
     }
 
-    public static function __verifyAccess(ApiMethodInfo $info): bool
+    public static function verifyAccess(ApiMethodInfo $info): bool
     {
         $requires = $info->metadata['class']['AccessControl']['properties']['requires'] ?? false;
         return $requires

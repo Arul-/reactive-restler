@@ -13,5 +13,5 @@ interface AuthenticationInterface extends FilterInterface
      * @example Digest
      * @example OAuth
      */
-    public static function __getWWWAuthenticateString(): string;
+    public static function getWWWAuthenticateString(): string;
 }

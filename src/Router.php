@@ -331,7 +331,7 @@ class Router
      * @param int $version
      *
      * @throws Exception
-     * @throws RestException
+     * @throws HttpException
      */
     protected static function addAPIForVersion(string $className, string $resourcePath = '', int $version = 1): void
     {
@@ -356,12 +356,15 @@ class Router
         try {
             $classMetadata = CommentParser::parse($class->getDocComment());
         } catch (Exception $e) {
-            throw new RestException(500, "Error while parsing comments of `$className` class. " . $e->getMessage());
+            throw new HttpException(500, "Error while parsing comments of `$className` class. " . $e->getMessage());
         }
         $classMetadata['scope'] = $scope = static::scope($class);
         $methods = $class->getMethods(ReflectionMethod::IS_PUBLIC +
             ReflectionMethod::IS_PROTECTED);
         foreach ($methods as $method) {
+            if ($method->isStatic()) {
+                continue;
+            }
             $methodUrl = strtolower($method->getName());
             //method name should not begin with _
             if ($methodUrl{0} == '_') {
@@ -372,7 +375,7 @@ class Router
             try {
                 $metadata = CommentParser::parse($doc) + $classMetadata;
             } catch (Exception $e) {
-                throw new RestException(500,
+                throw new HttpException(500,
                     "Error while parsing comments of `{$className}::{$method->getName()}` method. " . $e->getMessage());
             }
             //@access should not be private
@@ -869,7 +872,7 @@ class Router
         if (
             $authenticated &&
             $class = App::getClass(AccessControlInterface::class) &&
-                $class::__verifyAccess(ApiMethodInfo::__set_state($route))
+                $class::verifyAccess(ApiMethodInfo::__set_state($route))
         ) {
             return false;
         }
@@ -992,7 +995,7 @@ class Router
      * @return array
      *
      * @throws Exception
-     * @throws RestException
+     * @throws HttpException
      * @access protected
      */
     protected static function getTypeAndModel(
@@ -1067,7 +1070,7 @@ class Router
             }
         } catch (Exception $e) {
             if (Text::endsWith($e->getFile(), 'CommentParser.php')) {
-                throw new RestException(500, "Error while parsing comments of `$className` class. " . $e->getMessage());
+                throw new HttpException(500, "Error while parsing comments of `$className` class. " . $e->getMessage());
             }
             throw $e;
         }

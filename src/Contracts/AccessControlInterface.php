@@ -4,5 +4,5 @@ use Luracast\Restler\Data\ApiMethodInfo;
 
 interface AccessControlInterface extends AuthenticationInterface
 {
-    public static function __verifyAccess(ApiMethodInfo $info): bool;
+    public static function verifyAccess(ApiMethodInfo $info): bool;
 }

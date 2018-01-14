@@ -479,7 +479,7 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
         return $r;
     }
 
-    public static function __getMaximumSupportedVersion(): int
+    public static function getMaximumSupportedVersion(): int
     {
         return Router::$maximumVersion;
     }
