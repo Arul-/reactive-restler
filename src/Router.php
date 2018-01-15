@@ -174,7 +174,8 @@ class Router
     public static function setResponseMediaTypes(string ...$types): void
     {
         static::$writableMediaTypes = [];
-        static::_setResponseMediaTypes($types, static::$formatMap, static::$writableMediaTypes);
+        static::_setMediaTypes(ResponseMediaTypeInterface::class, $types,
+            static::$formatMap, static::$writableMediaTypes);
     }
 
     /**
@@ -184,26 +185,32 @@ class Router
     public static function setOverridingResponseMediaTypes(string ...$types): void
     {
         $ignore = [];
-        static::_setResponseMediaTypes($types, static::$formatOverridesMap, $ignore);
+        static::_setMediaTypes(ResponseMediaTypeInterface::class, $types,
+            static::$formatOverridesMap, $ignore);
     }
 
     /**
+     * @internal
+     * @param string $interface
      * @param array $types
      * @param array $formatMap
-     * @param array $writableMediaTypes
+     * @param array $mediaTypes
      * @throws Exception
-     * @internal
      */
-    public static function _setResponseMediaTypes(array $types, array &$formatMap, array &$writableMediaTypes): void
-    {
+    public static function _setMediaTypes(
+        string $interface,
+        array $types,
+        array &$formatMap,
+        array &$mediaTypes
+    ): void {
         $extensions = [];
         foreach ($types as $type) {
-            if (!isset(class_implements($type)[ResponseMediaTypeInterface::class])) {
+            if (!isset(class_implements($type)[$interface])) {
                 throw new Exception($type . ' is an invalid media type class; it must implement ' .
-                    'ResponseMediaTypeInterface interface');
+                    $interface . ' interface');
             }
             foreach ($type::supportedMediaTypes() as $mime => $extension) {
-                $writableMediaTypes[] = $mime;
+                $mediaTypes[] = $mime;
                 $extensions[".$extension"] = true;
                 if (!isset($formatMap[$extension])) {
                     $formatMap[$extension] = $type;

@@ -303,7 +303,7 @@ abstract class Core
                 }
                 $formats[$i] = $f;
             }
-            Router::_setResponseMediaTypes($formats, $this->router['formatMap'], $this->router['writableMediaTypes']);
+            Router::_setMediaTypes(ResponseMediaTypeInterface::class, $formats, $this->router['formatMap'], $this->router['writableMediaTypes']);
         }
 
         // check if client has specified an extension
