@@ -5,7 +5,6 @@ use Exception;
 use Luracast\Restler\Contracts\AccessControlInterface;
 use Luracast\Restler\Contracts\AuthenticationInterface;
 use Luracast\Restler\Contracts\FilterInterface;
-use Luracast\Restler\Contracts\MediaTypeInterface;
 use Luracast\Restler\Contracts\RequestMediaTypeInterface;
 use Luracast\Restler\Contracts\ResponseMediaTypeInterface;
 use Luracast\Restler\Contracts\UsesAuthenticationInterface;
@@ -56,11 +55,20 @@ class Router
      * @internal
      */
     public static $postAuthFilterClasses = [];
+
     /**
      * @var array
      * @internal
      */
-    public static $formatMap = [
+    public static $requestFormatMap = [
+        'default' => Json::class,
+        'application/json' => Json::class,
+    ];
+    /**
+     * @var array
+     * @internal
+     */
+    public static $responseFormatMap = [
         'default' => Json::class,
         'json' => Json::class,
         'application/json' => Json::class,
@@ -105,45 +113,11 @@ class Router
      */
     public static function setMediaTypes(string ...$types): void
     {
-        $extensions = [];
-        static::$writableMediaTypes = static::$readableMediaTypes = [];
-        static::$formatMap = [];
-        foreach ($types as $type) {
-            $implements = class_implements($type);
-            if (!isset($implements[MediaTypeInterface::class])) {
-                throw new Exception($type . ' is an invalid media type class; it must implement ' .
-                    'MediaTypeInterface interface');
-            }
-            $either = false;
-            foreach ($type::supportedMediaTypes() as $mime => $extension) {
-                if ($implements[ResponseMediaTypeInterface::class]) {
-                    $either = true;
-                    static::$writableMediaTypes[] = $mime;
-                    $extensions[".$extension"] = true;
-                    if (!isset(static::$formatMap['default'])) {
-                        static::$formatMap['default'] = $type;
-                    }
-                    if (!isset(static::$formatMap[$extension])) {
-                        static::$formatMap[$extension] = $type;
-                    }
-                    if (!isset(static::$formatMap[$mime])) {
-                        static::$formatMap[$mime] = $type;
-                    }
-                }
-                if ($implements[RequestMediaTypeInterface::class]) {
-                    $either = true;
-                    static::$readableMediaTypes[] = $mime;
-                    if (!isset(static::$formatMap[$mime])) {
-                        static::$formatMap[$mime] = $type;
-                    }
-                }
-            }
-            if (!$either) {
-                throw new Exception($type . ' is an invalid media type class; it must implement ' .
-                    'either RequestMediaTypeInterface or ResponseMediaTypeInterface interface');
-            }
-        }
-        static::$formatMap['extensions'] = array_keys($extensions);
+        static::_setMediaTypes(RequestMediaTypeInterface::class, $types,
+            static::$requestFormatMap, static::$readableMediaTypes);
+
+        static::_setMediaTypes(ResponseMediaTypeInterface::class, $types,
+            static::$responseFormatMap, static::$writableMediaTypes);
     }
 
     /**
@@ -152,19 +126,8 @@ class Router
      */
     public static function setRequestMediaTypes(string ...$types): void
     {
-        static::$readableMediaTypes = [];
-        foreach ($types as $type) {
-            if (!isset(class_implements($type)[RequestMediaTypeInterface::class])) {
-                throw new Exception($type . ' is an invalid media type class; it must implement ' .
-                    'RequestMediaTypeInterface interface');
-            }
-            foreach ($type::supportedMediaTypes() as $mime => $extension) {
-                static::$readableMediaTypes[] = $mime;
-                if (!isset(static::$formatMap[$mime])) {
-                    static::$formatMap[$mime] = $type;
-                }
-            }
-        }
+        static::_setMediaTypes(RequestMediaTypeInterface::class, $types,
+            static::$requestFormatMap, static::$readableMediaTypes);
     }
 
     /**
@@ -173,9 +136,8 @@ class Router
      */
     public static function setResponseMediaTypes(string ...$types): void
     {
-        static::$writableMediaTypes = [];
         static::_setMediaTypes(ResponseMediaTypeInterface::class, $types,
-            static::$formatMap, static::$writableMediaTypes);
+            static::$responseFormatMap, static::$writableMediaTypes);
     }
 
     /**
@@ -203,7 +165,10 @@ class Router
         array &$formatMap,
         array &$mediaTypes
     ): void {
+        $formatMap = [];
+        $mediaTypes = [];
         $extensions = [];
+        $writable = $interface === ResponseMediaTypeInterface::class;
         foreach ($types as $type) {
             if (!isset(class_implements($type)[$interface])) {
                 throw new Exception($type . ' is an invalid media type class; it must implement ' .
@@ -211,9 +176,11 @@ class Router
             }
             foreach ($type::supportedMediaTypes() as $mime => $extension) {
                 $mediaTypes[] = $mime;
-                $extensions[".$extension"] = true;
-                if (!isset($formatMap[$extension])) {
-                    $formatMap[$extension] = $type;
+                if ($writable) {
+                    $extensions[".$extension"] = true;
+                    if (!isset($formatMap[$extension])) {
+                        $formatMap[$extension] = $type;
+                    }
                 }
                 if (!isset($formatMap[$mime])) {
                     $formatMap[$mime] = $type;
@@ -221,7 +188,9 @@ class Router
             }
         }
         $formatMap['default'] = $types[0];
-        $formatMap['extensions'] = array_keys($extensions);
+        if ($writable) {
+            $formatMap['extensions'] = array_keys($extensions);
+        }
     }
 
     /**

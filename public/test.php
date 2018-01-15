@@ -9,7 +9,7 @@ include __DIR__ . "/../vendor/autoload.php";
 
 App::$apiVendor = 'SomeVendor';
 Router::setApiVersion(2);
-Router::$formatMap = [
+Router::$responseFormatMap = [
     'default' => 'Luracast\\Restler\\MediaTypes\\Json',
     'json' => 'Luracast\\Restler\\MediaTypes\\Json',
     'application/json' => 'Luracast\\Restler\\MediaTypes\\Json',

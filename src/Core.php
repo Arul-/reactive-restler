@@ -154,7 +154,7 @@ abstract class Core
     {
         $path = str_replace(
             array_merge(
-                $this->router['formatMap']['extensions'],
+                $this->router['responseFormatMap']['extensions'],
                 $this->router['formatOverridesMap']['extensions']
             ),
             '',
@@ -195,14 +195,12 @@ abstract class Core
         $format = null;
         // check if client has sent any information on request format
         if (!empty($contentType)) {
-            $mime = $contentType;
-            if (false !== $pos = strpos($mime, ';')) {
-                $mime = substr($mime, 0, $pos);
-            }
+            //remove content type if found
+            $mime = strtok($contentType, ';');
             if ($mime == UrlEncoded::MIME) {
                 $format = $this->make(UrlEncoded::class);
-            } elseif (isset($this->router['formatMap'][$mime])) {
-                $format = $this->make($this->router['formatMap'][$mime]);
+            } elseif (isset($this->router['requestFormatMap'][$mime])) {
+                $format = $this->make($this->router['requestFormatMap'][$mime]);
                 $format->mediaType($mime);
             } elseif (!$this->requestFormatDiffered && isset($this->router['formatOverridesMap'][$mime])) {
                 //if our api method is not using an @format comment
@@ -219,7 +217,7 @@ abstract class Core
             }
         }
         if (!$format) {
-            $format = $this->make($this->router['formatMap']['default']);
+            $format = $this->make($this->router['requestFormatMap']['default']);
         }
         return $format;
     }
@@ -303,7 +301,21 @@ abstract class Core
                 }
                 $formats[$i] = $f;
             }
-            Router::_setMediaTypes(ResponseMediaTypeInterface::class, $formats, $this->router['formatMap'], $this->router['writableMediaTypes']);
+            Router::_setMediaTypes(RequestMediaTypeInterface::class, $formats, $this->router['requestFormatMap'],
+                $this->router['readableMediaTypes']);
+
+            if (
+                $this->requestFormatDiffered &&
+                !isset($this->router['requestFormatMap'][$this->requestFormat->mediaType()])
+            ) {
+                throw new HttpException(
+                    403,
+                    "Content type `'.$this->requestFormat->mediaType().'` is not supported."
+                );
+            }
+
+            Router::_setMediaTypes(ResponseMediaTypeInterface::class, $formats, $this->router['responseFormatMap'],
+                $this->router['writableMediaTypes']);
         }
 
         // check if client has specified an extension
@@ -314,8 +326,8 @@ abstract class Core
             $extension = array_pop($extensions);
             $extension = explode('/', $extension);
             $extension = array_shift($extension);
-            if ($extension && isset($this->router['formatMap'][$extension])) {
-                $format = $this->make($this->router['formatMap'][$extension]);
+            if ($extension && isset($this->router['responseFormatMap'][$extension])) {
+                $format = $this->make($this->router['responseFormatMap'][$extension]);
                 $format->extension($extension);
                 return $format;
             }
@@ -324,8 +336,8 @@ abstract class Core
         if (!empty($acceptHeader)) {
             $acceptList = Util::sortByPriority($acceptHeader);
             foreach ($acceptList as $accept => $quality) {
-                if (isset($this->router['formatMap'][$accept])) {
-                    $format = $this->make($this->router['formatMap'][$accept]);
+                if (isset($this->router['responseFormatMap'][$accept])) {
+                    $format = $this->make($this->router['responseFormatMap'][$accept]);
                     $format->mediaType($accept);
                     // Tell cache content is based on Accept header
                     $this->responseHeaders['Vary'] = 'Accept';
@@ -337,12 +349,15 @@ abstract class Core
                         . $this->app['apiVendor'] . '-v';
                     if (is_string($this->app['apiVendor']) && 0 === stripos($mime, $vendor)) {
                         $extension = substr($accept, $index + 1);
-                        if (isset($this->router['formatMap'][$extension])) {
+                        if (isset($this->router['responseFormatMap'][$extension])) {
                             //check the MIME and extract version
                             $version = intval(substr($mime, strlen($vendor)));
-                            if ($version >= $this->router['minimumVersion'] && $version <= $this->router['maximumVersion']) {
+
+                            if ($version >= $this->router['minimumVersion'] &&
+                                $version <= $this->router['maximumVersion']) {
+
                                 $this->requestedApiVersion = $version;
-                                $format = $this->make($this->router['formatMap'][$extension]);
+                                $format = $this->make($this->router['responseFormatMap'][$extension]);
                                 $format->mediaType("$vendor$version+$extension");
                                 //$this->app['useVendorMIMEVersioning'] = true;
                                 $this->responseHeaders['Vary'] = 'Accept';
@@ -365,7 +380,7 @@ abstract class Core
             } elseif (false !== strpos($acceptHeader, 'text/*')) {
                 $format = $this->make(Xml::class);
             } elseif (false !== strpos($acceptHeader, '*/*')) {
-                $format = $this->make($this->router['formatMap']['default']);
+                $format = $this->make($this->router['responseFormatMap']['default']);
             }
         }
         if (empty($format)) {
@@ -373,7 +388,7 @@ abstract class Core
             // server cannot send a response which is acceptable according to
             // the combined Accept field value, then the server SHOULD send
             // a 406 (not acceptable) response.
-            $format = $this->make($this->router['formatMap']['default']);
+            $format = $this->make($this->router['responseFormatMap']['default']);
             $this->responseFormat = $format;
             throw new HttpException(
                 406,
