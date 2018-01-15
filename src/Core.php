@@ -480,26 +480,12 @@ abstract class Core
      */
     protected function filter(ServerRequestInterface $request, bool $postAuth = false)
     {
-        $filterClasses = $postAuth ? $this->router['postAuthFilterClasses'] : $this->router['preAuthFilterClasses'];
-        foreach ($filterClasses as $filerClass) {
-            if (isset(class_implements($filerClass)[SelectivePathsInterface::class])) {
-                $notInPath = true;
-                foreach ($filerClass::getIncludedPaths() as $include) {
-                    if (empty($include) || 0 === strpos($this->path, $include)) {
-                        $notInPath = false;
-                        break;
-                    }
-                }
-                if ($notInPath) {
-                    continue;
-                }
-                foreach ($filerClass::getExcludedPaths() as $exclude) {
-                    if (empty($exclude) && empty($this->path)) {
-                        continue 2;
-                    } elseif (0 === strpos($this->path, $exclude)) {
-                        continue 2;
-                    }
-                }
+        $name = $postAuth ? 'postAuthFilterClasses' : 'preAuthFilterClasses';
+        foreach ($this->router[$name] as $i => $filerClass) {
+            //exclude invalid paths
+            if (!static::isPathSelected($filerClass, $this->path)) {
+                array_splice($this->router[$name], $i, 1);
+                continue;
             }
             /** @var FilterInterface $filter */
             $filter = $this->make($filerClass);
@@ -528,27 +514,10 @@ abstract class Core
             $unauthorized = false;
             foreach ($this->router['authClasses'] as $i => $authClass) {
                 try {
-                    if (isset(class_implements($authClass)[SelectivePathsInterface::class])) {
-                        $notInPath = true;
-                        foreach ($authClass::getIncludedPaths() as $include) {
-                            if (empty($include) || 0 === strpos($this->path, $include)) {
-                                $notInPath = false;
-                                break;
-                            }
-                        }
-                        if ($notInPath) {
-                            array_splice($this->router['authClasses'], $i, 1);
-                            continue;
-                        }
-                        foreach ($authClass::getExcludedPaths() as $exclude) {
-                            if (empty($exclude) && empty($this->path)) {
-                                array_splice($this->router['authClasses'], $i, 1);
-                                continue 2;
-                            } elseif (0 === strpos($this->path, $exclude)) {
-                                array_splice($this->router['authClasses'], $i, 1);
-                                continue 2;
-                            }
-                        }
+                    //exclude invalid paths
+                    if (!static::isPathSelected($authClass, $this->path)) {
+                        array_splice($this->router['authClasses'], $i, 1);
+                        continue;
                     }
                     /**
                      * @var AuthenticationInterface
@@ -754,6 +723,30 @@ abstract class Core
         ResponseInterface $response,
         string $rawRequestBody = ''
     ): ResponseInterface;
+
+    private static function isPathSelected(string $class, string $path): bool
+    {
+        if (isset(class_implements($class)[SelectivePathsInterface::class])) {
+            $notInPath = true;
+            foreach ($class::getIncludedPaths() as $include) {
+                if (empty($include) || 0 === strpos($path, $include)) {
+                    $notInPath = false;
+                    break;
+                }
+            }
+            if ($notInPath) {
+                return false;
+            }
+            foreach ($class::getExcludedPaths() as $exclude) {
+                if (empty($exclude) && empty($path)) {
+                    return false;
+                } elseif (0 === strpos($path, $exclude)) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
 
     /**
      * Change app property from a query string or comments
