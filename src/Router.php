@@ -5,6 +5,7 @@ use Exception;
 use Luracast\Restler\Contracts\AccessControlInterface;
 use Luracast\Restler\Contracts\AuthenticationInterface;
 use Luracast\Restler\Contracts\FilterInterface;
+use Luracast\Restler\Contracts\ProvidesMultiVersionApiInterface;
 use Luracast\Restler\Contracts\RequestMediaTypeInterface;
 use Luracast\Restler\Contracts\ResponseMediaTypeInterface;
 use Luracast\Restler\Contracts\UsesAuthenticationInterface;
@@ -216,7 +217,6 @@ class Router
     public static function mapApiClasses(array $map): void
     {
         try {
-            $maxVersionMethod = '__getMaximumSupportedVersion';
             foreach ($map as $resourcePath => $className) {
                 if (is_numeric($resourcePath)) {
                     $resourcePath = strtolower($className);
@@ -225,7 +225,8 @@ class Router
                     $className = App::$aliases[$className];
                 }
                 if (class_exists($className)) {
-                    if (method_exists($className, $maxVersionMethod)) {
+                    if (isset(class_implements($className)[ProvidesMultiVersionApiInterface::class])) {
+                        $maxVersionMethod = '__getMaximumSupportedVersion';
                         $max = $className::$maxVersionMethod();
                         for ($i = 1; $i <= $max; $i++) {
                             static::$versionMap[$className][$i] = $className;
