@@ -17,6 +17,7 @@ use React\Http\Server;
 use React\Promise\Promise;
 use improved\Authors as ImprovedAuthors;
 use ratelimited\Authors as RateLimitedAuthors;
+use v1\BMI as BMI1;
 
 define('BASE', dirname(__DIR__));
 include __DIR__ . "/../vendor/autoload.php";
@@ -57,12 +58,14 @@ class ResetForTests
 
 try {
     Router::mapApiClasses([
+        /*
         //clean up db for tests
         '__cleanup_db' => ResetForTests::class,
         //examples
         'examples/_001_helloworld/say' => Say::class,
-        'examples/_002_minimal/math' => Math::class,
+        'examples/_002_minimal/math' => Math::class, */
         'examples/_003_multiformat/bmi' => BMI::class,
+        /*
         'examples/_004_error_response/currency' => Currency::class,
         'examples/_005_protected_api' => Simple::class,
         'examples/_005_protected_api/secured' => Secured::class,
@@ -70,8 +73,9 @@ try {
         'examples/_007_crud/authors' => Authors::class,
         'examples/_008_documentation/authors' => ImprovedAuthors::class,
         'examples/_009_rate_limiting/authors' => RateLimitedAuthors::class,
-        'examples/_010_access_control' => Access::class,
-        'examples/_011_versioning/bmi' => 'BMI',
+        'examples/_010_access_control' => Access::class, */
+        'examples/_011_versioning/bmi' => BMI1::class,
+        /*
         //tests
         'tests/param/minmax' => MinMax::class,
         'tests/param/minmaxfix' => MinMaxFix::class,
@@ -79,9 +83,9 @@ try {
         'tests/param/validation' => Validation::class,
         'tests/request_data' => Data::class,
         //Explorer
-        'explorer' => Explorer::class,
+        'explorer' => Explorer::class, */
     ]);
-    Router::setMediaTypes(Json::class, Xml::class);
+    Router::setOverridingResponseMediaTypes(Json::class, Xml::class);
     SimpleAuth::setIncludedPaths('examples/_005_protected_api');
     Router::addAuthenticator(SimpleAuth::class, 'examples/_005_protected_api/simpleauth');
     KeyAuth::setIncludedPaths('examples/_009_rate_limiting');
@@ -93,8 +97,10 @@ try {
     die($t->getMessage());
 }
 $routes = Router::toArray();
-
-//var_export(array_sort(array_keys($routes['v1'])));
+var_export($routes);
+die();
+var_export(array_sort(array_keys($routes['v1'])));
+var_export(array_sort(array_keys($routes['v2'])));
 //die();
 //var_export(Router::$formatMap);
 //var_dump(Router::$versionMap);
