@@ -1,4 +1,9 @@
 <?php
+
+/**
+ * Class BMI
+ * @format Json,Xml
+ */
 class BMI
 {
     function index($height = 162.6, $weight = 84)
