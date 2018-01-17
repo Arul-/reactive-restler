@@ -195,7 +195,7 @@ abstract class Core
         $format = null;
         // check if client has sent any information on request format
         if (!empty($contentType)) {
-            //remove content type if found
+            //remove charset if found
             $mime = strtok($contentType, ';');
             if ($mime == UrlEncoded::MIME) {
                 $format = $this->make(UrlEncoded::class);
@@ -293,6 +293,7 @@ abstract class Core
             $formats = explode(',', (string)$formats);
             foreach ($formats as $i => $f) {
                 $f = trim($f);
+                $f = App::$aliases[$f] ?? $f; //TODO: use api scope
                 if (!in_array($f, $this->router['formatOverridesMap'])) {
                     throw new HttpException(
                         500,
