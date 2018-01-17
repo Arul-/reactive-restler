@@ -13,7 +13,7 @@ use Luracast\Restler\Data\ApiMethodInfo;
 use Luracast\Restler\Data\Text;
 use Luracast\Restler\MediaTypes\Json;
 use Luracast\Restler\Utils\Type;
-use Luracast\Restler\Utils\Version;
+use Luracast\Restler\Utils\ClassName;
 use ReflectionClass;
 use ReflectionMethod;
 use ReflectionProperty;
@@ -223,7 +223,7 @@ class Router
                 if (isset(App::$aliases[$className])) {
                     $className = App::$aliases[$className];
                 }
-                $info = Version::parse($className);
+                $info = ClassName::parse($className);
                 $currentVersion = $info['version'];
                 $found = $info['version_found'];
                 if (is_null($resourcePath)) {
@@ -235,7 +235,7 @@ class Router
                     $resourcePath .= '/';
                 }
                 if (!class_exists($className)) {
-                    $nextClass = Version::build($info['name'], $info['namespace'], $currentVersion, !$found);
+                    $nextClass = ClassName::build($info['name'], $info['namespace'], $currentVersion, !$found);
                     if (!class_exists($nextClass)) {
                         throw new \ErrorException("Class '$className' not found");
                     }
@@ -255,7 +255,7 @@ class Router
                     if (isset($versionMap[$resourcePath][$version])) {
                         continue;
                     }
-                    $nextClass = Version::build($info['name'], $info['namespace'], $version);
+                    $nextClass = ClassName::build($info['name'], $info['namespace'], $version);
                     if (class_exists($nextClass)) {
                         if (isset(class_implements($nextClass)[ProvidesMultiVersionApiInterface::class])) {
                             $max = $className::$maxVersionMethod();
@@ -648,7 +648,7 @@ class Router
         if (!$p) {
             throw new HttpException(
                 404,
-                $version == 1 ? '' : "Version $version is not supported"
+                $version == 1 ? '' : "ClassName $version is not supported"
             );
         }
         $status = 404;

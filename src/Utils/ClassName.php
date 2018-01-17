@@ -1,7 +1,7 @@
 <?php namespace Luracast\Restler\Utils;
 
 
-class Version
+class ClassName
 {
 
     const NAMESPACE_SEPARATOR = '\\';
