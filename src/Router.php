@@ -12,6 +12,8 @@ use Luracast\Restler\Contracts\UsesAuthenticationInterface;
 use Luracast\Restler\Data\ApiMethodInfo;
 use Luracast\Restler\Data\Text;
 use Luracast\Restler\MediaTypes\Json;
+use Luracast\Restler\Utils\Build;
+use Luracast\Restler\Utils\Parse;
 use ReflectionClass;
 use ReflectionMethod;
 use ReflectionProperty;
@@ -80,11 +82,6 @@ class Router
      * @internal
      */
     public static $formatOverridesMap = ['extensions' => []];
-    /**
-     * @var array
-     * @internal
-     */
-    public static $versionMap = [];
     /**
      * @var array
      * @internal
@@ -216,6 +213,8 @@ class Router
      */
     public static function mapApiClasses(array $map): void
     {
+        $versionMap = [];
+        $maxVersionMethod = 'getMaximumSupportedVersion';
         try {
             foreach ($map as $resourcePath => $className) {
                 if (is_numeric($resourcePath)) {
@@ -224,61 +223,52 @@ class Router
                 if (isset(App::$aliases[$className])) {
                     $className = App::$aliases[$className];
                 }
-                if (class_exists($className)) {
-                    if (isset(class_implements($className)[ProvidesMultiVersionApiInterface::class])) {
-                        $maxVersionMethod = '__getMaximumSupportedVersion';
-                        $max = $className::$maxVersionMethod();
-                        for ($i = 1; $i <= $max; $i++) {
-                            static::$versionMap[$className][$i] = $className;
-                        }
-                    } else {
-                        static::$versionMap[$className][1] = $className;
+                $info = Parse::namespace($className);
+                $currentVersion = $info['version'];
+                $found = $info['version_found'];
+                if (!class_exists($className)) {
+                    $nextClass = Build::namespace($info['name'], $info['namespace'], $currentVersion, !$found);
+                    if (!class_exists($nextClass)) {
+                        throw new \ErrorException("Class '$className' not found");
                     }
+                    $className = $nextClass;
                 }
-                //versioned api
-                if (false !== ($index = strrpos($className, '\\'))) {
-                    $name = substr($className, 0, $index)
-                        . '\\v{$version}' . substr($className, $index);
+                if (isset(class_implements($className)[ProvidesMultiVersionApiInterface::class])) {
+                    $max = $className::$maxVersionMethod();
+                    for ($i = $currentVersion; $i <= $max; $i++) {
+                        $versionMap[$resourcePath][$i] = $className;
+                    }
                 } else {
-                    if (false !== ($index = strrpos($className, '_'))) {
-                        $name = substr($className, 0, $index)
-                            . '_v{$version}' . substr($className, $index);
-                    } else {
-                        $name = 'v{$version}\\' . $className;
-                    }
+                    $versionMap[$resourcePath][$currentVersion] = $className;
                 }
-
-                for ($version = static::$minimumVersion;
+                for ($version = $currentVersion + 1;
                      $version <= static::$maximumVersion;
                      $version++) {
-
-                    $versionedClassName = str_replace('{$version}', $version,
-                        $name);
-                    if (class_exists($versionedClassName)) {
-                        static::addAPIForVersion($versionedClassName,
-                            Util::getResourcePath(
-                                $className,
-                                $resourcePath
-                            ),
-                            $version
-                        );
-                        if (method_exists($versionedClassName, $maxVersionMethod)) {
-                            $max = $versionedClassName::$maxVersionMethod();
+                    if (isset($versionMap[$resourcePath][$version])) {
+                        continue;
+                    }
+                    $nextClass = Build::namespace($info['name'], $info['namespace'], $version);
+                    if (class_exists($nextClass)) {
+                        if (isset(class_implements($nextClass)[ProvidesMultiVersionApiInterface::class])) {
+                            $max = $className::$maxVersionMethod();
                             for ($i = $version; $i <= $max; $i++) {
-                                static::$versionMap[$className][$i] = $versionedClassName;
+                                $versionMap[$resourcePath][$i] = $nextClass;
                             }
                         } else {
-                            static::$versionMap[$className][$version] = $versionedClassName;
+                            $versionMap[$resourcePath][$version] = $nextClass;
                         }
-                    } elseif (isset(static::$versionMap[$className][$version])) {
-                        static::addAPIForVersion(static::$versionMap[$className][$version],
-                            Util::getResourcePath(
-                                $className,
-                                $resourcePath
-                            ),
-                            $version
-                        );
                     }
+                }
+            }
+            foreach ($versionMap as $resourcePath => $classes) {
+                foreach ($classes as $version => $class) {
+                    static::addAPIForVersion($class,
+                        Util::getResourcePath(
+                            Util::getShortName($class),
+                            $resourcePath
+                        ),
+                        $version
+                    );
                 }
             }
         } catch (Throwable $e) {
@@ -489,7 +479,7 @@ class Router
             */
 
             // take note of the order
-            $call = array(
+            $call = [
                 'url' => null,
                 'className' => $className,
                 'path' => rtrim($resourcePath, '/'),
@@ -498,7 +488,7 @@ class Router
                 'defaults' => $defaults,
                 'metadata' => $metadata,
                 'accessLevel' => $accessLevel,
-            );
+            ];
             // if manual route
             if (preg_match_all(
                 '/@url\s+(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS)'
@@ -608,7 +598,7 @@ class Router
             App::$implementations[AccessControlInterface::class][] = $className;
         }
         static::$authClasses[] = $className;
-        static::mapApiClasses([$className => $resourcePath]);
+        static::mapApiClasses([$resourcePath => $className]);
     }
 
     /**
