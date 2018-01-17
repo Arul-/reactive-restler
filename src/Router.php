@@ -12,6 +12,7 @@ use Luracast\Restler\Contracts\UsesAuthenticationInterface;
 use Luracast\Restler\Data\ApiMethodInfo;
 use Luracast\Restler\Data\Text;
 use Luracast\Restler\MediaTypes\Json;
+use Luracast\Restler\Utils\Type;
 use Luracast\Restler\Utils\Version;
 use ReflectionClass;
 use ReflectionMethod;
@@ -440,7 +441,7 @@ class Router
                 } elseif (isset($p['from'])) {
                     $from = $p['from'];
                 } else {
-                    if ((isset($type) && Util::isObjectOrArray($type))
+                    if ((isset($type) && Type::isObjectOrArray($type))
                     ) {
                         $from = 'body';
                         if (!isset($type)) {
