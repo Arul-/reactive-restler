@@ -409,7 +409,7 @@ class Router
                 }
                 $m ['default'] = $defaults [$position];
                 $m ['required'] = !$param->isOptional();
-                $contentType = Util::nestedValue($p, 'type');
+                $contentType = $p['type'] ?? false;
                 if ($type == 'array' && $contentType && $qualified = App::resolve($contentType, $scope)) {
                     list($p['type'], $children, $modelName) = static::getTypeAndModel(
                         new ReflectionClass($qualified), $scope,
@@ -644,7 +644,7 @@ class Router
         $version = 1,
         array $data = []
     ) {
-        $p = Util::nestedValue(static::$routes, "v$version");
+        $p = static::$routes["v$version"];
         if (!$p) {
             throw new HttpException(
                 404,
@@ -786,7 +786,7 @@ class Router
         $authenticated = false
     ) {
         $map = array();
-        $all = Util::nestedValue(self::$routes, "v$version");
+        $all = self::$routes["v$version"];
         $filter = array();
         if (isset($all['*'])) {
             $all = $all['*'] + $all;
@@ -870,8 +870,7 @@ class Router
             }
         }
         if (Defaults::$smartParameterParsing) {
-            if (
-                ($m = Util::nestedValue($call, 'metadata', 'param', 0)) &&
+            if (($m = $call['metadata']['param'][0] ?? false) &&
                 !array_key_exists($m['name'], $data) &&
                 array_key_exists(Defaults::$fullRequestDataName, $data) &&
                 !is_null($d = $data[Defaults::$fullRequestDataName]) &&
@@ -999,7 +998,7 @@ class Router
                     $name = $prop->getName();
                     $child = array('name' => $name);
                     if ($c = $prop->getDocComment()) {
-                        $child += Util::nestedValue(CommentParser::parse($c), 'var') ?: array();
+                        $child += CommentParser::parse($c)['var'] ?? [];
                     } else {
                         $o = $class->newInstance();
                         $p = $prop->getValue($o);
@@ -1027,8 +1026,7 @@ class Router
                     if ($prop->class != $className && $qualified = App::resolve($child['type'], $scope)) {
                         list($child['type'], $child['children'])
                             = static::getTypeAndModel(new ReflectionClass($qualified), $scope);
-                    } elseif (
-                        ($contentType = Util::nestedValue($child, $dataName, 'type')) &&
+                    } elseif (($contentType = $child[$dataName]['type'] ?? false) &&
                         ($qualified = App::resolve($contentType, $scope))
                     ) {
                         list($child['contentType'], $child['children'])
@@ -1043,7 +1041,7 @@ class Router
             }
             throw $e;
         }
-        if ($properties = Util::nestedValue($rules, 'properties')) {
+        if ($properties = $rules['properties'] ?? false) {
             if (is_string($properties)) {
                 $properties = array($properties);
             }
@@ -1055,7 +1053,7 @@ class Router
             }
             $children = $c;
         }
-        if ($required = Util::nestedValue($rules, 'required')) {
+        if ($required = $rules['required'] ?? false) {
             //override required on children
             if (is_bool($required)) {
                 // true means all are required false means none are required
