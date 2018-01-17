@@ -330,15 +330,4 @@ class App
         'JsFormat' => Js::class,
         'XmlFormat' => Xml::class,
     ];
-
-
-    /**
-     * @param string $stringName
-     * @return boolean
-     */
-    public static function isPrimitiveDataType($stringName)
-    {
-        $primitiveDataTypes = array('Array', 'array', 'bool', 'boolean', 'float', 'int', 'integer', 'string');
-        return in_array($stringName, $primitiveDataTypes);
-    }
 }

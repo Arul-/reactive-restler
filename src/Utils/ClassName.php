@@ -106,7 +106,7 @@ class ClassName
             return false;
         }
 
-        if (App::isPrimitiveDataType($name)) {
+        if (Type::isPrimitive($name)) {
             return false;
         }
 
