@@ -12,8 +12,7 @@ use Luracast\Restler\Contracts\UsesAuthenticationInterface;
 use Luracast\Restler\Data\ApiMethodInfo;
 use Luracast\Restler\Data\Text;
 use Luracast\Restler\MediaTypes\Json;
-use Luracast\Restler\Utils\Build;
-use Luracast\Restler\Utils\Parse;
+use Luracast\Restler\Utils\Version;
 use ReflectionClass;
 use ReflectionMethod;
 use ReflectionProperty;
@@ -223,7 +222,7 @@ class Router
                 if (isset(App::$aliases[$className])) {
                     $className = App::$aliases[$className];
                 }
-                $info = Parse::namespace($className);
+                $info = Version::parse($className);
                 $currentVersion = $info['version'];
                 $found = $info['version_found'];
                 if (is_null($resourcePath)) {
@@ -235,7 +234,7 @@ class Router
                     $resourcePath .= '/';
                 }
                 if (!class_exists($className)) {
-                    $nextClass = Build::namespace($info['name'], $info['namespace'], $currentVersion, !$found);
+                    $nextClass = Version::build($info['name'], $info['namespace'], $currentVersion, !$found);
                     if (!class_exists($nextClass)) {
                         throw new \ErrorException("Class '$className' not found");
                     }
@@ -255,7 +254,7 @@ class Router
                     if (isset($versionMap[$resourcePath][$version])) {
                         continue;
                     }
-                    $nextClass = Build::namespace($info['name'], $info['namespace'], $version);
+                    $nextClass = Version::build($info['name'], $info['namespace'], $version);
                     if (class_exists($nextClass)) {
                         if (isset(class_implements($nextClass)[ProvidesMultiVersionApiInterface::class])) {
                             $max = $className::$maxVersionMethod();

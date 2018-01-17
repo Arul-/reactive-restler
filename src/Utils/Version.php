@@ -1,21 +1,34 @@
-<?php
+<?php namespace Luracast\Restler\Utils;
 
 
-namespace Luracast\Restler\Utils;
-
-
-class Parse
+class Version
 {
+
     const NAMESPACE_SEPARATOR = '\\';
 
     /**
+     * Build versioned class name
+     * @param string $name
+     * @param string $namespace
+     * @param int $version
+     * @param bool $embed
+     * @return string
+     */
+    public static function build(string $name, string $namespace, int $version, bool $embed = false)
+    {
+        $versionString = $version > 1 || $embed ? "v$version" : '';
+        return $namespace . self::NAMESPACE_SEPARATOR . $versionString . self::NAMESPACE_SEPARATOR . $name;
+    }
+
+    /**
+     * Parse version information from class name
      * @param $class
      * @param string|null $option
      * @return array
      */
-    public static function namespace($class, ?string $option = null)
+    public static function parse($class, ?string $option = null)
     {
-        $parts = explode(static::NAMESPACE_SEPARATOR, strrev($class), 3);
+        $parts = explode(self::NAMESPACE_SEPARATOR, strrev($class), 3);
         $name = strrev($parts[0]);
         $count = count($parts);
         $version_found = false;
