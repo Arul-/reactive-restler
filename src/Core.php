@@ -11,6 +11,7 @@ use Luracast\Restler\Data\{
 use Luracast\Restler\MediaTypes\{
     Json, UrlEncoded, Xml
 };
+use Luracast\Restler\Utils\Header;
 use Psr\{
     Http\Message\ResponseInterface,
     Http\Message\ServerRequestInterface
@@ -330,7 +331,7 @@ abstract class Core
         }
         // check if client has sent list of accepted data formats
         if (!empty($acceptHeader)) {
-            $acceptList = Util::sortByPriority($acceptHeader);
+            $acceptList = Header::sortByPriority($acceptHeader);
             foreach ($acceptList as $accept => $quality) {
                 if (isset($this->router['responseFormatMap'][$accept])) {
                     $format = $this->make($this->router['responseFormatMap'][$accept]);
@@ -437,7 +438,7 @@ abstract class Core
     {
         if (!empty($acceptCharset)) {
             $found = false;
-            $charList = Util::sortByPriority($acceptCharset);
+            $charList = Header::sortByPriority($acceptCharset);
             foreach ($charList as $charset => $quality) {
                 if (in_array($charset, $this->app['supportedCharsets'])) {
                     $found = true;
@@ -463,7 +464,7 @@ abstract class Core
     {
         if (!empty($acceptLanguage)) {
             $found = false;
-            $langList = Util::sortByPriority($acceptLanguage);
+            $langList = Header::sortByPriority($acceptLanguage);
             foreach ($langList as $lang => $quality) {
                 foreach ($this->app['supportedLanguages'] as $supported) {
                     if (strcasecmp($supported, $lang) == 0) {
