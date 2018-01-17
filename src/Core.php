@@ -116,13 +116,8 @@ abstract class Core
         if ($m = $this->apiMethodInfo->metadata ?? false) {
             $fullName = $className;
             $shortName = Util::getShortName($fullName);
-            $properties = Util::nestedValue(
-                $m, 'class', $fullName,
-                CommentParser::$embeddedDataName
-            ) ?: (Util::nestedValue(
-                $m, 'class', $shortName,
-                CommentParser::$embeddedDataName
-            ) ?: []);
+            $properties = $m['class'][$fullName][CommentParser::$embeddedDataName] ??
+                $m['class'][$shortName][CommentParser::$embeddedDataName] ?? [];
             $name = lcfirst($shortName);
             if (!isset($this->config[$name])) {
                 $this->config[$name] = get_class_vars($fullName);
