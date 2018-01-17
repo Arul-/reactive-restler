@@ -226,6 +226,14 @@ class Router
                 $info = Parse::namespace($className);
                 $currentVersion = $info['version'];
                 $found = $info['version_found'];
+                if (is_null($resourcePath)) {
+                    $resourcePath = App::$autoRoutingEnabled ? strtolower($info['name']) : '';
+                } else {
+                    $resourcePath = trim($resourcePath, '/');
+                }
+                if (!empty($resourcePath)) {
+                    $resourcePath .= '/';
+                }
                 if (!class_exists($className)) {
                     $nextClass = Build::namespace($info['name'], $info['namespace'], $currentVersion, !$found);
                     if (!class_exists($nextClass)) {
@@ -262,13 +270,7 @@ class Router
             }
             foreach ($versionMap as $resourcePath => $classes) {
                 foreach ($classes as $version => $class) {
-                    static::addAPIForVersion($class,
-                        Util::getResourcePath(
-                            Util::getShortName($class),
-                            $resourcePath
-                        ),
-                        $version
-                    );
+                    static::addAPIForVersion($class, $resourcePath, $version);
                 }
             }
         } catch (Throwable $e) {
@@ -300,7 +302,7 @@ class Router
      * @throws Exception
      * @throws HttpException
      */
-    protected static function addAPIForVersion(string $className, string $resourcePath = '', int $version = 1): void
+    protected static function addAPIForVersion(string $className, string $resourcePath, int $version = 1): void
     {
 
         /*
