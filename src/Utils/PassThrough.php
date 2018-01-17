@@ -1,11 +1,8 @@
 <?php namespace Luracast\Restler\Utils;
 
-
 use Luracast\Restler\App;
 use Luracast\Restler\Core;
-use Luracast\Restler\Defaults;
 use Luracast\Restler\HttpException;
-use Luracast\Restler\Util;
 use Psr\Http\Message\ResponseInterface;
 
 class PassThrough
@@ -25,7 +22,7 @@ class PassThrough
      * @param bool $forceDownload
      * @param float $expires
      * @param bool $isPublic
-     * @return Response
+     * @return ResponseInterface
      * @throws HttpException
      */
     public static function file(
@@ -46,7 +43,7 @@ class PassThrough
             throw new HttpException(403);
         }
         $extension = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
-        if (!$mime = Util::nestedValue(static::$mimeTypes, $extension)) {
+        if (!$mime = static::$mimeTypes[$extension] ?? false) {
             if (!function_exists('finfo_open')) {
                 throw new HttpException(
                     500,
@@ -61,14 +58,14 @@ class PassThrough
             $mime = finfo_file($finfo, $filePath);
             static::$mimeTypes[$extension] = $mime;
         }
-        if (!is_array(Defaults::$headerCacheControl)) {
-            Defaults::$headerCacheControl = array(Defaults::$headerCacheControl);
+        if (!is_array(App::$headerCacheControl)) {
+            App::$headerCacheControl = array(App::$headerCacheControl);
         }
-        $cacheControl = Defaults::$headerCacheControl[0];
+        $cacheControl = App::$headerCacheControl[0];
 
         if ($expires > 0) {
             $cacheControl = $isPublic ? 'public' : 'private';
-            $cacheControl .= end(Defaults::$headerCacheControl);
+            $cacheControl .= end(App::$headerCacheControl);
             $cacheControl = str_replace('{expires}', $expires, $cacheControl);
             $expires = gmdate('D, d M Y H:i:s \G\M\T', time() + $expires);
         }
