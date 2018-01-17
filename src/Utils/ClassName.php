@@ -1,6 +1,9 @@
 <?php namespace Luracast\Restler\Utils;
 
 
+use Luracast\Restler\App;
+use Luracast\Restler\HttpException;
+
 class ClassName
 {
 
@@ -47,5 +50,84 @@ class ClassName
         } else {
             return $result[$option] ?? null;
         }
+    }
+
+    /**
+     * Extract base class name
+     *
+     * @param $name
+     * @return mixed
+     */
+    public static function short($name)
+    {
+        $name = explode('\\', $name);
+        return end($name);
+    }
+
+    /**
+     * Find valid class name from an abstract name
+     *
+     * @param string $abstract
+     * @return string
+     * @throws HttpException
+     */
+    public static function get(string $abstract)
+    {
+        $interface = App::$aliases[$abstract] ?? $abstract;
+        if ($class = App::$implementations[$interface][0] ?? false) {
+            if (interface_exists($interface) && class_implements($class)[$interface] ?? false) {
+                return $class;
+            }
+            throw new HttpException(
+                501,
+                'App::$implementations should contain at least one valid implementation for ' . $interface
+            );
+        }
+        if (class_exists($interface)) {
+            return $interface;
+        }
+        throw new HttpException(
+            501,
+            'Could not find a class for ' . $interface
+        );
+    }
+
+    /**
+     * Get fully qualified class name for the given scope
+     *
+     * @param string $name
+     * @param array $scope local scope
+     *
+     * @return string|boolean returns the class name or false
+     */
+    public static function resolve(string $name, array $scope)
+    {
+        if (empty($name) || !is_string($name)) {
+            return false;
+        }
+
+        if (App::isPrimitiveDataType($name)) {
+            return false;
+        }
+
+        $divider = '\\';
+        $qualified = false;
+        if ($name{0} == $divider) {
+            $qualified = trim($name, $divider);
+        } elseif (array_key_exists($name, $scope)) {
+            $qualified = $scope[$name];
+        } else {
+            $qualified = $scope['*'] . $name;
+        }
+        if (class_exists($qualified)) {
+            return $qualified;
+        }
+        if (isset(App::$aliases[$name])) {
+            $qualified = App::$aliases[$name];
+            if (class_exists($qualified)) {
+                return $qualified;
+            }
+        }
+        return false;
     }
 }

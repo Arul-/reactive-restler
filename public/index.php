@@ -1,6 +1,5 @@
 <?php declare(strict_types=1);
 
-use Illuminate\Config\Repository as Config;
 use Luracast\Restler\App;
 use Luracast\Restler\Container;
 use Luracast\Restler\Filters\RateLimiter;
@@ -11,6 +10,7 @@ use Luracast\Restler\OpenApi3\Explorer;
 use Luracast\Restler\Reactler;
 use Luracast\Restler\Router;
 use Luracast\Restler\Scope;
+use Luracast\Restler\Utils\ClassName;
 use Psr\Http\Message\ServerRequestInterface;
 use React\Http\Response;
 use React\Http\Server;
@@ -46,7 +46,7 @@ class ResetForTests
     function put()
     {
         //reset database
-        $class = App::getClass(DataProviderInterface::class);
+        $class = ClassName::get(DataProviderInterface::class);
         $class::reset();
         //reset cache
         $folder = BASE . '/api/common/store/';

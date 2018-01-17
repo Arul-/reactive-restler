@@ -97,7 +97,7 @@ class PassThrough
             $headers['Content-Transfer-Encoding'] = 'binary';
             $headers['Content-Disposition'] = 'attachment; filename="' . $filePath . '"';
         }
-        $class = App::getClass(ResponseInterface::class);
+        $class = ClassName::get(ResponseInterface::class);
         return new $class(200, $headers, $stream);
     }
 }

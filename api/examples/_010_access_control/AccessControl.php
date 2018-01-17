@@ -7,6 +7,7 @@ use Luracast\Restler\Contracts\SelectivePathsTrait;
 use Luracast\Restler\Data\ApiMethodInfo;
 use Luracast\Restler\HttpException;
 use Luracast\Restler\iIdentifyUser;
+use Luracast\Restler\Utils\ClassName;
 use Psr\Http\Message\ServerRequestInterface;
 
 class AccessControl implements AccessControlInterface, SelectivePathsInterface
@@ -30,7 +31,7 @@ class AccessControl implements AccessControlInterface, SelectivePathsInterface
         if (!$api_key = $request->getQueryParams()['api_key'] ?? false) {
             return false;
         }
-        $userClass = App::getClass(iIdentifyUser::class);
+        $userClass = ClassName::get(iIdentifyUser::class);
         if (!$role = $roles[$api_key] ?? false) {
             $userClass::setCacheIdentifier($api_key);
             return false;

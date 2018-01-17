@@ -8,6 +8,7 @@ use Luracast\Restler\ExplorerInfo;
 use Luracast\Restler\HttpException;
 use Luracast\Restler\Router;
 use Luracast\Restler\Util;
+use Luracast\Restler\Utils\ClassName;
 use Luracast\Restler\Utils\PassThrough;
 use Psr\Http\Message\ServerRequestInterface;
 use stdClass;
@@ -366,11 +367,11 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
     private function setType(&$object, ValidationInfo $info)
     {
         //TODO: proper type management
-        $type = Util::getShortName($info->type);
+        $type = ClassName::short($info->type);
         if ($info->type == 'array') {
             $object->type = 'array';
             if ($info->children) {
-                $contentType = Util::getShortName($info->contentType);
+                $contentType = ClassName::short($info->contentType);
                 $model = $this->model($contentType, $info->children);
                 $object->items = (object)array(
                     '$ref' => "#/definitions/$contentType"
@@ -400,7 +401,7 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
                         );
                     }
                 } else {
-                    $contentType = Util::getShortName($info->contentType);
+                    $contentType = ClassName::short($info->contentType);
                     $object->items = (object)array(
                         '$ref' => "#/definitions/$contentType"
                     );
@@ -444,7 +445,7 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
         if (isset($hash[$id])) {
             return $hash[$id];
         }
-        $class = Util::getShortName($route['className']);
+        $class = ClassName::short($route['className']);
         $method = $route['methodName'];
 
         if (isset(static::$prefixes[$method])) {

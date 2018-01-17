@@ -11,6 +11,7 @@ use Luracast\Restler\Data\{
 use Luracast\Restler\MediaTypes\{
     Json, UrlEncoded, Xml
 };
+use Luracast\Restler\Utils\ClassName;
 use Luracast\Restler\Utils\Header;
 use Psr\{
     Http\Message\ResponseInterface,
@@ -116,7 +117,7 @@ abstract class Core
         $properties = [];
         if ($m = $this->apiMethodInfo->metadata ?? false) {
             $fullName = $className;
-            $shortName = Util::getShortName($fullName);
+            $shortName = ClassName::short($fullName);
             $properties = $m['class'][$fullName][CommentParser::$embeddedDataName] ??
                 $m['class'][$shortName][CommentParser::$embeddedDataName] ?? [];
             $name = lcfirst($shortName);

@@ -3,8 +3,8 @@
 namespace improved;
 
 use DataProviderInterface;
-use Luracast\Restler\App;
 use Luracast\Restler\HttpException;
+use Luracast\Restler\Utils\ClassName;
 
 class Authors
 {
@@ -22,7 +22,7 @@ class Authors
          * $this->dp = new SessionDataProvider('db2');
          * $this->dp = new ArrayDB('db2');
          */
-        $class = App::getClass(DataProviderInterface::class);
+        $class = ClassName::get(DataProviderInterface::class);
         $this->dp = new $class('db1');
     }
 

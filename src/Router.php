@@ -374,7 +374,7 @@ class Router
                 $metadata['param'] = array();
             }
             if (isset($metadata['return']['type'])) {
-                if ($qualified = App::resolve($metadata['return']['type'], $scope)) {
+                if ($qualified = ClassName::resolve($metadata['return']['type'], $scope)) {
                     list($metadata['return']['type'], $metadata['return']['children']) =
                         static::getTypeAndModel(new ReflectionClass($qualified), $scope);
                 }
@@ -410,7 +410,7 @@ class Router
                 $m ['default'] = $defaults [$position];
                 $m ['required'] = !$param->isOptional();
                 $contentType = $p['type'] ?? false;
-                if ($type == 'array' && $contentType && $qualified = App::resolve($contentType, $scope)) {
+                if ($type == 'array' && $contentType && $qualified = ClassName::resolve($contentType, $scope)) {
                     list($p['type'], $children, $modelName) = static::getTypeAndModel(
                         new ReflectionClass($qualified), $scope,
                         $className . Text::title($methodUrl), $p
@@ -419,7 +419,7 @@ class Router
                 if ($type instanceof ReflectionClass) {
                     list($type, $children, $modelName) = static::getTypeAndModel($type, $scope,
                         $className . Text::title($methodUrl), $p);
-                } elseif ($type && is_string($type) && $qualified = App::resolve($type, $scope)) {
+                } elseif ($type && is_string($type) && $qualified = ClassName::resolve($type, $scope)) {
                     list($type, $children, $modelName)
                         = static::getTypeAndModel(new ReflectionClass($qualified), $scope,
                         $className . Text::title($methodUrl), $p);
@@ -840,7 +840,7 @@ class Router
         /** @var AccessControlInterface $class */
         if (
             $authenticated &&
-            $class = App::getClass(AccessControlInterface::class) &&
+            $class = ClassName::get(AccessControlInterface::class) &&
                 $class::verifyAccess(ApiMethodInfo::__set_state($route))
         ) {
             return false;
@@ -1023,11 +1023,11 @@ class Router
                     isset($child[$dataName])
                         ? $child[$dataName] += array('required' => true)
                         : $child[$dataName]['required'] = true;
-                    if ($prop->class != $className && $qualified = App::resolve($child['type'], $scope)) {
+                    if ($prop->class != $className && $qualified = ClassName::resolve($child['type'], $scope)) {
                         list($child['type'], $child['children'])
                             = static::getTypeAndModel(new ReflectionClass($qualified), $scope);
                     } elseif (($contentType = $child[$dataName]['type'] ?? false) &&
-                        ($qualified = App::resolve($contentType, $scope))
+                        ($qualified = ClassName::resolve($contentType, $scope))
                     ) {
                         list($child['contentType'], $child['children'])
                             = static::getTypeAndModel(new ReflectionClass($qualified), $scope);

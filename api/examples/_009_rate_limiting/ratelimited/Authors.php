@@ -3,10 +3,10 @@
 namespace ratelimited;
 
 use DataProviderInterface;
-use Luracast\Restler\App;
 use Luracast\Restler\HttpException;
 use Luracast\Restler\Filters\RateLimiter;
 use Author;
+use Luracast\Restler\Utils\ClassName;
 
 class Authors
 {
@@ -24,7 +24,7 @@ class Authors
          * $this->dp = new SessionDataProvider('db3');
          * $this->dp = new ArrayDB('db3');
          */
-        $class = App::getClass(DataProviderInterface::class);
+        $class = ClassName::get(DataProviderInterface::class);
         $this->dp = new $class('db1');
     }
 

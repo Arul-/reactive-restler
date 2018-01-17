@@ -331,78 +331,12 @@ class App
         'XmlFormat' => Xml::class,
     ];
 
-    /**
-     * Find valid class name from an abstract name
-     *
-     * @param string $abstract
-     * @return string
-     * @throws HttpException
-     */
-    public static function getClass(string $abstract)
-    {
-        $interface = static::$aliases[$abstract] ?? $abstract;
-        if ($class = App::$implementations[$interface][0] ?? false) {
-            if (interface_exists($interface) && class_implements($class)[$interface] ?? false) {
-                return $class;
-            }
-            throw new HttpException(
-                501,
-                'App::$implementations should contain at least one valid implementation for ' . $interface
-            );
-        }
-        if (class_exists($interface)) {
-            return $interface;
-        }
-        throw new HttpException(
-            501,
-            'Could not find a class for ' . $interface
-        );
-    }
-
-    /**
-     * Get fully qualified class name for the given scope
-     *
-     * @param string $className
-     * @param array $scope local scope
-     *
-     * @return string|boolean returns the class name or false
-     */
-    public static function resolve($className, array $scope)
-    {
-        if (empty($className) || !is_string($className)) {
-            return false;
-        }
-
-        if (self::isPrimitiveDataType($className)) {
-            return false;
-        }
-
-        $divider = '\\';
-        $qualified = false;
-        if ($className{0} == $divider) {
-            $qualified = trim($className, $divider);
-        } elseif (array_key_exists($className, $scope)) {
-            $qualified = $scope[$className];
-        } else {
-            $qualified = $scope['*'] . $className;
-        }
-        if (class_exists($qualified)) {
-            return $qualified;
-        }
-        if (isset(static::$aliases[$className])) {
-            $qualified = static::$aliases[$className];
-            if (class_exists($qualified)) {
-                return $qualified;
-            }
-        }
-        return false;
-    }
 
     /**
      * @param string $stringName
      * @return boolean
      */
-    private static function isPrimitiveDataType($stringName)
+    public static function isPrimitiveDataType($stringName)
     {
         $primitiveDataTypes = array('Array', 'array', 'bool', 'boolean', 'float', 'int', 'integer', 'string');
         return in_array($stringName, $primitiveDataTypes);
