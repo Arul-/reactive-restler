@@ -361,7 +361,7 @@ class Router
             $allowAmbiguity
                 = (isset($metadata['smart-auto-routing'])
                     && $metadata['smart-auto-routing'] != 'true')
-                || !Defaults::$smartAutoRouting;
+                || !App::$smartAutoRouting;
             $metadata['resourcePath'] = trim($resourcePath, '/');
             if (isset($classMetadata['description'])) {
                 $metadata['classDescription'] = $classMetadata['description'];
@@ -432,7 +432,7 @@ class Router
                 if (isset($modelName)) {
                     $m['model'] = $modelName;
                 }
-                if ($m['name'] == Defaults::$fullRequestDataName) {
+                if ($m['name'] == App::$fullRequestDataName) {
                     $from = 'body';
                     if (!isset($m['type'])) {
                         $type = $m['type'] = 'array';
@@ -529,7 +529,7 @@ class Router
                     static::addPath($url, $copy, $httpMethod, $version);
                 }
                 //if auto route enabled, do so
-            } elseif (Defaults::$autoRoutingEnabled) {
+            } elseif (App::$autoRoutingEnabled) {
                 // no configuration found so use convention
                 if (preg_match_all(
                     '/^(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS)/i',
@@ -869,11 +869,11 @@ class Router
                 $p[$call['arguments'][$key]] = $value;
             }
         }
-        if (Defaults::$smartParameterParsing) {
+        if (App::$smartParameterParsing) {
             if (($m = $call['metadata']['param'][0] ?? false) &&
                 !array_key_exists($m['name'], $data) &&
-                array_key_exists(Defaults::$fullRequestDataName, $data) &&
-                !is_null($d = $data[Defaults::$fullRequestDataName]) &&
+                array_key_exists(App::$fullRequestDataName, $data) &&
+                !is_null($d = $data[App::$fullRequestDataName]) &&
                 isset($m['type']) &&
                 static::typeMatch($m['type'], $d)
             ) {
@@ -892,8 +892,8 @@ class Router
                 if (
                     $bodyParamCount == 1 &&
                     !array_key_exists($lastM['name'], $data) &&
-                    array_key_exists(Defaults::$fullRequestDataName, $data) &&
-                    !is_null($d = $data[Defaults::$fullRequestDataName])
+                    array_key_exists(App::$fullRequestDataName, $data) &&
+                    !is_null($d = $data[App::$fullRequestDataName])
                 ) {
                     $p[$lastBodyParamIndex] = $d;
                 }

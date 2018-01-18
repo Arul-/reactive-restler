@@ -60,8 +60,8 @@ class Reactler extends Core
         /**
          * @var iCompose Default Composer
          */
-        $compose = new Defaults::$composeClass;
-        return is_null($response) && Defaults::$emptyBodyForNullResponse
+        $compose = $this->make(iCompose::class);
+        return is_null($response) && App::$emptyBodyForNullResponse
             ? null
             : $compose->response($response);
     }

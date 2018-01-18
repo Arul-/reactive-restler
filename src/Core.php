@@ -3,7 +3,7 @@
 use ArrayAccess;
 use Exception;
 use Luracast\Restler\Contracts\{
-    AuthenticationInterface, ContainerInterface, FilterInterface, SelectivePathsInterface, RequestMediaTypeInterface, ResponseMediaTypeInterface, UsesAuthenticationInterface
+    AuthenticationInterface, ContainerInterface, FilterInterface, RequestMediaTypeInterface, ResponseMediaTypeInterface, SelectivePathsInterface, UsesAuthenticationInterface
 };
 use Luracast\Restler\Data\{
     ApiMethodInfo, iValidate, ValidationInfo, Validator
@@ -14,8 +14,7 @@ use Luracast\Restler\MediaTypes\{
 use Luracast\Restler\Utils\ClassName;
 use Luracast\Restler\Utils\Header;
 use Psr\{
-    Http\Message\ResponseInterface,
-    Http\Message\ServerRequestInterface
+    Http\Message\ResponseInterface, Http\Message\ServerRequestInterface
 };
 use Throwable;
 use TypeError;
