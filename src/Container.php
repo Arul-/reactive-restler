@@ -10,7 +10,7 @@ use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
 use ReflectionParameter;
 
-class Resolver implements ContainerInterface
+class Container implements ContainerInterface
 {
     /**
      * @var array
