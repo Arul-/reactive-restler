@@ -110,8 +110,7 @@ $server = new Server(function (ServerRequestInterface $request) {
         });
 
         $request->getBody()->on('end', function () use ($request, $resolve, &$content) {
-            $c = new Container();
-            $h = new Reactler($c);
+            $h = new Reactler();
             $request = $request->withAttribute('reactler', $h);
             Scope::set('Restler', $h);
             try {
