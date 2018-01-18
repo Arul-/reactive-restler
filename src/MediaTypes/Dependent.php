@@ -1,6 +1,6 @@
 <?php namespace Luracast\Restler\MediaTypes;
 
-use Luracast\Restler\HttpException;
+use Luracast\Restler\Exceptions\HttpException;
 
 abstract class Dependent extends MediaType
 {

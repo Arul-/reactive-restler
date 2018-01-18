@@ -2,6 +2,7 @@
 
 use ArrayAccess;
 use Exception;
+use Luracast\Restler\Exceptions\HttpException;
 use Throwable;
 use TypeError;
 
@@ -603,7 +604,7 @@ abstract class Core
                 }
                 $valid = $o->parameters[$index];
                 $o->parameters[$index] = null;
-                if (empty(Validator1::$exceptions)) {
+                if (empty(Validator::$exceptions)) {
                     $o->metadata['param'][$index]['autofocus'] = true;
                 }
                 $valid = $validator::validate(

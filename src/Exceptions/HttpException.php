@@ -1,4 +1,4 @@
-<?php namespace Luracast\Restler;
+<?php namespace Luracast\Restler\Exceptions;
 
 
 use Luracast\Restler\RestException;

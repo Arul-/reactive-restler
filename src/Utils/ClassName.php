@@ -2,7 +2,7 @@
 
 
 use Luracast\Restler\App;
-use Luracast\Restler\HttpException;
+use Luracast\Restler\Exceptions\HttpException;
 
 class ClassName
 {

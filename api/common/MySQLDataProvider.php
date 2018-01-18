@@ -9,7 +9,7 @@
  * automatically on first `get` or `get($id)` request
  */
 
-use Luracast\Restler\HttpException;
+use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\RestException;
 
 class MySQLDataProvider implements DataProviderInterface

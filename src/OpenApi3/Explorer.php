@@ -5,7 +5,7 @@ use Luracast\Restler\Contracts\UsesAuthenticationInterface;
 use Luracast\Restler\Core;
 use Luracast\Restler\Data\ValidationInfo;
 use Luracast\Restler\ExplorerInfo;
-use Luracast\Restler\HttpException;
+use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\Router;
 use Luracast\Restler\Util;
 use Luracast\Restler\Utils\ClassName;

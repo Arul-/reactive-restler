@@ -2,7 +2,7 @@
 
 
 use Luracast\Restler\Contracts\RequestMediaTypeInterface;
-use Luracast\Restler\HttpException;
+use Luracast\Restler\Exceptions\HttpException;
 
 class Upload extends MediaType implements RequestMediaTypeInterface
 {

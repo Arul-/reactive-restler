@@ -1,7 +1,7 @@
 <?php namespace Luracast\Restler\MediaTypes;
 
 use Luracast\Restler\Contracts\ResponseMediaTypeInterface;
-use Luracast\Restler\HttpException;
+use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\Utils\Convert;
 
 class Js extends MediaType implements ResponseMediaTypeInterface

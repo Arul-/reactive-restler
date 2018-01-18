@@ -2,7 +2,7 @@
 
 use Luracast\Restler\Contracts\ResponseMediaTypeInterface;
 use Luracast\Restler\Contracts\StreamingRequestMediaTypeInterface;
-use Luracast\Restler\HttpException;
+use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\Utils\Convert;
 
 class Csv extends MediaType implements StreamingRequestMediaTypeInterface, ResponseMediaTypeInterface

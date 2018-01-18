@@ -4,6 +4,7 @@ use Luracast\Restler\Contracts\{
     AccessControlInterface, AuthenticationInterface, ComposerInterface, FilterInterface, RequestMediaTypeInterface, ResponseMediaTypeInterface
 };
 use Luracast\Restler\Data\iValidate;
+use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\Filters\RateLimiter;
 use Luracast\Restler\MediaTypes\Amf;
 use Luracast\Restler\MediaTypes\Csv;

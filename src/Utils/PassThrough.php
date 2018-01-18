@@ -2,7 +2,7 @@
 
 use Luracast\Restler\App;
 use Luracast\Restler\Core;
-use Luracast\Restler\HttpException;
+use Luracast\Restler\Exceptions\HttpException;
 use Psr\Http\Message\ResponseInterface;
 
 class PassThrough

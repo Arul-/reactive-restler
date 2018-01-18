@@ -3,7 +3,7 @@
 
 use Luracast\Restler\Contracts\RequestMediaTypeInterface;
 use Luracast\Restler\Contracts\ResponseMediaTypeInterface;
-use Luracast\Restler\HttpException;
+use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\Utils\Convert;
 
 class Json extends MediaType implements RequestMediaTypeInterface, ResponseMediaTypeInterface

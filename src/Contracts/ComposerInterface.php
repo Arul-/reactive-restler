@@ -1,7 +1,7 @@
 <?php namespace Luracast\Restler\Contracts;
 
 
-use Luracast\Restler\HttpException;
+use Luracast\Restler\Exceptions\HttpException;
 
 interface ComposerInterface
 {

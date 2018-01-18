@@ -11,6 +11,7 @@ use Luracast\Restler\Contracts\ResponseMediaTypeInterface;
 use Luracast\Restler\Contracts\UsesAuthenticationInterface;
 use Luracast\Restler\Data\ApiMethodInfo;
 use Luracast\Restler\Data\Text;
+use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\MediaTypes\Json;
 use Luracast\Restler\Utils\Type;
 use Luracast\Restler\Utils\ClassName;

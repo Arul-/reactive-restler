@@ -1,6 +1,6 @@
 <?php
 
-use Luracast\Restler\HttpException;
+use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\Utils\ClassName;
 
 class Authors

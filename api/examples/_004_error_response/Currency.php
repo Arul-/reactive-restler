@@ -1,6 +1,6 @@
 <?php
 
-use Luracast\Restler\HttpException;
+use Luracast\Restler\Exceptions\HttpException;
 
 class Currency
 {

@@ -2,6 +2,9 @@
 
 use Exception;
 use Luracast\Restler\Contracts\ContainerInterface;
+use Luracast\Restler\Exceptions\ContainerException;
+use Luracast\Restler\Exceptions\HttpException;
+use Luracast\Restler\Exceptions\NotFoundException;
 use Luracast\Restler\Utils\ClassName;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
@@ -92,7 +95,14 @@ class Resolver implements ContainerInterface
      */
     public function get($id)
     {
-        // TODO: Implement get() method.
+        try {
+            if ($instance = $this->instances[$id] ?? $this->instances[ClassName::get($id)] ?? false) {
+                return $instance;
+            }
+        } catch (\Throwable $t) {
+            throw new ContainerException('Error while retrieving the entry `' . $id . '`');
+        }
+        throw new NotFoundException(' No entry was found for `' . $id . '`` identifier');
     }
 
     /**
@@ -108,7 +118,15 @@ class Resolver implements ContainerInterface
      */
     public function has($id)
     {
-        // TODO: Implement has() method.
+        if (isset($this->instances[$id])) {
+            return true;
+        }
+        try {
+            $class = ClassName::get($id);
+        } catch (\Throwable $t) {
+            return false;
+        }
+        return isset($this->instances[$class]);
     }
 
     /**
@@ -199,6 +217,6 @@ class Resolver implements ContainerInterface
     {
         $message = "Unresolvable dependency resolving [$parameter] in class {$parameter->getDeclaringClass()->getName()}";
 
-        throw new Exception($message);
+        throw new ContainerException($message);
     }
 }

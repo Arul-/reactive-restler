@@ -4,17 +4,15 @@ use Luracast\Restler\CommentParser;
 use Luracast\Restler\Data\Invalid;
 use Luracast\Restler\Data\iValidate;
 use Luracast\Restler\Data\ValidationInfo;
-use Luracast\Restler\Format\HtmlFormat;
-use Luracast\Restler\HttpException;
+use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\RestException;
-use Luracast\Restler\Scope;
 use Luracast\Restler\Util;
 
 class Validator implements iValidate
 {
     public static $preFilters = array(
         //'*'             => 'some_global_filter', //applied to all parameters
-        'string'          => 'trim', //apply filter function by type (string)
+        'string' => 'trim', //apply filter function by type (string)
         //'string'       => 'strip_tags',
         //'string'       => 'htmlspecialchars',
         //'int'          => 'abs',
@@ -28,8 +26,7 @@ class Validator implements iValidate
 
     public static function validate($input, ValidationInfo $info, $full = null)
     {
-        $html = Scope::get('Restler')->responseFormat instanceof HtmlFormat;
-        $name = $html ? "<strong>$info->label</strong>" : "`$info->name`";
+        $name = "`$info->name`";
         if (
             isset(static::$preFilters['*']) &&
             is_scalar($input) &&

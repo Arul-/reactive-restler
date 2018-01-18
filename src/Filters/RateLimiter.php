@@ -4,7 +4,7 @@
 use Luracast\Restler\Contracts\FilterInterface;
 use Luracast\Restler\Contracts\SelectivePathsInterface;
 use Luracast\Restler\Contracts\UsesAuthenticationInterface;
-use Luracast\Restler\HttpException;
+use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\iCache;
 use Luracast\Restler\iIdentifyUser;
 use Luracast\Restler\Utils\ClassName;

@@ -1,6 +1,7 @@
 <?php namespace Luracast\Restler;
 
 use Exception;
+use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\MediaTypes\Json;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
