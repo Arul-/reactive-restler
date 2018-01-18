@@ -8,6 +8,7 @@ use Luracast\Restler\MediaTypes\Json;
 use Luracast\Restler\MediaTypes\Xml;
 use Luracast\Restler\OpenApi3\Explorer;
 use Luracast\Restler\Reactler;
+use Luracast\Restler\Resolver;
 use Luracast\Restler\Router;
 use Luracast\Restler\Scope;
 use Luracast\Restler\Utils\ClassName;
@@ -110,7 +111,7 @@ $server = new Server(function (ServerRequestInterface $request) {
         });
 
         $request->getBody()->on('end', function () use ($request, $resolve, &$content) {
-            $c = new Container();
+            $c = new Resolver();
             $h = new Reactler($c);
             $request = $request->withAttribute('reactler', $h);
             Scope::set('Restler', $h);
