@@ -4,7 +4,6 @@ use Luracast\Restler\Contracts\{
     AccessControlInterface, AuthenticationInterface, ComposerInterface, FilterInterface, RequestMediaTypeInterface, ResponseMediaTypeInterface
 };
 use Luracast\Restler\Data\iValidate;
-use Luracast\Restler\Data\Validator;
 use Luracast\Restler\Filters\RateLimiter;
 use Luracast\Restler\MediaTypes\Amf;
 use Luracast\Restler\MediaTypes\Csv;
@@ -16,6 +15,7 @@ use Luracast\Restler\MediaTypes\Upload;
 use Luracast\Restler\MediaTypes\UrlEncoded;
 use Luracast\Restler\MediaTypes\Xml;
 use Luracast\Restler\MediaTypes\Yaml;
+use Luracast\Restler\Utils\Validator;
 use Psr\{
     Http\Message\ResponseInterface, Http\Message\ServerRequestInterface
 };

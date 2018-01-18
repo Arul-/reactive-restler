@@ -2,22 +2,24 @@
 
 use ArrayAccess;
 use Exception;
+use Throwable;
+use TypeError;
+
 use Luracast\Restler\Contracts\{
     AuthenticationInterface, ContainerInterface, FilterInterface, RequestMediaTypeInterface, ResponseMediaTypeInterface, SelectivePathsInterface, UsesAuthenticationInterface
 };
 use Luracast\Restler\Data\{
-    ApiMethodInfo, iValidate, ValidationInfo, Validator
+    ApiMethodInfo, iValidate, ValidationInfo
 };
 use Luracast\Restler\MediaTypes\{
     Json, UrlEncoded, Xml
 };
-use Luracast\Restler\Utils\ClassName;
-use Luracast\Restler\Utils\Header;
-use Psr\{
-    Http\Message\ResponseInterface, Http\Message\ServerRequestInterface
+use Luracast\Restler\Utils\{
+    ClassName, Header, Validator
 };
-use Throwable;
-use TypeError;
+use Psr\Http\Message\{
+    ResponseInterface, ServerRequestInterface
+};
 use UnexpectedValueException;
 
 abstract class Core
@@ -601,7 +603,7 @@ abstract class Core
                 }
                 $valid = $o->parameters[$index];
                 $o->parameters[$index] = null;
-                if (empty(Validator::$exceptions)) {
+                if (empty(Validator1::$exceptions)) {
                     $o->metadata['param'][$index]['autofocus'] = true;
                 }
                 $valid = $validator::validate(

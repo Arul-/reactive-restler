@@ -2,15 +2,15 @@
 
 use Luracast\Restler\CommentParser;
 use Luracast\Restler\Data\Invalid;
+use Luracast\Restler\Data\iValidate;
 use Luracast\Restler\Data\ValidationInfo;
-use Luracast\Restler\Data\Validator as OldValidator;
 use Luracast\Restler\Format\HtmlFormat;
 use Luracast\Restler\HttpException;
 use Luracast\Restler\RestException;
 use Luracast\Restler\Scope;
 use Luracast\Restler\Util;
 
-class Validator extends OldValidator
+class Validator implements iValidate
 {
     public static $preFilters = array(
         //'*'             => 'some_global_filter', //applied to all parameters
@@ -23,6 +23,8 @@ class Validator extends OldValidator
         //                  please note that you wont get an instance
         //                  of CustomClass. you will get an array instead
     );
+    public static $holdException = false;
+    public static $exceptions = array();
 
     public static function validate($input, ValidationInfo $info, $full = null)
     {
@@ -331,11 +333,374 @@ class Validator extends OldValidator
             }
             throw new HttpException(400, $error);
         } catch (\Exception $e) {
-            static::$exceptions[$info->name] = $e;
-            if (static::$holdException) {
+            self::$exceptions[$info->name] = $e;
+            if (self::$holdException) {
                 return null;
             }
             throw $e;
         }
+    }
+
+    /**
+     * Validate alphabetic characters.
+     *
+     * Check that given value contains only alphabetic characters.
+     *
+     * @param                $input
+     * @param ValidationInfo $info
+     *
+     * @return string
+     *
+     * @throws Invalid
+     */
+    public static function alpha($input, ValidationInfo $info = null)
+    {
+        if (ctype_alpha($input)) {
+            return $input;
+        }
+        if ($info && $info->fix) {
+            //remove non alpha characters
+            return preg_replace("/[^a-z]/i", "", $input);
+        }
+        throw new Invalid('Expecting only alphabetic characters.');
+    }
+
+    /**
+     * Validate UUID strings.
+     *
+     * Check that given value contains only alpha numeric characters and the length is 36 chars.
+     *
+     * @param                $input
+     * @param ValidationInfo $info
+     *
+     * @return string
+     *
+     * @throws Invalid
+     */
+    public static function uuid($input, ValidationInfo $info = null)
+    {
+        if (is_string($input) && preg_match(
+                '/^\{?[0-9a-f]{8}\-?[0-9a-f]{4}\-?[0-9a-f]{4}\-?[0-9a-f]{4}\-?[0-9a-f]{12}\}?$/i',
+                $input
+            )) {
+            return strtolower($input);
+        }
+        throw new Invalid('Expecting a Universally Unique IDentifier (UUID) string.');
+    }
+
+    /**
+     * Validate alpha numeric characters.
+     *
+     * Check that given value contains only alpha numeric characters.
+     *
+     * @param                $input
+     * @param ValidationInfo $info
+     *
+     * @return string
+     *
+     * @throws Invalid
+     */
+    public static function alphanumeric($input, ValidationInfo $info = null)
+    {
+        if (ctype_alnum($input)) {
+            return $input;
+        }
+        if ($info && $info->fix) {
+            //remove non alpha numeric and space characters
+            return preg_replace("/[^a-z0-9 ]/i", "", $input);
+        }
+        throw new Invalid('Expecting only alpha numeric characters.');
+    }
+
+    /**
+     * Validate printable characters.
+     *
+     * Check that given value contains only printable characters.
+     *
+     * @param                $input
+     * @param ValidationInfo $info
+     *
+     * @return string
+     *
+     * @throws Invalid
+     */
+    public static function printable($input, ValidationInfo $info = null)
+    {
+        if (ctype_print($input)) {
+            return $input;
+        }
+        if ($info && $info->fix) {
+            //remove non printable characters
+            return preg_replace('/[\x00-\x1F\x80-\xFF]/', '', $input);
+        }
+        throw new Invalid('Expecting only printable characters.');
+    }
+
+    /**
+     * Validate hexadecimal digits.
+     *
+     * Check that given value contains only hexadecimal digits.
+     *
+     * @param                $input
+     * @param ValidationInfo $info
+     *
+     * @return string
+     *
+     * @throws Invalid
+     */
+    public static function hex($input, ValidationInfo $info = null)
+    {
+        if (ctype_xdigit($input)) {
+            return $input;
+        }
+        throw new Invalid('Expecting only hexadecimal digits.');
+    }
+
+    /**
+     * Color specified as hexadecimals
+     *
+     * Check that given value contains only color.
+     *
+     * @param                     $input
+     * @param ValidationInfo|null $info
+     *
+     * @return string
+     * @throws Invalid
+     */
+    public static function color($input, ValidationInfo $info = null)
+    {
+        if (preg_match('/^#[a-f0-9]{6}$/i', $input)) {
+            return $input;
+        }
+        throw new Invalid('Expecting color as hexadecimal digits.');
+    }
+
+    /**
+     * Validate Telephone number
+     *
+     * Check if the given value is numeric with or without a `+` prefix
+     *
+     * @param                $input
+     * @param ValidationInfo $info
+     *
+     * @return string
+     *
+     * @throws Invalid
+     */
+    public static function tel($input, ValidationInfo $info = null)
+    {
+        if (is_numeric($input) && '-' != substr($input, 0, 1)) {
+            return $input;
+        }
+        throw new Invalid('Expecting phone number, a numeric value ' .
+            'with optional `+` prefix');
+    }
+
+    /**
+     * Validate Email
+     *
+     * Check if the given string is a valid email
+     *
+     * @param String $input
+     * @param ValidationInfo $info
+     *
+     * @return string
+     * @throws Invalid
+     */
+    public static function email($input, ValidationInfo $info = null)
+    {
+        $r = filter_var($input, FILTER_VALIDATE_EMAIL);
+        if ($r) {
+            return $r;
+        } elseif ($info && $info->fix) {
+            $r = filter_var($input, FILTER_SANITIZE_EMAIL);
+            return static::email($r);
+        }
+        throw new Invalid('Expecting email in `name@example.com` format');
+    }
+
+    /**
+     * Validate IP Address
+     *
+     * Check if the given string is a valid ip address
+     *
+     * @param String $input
+     * @param ValidationInfo $info
+     *
+     * @return string
+     * @throws Invalid
+     */
+    public static function ip($input, ValidationInfo $info = null)
+    {
+        $r = filter_var($input, FILTER_VALIDATE_IP);
+        if ($r) {
+            return $r;
+        }
+
+        throw new Invalid('Expecting IP address in IPV6 or IPV4 format');
+    }
+
+    /**
+     * Validate Url
+     *
+     * Check if the given string is a valid url
+     *
+     * @param String $input
+     * @param ValidationInfo $info
+     *
+     * @return string
+     * @throws Invalid
+     */
+    public static function url($input, ValidationInfo $info = null)
+    {
+        $r = filter_var($input, FILTER_VALIDATE_URL);
+        if ($r) {
+            return $r;
+        } elseif ($info && $info->fix) {
+            $r = filter_var($input, FILTER_SANITIZE_URL);
+            return static::url($r);
+        }
+        throw new Invalid('Expecting url in `http://example.com` format');
+    }
+
+    /**
+     * MySQL Date
+     *
+     * Check if the given string is a valid date in YYYY-MM-DD format
+     *
+     * @param String $input
+     * @param ValidationInfo $info
+     *
+     * @return string
+     * @throws Invalid
+     */
+    public static function date($input, ValidationInfo $info = null)
+    {
+        if (
+            preg_match(
+                '#^(?P<year>\d{2}|\d{4})-(?P<month>\d{1,2})-(?P<day>\d{1,2})$#',
+                $input,
+                $date
+            )
+            && checkdate($date['month'], $date['day'], $date['year'])
+        ) {
+            return $input;
+        }
+        throw new Invalid(
+            'Expecting date in `YYYY-MM-DD` format, such as `'
+            . date("Y-m-d") . '`'
+        );
+    }
+
+    /**
+     * MySQL DateTime
+     *
+     * Check if the given string is a valid date and time in YYY-MM-DD HH:MM:SS format
+     *
+     * @param String $input
+     * @param ValidationInfo $info
+     *
+     * @return string
+     * @throws Invalid
+     */
+    public static function datetime($input, ValidationInfo $info = null)
+    {
+        if (
+            preg_match('/^(?P<year>19\d\d|20\d\d)\-(?P<month>0[1-9]|1[0-2])\-' .
+                '(?P<day>0\d|[1-2]\d|3[0-1]) (?P<h>0\d|1\d|2[0-3]' .
+                ')\:(?P<i>[0-5][0-9])\:(?P<s>[0-5][0-9])$/',
+                $input, $date)
+            && checkdate($date['month'], $date['day'], $date['year'])
+        ) {
+            return $input;
+        }
+        throw new Invalid(
+            'Expecting date and time in `YYYY-MM-DD HH:MM:SS` format, such as `'
+            . date("Y-m-d H:i:s") . '`'
+        );
+    }
+
+    /**
+     * Alias for Time
+     *
+     * Check if the given string is a valid time in HH:MM:SS format
+     *
+     * @param String $input
+     * @param ValidationInfo $info
+     *
+     * @return string
+     * @throws Invalid
+     */
+    public static function time24($input, ValidationInfo $info = null)
+    {
+        return static::time($input, $info);
+    }
+
+    /**
+     * Time
+     *
+     * Check if the given string is a valid time in HH:MM:SS format
+     *
+     * @param String $input
+     * @param ValidationInfo $info
+     *
+     * @return string
+     * @throws Invalid
+     */
+    public static function time($input, ValidationInfo $info = null)
+    {
+        if (preg_match('/^([01]?[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$/', $input)) {
+            return $input;
+        }
+        throw new Invalid(
+            'Expecting time in `HH:MM:SS` format, such as `'
+            . date("H:i:s") . '`'
+        );
+    }
+
+    /**
+     * Time in 12 hour format
+     *
+     * Check if the given string is a valid time 12 hour format
+     *
+     * @param String $input
+     * @param ValidationInfo $info
+     *
+     * @return string
+     * @throws Invalid
+     */
+    public static function time12($input, ValidationInfo $info = null)
+    {
+        if (preg_match(
+            '/^([1-9]|1[0-2]|0[1-9]){1}(:[0-5][0-9])?\s?([aApP][mM]{1})?$/',
+            $input)
+        ) {
+            return $input;
+        }
+        throw new Invalid(
+            'Expecting time in 12 hour format, such as `08:00AM` and `10:05:11`'
+        );
+    }
+
+    /**
+     * Unix Timestamp
+     *
+     * Check if the given value is a valid timestamp
+     *
+     * @param String $input
+     * @param ValidationInfo $info
+     *
+     * @return int
+     * @throws Invalid
+     */
+    public static function timestamp($input, ValidationInfo $info = null)
+    {
+        if ((string)(int)$input == $input
+            && ($input <= PHP_INT_MAX)
+            && ($input >= ~PHP_INT_MAX)
+        ) {
+            return (int)$input;
+        }
+        throw new Invalid('Expecting unix timestamp, such as ' . time());
     }
 }
