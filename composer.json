@@ -4,8 +4,7 @@
   "type": "project",
   "require": {
     "php": "^7.1",
-    "react/event-loop": "^0.4.3",
-    "react/http": "^0.7.4",
+    "react/http": "^0.8.1",
     "restler/framework": "3.0-RC6",
     "illuminate/container": "^5.5"
   },
