@@ -14,12 +14,12 @@ interface ComposerInterface
     public function response($result);
 
     /**
-     * When the api call results in RestException this method
+     * When the api call results in HttpException this method
      * will be called to return the error message
      *
      * @param HttpException $exception exception that has reasons for failure
      *
-     * @return
+     * @return mixed
      */
     public function message(HttpException $exception);
 }
