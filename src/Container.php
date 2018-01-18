@@ -34,7 +34,7 @@ class Container implements ContainerInterface
         $this->instances = [];
         $this->aliases = $aliases;
         $this->abstractAliases = $abstractAliases;
-        $this->config = $config;
+        $this->config = &$config;
     }
 
     public function setAliases(array $aliases, bool $clear = false)
