@@ -4,7 +4,7 @@ use Psr\Container\ContainerInterface as PsrContainer;
 
 interface ContainerInterface extends PsrContainer
 {
-    public function __construct(array $aliases = [], array $abstractAliases = []);
+    public function __construct(array $aliases = [], array $abstractAliases = [], &$config = []);
 
     public function setAliases(array $aliases, bool $clear = false);
 
