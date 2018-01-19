@@ -276,8 +276,7 @@ class Validator implements iValidate
                         }
                         return $input;
                     } elseif (isset($contentType)) {
-                        $error .= '. Expecting items of type ' .
-                            ($html ? "<strong>$contentType</strong>" : "`$contentType`");
+                        $error .= ". Expecting items of type `$contentType`";
                         break;
                     }
                     break;
@@ -310,8 +309,7 @@ class Validator implements iValidate
                                 !is_array($input) ||
                                 $input === array_values($input)
                             ) {
-                                $error .= '. Expecting an item of type ' .
-                                    ($html ? "<strong>$info->type</strong>" : "`$info->type`");
+                                $error .= ". Expecting an item of type `$info->type`";
                                 break;
                             }
                             foreach ($info->children as $key => $value) {
