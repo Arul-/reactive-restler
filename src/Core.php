@@ -733,11 +733,7 @@ abstract class Core
     abstract protected function stream($data): ResponseInterface;
 
 
-    abstract public function handle(
-        ServerRequestInterface $request,
-        ResponseInterface $response,
-        string $rawRequestBody = ''
-    ): ResponseInterface;
+    abstract public function handle(ServerRequestInterface $request): ResponseInterface;
 
     private static function isPathSelected(string $class, string $path): bool
     {

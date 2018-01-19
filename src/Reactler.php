@@ -3,6 +3,7 @@
 use Exception;
 use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\MediaTypes\Json;
+use Luracast\Restler\Utils\ClassName;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Throwable;
@@ -13,10 +14,6 @@ class Reactler extends Core
      * @var ServerRequestInterface
      */
     protected $request;
-    /**
-     * @var ResponseInterface
-     */
-    protected $response;
     protected $rawRequestBody = "";
 
 
@@ -70,12 +67,12 @@ class Reactler extends Core
     /**
      * @param array $response
      * @return ResponseInterface
+     * @throws HttpException
      */
     protected function respond($response = []): ResponseInterface
     {
-        if (!is_null($response)) {
-            $this->response->getBody()->write($this->responseFormat->encode($response, true));
-        }
+        $body = is_null($response) ? '' : $this->responseFormat->encode($response, true);
+
         //handle throttling
         if ($throttle = $this->app['throttle'] ?? 0) {
             $elapsed = time() - $this->startTime;
@@ -89,10 +86,11 @@ class Reactler extends Core
                 : 'Unknown';
             $this->responseHeaders['WWW-Authenticate'] = $authString;
         }
-        foreach ($this->responseHeaders as $name => $value) {
-            $this->response = $this->response->withHeader($name, $value);
-        }
-        return $this->response->withStatus($this->responseCode);
+        $responseClass = ClassName::get(ResponseInterface::class);
+        /**
+         * @var ResponseInterface
+         */
+        return new $responseClass($this->responseCode, $this->responseHeaders, $body);
     }
 
     protected function stream($data): ResponseInterface
@@ -105,17 +103,17 @@ class Reactler extends Core
             ->withBody($data);
     }
 
-    public function handle(
-        ServerRequestInterface $request,
-        ResponseInterface $response,
-        string $rawRequestBody = ''
-    ): ResponseInterface {
+    /**
+     * @param ServerRequestInterface $request
+     * @return ResponseInterface
+     * @throws HttpException
+     */
+    public function handle(ServerRequestInterface $request): ResponseInterface
+    {
         $this->container->instance(ServerRequestInterface::class, $request);
-        $this->container->instance(ResponseInterface::class, $response);
-        $this->rawRequestBody = $rawRequestBody;
+        $this->rawRequestBody = $request->getBody()->getContents();
         $this->requestMethod = $request->getMethod();
         $this->request = $request;
-        $this->response = $response;
         try {
             $this->get();
             $this->route();
@@ -143,6 +141,11 @@ class Reactler extends Core
                 )
             );
         }
+    }
+
+    public function __invoke(ServerRequestInterface $request, callable $next)
+    {
+        $next($this->handle($request));
     }
 
     //TODO: remove dependency

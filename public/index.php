@@ -1,7 +1,7 @@
 <?php declare(strict_types=1);
 
+use improved\Authors as ImprovedAuthors;
 use Luracast\Restler\App;
-use Luracast\Restler\Container;
 use Luracast\Restler\Filters\RateLimiter;
 use Luracast\Restler\HumanReadableCache;
 use Luracast\Restler\MediaTypes\Json;
@@ -12,11 +12,11 @@ use Luracast\Restler\Router;
 use Luracast\Restler\Scope;
 use Luracast\Restler\Utils\ClassName;
 use Psr\Http\Message\ServerRequestInterface;
+use ratelimited\Authors as RateLimitedAuthors;
 use React\Http\Response;
 use React\Http\Server;
 use React\Promise\Promise;
-use improved\Authors as ImprovedAuthors;
-use ratelimited\Authors as RateLimitedAuthors;
+use RingCentral\Psr7\Stream;
 use v1\BMI as BMI1;
 
 define('BASE', dirname(__DIR__));
@@ -112,9 +112,13 @@ $server = new Server(function (ServerRequestInterface $request) {
         $request->getBody()->on('end', function () use ($request, $resolve, &$content) {
             $h = new Reactler();
             $request = $request->withAttribute('reactler', $h);
+            $stream = fopen('php://memory', 'r+');
+            fwrite($stream, $content);
+            rewind($stream);
+            $request = $request->withBody(new Stream($stream));
             Scope::set('Restler', $h);
             try {
-                $response = $h->handle($request, new Response(), $content);
+                $response = $h->handle($request);
                 $resolve($response);
             } catch (Throwable $throwable) {
                 var_dump($throwable);
