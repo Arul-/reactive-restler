@@ -52,6 +52,12 @@ class Container implements ContainerInterface
         $this->config = &$config;
     }
 
+    /**
+     * @param $abstract
+     * @param array $parameters
+     * @return bool|mixed
+     * @throws Exception
+     */
     public function make($abstract, array $parameters = [])
     {
         if ($instance = $this->instances[$abstract] ?? false) {
@@ -64,7 +70,7 @@ class Container implements ContainerInterface
         if ($class && $instance = $this->instances[$class] ?? false) {
             return $instance;
         }
-        $instance = $this->resolve($class ?? $abstract);
+        $instance = $this->resolve($class ?? $abstract, $parameters);
         $this->instances[$abstract] = $instance;
         if ($class) {
             $this->instances[$class] = $instance;
@@ -137,7 +143,7 @@ class Container implements ContainerInterface
      *
      * @throws Exception
      */
-    public function resolve($class)
+    public function resolve($class, array $arguments = [])
     {
         $reflector = new \ReflectionClass($class);
 
@@ -152,7 +158,7 @@ class Container implements ContainerInterface
         }
 
         $parameters = $constructor->getParameters();
-        $dependencies = $this->getDependencies($parameters);
+        $dependencies = $this->getDependencies($parameters, $arguments);
 
         return $reflector->newInstanceArgs($dependencies);
     }
@@ -161,17 +167,22 @@ class Container implements ContainerInterface
      * Build up a list of dependencies for a given methods parameters
      *
      * @param array $parameters
+     * @param array $arguments
      * @return array
      * @throws Exception
      */
-    public function getDependencies($parameters)
+    public function getDependencies(array $parameters, array $arguments = [])
     {
         $dependencies = array();
-
-        foreach ($parameters as $parameter) {
-            $dependency = $parameter->getClass();
-
-            if (is_null($dependency)) {
+        /**
+         * @var ReflectionParameter $parameter
+         */
+        foreach ($parameters as $index => $parameter) {
+            if (isset($arguments[$parameter->name])) {
+                $dependencies[] = $arguments[$parameter->name];
+            } elseif (isset($arguments[$index])) { //&& gettype($arguments[$index]) == $parameter->getType()
+                $dependencies[] = $arguments[$index];
+            } elseif (is_null($dependency = $parameter->getClass())) {
                 $dependencies[] = $this->resolvePrimitive($parameter);
             } else {
                 $dependencies[] = $this->resolve($dependency->name);

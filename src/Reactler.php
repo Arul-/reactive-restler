@@ -30,6 +30,7 @@ class Reactler extends Core
     }
 
     /**
+     * @throws Exception
      * @throws HttpException
      */
     protected function negotiate(): void
@@ -46,7 +47,6 @@ class Reactler extends Core
         );
         $this->negotiateCharset($this->request->getHeaderLine('accept-charset'));
         $this->negotiateLanguage($this->request->getHeaderLine('accept-language'));
-
     }
 
     protected function compose($response = null)
@@ -86,11 +86,8 @@ class Reactler extends Core
                 : 'Unknown';
             $this->responseHeaders['WWW-Authenticate'] = $authString;
         }
-        $responseClass = ClassName::get(ResponseInterface::class);
-        /**
-         * @var ResponseInterface
-         */
-        return new $responseClass($this->responseCode, $this->responseHeaders, $body);
+        return $this->container->make(ResponseInterface::class,
+            [$this->responseCode, $this->responseHeaders, $body]);
     }
 
     protected function stream($data): ResponseInterface

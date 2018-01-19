@@ -53,6 +53,7 @@ class ResetForTests
         foreach (glob($folder . "*.php") as $filename) {
             unlink($filename);
         }
+        return 'success';
     }
 }
 
