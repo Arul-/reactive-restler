@@ -219,7 +219,7 @@ class Router
         try {
             foreach ($map as $resourcePath => $className) {
                 if (is_numeric($resourcePath)) {
-                    $resourcePath = strtolower($className);
+                    $resourcePath = null;
                 }
                 if (isset(App::$aliases[$className])) {
                     $className = App::$aliases[$className];
@@ -288,9 +288,9 @@ class Router
      * @param string|null $resourcePath
      * @throws Exception
      */
-    public static function addAPI(string $className, string $resourcePath = null)
+    public static function addAPI(string $className, ?string $resourcePath = null)
     {
-        static::mapApiClasses([$resourcePath => $className]);
+        static::mapApiClasses(is_null($resourcePath) ? [$className] : [$resourcePath => $className]);
     }
 
     /**
