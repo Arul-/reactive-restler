@@ -1,9 +1,9 @@
 <?php namespace Luracast\Restler;
 
 use Exception;
+use Luracast\Restler\Contracts\ComposerInterface;
 use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\MediaTypes\Json;
-use Luracast\Restler\Utils\ClassName;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Throwable;
@@ -56,9 +56,9 @@ class Reactler extends Core
             $this->request->getHeaderLine('origin')
         );
         /**
-         * @var iCompose Default Composer
+         * @var ComposerInterface Default Composer
          */
-        $compose = $this->make(iCompose::class);
+        $compose = $this->make(ComposerInterface::class);
         return is_null($response) && App::$emptyBodyForNullResponse
             ? null
             : $compose->response($response);
@@ -67,11 +67,10 @@ class Reactler extends Core
     /**
      * @param array $response
      * @return ResponseInterface
-     * @throws HttpException
      */
     protected function respond($response = []): ResponseInterface
     {
-        $body = is_null($response) ? '' : $this->responseFormat->encode($response, true);
+        $body = is_null($response) ? '' : $this->responseFormat->encode($response, App::$productionMode);
 
         //handle throttling
         if ($throttle = $this->app['throttle'] ?? 0) {
@@ -92,18 +91,13 @@ class Reactler extends Core
 
     protected function stream($data): ResponseInterface
     {
-        foreach ($this->responseHeaders as $name => $value) {
-            $this->response = $this->response->withHeader($name, $value);
-        }
-        return $this->response
-            ->withStatus($this->responseCode)
-            ->withBody($data);
+        return $this->container->make(ResponseInterface::class,
+            [$this->responseCode, $this->responseHeaders, $data]);
     }
 
     /**
      * @param ServerRequestInterface $request
      * @return ResponseInterface
-     * @throws HttpException
      */
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
@@ -140,20 +134,12 @@ class Reactler extends Core
         }
     }
 
+    /**
+     * @param ServerRequestInterface $request
+     * @param callable $next
+     */
     public function __invoke(ServerRequestInterface $request, callable $next)
     {
         $next($this->handle($request));
-    }
-
-    //TODO: remove dependency
-    public function getEvents()
-    {
-        return [];
-    }
-
-    //TODO: remove dependency
-    public function getProductionMode()
-    {
-        return false;
     }
 }

@@ -10,6 +10,8 @@ interface ComposerInterface
      * to create a standard structure for the data
      *
      * @param mixed $result can be a primitive or array or object
+     *
+     * @return mixed
      */
     public function response($result);
 

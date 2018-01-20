@@ -1,7 +1,7 @@
 <?php
 namespace v2;
 
-use Luracast\Restler\RestException;
+use Luracast\Restler\Exceptions\HttpException;
 use stdClass;
 
 class BMI
@@ -15,7 +15,7 @@ class BMI
      * @param string $height height along with unit
      * @param string $weight weight along with unit
      *
-     * @throws RestException 400
+     * @throws HttpException 400
      * @return object
      */
     function index($height = "162.6cm", $weight = "84.0kg")
@@ -57,7 +57,7 @@ class BMI
                 $meter = 3.2808399 * $height;
                 break;
             default:
-                throw new RestException(400, 'invalid height unit');
+                throw new HttpException(400, 'invalid height unit');
 
         }
         $cm = $meter * 100;
@@ -79,7 +79,7 @@ class BMI
                 $kg = 0.45359237 * $weight;
                 break;
             default:
-                throw new RestException(400, 'invalid weight unit');
+                throw new HttpException(400, 'invalid weight unit');
         }
 
         $result->bmi = round($kg / ($meter * $meter), 2);

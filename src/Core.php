@@ -2,16 +2,13 @@
 
 use ArrayAccess;
 use Exception;
-use Luracast\Restler\Exceptions\HttpException;
-use Throwable;
-use TypeError;
-
 use Luracast\Restler\Contracts\{
-    AuthenticationInterface, ContainerInterface, FilterInterface, RequestMediaTypeInterface, ResponseMediaTypeInterface, SelectivePathsInterface, UsesAuthenticationInterface
+    AuthenticationInterface, ComposerInterface, ContainerInterface, FilterInterface, RequestMediaTypeInterface, ResponseMediaTypeInterface, SelectivePathsInterface, UsesAuthenticationInterface
 };
 use Luracast\Restler\Data\{
     ApiMethodInfo, iValidate, ValidationInfo
 };
+use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\MediaTypes\{
     Json, UrlEncoded, Xml
 };
@@ -21,6 +18,9 @@ use Luracast\Restler\Utils\{
 use Psr\Http\Message\{
     ResponseInterface, ServerRequestInterface
 };
+use ReflectionMethod;
+use Throwable;
+use TypeError;
 use UnexpectedValueException;
 
 abstract class Core
@@ -616,6 +616,10 @@ abstract class Core
         }
     }
 
+    /**
+     * @return mixed
+     * @throws \ReflectionException
+     */
     protected function call()
     {
         $o = &$this->apiMethodInfo;
@@ -623,7 +627,7 @@ abstract class Core
         $object = $this->make($o->className);
         switch ($accessLevel) {
             case 3 : //protected method
-                $reflectionMethod = new \ReflectionMethod(
+                $reflectionMethod = new ReflectionMethod(
                     $object,
                     $o->methodName
                 );
@@ -645,7 +649,7 @@ abstract class Core
     abstract protected function compose($response = null);
 
 
-    protected function composeHeaders(?ApiMethodInfo $info, string $origin = '', RestException $e = null): void
+    protected function composeHeaders(?ApiMethodInfo $info, string $origin = '', HttpException $e = null): void
     {
         //only GET method should be cached if allowed by API developer
         $expires = $this->requestMethod == 'GET' ? $this->app['headerExpires'] : 0;
@@ -706,9 +710,7 @@ abstract class Core
 
     protected function message(Throwable $e, string $origin)
     {
-        if (!$e instanceof RestException) {
-            $e = new HttpException(500, $e->getMessage(), [], $e);
-        } elseif (!$e instanceof HttpException) {
+        if (!$e instanceof HttpException) {
             $e = new HttpException($e->getCode(), $e->getMessage(), [], $e);
         }
         $this->responseCode = $e->getCode();
@@ -721,9 +723,9 @@ abstract class Core
             $e
         );
         /**
-         * @var iCompose Default Composer
+         * @var ComposerInterface Default Composer
          */
-        $compose = $this->make($this->app['implementations'][iCompose::class][0]);
+        $compose = $this->make(ComposerInterface::class);
         return $compose->message($e);
     }
 

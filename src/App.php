@@ -26,6 +26,7 @@ use React\Http\{
 
 class App
 {
+    public static $productionMode = false;
     /**
      * @var string full path of the directory where all the generated files will
      * be kept. When set to null (default) it will use the cache folder that is
@@ -287,12 +288,11 @@ class App
      */
     public static $implementations = [
         iCache::class => [HumanReadableCache::class],
-        iCompose::class => [Compose::class],
         iValidate::class => [Validator::class],
         iIdentifyUser::class => [User::class],
         AccessControlInterface::class => [ /* YOUR_CLASS_NAME_HERE */],
         AuthenticationInterface::class => [ /* YOUR_CLASS_NAME_HERE */],
-        ComposerInterface::class => [],
+        ComposerInterface::class => [Composer::class],
         FilterInterface::class => [RateLimiter::class],
         RequestMediaTypeInterface::class => [Json::class],
         ResponseMediaTypeInterface::class => [Json::class],

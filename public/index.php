@@ -9,7 +9,6 @@ use Luracast\Restler\MediaTypes\Xml;
 use Luracast\Restler\OpenApi3\Explorer;
 use Luracast\Restler\Reactler;
 use Luracast\Restler\Router;
-use Luracast\Restler\Scope;
 use Luracast\Restler\Utils\ClassName;
 use Psr\Http\Message\ServerRequestInterface;
 use ratelimited\Authors as RateLimitedAuthors;
@@ -117,7 +116,6 @@ $server = new Server(function (ServerRequestInterface $request) {
             fwrite($stream, $content);
             rewind($stream);
             $request = $request->withBody(new Stream($stream));
-            Scope::set('Restler', $h);
             try {
                 $response = $h->handle($request);
                 $resolve($response);
