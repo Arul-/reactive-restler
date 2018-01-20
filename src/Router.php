@@ -649,7 +649,7 @@ class Router
         if (!$p) {
             throw new HttpException(
                 404,
-                $version == 1 ? '' : "ClassName $version is not supported"
+                $version == 1 ? '' : "Version $version is not supported"
             );
         }
         $status = 404;
