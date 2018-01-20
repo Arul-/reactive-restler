@@ -3,10 +3,10 @@
 use ArrayAccess;
 use Exception;
 use Luracast\Restler\Contracts\{
-    AuthenticationInterface, ComposerInterface, ContainerInterface, FilterInterface, RequestMediaTypeInterface, ResponseMediaTypeInterface, SelectivePathsInterface, UsesAuthenticationInterface
+    AuthenticationInterface, ComposerInterface, ContainerInterface, FilterInterface, ValidationInterface, RequestMediaTypeInterface, ResponseMediaTypeInterface, SelectivePathsInterface, UsesAuthenticationInterface
 };
 use Luracast\Restler\Data\{
-    ApiMethodInfo, iValidate, ValidationInfo
+    ApiMethodInfo, ValidationInfo
 };
 use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\MediaTypes\{
@@ -596,10 +596,10 @@ abstract class Core
                 //convert to instance of ValidationInfo
                 $info = new ValidationInfo($param);
                 //initialize validator
-                $validator = $this->app['implementations'][iValidate::class][0];
-                if (!$this->make($validator) instanceof iValidate) {
+                $validator = $this->app['implementations'][ValidationInterface::class][0];
+                if (!$this->make($validator) instanceof ValidationInterface) {
                     throw new UnexpectedValueException(
-                        '`' . $validator . '` must implement `iValidate` interface'
+                        '`' . $validator . '` must implement `ValidationInterface` interface'
                     );
                 }
                 $valid = $o->parameters[$index];

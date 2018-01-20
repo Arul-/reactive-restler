@@ -5,8 +5,8 @@ use Luracast\Restler\Contracts\FilterInterface;
 use Luracast\Restler\Contracts\SelectivePathsInterface;
 use Luracast\Restler\Contracts\UsesAuthenticationInterface;
 use Luracast\Restler\Exceptions\HttpException;
-use Luracast\Restler\iCache;
-use Luracast\Restler\iIdentifyUser;
+use Luracast\Restler\Contracts\CacheInterface;
+use Luracast\Restler\Contracts\UserIdentificationInterface;
 use Luracast\Restler\Utils\ClassName;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -51,7 +51,7 @@ class RateLimiter implements FilterInterface, SelectivePathsInterface, UsesAuthe
     private $runtimeValues = [];
 
     /**
-     * @var iCache
+     * @var CacheInterface
      */
     protected $cache;
     /**
@@ -62,8 +62,8 @@ class RateLimiter implements FilterInterface, SelectivePathsInterface, UsesAuthe
     public function __construct(array $rateLimiter)
     {
         $this->runtimeValues = $rateLimiter;
-        $class = ClassName::get(iCache::class);
-        /** @var iCache cache */
+        $class = ClassName::get(CacheInterface::class);
+        /** @var CacheInterface cache */
         $this->cache = new $class;
     }
 
@@ -101,8 +101,8 @@ class RateLimiter implements FilterInterface, SelectivePathsInterface, UsesAuthe
             ? $this->runtimeValues['authenticatedUsagePerUnit']
             : $this->runtimeValues['usagePerUnit'];
         if ($maxPerUnit) {
-            /** @var iIdentifyUser $user */
-            $user = ClassName::get(iIdentifyUser::class);
+            /** @var UserIdentificationInterface $user */
+            $user = ClassName::get(UserIdentificationInterface::class);
             $id = "RateLimit_" . $maxPerUnit . '_per_' . $unit
                 . '_for_' . $group
                 . '_' . $user::getUniqueIdentifier();

@@ -2,13 +2,13 @@
 
 use Luracast\Restler\CommentParser;
 use Luracast\Restler\Data\Invalid;
-use Luracast\Restler\Data\iValidate;
+use Luracast\Restler\Contracts\ValidationInterface;
 use Luracast\Restler\Data\ValidationInfo;
 use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\RestException;
 use Luracast\Restler\Util;
 
-class Validator implements iValidate
+class Validator implements ValidationInterface
 {
     public static $preFilters = array(
         //'*'             => 'some_global_filter', //applied to all parameters
@@ -295,7 +295,7 @@ class Validator implements iValidate
                         $implements = class_implements($info->type);
                         if (
                             is_array($implements) &&
-                            in_array('Luracast\\Restler\\Data\\iValueObject', $implements)
+                            in_array('Luracast\\Restler\\Contracts\\ValueObjectInterface', $implements)
                         ) {
                             return call_user_func(
                                 "{$info->type}::__set_state", $input

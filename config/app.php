@@ -4,12 +4,12 @@ use Luracast\Restler\Compose;
 use Luracast\Restler\Contracts\{
     ComposerInterface, RequestMediaTypeInterface, ResponseMediaTypeInterface, FilterInterface, AuthenticationInterface
 };
-use Luracast\Restler\Data\iValidate;
+use Luracast\Restler\Contracts\ValidationInterface;
 use Luracast\Restler\Filters\RateLimiter;
 use Luracast\Restler\HumanReadableCache;
-use Luracast\Restler\iCache;
+use Luracast\Restler\Contracts\CacheInterface;
 use Luracast\Restler\iCompose;
-use Luracast\Restler\iIdentifyUser;
+use Luracast\Restler\Contracts\UserIdentificationInterface;
 use Luracast\Restler\MediaTypes\{
     Amf, Csv, Js, Json, Plist, Tsv, Upload, UrlEncoded, Xml, Yaml
 };
@@ -34,10 +34,10 @@ return [
     |
     */
     'implementations' => [
-        iCache::class => [HumanReadableCache::class],
+        CacheInterface::class => [HumanReadableCache::class],
         iCompose::class => [Compose::class],
-        iValidate::class => [Validator::class],
-        iIdentifyUser::class => [User::class],
+        ValidationInterface::class => [Validator::class],
+        UserIdentificationInterface::class => [User::class],
         RequestMediaTypeInterface::class => [Json::class],
         ResponseMediaTypeInterface::class => [Json::class],
         ServerRequestInterface::class => [ServerRequest::class],

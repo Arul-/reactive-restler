@@ -1,21 +1,21 @@
 <?php namespace Luracast\Restler;
 
 use Luracast\Restler\Contracts\{
-    AccessControlInterface, AuthenticationInterface, ComposerInterface, FilterInterface, RequestMediaTypeInterface, ResponseMediaTypeInterface
+    AccessControlInterface,
+    AuthenticationInterface,
+    CacheInterface,
+    ComposerInterface,
+    FilterInterface,
+    RequestMediaTypeInterface,
+    ResponseMediaTypeInterface,
+    UserIdentificationInterface,
+    ValidationInterface
 };
-use Luracast\Restler\Data\iValidate;
 use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\Filters\RateLimiter;
-use Luracast\Restler\MediaTypes\Amf;
-use Luracast\Restler\MediaTypes\Csv;
-use Luracast\Restler\MediaTypes\Js;
-use Luracast\Restler\MediaTypes\Json;
-use Luracast\Restler\MediaTypes\Plist;
-use Luracast\Restler\MediaTypes\Tsv;
-use Luracast\Restler\MediaTypes\Upload;
-use Luracast\Restler\MediaTypes\UrlEncoded;
-use Luracast\Restler\MediaTypes\Xml;
-use Luracast\Restler\MediaTypes\Yaml;
+use Luracast\Restler\MediaTypes\{
+    Amf, Csv, Js, Json, Plist, Tsv, Upload, UrlEncoded, Xml, Yaml
+};
 use Luracast\Restler\Utils\Validator;
 use Psr\{
     Http\Message\ResponseInterface, Http\Message\ServerRequestInterface
@@ -287,9 +287,9 @@ class App
      * @var array {@type associative}
      */
     public static $implementations = [
-        iCache::class => [HumanReadableCache::class],
-        iValidate::class => [Validator::class],
-        iIdentifyUser::class => [User::class],
+        CacheInterface::class => [HumanReadableCache::class],
+        ValidationInterface::class => [Validator::class],
+        UserIdentificationInterface::class => [User::class],
         AccessControlInterface::class => [ /* YOUR_CLASS_NAME_HERE */],
         AuthenticationInterface::class => [ /* YOUR_CLASS_NAME_HERE */],
         ComposerInterface::class => [Composer::class],
