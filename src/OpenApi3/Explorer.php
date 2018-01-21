@@ -143,13 +143,14 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
     private function servers()
     {
         $url = (string)$this->request->getUri();
-        $url = substr($url, 0, strlen($this->request->getUri()->getPath()));
+        $url = substr($url, 0, -strlen($this->request->getUri()->getPath()));
         return [$url];
     }
 
     /**
      * @param int $version
      * @param string $basePath
+     * @return array
      * @throws HttpException
      */
     private function paths(int $version = 1, string $basePath)
@@ -174,6 +175,7 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
                 $paths["/$url"][strtolower($route['httpMethod'])] = $this->operation($route);
             }
         }
+        return $paths;
     }
 
     private function operation($route)
@@ -235,7 +237,7 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
         $required = false;
         foreach ($route['metadata']['param'] as $param) {
             $info = new ValidationInfo($param);
-            $description = isset($param['description']) ? $param['description'] : '';
+            $description = $param['description'] ?? '';
             if ('body' == $info->from) {
                 if ($info->required) {
                     $required = true;
@@ -293,12 +295,18 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
 
     private function parameter(ValidationInfo $info, $description = '')
     {
-        $p = new stdClass();
-        if (isset($info->rules['model'])) {
-            //$info->type = $info->rules['model'];
-        }
+        $p = (object)[
+            'name' => '',
+            'in' => 'query',
+            'description' => '',
+            'required' => false,
+            'schema' => new stdClass()
+        ];
+        //if (isset($info->rules['model'])) {
+        //$info->type = $info->rules['model'];
+        //}
         $p->name = $info->name;
-        $this->setType($p, $info);
+        $this->setType($p->schema, $info);
         if (empty($info->children) || $info->type != 'array') {
             //primitives
             if ($info->default) {
@@ -362,8 +370,8 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
         $required = array();
         foreach ($children as $child) {
             $info = new ValidationInfo($child);
-            $p = new stdClass();
-            $this->setType($p, $info);
+            $p = (object)['schema' => new stdClass()];
+            $this->setType($p->schema, $info);
             $p->description = isset($child['description']) ? $child['description'] : '';
             if ($info->default) {
                 $p->defaultValue = $info->default;
