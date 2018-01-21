@@ -126,8 +126,7 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
 
         $s->paths = $this->paths($version, $s->servers[0]);
 
-        $s->securityDefinitions = $this->securityDefinitions();
-
+        $s->components = $this->components();
         return $s;
     }
 
@@ -228,6 +227,13 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
         //TODO: add $r->deprecated
         //Declares this operation to be deprecated. Usage of the declared operation should be refrained. Valid value MUST be either "true" or "false". Note: This field will change to type boolean in the future.
         return $r;
+    }
+
+    private function components()
+    {
+        $c = new stdClass();
+        $c->securitySchemes = $this->securitySchemes();
+        return $c;
     }
 
     private function parameters(array $route)
@@ -504,16 +510,15 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
         return $this->operationId($route) . 'Model';
     }
 
-    private function securityDefinitions()
+    private function securitySchemes()
     {
-        $r = new stdClass();
-        $r->api_key = (object)array(
-            'type' => 'apiKey',
-            'name' => 'api_key',
-            'in' => 'query',
-        );
-
-        return $r;
+        return (object)[
+            'APIKey' => (object)[
+                'type' => 'http',
+                'scheme' => 'bearer',
+                'bearerFormat' => 'TOKEN',
+            ]
+        ];
     }
 
     public static function getMaximumSupportedVersion(): int
