@@ -110,6 +110,10 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
         return PassThrough::file($file, $this->request->getHeaderLine('If-Modified-Since'));
     }
 
+    /**
+     * @return stdClass
+     * @throws HttpException
+     */
     public function swagger()
     {
         $s = new stdClass();
@@ -117,25 +121,41 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
 
         $r = $this->restler;
         $version = (string)$r->requestedApiVersion;
+        $s->info = $this->info($version);
+        $s->servers = $this->servers();
 
-        $s->paths = $this->paths($version);
+        $s->paths = $this->paths($version, $s->servers[0]);
 
         $s->securityDefinitions = $this->securityDefinitions();
-
-        $s->info = compact('version') +
-            array_filter(call_user_func(static::$infoClass . '::format', static::SWAGGER));
 
         return $s;
     }
 
+    private function info(int $version)
+    {
+        return compact('version') +
+            array_filter(call_user_func(static::$infoClass . '::format', static::SWAGGER));
+    }
+
+    /**
+     * @return array
+     */
+    private function servers()
+    {
+        $url = (string)$this->request->getUri();
+        $url = substr($url, 0, strlen($this->request->getUri()->getPath()));
+        return [$url];
+    }
+
     /**
      * @param int $version
+     * @param string $basePath
      * @throws HttpException
      */
-    private function paths($version = 1)
+    private function paths(int $version = 1, string $basePath)
     {
         $map = Router::findAll(
-            static::$excludedPaths + array($this->base()),
+            static::$excludedPaths + [$basePath],
             static::$excludedHttpMethods, $version, $this->authenticated
         );
         $paths = array();
@@ -154,12 +174,6 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
                 $paths["/$url"][strtolower($route['httpMethod'])] = $this->operation($route);
             }
         }
-    }
-
-    private function base()
-    {
-        //TODO: do not hard code
-        return 'localhost:8080';
     }
 
     private function operation($route)
