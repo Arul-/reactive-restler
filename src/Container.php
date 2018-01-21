@@ -60,22 +60,7 @@ class Container implements ContainerInterface
      */
     public function make($abstract, array $parameters = [])
     {
-        if ($instance = $this->instances[$abstract] ?? false) {
-            return $instance;
-        }
-        try {
-            $class = ClassName::get($abstract);
-        } catch (HttpException $e) {
-        }
-        if ($class && $instance = $this->instances[$class] ?? false) {
-            return $instance;
-        }
-        $instance = $this->resolve($class ?? $abstract, $parameters);
-        $this->instances[$abstract] = $instance;
-        if ($class) {
-            $this->instances[$class] = $instance;
-        }
-        return $instance;
+        return $this->resolve($abstract, $parameters);
     }
 
     public function instance($abstract, $instance)
@@ -138,29 +123,44 @@ class Container implements ContainerInterface
     /**
      * Build an instance of the given class
      *
-     * @param string $class
+     * @param string $abstract
+     * @param array $arguments
      * @return mixed
      *
      * @throws Exception
+     * @throws \ReflectionException
      */
-    public function resolve($class, array $arguments = [])
+    public function resolve(string $abstract, array $arguments = [])
     {
-        $reflector = new \ReflectionClass($class);
-
-        if (!$reflector->isInstantiable()) {
-            throw new Exception("[$class] is not instantiable");
+        if ($instance = $this->instances[$abstract] ?? false) {
+            return $instance;
+        }
+        try {
+            $class = ClassName::get($abstract);
+        } catch (HttpException $e) {
+        }
+        if ($class && $instance = $this->instances[$class] ?? false) {
+            return $instance;
         }
 
+        $reflector = new \ReflectionClass($class);
+        if (!$reflector->isInstantiable()) {
+            throw new ContainerException("[$class] is not instantiable");
+        }
         $constructor = $reflector->getConstructor();
-
         if (is_null($constructor)) {
             return new $class;
         }
-
         $parameters = $constructor->getParameters();
         $dependencies = $this->getDependencies($parameters, $arguments);
-
-        return $reflector->newInstanceArgs($dependencies);
+        $instance = $reflector->newInstanceArgs($dependencies);
+        if (is_object($instance)) {
+            $this->instances[$abstract] = $instance;
+            if ($class) {
+                $this->instances[$class] = $instance;
+            }
+        }
+        return $instance;
     }
 
     /**
@@ -180,7 +180,7 @@ class Container implements ContainerInterface
         foreach ($parameters as $index => $parameter) {
             if (isset($arguments[$parameter->name])) {
                 $dependencies[] = $arguments[$parameter->name];
-            } elseif (isset($arguments[$index])) { //&& gettype($arguments[$index]) == $parameter->getType()
+            } elseif (isset($arguments[$index])) {
                 $dependencies[] = $arguments[$index];
             } elseif (is_null($dependency = $parameter->getClass())) {
                 $dependencies[] = $this->resolvePrimitive($parameter);
@@ -226,8 +226,8 @@ class Container implements ContainerInterface
      */
     protected function unresolvablePrimitive(ReflectionParameter $parameter)
     {
-        $message = "Unresolvable dependency resolving [$parameter] in class {$parameter->getDeclaringClass()->getName()}";
-
+        $message =
+            "Unresolvable dependency resolving [$parameter] in class {$parameter->getDeclaringClass()->getName()}";
         throw new ContainerException($message);
     }
 }
