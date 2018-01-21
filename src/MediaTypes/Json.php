@@ -11,7 +11,7 @@ class Json extends MediaType implements RequestMediaTypeInterface, ResponseMedia
     const MIME = 'application/json';
     const EXTENSION = 'json';
 
-    public static $encodeOptions = 0;
+    public static $encodeOptions = JSON_UNESCAPED_SLASHES;
     public static $decodeOptions = JSON_BIGINT_AS_STRING;
 
     /**
