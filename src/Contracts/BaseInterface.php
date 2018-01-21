@@ -1,6 +1,6 @@
 <?php namespace Luracast\Restler\Contracts;
 
-use Luracast\Restler\Data\ApiMethodInfo;
+use Luracast\Restler\Utils\ApiMethodInfo;
 use Luracast\Restler\RestException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;

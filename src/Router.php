@@ -9,10 +9,11 @@ use Luracast\Restler\Contracts\ProvidesMultiVersionApiInterface;
 use Luracast\Restler\Contracts\RequestMediaTypeInterface;
 use Luracast\Restler\Contracts\ResponseMediaTypeInterface;
 use Luracast\Restler\Contracts\UsesAuthenticationInterface;
-use Luracast\Restler\Data\ApiMethodInfo;
-use Luracast\Restler\Data\Text;
+use Luracast\Restler\Utils\ApiMethodInfo;
+use Luracast\Restler\Utils\Text;
 use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\MediaTypes\Json;
+use Luracast\Restler\Utils\CommentParser;
 use Luracast\Restler\Utils\Type;
 use Luracast\Restler\Utils\ClassName;
 use ReflectionClass;
@@ -89,7 +90,7 @@ class Router
      */
     public static $minimumVersion = 1;
     /**
-     * @var array
+     * @var int
      * @internal
      */
     public static $maximumVersion = 1;
@@ -636,7 +637,7 @@ class Router
      * @param string $httpMethod
      * @param int $version
      * @param array $data
-     * @return \Luracast\Restler\Data\ApiMethodInfo
+     * @return \Luracast\Restler\Utils\ApiMethodInfo
      * @throws HttpException
      */
     public static function find(

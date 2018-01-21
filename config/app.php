@@ -6,7 +6,7 @@ use Luracast\Restler\Contracts\{
 };
 use Luracast\Restler\Contracts\ValidationInterface;
 use Luracast\Restler\Filters\RateLimiter;
-use Luracast\Restler\HumanReadableCache;
+use Luracast\Restler\Cache\HumanReadableCache;
 use Luracast\Restler\Contracts\CacheInterface;
 use Luracast\Restler\iCompose;
 use Luracast\Restler\Contracts\UserIdentificationInterface;

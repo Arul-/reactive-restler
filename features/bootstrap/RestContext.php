@@ -8,8 +8,7 @@ use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
 use GuzzleHttp\UriTemplate;
-use Luracast\Restler\Data\Text;
-use Luracast\Restler\Util;
+use Luracast\Restler\Utils\Text;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 

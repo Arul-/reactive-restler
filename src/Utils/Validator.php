@@ -1,16 +1,12 @@
 <?php namespace Luracast\Restler\Utils;
 
-use Luracast\Restler\CommentParser;
-use Luracast\Restler\Data\Invalid;
 use Luracast\Restler\Contracts\ValidationInterface;
-use Luracast\Restler\Data\ValidationInfo;
+use Luracast\Restler\Exceptions\Invalid;
 use Luracast\Restler\Exceptions\HttpException;
-use Luracast\Restler\RestException;
-use Luracast\Restler\Util;
 
 class Validator implements ValidationInterface
 {
-    public static $preFilters = array(
+    public static $preFilters = [
         //'*'             => 'some_global_filter', //applied to all parameters
         'string' => 'trim', //apply filter function by type (string)
         //'string'       => 'strip_tags',
@@ -20,9 +16,9 @@ class Validator implements ValidationInterface
         //'CustomClass'  => 'MyFilterClass::custom',
         //                  please note that you wont get an instance
         //                  of CustomClass. you will get an array instead
-    );
+    ];
     public static $holdException = false;
-    public static $exceptions = array();
+    public static $exceptions = [];
 
     public static function validate($input, ValidationInfo $info, $full = null)
     {
@@ -72,7 +68,7 @@ class Validator implements ValidationInterface
                         if ($r !== false) {
                             return $r;
                         }
-                    } catch (RestException $e) {
+                    } catch (HttpException $e) {
                         // just continue
                     }
                 }
@@ -222,8 +218,7 @@ class Validator implements ValidationInterface
                         $input = explode(CommentParser::$arrayDelimiter, $input);
                     }
                     if (is_array($input)) {
-                        $contentType =
-                            Util::nestedValue($info, 'contentType') ?: null;
+                        $contentType = $info->contentType;
                         if ($info->fix) {
                             if ($contentType == 'indexed') {
                                 $input = $info->filterArray($input, true);
@@ -316,10 +311,7 @@ class Validator implements ValidationInterface
                                 $cv = new ValidationInfo($value);
                                 $cv->name = "{$info->name}[$key]";
                                 if (array_key_exists($key, $input) || $cv->required) {
-                                    $instance->{$key} = static::validate(
-                                        Util::nestedValue($input, $key),
-                                        $cv
-                                    );
+                                    $instance->{$key} = static::validate(($input[$key] ?? null), $cv);
                                 }
                             }
                         }

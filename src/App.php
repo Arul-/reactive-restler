@@ -1,15 +1,8 @@
 <?php namespace Luracast\Restler;
 
+use Luracast\Restler\Cache\HumanReadableCache;
 use Luracast\Restler\Contracts\{
-    AccessControlInterface,
-    AuthenticationInterface,
-    CacheInterface,
-    ComposerInterface,
-    FilterInterface,
-    RequestMediaTypeInterface,
-    ResponseMediaTypeInterface,
-    UserIdentificationInterface,
-    ValidationInterface
+    AccessControlInterface, AuthenticationInterface, CacheInterface, ComposerInterface, FilterInterface, RequestMediaTypeInterface, ResponseMediaTypeInterface, UserIdentificationInterface, ValidationInterface
 };
 use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\Filters\RateLimiter;
@@ -20,9 +13,8 @@ use Luracast\Restler\Utils\Validator;
 use Psr\{
     Http\Message\ResponseInterface, Http\Message\ServerRequestInterface
 };
-use React\Http\{
-    Response, ServerRequest
-};
+use React\Http\Io\ServerRequest;
+use React\Http\Response;
 
 class App
 {
@@ -289,7 +281,7 @@ class App
     public static $implementations = [
         CacheInterface::class => [HumanReadableCache::class],
         ValidationInterface::class => [Validator::class],
-        UserIdentificationInterface::class => [User::class],
+        UserIdentificationInterface::class => [UserIdentifier::class],
         AccessControlInterface::class => [ /* YOUR_CLASS_NAME_HERE */],
         AuthenticationInterface::class => [ /* YOUR_CLASS_NAME_HERE */],
         ComposerInterface::class => [Composer::class],

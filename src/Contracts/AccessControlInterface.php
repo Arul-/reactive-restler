@@ -1,6 +1,6 @@
 <?php namespace Luracast\Restler\Contracts;
 
-use Luracast\Restler\Data\ApiMethodInfo;
+use Luracast\Restler\Utils\ApiMethodInfo;
 
 interface AccessControlInterface extends AuthenticationInterface
 {

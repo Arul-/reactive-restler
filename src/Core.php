@@ -5,16 +5,17 @@ use Exception;
 use Luracast\Restler\Contracts\{
     AuthenticationInterface, ComposerInterface, ContainerInterface, FilterInterface, ValidationInterface, RequestMediaTypeInterface, ResponseMediaTypeInterface, SelectivePathsInterface, UsesAuthenticationInterface
 };
-use Luracast\Restler\Data\{
-    ApiMethodInfo, ValidationInfo
+use Luracast\Restler\Utils\{
+    ApiMethodInfo
 };
 use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\MediaTypes\{
     Json, UrlEncoded, Xml
 };
 use Luracast\Restler\Utils\{
-    ClassName, Header, Validator
+    ClassName, CommentParser, Header, Validator
 };
+use Luracast\Restler\Utils\ValidationInfo;
 use Psr\Http\Message\{
     ResponseInterface, ServerRequestInterface
 };

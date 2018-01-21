@@ -2,8 +2,8 @@
 
 use improved\Authors as ImprovedAuthors;
 use Luracast\Restler\App;
+use Luracast\Restler\Cache\HumanReadableCache;
 use Luracast\Restler\Filters\RateLimiter;
-use Luracast\Restler\HumanReadableCache;
 use Luracast\Restler\MediaTypes\Json;
 use Luracast\Restler\MediaTypes\Xml;
 use Luracast\Restler\OpenApi3\Explorer;
@@ -12,10 +12,9 @@ use Luracast\Restler\Router;
 use Luracast\Restler\Utils\ClassName;
 use Psr\Http\Message\ServerRequestInterface;
 use ratelimited\Authors as RateLimitedAuthors;
-use React\Http\Response;
-use React\Http\Server;
-use React\Promise\Promise;
-use RingCentral\Psr7\Stream;
+use React\Http\Middleware\LimitConcurrentRequestsMiddleware;
+use React\Http\Middleware\RequestBodyBufferMiddleware;
+use React\Http\StreamingServer;
 use v1\BMI as BMI1;
 
 define('BASE', dirname(__DIR__));
@@ -101,6 +100,7 @@ $routes = Router::toArray();
 
 $loop = React\EventLoop\Factory::create();
 
+/*
 $server = new Server(function (ServerRequestInterface $request) {
     return new Promise(function ($resolve, $reject) use ($request) {
         echo '      ' . $request->getMethod() . ' ' . $request->getUri()->getPath() . PHP_EOL;
@@ -136,6 +136,23 @@ $server = new Server(function (ServerRequestInterface $request) {
         });
     });
 });
+*/
+
+$server = new StreamingServer([
+    new LimitConcurrentRequestsMiddleware(100), // 100 concurrent buffering handlers
+    new RequestBodyBufferMiddleware(16 * 1024 * 1024), // 16 MiB
+    function (ServerRequestInterface $request, callable $next) {
+        echo '      ' . $request->getMethod() . ' ' . $request->getUri()->getPath() . PHP_EOL;
+        try {
+            $h = new Reactler();
+            return $h->handle($request);
+        } catch (Throwable $throwable) {
+            var_dump($throwable);
+            die();
+        }
+    },
+]);
+
 
 $socket = new React\Socket\Server(8080, $loop);
 $server->listen($socket);

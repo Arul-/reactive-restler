@@ -2,7 +2,7 @@
 
 use Illuminate\Config\Repository as Config;
 use Luracast\Restler\Container;
-use Luracast\Restler\Data\ValidationInfo;
+use Luracast\Restler\Utils\ValidationInfo;
 use Luracast\Restler\Defaults;
 use Luracast\Restler\Utils\Validator;
 

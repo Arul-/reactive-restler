@@ -3,11 +3,10 @@
 use Luracast\Restler\Contracts\ProvidesMultiVersionApiInterface;
 use Luracast\Restler\Contracts\UsesAuthenticationInterface;
 use Luracast\Restler\Core;
-use Luracast\Restler\Data\ValidationInfo;
+use Luracast\Restler\Utils\ValidationInfo;
 use Luracast\Restler\ExplorerInfo;
 use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\Router;
-use Luracast\Restler\Util;
 use Luracast\Restler\Utils\ClassName;
 use Luracast\Restler\Utils\PassThrough;
 use Psr\Http\Message\ServerRequestInterface;
@@ -178,7 +177,7 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
         /*
         $this->setType(
             $r,
-            new ValidationInfo(Util::nestedValue($m, 'return') ?: array())
+            new ValidationInfo($m['return'] ?? [])
         );
         if (is_null($r->type) || 'mixed' == $r->type) {
             $r->type = 'array';
@@ -310,12 +309,12 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
                 'schema' => new stdClass()
             )
         );
-        $return = Util::nestedValue($route, 'metadata', 'return');
+        $return = $route['metadata']['return'];
         if (!empty($return)) {
             $this->setType($r[$code]->schema, new ValidationInfo($return));
         }
 
-        if (is_array($throws = Util::nestedValue($route, 'metadata', 'throws'))) {
+        if (is_array($throws = $route['metadata']['throws'] ?? null)) {
             foreach ($throws as $message) {
                 $r[$message['code']] = array('description' => $message['message']);
             }
@@ -388,8 +387,8 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
                     )
                 ));
             } elseif ($info->contentType && $info->contentType != 'indexed') {
-                if (is_string($info->contentType) && $t = Util::nestedValue(static::$dataTypeAlias,
-                        strtolower($info->contentType))) {
+                if (is_string($info->contentType) &&
+                    $t = static::$dataTypeAlias[strtolower($info->contentType)] ?? null) {
                     if (is_array($t)) {
                         $object->items = (object)array(
                             'type' => $t[0],
@@ -414,7 +413,7 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
         } elseif ($info->children) {
             $this->model($type, $info->children);
             $object->{'$ref'} = "#/definitions/$type";
-        } elseif (is_string($info->type) && $t = Util::nestedValue(static::$dataTypeAlias, strtolower($info->type))) {
+        } elseif (is_string($info->type) && $t = static::$dataTypeAlias[strtolower($info->type)]) {
             if (is_array($t)) {
                 $object->type = $t[0];
                 $object->format = $t[1];

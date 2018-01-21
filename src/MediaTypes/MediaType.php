@@ -3,7 +3,7 @@
 use Luracast\Restler\Contracts\MediaTypeInterface;
 use Luracast\Restler\Contracts\SelectivePathsInterface;
 use Luracast\Restler\Contracts\SelectivePathsTrait;
-use Luracast\Restler\Data\Text;
+use Luracast\Restler\Utils\Text;
 use Luracast\Restler\Exceptions\HttpException;
 
 abstract class MediaType implements MediaTypeInterface, SelectivePathsInterface
