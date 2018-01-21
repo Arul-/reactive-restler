@@ -413,7 +413,7 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
         } elseif ($info->children) {
             $this->model($type, $info->children);
             $object->{'$ref'} = "#/definitions/$type";
-        } elseif (is_string($info->type) && $t = static::$dataTypeAlias[strtolower($info->type)]) {
+        } elseif (is_string($info->type) && $t = static::$dataTypeAlias[strtolower($info->type)] ?? null) {
             if (is_array($t)) {
                 $object->type = $t[0];
                 $object->format = $t[1];
