@@ -4,7 +4,8 @@
   "type": "project",
   "require": {
     "php": "^7.1",
-    "react/http": "^0.8.1"
+    "react/http": "^0.8.1",
+    "psr/container": "^1.0"
   },
   "require-dev": {
     "behat/behat": "~3",
