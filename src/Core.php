@@ -190,6 +190,11 @@ abstract class Core
         return $get;
     }
 
+    /**
+     * @param string $contentType
+     * @return RequestMediaTypeInterface
+     * @throws HttpException
+     */
     protected function getRequestMediaType(string $contentType): RequestMediaTypeInterface
     {
         $format = null;

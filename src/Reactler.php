@@ -70,7 +70,7 @@ class Reactler extends Core
      */
     protected function respond($response = []): ResponseInterface
     {
-        $body = is_null($response) ? '' : $this->responseFormat->encode($response, App::$productionMode);
+        $body = is_null($response) ? '' : $this->responseFormat->encode($response, !App::$productionMode);
 
         //handle throttling
         if ($throttle = $this->app['throttle'] ?? 0) {
