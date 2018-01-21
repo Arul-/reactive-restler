@@ -32,23 +32,23 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
     );
     public static $allowScalarValueOnRequestBody = false;
 
-    protected static $prefixes = array(
+    protected static $prefixes = [
         'get' => 'retrieve',
         'index' => 'list',
         'post' => 'create',
         'put' => 'update',
         'patch' => 'modify',
         'delete' => 'remove',
-    );
+    ];
     protected $authenticated = false;
 
-    protected $models = array();
+    protected $models = [];
 
-    public static $dataTypeAlias = array(
+    public static $dataTypeAlias = [
         //'string' => 'string',
         'int' => 'integer',
         'number' => 'number',
-        'float' => array('number', 'float'),
+        'float' => ['number', 'float'],
         'bool' => 'boolean',
         //'boolean' => 'boolean',
         //'NULL' => 'null',
@@ -56,12 +56,12 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
         //'object'  => 'object',
         'stdClass' => 'object',
         'mixed' => 'string',
-        'date' => array('string', 'date'),
-        'datetime' => array('string', 'date-time'),
+        'date' => ['string', 'date'],
+        'datetime' => ['string', 'date-time'],
 
         'time' => 'string',
         'timestamp' => 'string',
-    );
+    ];
     /**
      * @var ServerRequestInterface
      */
@@ -231,8 +231,13 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
 
     private function components()
     {
-        $c = new stdClass();
-        $c->securitySchemes = $this->securitySchemes();
+        $c = (object)[
+            'schemas' => new stdClass(),
+            'securitySchemes' => $this->securitySchemes(),
+        ];
+        foreach ($this->models as $type => $model) {
+            $c->schemas->{$type} = $model;
+        }
         return $c;
     }
 
@@ -416,7 +421,7 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
                 $contentType = ClassName::short($info->contentType);
                 $model = $this->model($contentType, $info->children);
                 $object->items = (object)array(
-                    '$ref' => "#/definitions/$contentType"
+                    '$ref' => "#/components/schemas/$contentType"
                 );
             } elseif ($info->contentType && $info->contentType == 'associative') {
                 unset($info->contentType);
@@ -445,7 +450,7 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
                 } else {
                     $contentType = ClassName::short($info->contentType);
                     $object->items = (object)array(
-                        '$ref' => "#/definitions/$contentType"
+                        '$ref' => "#/components/schemas/$contentType"
                     );
                 }
             } else {
@@ -455,7 +460,7 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
             }
         } elseif ($info->children) {
             $this->model($type, $info->children);
-            $object->{'$ref'} = "#/definitions/$type";
+            $object->{'$ref'} = "#/components/schemas/$type";
         } elseif (is_string($info->type) && $t = static::$dataTypeAlias[strtolower($info->type)] ?? null) {
             if (is_array($t)) {
                 $object->type = $t[0];
@@ -507,7 +512,7 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
 
     private function modelName(array $route)
     {
-        return $this->operationId($route) . 'Model';
+        return ucfirst($this->operationId($route)) . 'Model';
     }
 
     private function securitySchemes()
@@ -515,7 +520,7 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
         return (object)[
             'APIKey' => (object)[
                 'type' => 'http',
-                'scheme' => 'bearer',
+                'schema' => 'bearer',
                 'bearerFormat' => 'TOKEN',
             ]
         ];
