@@ -3,6 +3,9 @@
 use Luracast\Restler\Contracts\ProvidesMultiVersionApiInterface;
 use Luracast\Restler\Contracts\UsesAuthenticationInterface;
 use Luracast\Restler\Core;
+use Luracast\Restler\Exceptions\Redirect;
+use Luracast\Restler\Utils\ApiMethodInfo;
+use Luracast\Restler\Utils\Text;
 use Luracast\Restler\Utils\ValidationInfo;
 use Luracast\Restler\ExplorerInfo;
 use Luracast\Restler\Exceptions\HttpException;
@@ -71,11 +74,16 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
      * @var Core
      */
     private $restler;
+    /**
+     * @var ApiMethodInfo
+     */
+    private $info;
 
-    public function __construct(ServerRequestInterface $request, Core $restler)
+    public function __construct(ServerRequestInterface $request, ApiMethodInfo $info, Core $restler)
     {
         $this->request = $request;
         $this->restler = $restler;
+        $this->info = $info;
     }
 
     /**
@@ -85,6 +93,13 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
      */
     public function index()
     {
+        $base = '/' . rtrim($this->info->url, '*');
+        $path = $this->request->getUri()->getPath();
+        //make sure explorer is called with trailing slash
+        if (!Text::beginsWith($path, $base)) {
+            //if not add and redirect
+            throw new Redirect((string)$this->request->getUri() . '/');
+        }
         $args = func_get_args();
         $filename = implode('/', $args);
         $filename = str_replace(array('../', './', '\\', '..', '.php'), '', $filename);
