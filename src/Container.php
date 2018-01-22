@@ -149,11 +149,12 @@ class Container implements ContainerInterface
         }
         $constructor = $reflector->getConstructor();
         if (is_null($constructor)) {
-            return new $class;
+            $instance = new $class;
+        } else {
+            $parameters = $constructor->getParameters();
+            $dependencies = $this->getDependencies($parameters, $arguments);
+            $instance = $reflector->newInstanceArgs($dependencies);
         }
-        $parameters = $constructor->getParameters();
-        $dependencies = $this->getDependencies($parameters, $arguments);
-        $instance = $reflector->newInstanceArgs($dependencies);
         if (is_object($instance)) {
             $this->instances[$abstract] = $instance;
             if ($class) {
