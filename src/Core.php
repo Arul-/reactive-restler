@@ -626,28 +626,27 @@ abstract class Core
      * @return mixed
      * @throws \ReflectionException
      */
-    protected function call()
+    public function call(ApiMethodInfo $info)
     {
-        $o = &$this->apiMethodInfo;
-        $accessLevel = max($this->app['apiAccessLevel'], $o->accessLevel);
-        $object = $this->make($o->className);
+        $accessLevel = max($this->app['apiAccessLevel'], $info->accessLevel);
+        $object = $this->make($info->className);
         switch ($accessLevel) {
             case 3 : //protected method
                 $reflectionMethod = new ReflectionMethod(
                     $object,
-                    $o->methodName
+                    $info->methodName
                 );
                 $reflectionMethod->setAccessible(true);
                 $result = $reflectionMethod->invokeArgs(
                     $object,
-                    $o->parameters
+                    $info->parameters
                 );
                 break;
             default :
                 $result = call_user_func_array(array(
                     $object,
-                    $o->methodName
-                ), $o->parameters);
+                    $info->methodName
+                ), $info->parameters);
         }
         return $result;
     }

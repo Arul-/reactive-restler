@@ -113,7 +113,7 @@ class Reactler extends Core
             $this->authenticate($this->request);
             $this->filter($this->request, true);
             $this->validate();
-            $data = $this->call();
+            $data = $this->call($this->apiMethodInfo);
             if ($data instanceof ResponseInterface) {
                 return $data;
             }
