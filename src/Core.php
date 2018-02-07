@@ -421,7 +421,7 @@ abstract class Core
         string $accessControlRequestHeaders = '',
         string $origin = ''
     ): void {
-        if ($this->app['crossOriginResourceSharing'] || $requestMethod != 'OPTIONS') {
+        if (!$this->app['crossOriginResourceSharing'] || $requestMethod != 'OPTIONS') {
             return;
         }
         if (!empty($accessControlRequestMethod)) {

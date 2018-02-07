@@ -106,8 +106,13 @@ class Reactler extends Core
         $this->requestMethod = $request->getMethod();
         $this->request = $request;
         try {
-            $this->get();
-            $this->route();
+            try {
+                $this->get();
+                $this->route();
+            } catch (Throwable $t) {
+                $this->negotiate();
+                throw $t;
+            }
             $this->negotiate();
             $this->filter($this->request);
             $this->authenticate($this->request);
