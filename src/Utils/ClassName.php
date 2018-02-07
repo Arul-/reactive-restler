@@ -74,7 +74,8 @@ class ClassName
     public static function get(string $abstract)
     {
         $interface = App::$aliases[$abstract] ?? $abstract;
-        if ($class = App::$implementations[$interface][0] ?? false) {
+        if (($class = App::$implementations[$interface][0] ?? App::$implementations[$interface] ?? false)
+            && is_string($class)) {
             if (interface_exists($interface) && class_implements($class)[$interface] ?? false) {
                 return $class;
             }
