@@ -90,6 +90,9 @@ abstract class Core
             throw new TypeError('Argument 2 passed to ' . __CLASS__
                 . '::__construct() must be an array or implement ArrayAccess');
         }
+
+        $this->startTime = time();
+
         $config = $config ?? [];
         $this->config = &$config;
 
