@@ -323,4 +323,16 @@ class App
         'JsFormat' => Js::class,
         'XmlFormat' => Xml::class,
     ];
+
+    /** @noinspection PhpDocMissingThrowsInspection */
+    /**
+     * @param ServerRequestInterface $request
+     * @param callable $next
+     * @return ResponseInterface
+     */
+    public function __invoke(ServerRequestInterface $request, callable $next)
+    {
+        echo '      ' . $request->getMethod() . ' ' . $request->getUri()->getPath() . PHP_EOL;
+        return (new Reactler)->handle($request);
+    }
 }
