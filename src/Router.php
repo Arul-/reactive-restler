@@ -2,13 +2,10 @@
 
 
 use Exception;
-use Luracast\Restler\Contracts\AccessControlInterface;
-use Luracast\Restler\Contracts\AuthenticationInterface;
-use Luracast\Restler\Contracts\FilterInterface;
-use Luracast\Restler\Contracts\ProvidesMultiVersionApiInterface;
-use Luracast\Restler\Contracts\RequestMediaTypeInterface;
-use Luracast\Restler\Contracts\ResponseMediaTypeInterface;
-use Luracast\Restler\Contracts\UsesAuthenticationInterface;
+use Luracast\Restler\Contracts\{
+    AccessControlInterface, AuthenticationInterface, FilterInterface, ProvidesMultiVersionApiInterface,
+    RequestMediaTypeInterface, ResponseMediaTypeInterface, UsesAuthenticationInterface
+};
 use Luracast\Restler\Utils\ApiMethodInfo;
 use Luracast\Restler\Utils\Text;
 use Luracast\Restler\Exceptions\HttpException;

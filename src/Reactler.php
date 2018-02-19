@@ -3,10 +3,12 @@
 use Exception;
 use Luracast\Restler\Contracts\ComposerInterface;
 use Luracast\Restler\Exceptions\HttpException;
+use Luracast\Restler\Exceptions\InvalidAuthCredentials;
 use Luracast\Restler\MediaTypes\Json;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Throwable;
+use TypeError;
 
 class Reactler extends Core
 {
@@ -55,9 +57,7 @@ class Reactler extends Core
             $this->apiMethodInfo,
             $this->request->getHeaderLine('origin')
         );
-        /**
-         * @var ComposerInterface Default Composer
-         */
+        /** @var ComposerInterface $compose */
         $compose = $this->make(ComposerInterface::class);
         return is_null($response) && App::$emptyBodyForNullResponse
             ? null
@@ -137,14 +137,5 @@ class Reactler extends Core
                 )
             );
         }
-    }
-
-    /**
-     * @param ServerRequestInterface $request
-     * @param callable $next
-     */
-    public function __invoke(ServerRequestInterface $request, callable $next)
-    {
-        $next($this->handle($request));
     }
 }
