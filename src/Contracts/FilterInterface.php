@@ -1,5 +1,6 @@
 <?php namespace Luracast\Restler\Contracts;
 
+use Luracast\Restler\Exceptions\HttpException;
 use Psr\Http\Message\ServerRequestInterface;
 
 /**
@@ -21,6 +22,8 @@ interface FilterInterface
      *
      * @param array $responseHeaders
      * @return boolean true when api access is allowed false otherwise
+     *
+     * @throws HttpException
      */
     public function __isAllowed(ServerRequestInterface $request, array &$responseHeaders): bool;
 }

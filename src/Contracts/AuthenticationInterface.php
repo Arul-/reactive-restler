@@ -1,5 +1,8 @@
 <?php namespace Luracast\Restler\Contracts;
 
+use Luracast\Restler\Exceptions\InvalidAuthCredentials;
+use Psr\Http\Message\ServerRequestInterface;
+
 /**
  * Interface for creating authentication classes
  *
@@ -14,4 +17,11 @@ interface AuthenticationInterface extends FilterInterface
      * @example OAuth
      */
     public static function getWWWAuthenticateString(): string;
+
+    /**
+     * @inheritdoc
+     *
+     * @throws InvalidAuthCredentials
+     */
+    public function __isAllowed(ServerRequestInterface $request, array &$responseHeaders): bool;
 }
