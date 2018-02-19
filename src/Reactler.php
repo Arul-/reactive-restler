@@ -3,12 +3,10 @@
 use Exception;
 use Luracast\Restler\Contracts\ComposerInterface;
 use Luracast\Restler\Exceptions\HttpException;
-use Luracast\Restler\Exceptions\InvalidAuthCredentials;
 use Luracast\Restler\MediaTypes\Json;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Throwable;
-use TypeError;
 
 class Reactler extends Core
 {
