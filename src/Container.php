@@ -19,36 +19,16 @@ class Container implements ContainerInterface
     /**
      * @var array
      */
-    private $aliases;
-    /**
-     * @var array
-     */
-    private $abstractAliases;
-    /**
-     * @var array
-     */
     private $config;
 
-    public function __construct(array $aliases = [], array $abstractAliases = [], &$config = [])
+    public function __construct(&$config = [])
+    {
+        $this->init($config);
+    }
+
+    public function init(&$config)
     {
         $this->instances = [];
-        $this->aliases = $aliases;
-        $this->abstractAliases = $abstractAliases;
-        $this->config = &$config;
-    }
-
-    public function setAliases(array $aliases, bool $clear = false)
-    {
-        $this->aliases = $clear ? $aliases : $aliases + $this->aliases;
-    }
-
-    public function setAbstractAliases(array $abstractAliases, bool $clear = false)
-    {
-        $this->abstractAliases = $clear ? $abstractAliases : $abstractAliases + $this->abstractAliases;
-    }
-
-    public function setConfig(&$config)
-    {
         $this->config = &$config;
     }
 
