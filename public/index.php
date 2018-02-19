@@ -7,10 +7,8 @@ use Luracast\Restler\Filters\RateLimiter;
 use Luracast\Restler\MediaTypes\Json;
 use Luracast\Restler\MediaTypes\Xml;
 use Luracast\Restler\OpenApi3\Explorer;
-use Luracast\Restler\Reactler;
 use Luracast\Restler\Router;
 use Luracast\Restler\Utils\ClassName;
-use Psr\Http\Message\ServerRequestInterface;
 use ratelimited\Authors as RateLimitedAuthors;
 use React\Http\Middleware\LimitConcurrentRequestsMiddleware;
 use React\Http\Middleware\RequestBodyBufferMiddleware;
@@ -100,47 +98,11 @@ $routes = Router::toArray();
 
 $loop = React\EventLoop\Factory::create();
 
-/*
-$server = new Server(function (ServerRequestInterface $request) {
-    return new Promise(function ($resolve, $reject) use ($request) {
-        echo '      ' . $request->getMethod() . ' ' . $request->getUri()->getPath() . PHP_EOL;
-        $content = "";
-        $request->getBody()->on('data', function ($data) use (&$content) {
-            $content .= $data;
-        });
-
-        $request->getBody()->on('end', function () use ($request, $resolve, &$content) {
-            $h = new Reactler();
-            $request = $request->withAttribute('reactler', $h);
-            $stream = fopen('php://memory', 'r+');
-            fwrite($stream, $content);
-            rewind($stream);
-            $request = $request->withBody(new Stream($stream));
-            try {
-                $response = $h->handle($request);
-                $resolve($response);
-            } catch (Throwable $throwable) {
-                var_dump($throwable);
-                die();
-            }
-        });
-
-        // an error occurs e.g. on invalid chucked encoded data or an unexpected 'end' event
-        $request->getBody()->on('error', function (Exception $exception) use ($resolve, &$contentLength) {
-            $response = new Response(
-                400,
-                ['Content-Type' => 'text/plain'],
-                "An error occurred while reading at length: " . $contentLength
-            );
-            $resolve($response);
-        });
-    });
-});
-*/
-
 $server = new StreamingServer([
     new LimitConcurrentRequestsMiddleware(100), // 100 concurrent buffering handlers
     new RequestBodyBufferMiddleware(16 * 1024 * 1024), // 16 MiB
+    new App(),
+    /*
     function (ServerRequestInterface $request, callable $next) {
         echo '      ' . $request->getMethod() . ' ' . $request->getUri()->getPath() . PHP_EOL;
         try {
@@ -150,7 +112,7 @@ $server = new StreamingServer([
             var_dump($throwable);
             die();
         }
-    },
+    },*/
 ]);
 
 
