@@ -3,7 +3,8 @@
 use ArrayAccess;
 use Exception;
 use Luracast\Restler\Contracts\{
-    AuthenticationInterface, ComposerInterface, ContainerInterface, FilterInterface, RequestMediaTypeInterface, ResponseMediaTypeInterface, SelectivePathsInterface, UsesAuthenticationInterface, ValidationInterface
+    AuthenticationInterface, ComposerInterface, ContainerInterface, FilterInterface, RequestMediaTypeInterface,
+    ResponseMediaTypeInterface, SelectivePathsInterface, UsesAuthenticationInterface, ValidationInterface
 };
 use Luracast\Restler\Exceptions\{
     HttpException, InvalidAuthCredentials
@@ -85,21 +86,32 @@ abstract class Core
      */
     public function __construct(ContainerInterface $container = null, &$config = [])
     {
-        $this->init($container, $config);
+        if (!is_array($config) && !$config instanceof ArrayAccess) {
+            throw new TypeError('Argument 2 passed to ' . __CLASS__
+                . '::__construct() must be an array or implement ArrayAccess');
+        }
+        $config = $config ?? [];
+        $this->config = &$config;
+
+        $this->config['app'] = $this->app = get_class_vars(App::class);
+        $this->config['router'] = $this->router = get_class_vars(Router::class);
+
+        if ($container) {
+            $container->init($config);
+        } else {
+            $container = new Container($config);
+        }
+        $this->container = $container;
+        $this->container->instance(Core::class, $this);
     }
 
 
     /**
-     * Core constructor.
-     * @param ContainerInterface $container
-     * @param array $config
-     * @throws TypeError
+     * reset all properties to initial stage
      */
-    protected function init(ContainerInterface $container = null, &$config = [])
+    protected function reset()
     {
-        if (!is_array($config) && !$config instanceof ArrayAccess) {
-            throw new TypeError('Argument 2 passed to ' . __CLASS__ . '::__construct() must be an array or implement ArrayAccess');
-        }
+
         $this->authenticated = false;
         $this->authVerified = false;
         $this->requestedApiVersion = 1;
@@ -115,23 +127,10 @@ abstract class Core
         $this->responseCode = null;
         $this->startTime = time();
 
-        $config = $config ?? [];
-        $config['app'] = $this->app = $config['app']
-            ?? get_class_vars(App::class);
-        $config['router'] = $this->router = $config['router']
-            ?? get_class_vars(Router::class);
-        $this->config = &$config;
-        foreach ($this->app['implementations'] as $abstract => $implementations) {
-            if (!isset($this->app['aliases'][$abstract]) && count($implementations)) {
-                $this->app['aliases'][$abstract] = $implementations[0];
-            }
-        }
-        if ($container) {
-            $container->init($config);
-            $this->container = $container;
-        } else {
-            $this->container = new Container($config);
-        }
+        $this->config['app'] = $this->app = get_class_vars(App::class);
+        $this->config['router'] = $this->router = get_class_vars(Router::class);
+
+        $this->container->init($this->config);
         $this->container->instance(Core::class, $this);
     }
 
@@ -255,19 +254,7 @@ abstract class Core
             || $this->requestMethod == 'PATCH'
             || $this->requestMethod == 'POST'
         ) {
-            //TODO: handle stream
             $r = $this->requestFormat->decode($raw);
-
-            /*
-            $r = $this->request->getParsedBody();
-
-            if ($r == null) {
-                $body = $this->request->getBody();
-                $body->rewind();
-                $content = $body->read($body->getSize());
-                $r = json_decode($content);
-            }
-            */
 
             $r = is_array($r)
                 ? array_merge($r, array($this->app['fullRequestDataName'] => $r))
@@ -315,21 +302,23 @@ abstract class Core
     protected function negotiateResponseMediaType(string $path, string $acceptHeader = ''): ResponseMediaTypeInterface
     {
         //check if the api method insists on response format using @format comment
-        if ($formats = $this->apiMethodInfo->metadata['format'] ?? false) {
+        if (($metadata = $this->apiMethodInfo->metadata ?? false) && ($formats = $metadata['format'] ?? false)) {
             $formats = explode(',', (string)$formats);
             foreach ($formats as $i => $f) {
-                $f = trim($f);
-                $f = App::$aliases[$f] ?? $f; //TODO: use api scope
-                if (!in_array($f, $this->router['formatOverridesMap'])) {
-                    throw new HttpException(
-                        500,
-                        "Given @format is not present in overriding formats. Please call `Router::\$setOverridingResponseMediaTypes('$f');` first."
-                    );
+                if ($f = ClassName::resolve(trim($f), $metadata['scope'])) {
+                    if (!in_array($f, $this->router['formatOverridesMap'])) {
+                        throw new HttpException(
+                            500,
+                            "Given @format is not present in overriding formats. " .
+                            "Please call `Router::\$setOverridingResponseMediaTypes('$f');` first."
+                        );
+                    }
+                    $formats[$i] = $f;
                 }
-                $formats[$i] = $f;
             }
             /** @noinspection PhpInternalEntityUsedInspection */
-            Router::_setMediaTypes(RequestMediaTypeInterface::class, $formats, $this->router['requestFormatMap'],
+            Router::_setMediaTypes(RequestMediaTypeInterface::class, $formats,
+                $this->router['requestFormatMap'],
                 $this->router['readableMediaTypes']);
 
             if (
@@ -343,7 +332,8 @@ abstract class Core
             }
 
             /** @noinspection PhpInternalEntityUsedInspection */
-            Router::_setMediaTypes(ResponseMediaTypeInterface::class, $formats, $this->router['responseFormatMap'],
+            Router::_setMediaTypes(ResponseMediaTypeInterface::class, $formats,
+                $this->router['responseFormatMap'],
                 $this->router['writableMediaTypes']);
         }
 
