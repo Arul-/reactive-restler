@@ -3,26 +3,24 @@
 use ArrayAccess;
 use Exception;
 use Luracast\Restler\Contracts\{
-    AuthenticationInterface, ComposerInterface, ContainerInterface, FilterInterface, ValidationInterface, RequestMediaTypeInterface, ResponseMediaTypeInterface, SelectivePathsInterface, UsesAuthenticationInterface
+    AuthenticationInterface, ComposerInterface, ContainerInterface, FilterInterface, RequestMediaTypeInterface, ResponseMediaTypeInterface, SelectivePathsInterface, UsesAuthenticationInterface, ValidationInterface
 };
-use Luracast\Restler\Utils\{
-    ApiMethodInfo
+use Luracast\Restler\Exceptions\{
+    HttpException, InvalidAuthCredentials
 };
-use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\MediaTypes\{
     Json, UrlEncoded, Xml
 };
 use Luracast\Restler\Utils\{
-    ClassName, CommentParser, Header, Validator
+    ApiMethodInfo, ClassName, CommentParser, Header, Validator, ValidationInfo
 };
-use Luracast\Restler\Utils\ValidationInfo;
 use Psr\Http\Message\{
     ResponseInterface, ServerRequestInterface
 };
+use ReflectionException;
 use ReflectionMethod;
 use Throwable;
 use TypeError;
-use UnexpectedValueException;
 
 abstract class Core
 {
@@ -79,7 +77,6 @@ abstract class Core
      */
     protected $startTime;
 
-
     /**
      * Core constructor.
      * @param ContainerInterface $container
@@ -88,10 +85,36 @@ abstract class Core
      */
     public function __construct(ContainerInterface $container = null, &$config = [])
     {
+        $this->init($container, $config);
+    }
+
+
+    /**
+     * Core constructor.
+     * @param ContainerInterface $container
+     * @param array $config
+     * @throws TypeError
+     */
+    protected function init(ContainerInterface $container = null, &$config = [])
+    {
         if (!is_array($config) && !$config instanceof ArrayAccess) {
             throw new TypeError('Argument 2 passed to ' . __CLASS__ . '::__construct() must be an array or implement ArrayAccess');
         }
+        $this->authenticated = false;
+        $this->authVerified = false;
+        $this->requestedApiVersion = 1;
+        $this->requestMethod = 'GET';
+        $this->requestFormatDiffered = false;
+        $this->apiMethodInfo = null;
+        $this->responseFormat = null;
+        $this->path = '';
+        $this->requestFormat = null;
+        $this->body = [];
+        $this->query = [];
+        $this->responseHeaders = [];
+        $this->responseCode = null;
         $this->startTime = time();
+
         $config = $config ?? [];
         $config['app'] = $this->app = $config['app']
             ?? get_class_vars(App::class);
@@ -104,13 +127,10 @@ abstract class Core
             }
         }
         if ($container) {
-            $container->setAliases($this->app['aliases']);
-            $container->setAbstractAliases($this->app['implementations']);
-            $container->setConfig($config);
+            $container->init($config);
             $this->container = $container;
         } else {
-            $this->container = new Container(
-                $this->app['aliases'], $this->app['implementations'], $config);
+            $this->container = new Container($config);
         }
         $this->container->instance(Core::class, $this);
     }
@@ -118,8 +138,8 @@ abstract class Core
     public function make($className)
     {
         $properties = [];
+        $fullName = $className;
         if ($m = $this->apiMethodInfo->metadata ?? false) {
-            $fullName = $className;
             $shortName = ClassName::short($fullName);
             $properties = $m['class'][$fullName][CommentParser::$embeddedDataName] ??
                 $m['class'][$shortName][CommentParser::$embeddedDataName] ?? [];
@@ -197,6 +217,7 @@ abstract class Core
      */
     protected function getRequestMediaType(string $contentType): RequestMediaTypeInterface
     {
+        /** @var RequestMediaTypeInterface $format */
         $format = null;
         // check if client has sent any information on request format
         if (!empty($contentType)) {
@@ -307,6 +328,7 @@ abstract class Core
                 }
                 $formats[$i] = $f;
             }
+            /** @noinspection PhpInternalEntityUsedInspection */
             Router::_setMediaTypes(RequestMediaTypeInterface::class, $formats, $this->router['requestFormatMap'],
                 $this->router['readableMediaTypes']);
 
@@ -320,6 +342,7 @@ abstract class Core
                 );
             }
 
+            /** @noinspection PhpInternalEntityUsedInspection */
             Router::_setMediaTypes(ResponseMediaTypeInterface::class, $formats, $this->router['responseFormatMap'],
                 $this->router['writableMediaTypes']);
         }
@@ -486,7 +509,7 @@ abstract class Core
             if (!$found) {
                 if (strpos($acceptLanguage, '*') !== false) {
                     //use default language
-                } else {
+                } /** @noinspection PhpStatementHasEmptyBodyInspection */ else {
                     //ignore for now! //TODO: find best response for language negotiation failure
                 }
             }
@@ -520,6 +543,7 @@ abstract class Core
      * @param ServerRequestInterface $request
      * @throws HttpException
      * @throws InvalidAuthCredentials
+     * @throws Exception
      */
     protected function authenticate(ServerRequestInterface $request)
     {
@@ -540,11 +564,9 @@ abstract class Core
                         array_splice($this->router['authClasses'], $i, 1);
                         continue;
                     }
-                    /**
-                     * @var AuthenticationInterface
-                     */
-                    $authObj = $this->make($authClass);
-                    if (!$authObj->__isAllowed($request, $this->responseHeaders)) {
+                    /** @var AuthenticationInterface $auth */
+                    $auth = $this->make($authClass);
+                    if (!$auth->__isAllowed($request, $this->responseHeaders)) {
                         throw new HttpException(401);
                     }
                     $unauthorized = false;
@@ -552,7 +574,7 @@ abstract class Core
                     array_splice($this->router['authClasses'], $i, 1);
                     array_unshift($this->router['authClasses'], $authClass);
                     break;
-                } catch (InvalidAuthCredentials $e) {
+                } catch (InvalidAuthCredentials $e) { //provided credentials does not authenticate
                     $this->authenticated = false;
                     throw $e;
                 } catch (HttpException $e) {
@@ -602,12 +624,8 @@ abstract class Core
                 //convert to instance of ValidationInfo
                 $info = new ValidationInfo($param);
                 //initialize validator
-                $validator = $this->app['implementations'][ValidationInterface::class][0];
-                if (!$this->make($validator) instanceof ValidationInterface) {
-                    throw new UnexpectedValueException(
-                        '`' . $validator . '` must implement `ValidationInterface` interface'
-                    );
-                }
+                /** @var ValidationInterface $validator */
+                $validator = $this->make(ValidationInterface::class);
                 $valid = $o->parameters[$index];
                 $o->parameters[$index] = null;
                 if (empty(Validator::$exceptions)) {
@@ -623,8 +641,9 @@ abstract class Core
     }
 
     /**
+     * @param ApiMethodInfo $info
      * @return mixed
-     * @throws \ReflectionException
+     * @throws ReflectionException
      */
     public function call(ApiMethodInfo $info)
     {
@@ -654,6 +673,11 @@ abstract class Core
     abstract protected function compose($response = null);
 
 
+    /**
+     * @param ApiMethodInfo|null $info
+     * @param string $origin
+     * @param HttpException|null $e
+     */
     protected function composeHeaders(?ApiMethodInfo $info, string $origin = '', HttpException $e = null): void
     {
         //only GET method should be cached if allowed by API developer
@@ -724,12 +748,10 @@ abstract class Core
         }
         $this->composeHeaders(
             $this->apiMethodInfo,
-            $this->request->getHeaderLine('origin'),
+            $origin,
             $e
         );
-        /**
-         * @var ComposerInterface Default Composer
-         */
+        /** @var ComposerInterface $compose */
         $compose = $this->make(ComposerInterface::class);
         return $compose->message($e);
     }
@@ -746,6 +768,7 @@ abstract class Core
     {
         if (isset(class_implements($class)[SelectivePathsInterface::class])) {
             $notInPath = true;
+            /** @var SelectivePathsInterface $class */
             foreach ($class::getIncludedPaths() as $include) {
                 if (empty($include) || 0 === strpos($path, $include)) {
                     $notInPath = false;
@@ -782,6 +805,7 @@ abstract class Core
             return false;
         }
         if ($detail = App::$propertyValidations[$property] ?? false) {
+            /** @noinspection PhpParamsInspection */
             $value = Validator::validate($value, new ValidationInfo($detail));
         }
         $this->app[$property] = $value;
