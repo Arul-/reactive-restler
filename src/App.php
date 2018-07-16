@@ -2,7 +2,16 @@
 
 use Luracast\Restler\Cache\HumanReadableCache;
 use Luracast\Restler\Contracts\{
-    AccessControlInterface, AuthenticationInterface, CacheInterface, ComposerInterface, FilterInterface, RequestMediaTypeInterface, ResponseMediaTypeInterface, UserIdentificationInterface, ValidationInterface
+    AccessControlInterface,
+    AuthenticationInterface,
+    CacheInterface,
+    ComposerInterface,
+    ContainerInterface,
+    FilterInterface,
+    RequestMediaTypeInterface,
+    ResponseMediaTypeInterface,
+    UserIdentificationInterface,
+    ValidationInterface
 };
 use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\Filters\RateLimiter;
@@ -290,6 +299,7 @@ class App
         ResponseMediaTypeInterface::class => [Json::class],
         ServerRequestInterface::class => [ServerRequest::class],
         ResponseInterface::class => [Response::class],
+        ContainerInterface::class => [Container::class],
     ];
     /**
      * Class Aliases
