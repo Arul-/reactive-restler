@@ -108,6 +108,7 @@ class Container implements ContainerInterface
      * @return mixed
      *
      * @throws Exception
+     * @throws HttpException
      * @throws \ReflectionException
      */
     public function resolve(string $abstract, array $arguments = [])
@@ -115,10 +116,7 @@ class Container implements ContainerInterface
         if ($instance = $this->instances[$abstract] ?? false) {
             return $instance;
         }
-        try {
-            $class = ClassName::get($abstract);
-        } catch (HttpException $e) {
-        }
+        $class = ClassName::get($abstract);
         if ($class && $instance = $this->instances[$class] ?? false) {
             return $instance;
         }
