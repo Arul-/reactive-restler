@@ -20,7 +20,7 @@ use Luracast\Restler\MediaTypes\{
 };
 use Luracast\Restler\Utils\Validator;
 use Psr\{
-    Http\Message\ResponseInterface, Http\Message\ServerRequestInterface
+    Http\Message\RequestInterface, Http\Message\ResponseInterface, Http\Message\ServerRequestInterface
 };
 use React\Http\Io\ServerRequest;
 use React\Http\Response;
@@ -298,6 +298,7 @@ class App
         RequestMediaTypeInterface::class => [Json::class],
         ResponseMediaTypeInterface::class => [Json::class],
         ServerRequestInterface::class => [ServerRequest::class],
+        RequestInterface::class => [ServerRequest::class],
         ResponseInterface::class => [Response::class],
         ContainerInterface::class => [Container::class],
     ];
