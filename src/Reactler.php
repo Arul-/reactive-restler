@@ -118,6 +118,10 @@ class Reactler extends Core
             $this->validate();
             $data = $this->call($this->apiMethodInfo);
             if ($data instanceof ResponseInterface) {
+                $this->composeHeaders(null, $this->request->getHeaderLine('origin'));
+                $headers = $data->getHeaders() + $this->responseHeaders;
+                $data = $this->container->make(ResponseInterface::class,
+                    [$data->getStatusCode(), $headers, $data->getBody()]);
                 return $data;
             }
             if (is_resource($data) && get_resource_type($data) == 'stream') {
