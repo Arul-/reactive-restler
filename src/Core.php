@@ -446,10 +446,6 @@ abstract class Core
         if (!empty($accessControlRequestHeaders)) {
             $this->responseHeaders['Access-Control-Allow-Headers'] = $accessControlRequestHeaders;
         }
-        $this->responseHeaders['Access-Control-Allow-Origin'] =
-            $this->app['accessControlAllowOrigin'] == '*' && !empty($origin)
-                ? $origin : $this->app['accessControlAllowOrigin'];
-        $this->responseHeaders['Access-Control-Allow-Credentials'] = 'true';
         $e = new HttpException(200);
         $e->emptyMessageBody = true;
         throw $e;
@@ -690,17 +686,20 @@ abstract class Core
         $this->responseHeaders['Expires'] = $expires;
         $this->responseHeaders['X-Powered-By'] = 'Luracast Restler v' . static::VERSION;
 
-        if ($this->app['crossOriginResourceSharing']
-            && !empty($origin)
-        ) {
-            $this->responseHeaders['Access-Control-Allow-Origin']
-                = $this->app['accessControlAllowOrigin'] == '*'
-                ? $origin
-                : $this->app['accessControlAllowOrigin'];
-            $this->responseHeaders['Access-Control-Allow-Credentials'] = 'true';
-            $this->responseHeaders['Access-Control-Max-Age'] = 86400;
+        if ($this->app['crossOriginResourceSharing']) {
+            if (!empty($origin)) {
+                $this->responseHeaders['Access-Control-Allow-Origin']
+                    = $this->app['accessControlAllowOrigin'] == '*'
+                    ? $origin
+                    : $this->app['accessControlAllowOrigin'];
+                $this->responseHeaders['Access-Control-Allow-Credentials'] = 'true';
+                $this->responseHeaders['Access-Control-Max-Age'] = 86400;
+            } elseif ($this->requestMethod == 'OPTIONS') {
+                $this->responseHeaders['Access-Control-Allow-Origin']
+                    = $this->app['accessControlAllowOrigin'];
+                $this->responseHeaders['Access-Control-Allow-Credentials'] = 'true';
+            }
         }
-
         $this->responseHeaders['Content-Language'] = $this->app['language'];
 
         if (isset($info->metadata['header'])) {
@@ -736,14 +735,14 @@ abstract class Core
             $e = new HttpException($e->getCode(), $e->getMessage(), [], $e);
         }
         $this->responseCode = $e->getCode();
-        if ($e->emptyMessageBody) {
-            return null;
-        }
         $this->composeHeaders(
             $this->apiMethodInfo,
             $origin,
             $e
         );
+        if ($e->emptyMessageBody) {
+            return null;
+        }
         /** @var ComposerInterface $compose */
         $compose = $this->make(ComposerInterface::class);
         return $compose->message($e);
