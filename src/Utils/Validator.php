@@ -353,6 +353,30 @@ class Validator implements ValidationInterface
     }
 
     /**
+     * Validate numeric characters.
+     *
+     * Check that given value contains only digits.
+     *
+     * @param                $input
+     * @param ValidationInfo $info
+     *
+     * @return string
+     *
+     * @throws Invalid
+     */
+    public static function numeric($input, ValidationInfo $info = null)
+    {
+        if (ctype_digit($input)) {
+            return $input;
+        }
+        if ($info && $info->fix) {
+            //remove non numeric characters
+            return preg_replace("/[^0-9]/i", "", $input);
+        }
+        throw new Invalid('Expecting only numeric characters.');
+    }
+
+    /**
      * Validate UUID strings.
      *
      * Check that given value contains only alpha numeric characters and the length is 36 chars.
