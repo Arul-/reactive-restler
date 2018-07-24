@@ -24,12 +24,7 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
     public static $excludedHttpMethods = ['OPTIONS'];
 
     public static $hideProtected = true;
-
-    public static $apiDescriptionSuffixSymbols = array(
-        0 => ' 🔓', //'&nbsp; <i class="fa fa-lg fa-unlock-alt"></i>', //public api
-        1 => ' ◑', //'&nbsp; <i class="fa fa-lg fa-adjust"></i>', //hybrid api
-        2 => ' 🔐', //'&nbsp; <i class="fa fa-lg fa-lock"></i>', //protected api
-    );
+    
     public static $allowScalarValueOnRequestBody = false;
 
     protected static $prefixes = [
@@ -193,9 +188,6 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
         $r->summary = isset($m['description'])
             ? $m['description']
             : '';
-        $r->summary .= $route['accessLevel'] > 2
-            ? static::$apiDescriptionSuffixSymbols[2]
-            : static::$apiDescriptionSuffixSymbols[$route['accessLevel']];
         $r->description = isset($m['longDescription'])
             ? $m['longDescription']
             : '';
