@@ -1,10 +1,8 @@
 <?php declare(strict_types=1);
 
 use Luracast\Restler\Utils\ValidationInfo as VI2;
-use Luracast\Restler\Data\ValidationInfo as VI1;
 
 use Luracast\Restler\Utils\CommentParser as CP2;
-use Luracast\Restler\CommentParser as CP1;
 
 include __DIR__ . "/../vendor/autoload.php";
 
@@ -21,11 +19,11 @@ $comment = '/**
      * @return string {@type date}
      */';
 
-$parsed = CP1::parse($comment);
+$parsed = CP2::parse($comment);
 
-$info1 = VI1::__set_state($parsed['param'][0]);
+//$info1 = VI1::__set_state($parsed['param'][0]);
 $info2 = VI2::__set_state($parsed['param'][0]);
 
 
 
-var_export($parsed);
+var_dump($parsed);
