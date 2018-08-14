@@ -2,6 +2,8 @@
 
 use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Psr7\ServerRequest;
+use GuzzleHttp\Psr7\Stream;
+use function GuzzleHttp\Psr7\stream_for;
 use improved\Authors as ImprovedAuthors;
 use Luracast\Restler\App;
 use Luracast\Restler\Cache\HumanReadableCache;
@@ -26,9 +28,9 @@ include __DIR__ . "/../vendor/autoload.php";
 App::$cacheDirectory = HumanReadableCache::$cacheDir = __DIR__ . '/../api/common/store';
 
 App::$implementations[DataProviderInterface::class] = [ArrayDataProvider::class];
-App::$implementations[ResponseInterface::class]=[Response::class];
-App::$implementations[RequestInterface::class]=[ServerRequest::class];
-App::$implementations[ServerRequestInterface::class]=[ServerRequest::class];
+App::$implementations[ResponseInterface::class] = [Response::class];
+App::$implementations[RequestInterface::class] = [ServerRequest::class];
+App::$implementations[ServerRequestInterface::class] = [ServerRequest::class];
 
 RateLimiter::setLimit('hour', 10);
 RateLimiter::setIncludedPaths('examples/_009_rate_limiting');
@@ -36,6 +38,39 @@ App::$useUrlBasedVersioning = true;
 App::$apiVendor = "SomeVendor";
 App::$useVendorMIMEVersioning = true;
 Router::setApiVersion(2);
+
+function read_headers($server = [])
+{
+    $headers = array();
+    $copy_server = array(
+        'CONTENT_TYPE' => 'Content-Type',
+        'CONTENT_LENGTH' => 'Content-Length',
+        'CONTENT_MD5' => 'Content-Md5',
+    );
+    foreach ($server as $key => $value) {
+        if (substr($key, 0, 5) === 'HTTP_') {
+            $key = substr($key, 5);
+            if (!isset($copy_server[$key]) || !isset($server[$key])) {
+                $key = str_replace(' ', '-',
+                    ucwords(strtolower(str_replace('_', ' ', $key))));
+                $headers[$key] = $value;
+            }
+        } elseif (isset($copy_server[$key])) {
+            $headers[$copy_server[$key]] = $value;
+        }
+    }
+    if (!isset($headers['Authorization'])) {
+        if (isset($server['REDIRECT_HTTP_AUTHORIZATION'])) {
+            $headers['Authorization'] = $server['REDIRECT_HTTP_AUTHORIZATION'];
+        } elseif (isset($server['PHP_AUTH_USER'])) {
+            $basic_pass = isset($server['PHP_AUTH_PW']) ? $server['PHP_AUTH_PW'] : '';
+            $headers['Authorization'] = 'Basic ' . base64_encode($server['PHP_AUTH_USER'] . ':' . $basic_pass);
+        } elseif (isset($server['PHP_AUTH_DIGEST'])) {
+            $headers['Authorization'] = $server['PHP_AUTH_DIGEST'];
+        }
+    }
+    return $headers;
+}
 
 class ResetForTests
 {
@@ -113,9 +148,17 @@ $http_worker = new Worker("http://0.0.0.0:8080");
 $http_worker->count = 4;
 
 // Emitted when data received
-$http_worker->onMessage = function($connection, $data)
-{
+$http_worker->onMessage = function ($connection, $data) {
+    /*
+    $headers = read_headers($data['server']);
+    $method = isset($_SERVER['REQUEST_METHOD']) ? $_SERVER['REQUEST_METHOD'] : 'GET';
+    $uri = ServerRequest::getUriFromGlobals();
+    $request = new ServerRequest($method, $uri, $headers,
+        $GLOBALS['HTTP_RAW_REQUEST_DATA'], '1.1', $data['server']);
+    */
     $request = ServerRequest::fromGlobals();
+    $request = $request->withBody(stream_for($GLOBALS['HTTP_RAW_REQUEST_DATA']));
+    echo Dump::request($request);
     $r = new Reactler();
     $response = $r->handle($request);
     $connection->send(Dump::response($response), true);

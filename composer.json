@@ -5,7 +5,8 @@
   "require": {
     "php": "^7.1",
     "psr/container": "^1.0",
-    "walkor/workerman": "^3.5"
+    "walkor/workerman": "^3.5",
+    "ralouphie/getallheaders": "^2.0"
   },
   "require-dev": {
     "behat/behat": "~3",
