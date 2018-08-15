@@ -100,7 +100,7 @@ class Reactler extends Core
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
         $this->container->instance(ServerRequestInterface::class, $request);
-        $this->rawRequestBody = $request->getBody()->getContents();
+        $this->rawRequestBody = (string)$request->getBody();
         $this->requestMethod = $request->getMethod();
         $this->request = $request;
         try {
