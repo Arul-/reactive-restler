@@ -39,39 +39,6 @@ App::$apiVendor = "SomeVendor";
 App::$useVendorMIMEVersioning = true;
 Router::setApiVersion(2);
 
-function read_headers($server = [])
-{
-    $headers = array();
-    $copy_server = array(
-        'CONTENT_TYPE' => 'Content-Type',
-        'CONTENT_LENGTH' => 'Content-Length',
-        'CONTENT_MD5' => 'Content-Md5',
-    );
-    foreach ($server as $key => $value) {
-        if (substr($key, 0, 5) === 'HTTP_') {
-            $key = substr($key, 5);
-            if (!isset($copy_server[$key]) || !isset($server[$key])) {
-                $key = str_replace(' ', '-',
-                    ucwords(strtolower(str_replace('_', ' ', $key))));
-                $headers[$key] = $value;
-            }
-        } elseif (isset($copy_server[$key])) {
-            $headers[$copy_server[$key]] = $value;
-        }
-    }
-    if (!isset($headers['Authorization'])) {
-        if (isset($server['REDIRECT_HTTP_AUTHORIZATION'])) {
-            $headers['Authorization'] = $server['REDIRECT_HTTP_AUTHORIZATION'];
-        } elseif (isset($server['PHP_AUTH_USER'])) {
-            $basic_pass = isset($server['PHP_AUTH_PW']) ? $server['PHP_AUTH_PW'] : '';
-            $headers['Authorization'] = 'Basic ' . base64_encode($server['PHP_AUTH_USER'] . ':' . $basic_pass);
-        } elseif (isset($server['PHP_AUTH_DIGEST'])) {
-            $headers['Authorization'] = $server['PHP_AUTH_DIGEST'];
-        }
-    }
-    return $headers;
-}
-
 class ResetForTests
 {
     /**
@@ -157,11 +124,18 @@ $http_worker->onMessage = function ($connection, $data) {
         $GLOBALS['HTTP_RAW_REQUEST_DATA'], '1.1', $data['server']);
     */
     $request = ServerRequest::fromGlobals();
-    $request = $request->withBody(stream_for($GLOBALS['HTTP_RAW_REQUEST_DATA']));
+    if (isset($GLOBALS['HTTP_RAW_REQUEST_DATA'])) {
+        $request = $request->withBody(stream_for($GLOBALS['HTTP_RAW_REQUEST_DATA']));
+    }
+    echo PHP_EOL.'-------------------------------------'.PHP_EOL;
+    var_dump(getallheaders());
     echo Dump::request($request);
     $r = new Reactler();
     $response = $r->handle($request);
-    $connection->send(Dump::response($response), true);
+    $response_text = Dump::response($response);
+    echo PHP_EOL.PHP_EOL;
+    echo $response_text;
+    $connection->send($response_text."\r\n\r\n", true);
     $connection->close();
 };
 
