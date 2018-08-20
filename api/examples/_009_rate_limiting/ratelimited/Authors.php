@@ -25,7 +25,7 @@ class Authors
          * $this->dp = new ArrayDB('db3');
          */
         $class = ClassName::get(DataProviderInterface::class);
-        $this->dp = new $class('db1');
+        $this->dp = new $class('db3');
     }
 
     /**
