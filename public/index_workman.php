@@ -27,7 +27,7 @@ include __DIR__ . "/../vendor/autoload.php";
 
 App::$cacheDirectory = HumanReadableCache::$cacheDir = __DIR__ . '/../api/common/store';
 
-App::$implementations[DataProviderInterface::class] = [ArrayDataProvider::class];
+App::$implementations[DataProviderInterface::class] = [SerializedFileDataProvider::class];
 App::$implementations[ResponseInterface::class] = [Response::class];
 App::$implementations[RequestInterface::class] = [ServerRequest::class];
 App::$implementations[ServerRequestInterface::class] = [ServerRequest::class];
@@ -128,7 +128,6 @@ $http_worker->onMessage = function ($connection, $data) {
         $request = $request->withBody(stream_for($GLOBALS['HTTP_RAW_REQUEST_DATA']));
     }
     echo PHP_EOL.'-------------------------------------'.PHP_EOL;
-    var_dump(getallheaders());
     echo Dump::request($request);
     $r = new Reactler();
     $response = $r->handle($request);
