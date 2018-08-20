@@ -338,10 +338,9 @@ class App
     /** @noinspection PhpDocMissingThrowsInspection */
     /**
      * @param ServerRequestInterface $request
-     * @param callable $next
      * @return ResponseInterface
      */
-    public function __invoke(ServerRequestInterface $request, callable $next)
+    public function __invoke(ServerRequestInterface $request)
     {
         echo '      ' . $request->getMethod() . ' ' . $request->getUri()->getPath() . PHP_EOL;
         return (new Reactler)->handle($request);

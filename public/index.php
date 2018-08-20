@@ -7,8 +7,10 @@ use Luracast\Restler\Filters\RateLimiter;
 use Luracast\Restler\MediaTypes\Json;
 use Luracast\Restler\MediaTypes\Xml;
 use Luracast\Restler\OpenApi3\Explorer;
+use Luracast\Restler\Reactler;
 use Luracast\Restler\Router;
 use Luracast\Restler\Utils\ClassName;
+use Psr\Http\Message\ServerRequestInterface;
 use ratelimited\Authors as RateLimitedAuthors;
 use React\Http\Middleware\LimitConcurrentRequestsMiddleware;
 use React\Http\Middleware\RequestBodyBufferMiddleware;
@@ -103,7 +105,7 @@ $server = new StreamingServer([
     new RequestBodyBufferMiddleware(16 * 1024 * 1024), // 16 MiB
     new App(),
     /*
-    function (ServerRequestInterface $request, callable $next) {
+    function (ServerRequestInterface $request) {
         echo '      ' . $request->getMethod() . ' ' . $request->getUri()->getPath() . PHP_EOL;
         try {
             $h = new Reactler();
@@ -112,8 +114,14 @@ $server = new StreamingServer([
             var_dump($throwable);
             die();
         }
-    },*/
+    }
+    */
 ]);
+
+
+$server->on('error', function (Exception $e) {
+    echo 'Error: ' . $e->getMessage() . PHP_EOL;
+});
 
 
 $socket = new React\Socket\Server(8080, $loop);
