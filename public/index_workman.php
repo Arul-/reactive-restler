@@ -27,7 +27,7 @@ include __DIR__ . "/../vendor/autoload.php";
 
 App::$cacheDirectory = HumanReadableCache::$cacheDir = __DIR__ . '/../api/common/store';
 
-App::$implementations[DataProviderInterface::class] = [SerializedFileDataProvider::class];
+App::$implementations[DataProviderInterface::class] = [SqliteDataProvider::class];
 App::$implementations[ResponseInterface::class] = [Response::class];
 App::$implementations[RequestInterface::class] = [ServerRequest::class];
 App::$implementations[ServerRequestInterface::class] = [ServerRequest::class];
@@ -132,9 +132,8 @@ $http_worker->onMessage = function ($connection, $data) {
     $r = new Reactler();
     $response = $r->handle($request);
     $response_text = Dump::response($response);
-    echo PHP_EOL.PHP_EOL;
     echo $response_text;
-    $connection->send($response_text."\r\n\r\n", true);
+    $connection->send($response_text, true);
     $connection->close();
 };
 
