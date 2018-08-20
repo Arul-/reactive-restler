@@ -93,7 +93,8 @@ class SerializedFileDataProvider implements DataProviderInterface
             return false;
         }
         $this->modified = true;
-        return array_shift(array_splice($this->arr['rs'], $index, 1));
+        $temp = array_splice($this->arr['rs'], $index, 1);
+        return array_shift($temp);
     }
 
     private function install()
