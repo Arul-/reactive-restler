@@ -5,7 +5,7 @@
   "require": {
     "php": "^7.1",
     "psr/container": "^1.0",
-    "walkor/workerman": "^3.5",
+    "workerman/workerman": "@dev",
     "ralouphie/getallheaders": "^2.0"
   },
   "require-dev": {
