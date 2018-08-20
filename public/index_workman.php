@@ -2,7 +2,6 @@
 
 use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Psr7\ServerRequest;
-use GuzzleHttp\Psr7\Stream;
 use function GuzzleHttp\Psr7\stream_for;
 use improved\Authors as ImprovedAuthors;
 use Luracast\Restler\App;
@@ -27,6 +26,7 @@ include __DIR__ . "/../vendor/autoload.php";
 
 App::$cacheDirectory = HumanReadableCache::$cacheDir = __DIR__ . '/../api/common/store';
 
+//ArrayDataProvider and SerializedFileDataProvider wont work here
 App::$implementations[DataProviderInterface::class] = [SqliteDataProvider::class];
 App::$implementations[ResponseInterface::class] = [Response::class];
 App::$implementations[RequestInterface::class] = [ServerRequest::class];
