@@ -682,6 +682,7 @@ abstract class Core
             $cacheControl = str_replace('{expires}', $expires, $cacheControl);
             $expires = gmdate('D, d M Y H:i:s \G\M\T', time() + $expires);
         }
+        $this->responseHeaders['Date'] = gmdate('D, d M Y H:i:s \G\M\T', $this->startTime);
         $this->responseHeaders['Cache-Control'] = $cacheControl;
         $this->responseHeaders['Expires'] = $expires;
         $this->responseHeaders['X-Powered-By'] = 'Luracast Restler v' . static::VERSION;
