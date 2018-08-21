@@ -1,6 +1,7 @@
 <?php
 
-use Luracast\Restler\Data\Text;
+use Luracast\Restler\Utils\Text;
+
 
 /**
  * Fake Database. All records are stored in $_SESSION
