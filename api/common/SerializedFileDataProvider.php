@@ -27,7 +27,7 @@ class SerializedFileDataProvider implements DataProviderInterface
         }
     }
 
-    function __destruct()
+    private function save()
     {
         if ($this->modified) {
             /** save data **/
@@ -71,6 +71,7 @@ class SerializedFileDataProvider implements DataProviderInterface
         $rec['id'] = $this->pk();
         $this->modified = true;
         array_push($this->arr['rs'], $rec);
+        $this->save();
         return $rec;
     }
 
@@ -83,6 +84,7 @@ class SerializedFileDataProvider implements DataProviderInterface
         $rec['id'] = $id;
         $this->modified = true;
         $this->arr['rs'][$index] = $rec;
+        $this->save();
         return $rec;
     }
 
@@ -94,7 +96,9 @@ class SerializedFileDataProvider implements DataProviderInterface
         }
         $this->modified = true;
         $temp = array_splice($this->arr['rs'], $index, 1);
-        return array_shift($temp);
+        $result = array_shift($temp);
+        $this->save();
+        return $result;
     }
 
     private function install()
@@ -115,6 +119,7 @@ class SerializedFileDataProvider implements DataProviderInterface
         );
         $this->arr['pk'] = 5;
         $this->modified = true;
+        $this->save();
     }
 
     static function reset()

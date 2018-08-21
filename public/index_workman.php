@@ -26,8 +26,8 @@ include __DIR__ . "/../vendor/autoload.php";
 
 App::$cacheDirectory = HumanReadableCache::$cacheDir = __DIR__ . '/../api/common/store';
 
-//ArrayDataProvider and SerializedFileDataProvider wont work here
-App::$implementations[DataProviderInterface::class] = [SqliteDataProvider::class];
+//ArrayDataProvider wont work here
+App::$implementations[DataProviderInterface::class] = [SerializedFileDataProvider::class];
 App::$implementations[ResponseInterface::class] = [Response::class];
 App::$implementations[RequestInterface::class] = [ServerRequest::class];
 App::$implementations[ServerRequestInterface::class] = [ServerRequest::class];
