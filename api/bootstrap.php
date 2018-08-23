@@ -16,7 +16,7 @@ define('BASE', dirname(__DIR__));
 include BASE . "/vendor/autoload.php";
 
 App::$cacheDirectory = HumanReadableCache::$cacheDir = BASE . '/api/common/store';
-App::$implementations[DataProviderInterface::class] = [ArrayDataProvider::class];
+App::$implementations[DataProviderInterface::class] = [SerializedFileDataProvider::class];
 RateLimiter::setLimit('hour', 10);
 RateLimiter::setIncludedPaths('examples/_009_rate_limiting');
 App::$useUrlBasedVersioning = true;
