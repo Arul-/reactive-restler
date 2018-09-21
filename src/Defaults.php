@@ -334,15 +334,4 @@ class Defaults
         'JsFormat' => Js::class,
         'XmlFormat' => Xml::class,
     ];
-
-    /** @noinspection PhpDocMissingThrowsInspection */
-    /**
-     * @param ServerRequestInterface $request
-     * @return ResponseInterface
-     */
-    public function __invoke(ServerRequestInterface $request)
-    {
-        echo '      ' . $request->getMethod() . ' ' . $request->getUri()->getPath() . PHP_EOL;
-        return (new Reactler)->handle($request);
-    }
 }
