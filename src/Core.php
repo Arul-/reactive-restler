@@ -96,7 +96,7 @@ abstract class Core
         $config = $config ?? [];
         $this->config = &$config;
 
-        $this->config['app'] = $this->app = get_class_vars(Defaults::class);
+        $this->config['defaults'] = $this->app = get_class_vars(Defaults::class);
         $this->config['router'] = $this->router = get_class_vars(Router::class);
 
         if ($container) {
@@ -130,7 +130,7 @@ abstract class Core
         $this->responseCode = null;
         $this->startTime = time();
 
-        $this->config['app'] = $this->app = get_class_vars(Defaults::class);
+        $this->config['defaults'] = $this->app = get_class_vars(Defaults::class);
         $this->config['router'] = $this->router = get_class_vars(Router::class);
 
         $this->container->init($this->config);
