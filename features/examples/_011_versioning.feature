@@ -2,7 +2,7 @@
 Feature: Testing Versioning
 
   Scenario: Access version 1 as default
-    When I request "/examples/_011_versioning/bmi?height=190"
+    When I request "examples/_011_versioning/bmi?height=190"
     Then the response status code should be 200
     And the response is JSON
     And the type is "array"

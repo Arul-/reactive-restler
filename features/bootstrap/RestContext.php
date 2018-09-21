@@ -56,7 +56,7 @@ class RestContext implements Context
         // prepare system for test suite
         // before it runs
         $client = new Client(['base_uri' => $baseUrl]);
-        $result = $client->put('/__cleanup_db');
+        $result = $client->put('__cleanup_db');
     }
 
     /**
