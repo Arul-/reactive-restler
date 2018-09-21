@@ -18,15 +18,32 @@ class Dump
         return $text;
     }
 
-    public static function response(ResponseInterface $response): string
+    public static function response(ResponseInterface $response, bool $headerAsString = true): string
     {
-        $text = 'HTTP/' . $response->getProtocolVersion() . ' ' . $response->getStatusCode() . ' '
-            . $response->getReasonPhrase() . PHP_EOL;
-        foreach ($response->getHeaders() as $k => $v) {
-            $text .= ucwords($k) . ': ' . implode(', ', $v) . PHP_EOL;
+        $http = sprintf('HTTP/%s %s %s',
+            $response->getProtocolVersion(),
+            $response->getStatusCode(),
+            $response->getReasonPhrase()
+        );
+        $text = '';
+        if ($headerAsString) {
+            $text .= $http . PHP_EOL;
+            foreach ($response->getHeaders() as $k => $v) {
+                $text .= ucwords($k) . ': ' . implode(', ', $v) . PHP_EOL;
+            }
+            $text .= static::CRLF;
+        } else {
+            header($http, true, $response->getStatusCode());
+            foreach ($response->getHeaders() as $name => $values) {
+                foreach ($values as $value) {
+                    header("$name: $value", false);
+                }
+            }
         }
-        $text .= static::CRLF;
-        $text .= (string)$response->getBody() . static::CRLF . static::CRLF;
+        $text .= (string)$response->getBody();
+        if ($headerAsString) {
+            $text .= static::CRLF . static::CRLF;
+        }
         return $text;
     }
 }
