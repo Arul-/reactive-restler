@@ -43,14 +43,14 @@ class Restler extends Core
         );
         /** @var ComposerInterface $compose */
         $compose = $this->make(ComposerInterface::class);
-        return is_null($response) && App::$emptyBodyForNullResponse
+        return is_null($response) && Defaults::$emptyBodyForNullResponse
             ? null
             : $compose->response($response);
     }
 
     protected function respond($response = []): ResponseInterface
     {
-        $body = is_null($response) ? '' : $this->responseFormat->encode($response, !App::$productionMode);
+        $body = is_null($response) ? '' : $this->responseFormat->encode($response, !Defaults::$productionMode);
 
         //handle throttling
         if ($throttle = $this->app['throttle'] ?? 0) {

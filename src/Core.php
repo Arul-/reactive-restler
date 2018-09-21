@@ -96,7 +96,7 @@ abstract class Core
         $config = $config ?? [];
         $this->config = &$config;
 
-        $this->config['app'] = $this->app = get_class_vars(App::class);
+        $this->config['app'] = $this->app = get_class_vars(Defaults::class);
         $this->config['router'] = $this->router = get_class_vars(Router::class);
 
         if ($container) {
@@ -130,7 +130,7 @@ abstract class Core
         $this->responseCode = null;
         $this->startTime = time();
 
-        $this->config['app'] = $this->app = get_class_vars(App::class);
+        $this->config['app'] = $this->app = get_class_vars(Defaults::class);
         $this->config['router'] = $this->router = get_class_vars(Router::class);
 
         $this->container->init($this->config);
@@ -182,7 +182,7 @@ abstract class Core
             '',
             trim($path, '/')
         );
-        if (App::$useUrlBasedVersioning && strlen($path) && $path{0} == 'v') {
+        if (Defaults::$useUrlBasedVersioning && strlen($path) && $path{0} == 'v') {
             $version = intval(substr($path, 1));
             if ($version && $version <= $this->router['maximumVersion']) {
                 $this->requestedApiVersion = $version;
@@ -794,10 +794,10 @@ abstract class Core
      */
     private function changeAppProperty($property, $value)
     {
-        if (!property_exists(App::class, $property)) {
+        if (!property_exists(Defaults::class, $property)) {
             return false;
         }
-        if ($detail = App::$propertyValidations[$property] ?? false) {
+        if ($detail = Defaults::$propertyValidations[$property] ?? false) {
             /** @noinspection PhpParamsInspection */
             $value = Validator::validate($value, new ValidationInfo($detail));
         }

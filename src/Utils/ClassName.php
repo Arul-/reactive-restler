@@ -1,7 +1,7 @@
 <?php namespace Luracast\Restler\Utils;
 
 
-use Luracast\Restler\App;
+use Luracast\Restler\Defaults;
 use Luracast\Restler\Exceptions\HttpException;
 
 class ClassName
@@ -73,15 +73,15 @@ class ClassName
      */
     public static function get(string $abstract)
     {
-        $interface = App::$aliases[$abstract] ?? $abstract;
-        if (($class = App::$implementations[$interface][0] ?? App::$implementations[$interface] ?? false)
+        $interface = Defaults::$aliases[$abstract] ?? $abstract;
+        if (($class = Defaults::$implementations[$interface][0] ?? Defaults::$implementations[$interface] ?? false)
             && is_string($class)) {
             if (interface_exists($interface) && class_implements($class)[$interface] ?? false) {
                 return $class;
             }
             throw new HttpException(
                 501,
-                'App::$implementations should contain at least one valid implementation for ' . $interface
+                'Defaults::$implementations should contain at least one valid implementation for ' . $interface
             );
         }
         if (class_exists($interface)) {
@@ -123,8 +123,8 @@ class ClassName
         if (class_exists($qualified)) {
             return $qualified;
         }
-        if (isset(App::$aliases[$name])) {
-            $qualified = App::$aliases[$name];
+        if (isset(Defaults::$aliases[$name])) {
+            $qualified = Defaults::$aliases[$name];
             if (class_exists($qualified)) {
                 return $qualified;
             }

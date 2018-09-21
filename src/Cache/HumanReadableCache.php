@@ -1,6 +1,6 @@
 <?php namespace Luracast\Restler\Cache;
 
-use Luracast\Restler\App;
+use Luracast\Restler\Defaults;
 use Luracast\Restler\Contracts\CacheInterface;
 
 /**
@@ -16,7 +16,7 @@ class HumanReadableCache implements CacheInterface
     public function __construct()
     {
         if (is_null(self::$cacheDir)) {
-            self::$cacheDir = App::$cacheDirectory;
+            self::$cacheDir = Defaults::$cacheDirectory;
         }
     }
 

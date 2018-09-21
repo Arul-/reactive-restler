@@ -1,7 +1,7 @@
 <?php declare(strict_types=1);
 
 use improved\Authors as ImprovedAuthors;
-use Luracast\Restler\App;
+use Luracast\Restler\Defaults;
 use Luracast\Restler\Cache\HumanReadableCache;
 use Luracast\Restler\Filters\RateLimiter;
 use Luracast\Restler\MediaTypes\Json;
@@ -15,13 +15,13 @@ use v1\BMI as BMI1;
 define('BASE', dirname(__DIR__));
 include BASE . "/vendor/autoload.php";
 
-App::$cacheDirectory = HumanReadableCache::$cacheDir = BASE . '/api/common/store';
-App::$implementations[DataProviderInterface::class] = [SerializedFileDataProvider::class];
+Defaults::$cacheDirectory = HumanReadableCache::$cacheDir = BASE . '/api/common/store';
+Defaults::$implementations[DataProviderInterface::class] = [SerializedFileDataProvider::class];
 RateLimiter::setLimit('hour', 10);
 RateLimiter::setIncludedPaths('examples/_009_rate_limiting');
-App::$useUrlBasedVersioning = true;
-App::$apiVendor = "SomeVendor";
-App::$useVendorMIMEVersioning = true;
+Defaults::$useUrlBasedVersioning = true;
+Defaults::$apiVendor = "SomeVendor";
+Defaults::$useVendorMIMEVersioning = true;
 Router::setApiVersion(2);
 
 class ResetForTests

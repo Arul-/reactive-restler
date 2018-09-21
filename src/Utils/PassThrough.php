@@ -1,6 +1,6 @@
 <?php namespace Luracast\Restler\Utils;
 
-use Luracast\Restler\App;
+use Luracast\Restler\Defaults;
 use Luracast\Restler\Core;
 use Luracast\Restler\Exceptions\HttpException;
 use Psr\Http\Message\ResponseInterface;
@@ -58,14 +58,14 @@ class PassThrough
             $mime = finfo_file($finfo, $filePath);
             static::$mimeTypes[$extension] = $mime;
         }
-        if (!is_array(App::$headerCacheControl)) {
-            App::$headerCacheControl = array(App::$headerCacheControl);
+        if (!is_array(Defaults::$headerCacheControl)) {
+            Defaults::$headerCacheControl = array(Defaults::$headerCacheControl);
         }
-        $cacheControl = App::$headerCacheControl[0];
+        $cacheControl = Defaults::$headerCacheControl[0];
 
         if ($expires > 0) {
             $cacheControl = $isPublic ? 'public' : 'private';
-            $cacheControl .= end(App::$headerCacheControl);
+            $cacheControl .= end(Defaults::$headerCacheControl);
             $cacheControl = str_replace('{expires}', $expires, $cacheControl);
             $expires = gmdate('D, d M Y H:i:s \G\M\T', time() + $expires);
         }

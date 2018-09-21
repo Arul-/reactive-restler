@@ -1,6 +1,6 @@
 <?php
 
-use Luracast\Restler\App;
+use Luracast\Restler\Defaults;
 use Luracast\Restler\Reactler;
 use Luracast\Restler\Router;
 use Luracast\Restler\Utils\Dump;
@@ -16,7 +16,7 @@ class Home
     }
 }
 
-App::$crossOriginResourceSharing = true;
+Defaults::$crossOriginResourceSharing = true;
 Router::addAPI(Home::class, '');
 
 $h = new Reactler();

@@ -25,7 +25,7 @@ use Psr\{
 use React\Http\Io\ServerRequest;
 use React\Http\Response;
 
-class App
+class Defaults
 {
     public static $productionMode = false;
     /**
@@ -167,7 +167,7 @@ class App
     /**
      * @var array default Cache-Control template that used to set the
      * Cache-Control header and has two values, first one is used when
-     * App::$headerExpires is 0 and second one when it has some time
+     * Defaults::$headerExpires is 0 and second one when it has some time
      * value specified. When only one value is specified it will be used for
      * both cases
      */

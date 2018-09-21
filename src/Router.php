@@ -219,14 +219,14 @@ class Router
                 if (is_numeric($resourcePath)) {
                     $resourcePath = null;
                 }
-                if (isset(App::$aliases[$className])) {
-                    $className = App::$aliases[$className];
+                if (isset(Defaults::$aliases[$className])) {
+                    $className = Defaults::$aliases[$className];
                 }
                 $info = ClassName::parse($className);
                 $currentVersion = $info['version'];
                 $found = $info['version_found'];
                 if (is_null($resourcePath)) {
-                    $resourcePath = App::$autoRoutingEnabled ? strtolower($info['name']) : '';
+                    $resourcePath = Defaults::$autoRoutingEnabled ? strtolower($info['name']) : '';
                 } else {
                     $resourcePath = trim($resourcePath, '/');
                 }
@@ -360,7 +360,7 @@ class Router
             $allowAmbiguity
                 = (isset($metadata['smart-auto-routing'])
                     && $metadata['smart-auto-routing'] != 'true')
-                || !App::$smartAutoRouting;
+                || !Defaults::$smartAutoRouting;
             $metadata['resourcePath'] = trim($resourcePath, '/');
             if (isset($classMetadata['description'])) {
                 $metadata['classDescription'] = $classMetadata['description'];
@@ -431,7 +431,7 @@ class Router
                 if (isset($modelName)) {
                     $m['model'] = $modelName;
                 }
-                if ($m['name'] == App::$fullRequestDataName) {
+                if ($m['name'] == Defaults::$fullRequestDataName) {
                     $from = 'body';
                     if (!isset($m['type'])) {
                         $type = $m['type'] = 'array';
@@ -528,7 +528,7 @@ class Router
                     static::addPath($url, $copy, $httpMethod, $version);
                 }
                 //if auto route enabled, do so
-            } elseif (App::$autoRoutingEnabled) {
+            } elseif (Defaults::$autoRoutingEnabled) {
                 // no configuration found so use convention
                 if (preg_match_all(
                     '/^(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS)/i',
@@ -591,12 +591,12 @@ class Router
                 ' is an invalid authenticator class; it must implement ' .
                 'AuthenticationInterface.');
         }
-        if (!in_array($className, App::$implementations[AuthenticationInterface::class])) {
-            App::$implementations[AuthenticationInterface::class][] = $className;
+        if (!in_array($className, Defaults::$implementations[AuthenticationInterface::class])) {
+            Defaults::$implementations[AuthenticationInterface::class][] = $className;
         }
         if (isset($implements[AccessControlInterface::class]) &&
-            !in_array($className, App::$implementations[AccessControlInterface::class])) {
-            App::$implementations[AccessControlInterface::class][] = $className;
+            !in_array($className, Defaults::$implementations[AccessControlInterface::class])) {
+            Defaults::$implementations[AccessControlInterface::class][] = $className;
         }
         static::$authClasses[] = $className;
         static::mapApiClasses([$resourcePath => $className]);
@@ -868,11 +868,11 @@ class Router
                 $p[$call['arguments'][$key]] = $value;
             }
         }
-        if (App::$smartParameterParsing) {
+        if (Defaults::$smartParameterParsing) {
             if (($m = $call['metadata']['param'][0] ?? false) &&
                 !array_key_exists($m['name'], $data) &&
-                array_key_exists(App::$fullRequestDataName, $data) &&
-                !is_null($d = $data[App::$fullRequestDataName]) &&
+                array_key_exists(Defaults::$fullRequestDataName, $data) &&
+                !is_null($d = $data[Defaults::$fullRequestDataName]) &&
                 isset($m['type']) &&
                 static::typeMatch($m['type'], $d)
             ) {
@@ -891,8 +891,8 @@ class Router
                 if (
                     $bodyParamCount == 1 &&
                     !array_key_exists($lastM['name'], $data) &&
-                    array_key_exists(App::$fullRequestDataName, $data) &&
-                    !is_null($d = $data[App::$fullRequestDataName])
+                    array_key_exists(Defaults::$fullRequestDataName, $data) &&
+                    !is_null($d = $data[Defaults::$fullRequestDataName])
                 ) {
                     $p[$lastBodyParamIndex] = $d;
                 }

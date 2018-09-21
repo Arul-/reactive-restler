@@ -41,7 +41,7 @@ class Composer implements ComposerInterface
                     'message' => $exception->getErrorMessage(),
                 ) + $exception->getDetails()
         );
-        if (!App::$productionMode && self::$includeDebugInfo) {
+        if (!Defaults::$productionMode && self::$includeDebugInfo) {
             $r += array(
                 'debug' => array(
                     'source' => $exception->getSource()
