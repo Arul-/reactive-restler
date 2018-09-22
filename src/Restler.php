@@ -53,7 +53,7 @@ class Restler extends Core
         $body = is_null($response) ? '' : $this->responseFormat->encode($response, !Defaults::$productionMode);
 
         //handle throttling
-        if ($throttle = $this->app['throttle'] ?? 0) {
+        if ($throttle = $this->defaults['throttle'] ?? 0) {
             $elapsed = time() - $this->startTime;
             if ($throttle / 1e3 > $elapsed) {
                 usleep(1e6 * ($throttle / 1e3 - $elapsed));

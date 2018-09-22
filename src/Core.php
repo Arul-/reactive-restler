@@ -73,7 +73,7 @@ abstract class Core
     /**
      * @var iterable
      */
-    protected $app;
+    protected $defaults;
     /**
      * @var iterable
      */
@@ -101,7 +101,7 @@ abstract class Core
         $config = $config ?? [];
         $this->config = &$config;
 
-        $this->config['defaults'] = $this->app = get_class_vars(Defaults::class);
+        $this->config['defaults'] = $this->defaults = get_class_vars(Defaults::class);
         $this->config['router'] = $this->router = get_class_vars(Router::class);
 
         if ($container) {
@@ -135,7 +135,7 @@ abstract class Core
         $this->responseCode = null;
         $this->startTime = time();
 
-        $this->config['defaults'] = $this->app = get_class_vars(Defaults::class);
+        $this->config['defaults'] = $this->defaults = get_class_vars(Defaults::class);
         $this->config['router'] = $this->router = get_class_vars(Router::class);
 
         $this->container->init($this->config);
@@ -211,7 +211,7 @@ abstract class Core
         $get = UrlEncoded::decoderTypeFix($get);
         //apply app property changes
         foreach ($get as $key => $value) {
-            if ($alias = $this->app['fromQuery'][$key] ?? false) {
+            if ($alias = $this->defaults['fromQuery'][$key] ?? false) {
                 $this->changeAppProperty($alias, $value);
             }
         }
@@ -266,8 +266,8 @@ abstract class Core
             $r = $this->requestFormat->decode($raw);
 
             $r = is_array($r)
-                ? array_merge($r, array($this->app['fullRequestDataName'] => $r))
-                : array($this->app['fullRequestDataName'] => $r);
+                ? array_merge($r, array($this->defaults['fullRequestDataName'] => $r))
+                : array($this->defaults['fullRequestDataName'] => $r);
         }
         return $r;
     }
@@ -287,7 +287,7 @@ abstract class Core
         $this->container->instance(ApiMethodInfo::class, $o);
         //set defaults based on api method comments
         if (isset($o->metadata)) {
-            foreach ($this->app['fromComments'] as $key => $property) {
+            foreach ($this->defaults['fromComments'] as $key => $property) {
                 if (array_key_exists($key, $o->metadata)) {
                     $value = $o->metadata[$key];
                     $this->changeAppProperty($property, $value);
@@ -374,8 +374,8 @@ abstract class Core
                 } elseif (false !== ($index = strrpos($accept, '+'))) {
                     $mime = substr($accept, 0, $index);
                     $vendor = 'application/vnd.'
-                        . $this->app['apiVendor'] . '-v';
-                    if (is_string($this->app['apiVendor']) && 0 === stripos($mime, $vendor)) {
+                        . $this->defaults['apiVendor'] . '-v';
+                    if (is_string($this->defaults['apiVendor']) && 0 === stripos($mime, $vendor)) {
                         $extension = substr($accept, $index + 1);
                         if (isset($this->router['responseFormatMap'][$extension])) {
                             //check the MIME and extract version
@@ -443,11 +443,11 @@ abstract class Core
         string $accessControlRequestHeaders = '',
         string $origin = ''
     ): void {
-        if (!$this->app['crossOriginResourceSharing'] || $requestMethod != 'OPTIONS') {
+        if (!$this->defaults['crossOriginResourceSharing'] || $requestMethod != 'OPTIONS') {
             return;
         }
         if (!empty($accessControlRequestMethod)) {
-            $this->responseHeaders['Access-Control-Allow-Methods'] = $this->app['accessControlAllowMethods'];
+            $this->responseHeaders['Access-Control-Allow-Methods'] = $this->defaults['accessControlAllowMethods'];
         }
         if (!empty($accessControlRequestHeaders)) {
             $this->responseHeaders['Access-Control-Allow-Headers'] = $accessControlRequestHeaders;
@@ -467,9 +467,9 @@ abstract class Core
             $found = false;
             $charList = Header::sortByPriority($acceptCharset);
             foreach ($charList as $charset => $quality) {
-                if (in_array($charset, $this->app['supportedCharsets'])) {
+                if (in_array($charset, $this->defaults['supportedCharsets'])) {
                     $found = true;
-                    $this->app['charset'] = $charset;
+                    $this->defaults['charset'] = $charset;
                     break;
                 }
             }
@@ -493,10 +493,10 @@ abstract class Core
             $found = false;
             $langList = Header::sortByPriority($acceptLanguage);
             foreach ($langList as $lang => $quality) {
-                foreach ($this->app['supportedLanguages'] as $supported) {
+                foreach ($this->defaults['supportedLanguages'] as $supported) {
                     if (strcasecmp($supported, $lang) == 0) {
                         $found = true;
-                        $this->app['language'] = $supported;
+                        $this->defaults['language'] = $supported;
                         break 2;
                     }
                 }
@@ -543,7 +543,7 @@ abstract class Core
     protected function authenticate(ServerRequestInterface $request)
     {
         $o = &$this->apiMethodInfo;
-        $accessLevel = max($this->app['apiAccessLevel'], $o->accessLevel);
+        $accessLevel = max($this->defaults['apiAccessLevel'], $o->accessLevel);
         if ($accessLevel) {
             if (!count($this->router['authClasses']) && $accessLevel > 1) {
                 throw new HttpException(
@@ -603,7 +603,7 @@ abstract class Core
      */
     protected function validate()
     {
-        if (!$this->app['autoValidationEnabled']) {
+        if (!$this->defaults['autoValidationEnabled']) {
             return;
         }
 
@@ -642,7 +642,7 @@ abstract class Core
      */
     public function call(ApiMethodInfo $info)
     {
-        $accessLevel = max($this->app['apiAccessLevel'], $info->accessLevel);
+        $accessLevel = max($this->defaults['apiAccessLevel'], $info->accessLevel);
         $object = $this->make($info->className);
         switch ($accessLevel) {
             case 3 : //protected method
@@ -676,15 +676,15 @@ abstract class Core
     protected function composeHeaders(?ApiMethodInfo $info, string $origin = '', HttpException $e = null): void
     {
         //only GET method should be cached if allowed by API developer
-        $expires = $this->requestMethod == 'GET' ? $this->app['headerExpires'] : 0;
-        if (!is_array($this->app['headerCacheControl'])) {
-            $this->app['headerCacheControl'] = [$this->app['headerCacheControl']];
+        $expires = $this->requestMethod == 'GET' ? $this->defaults['headerExpires'] : 0;
+        if (!is_array($this->defaults['headerCacheControl'])) {
+            $this->defaults['headerCacheControl'] = [$this->defaults['headerCacheControl']];
         }
-        $cacheControl = $this->app['headerCacheControl'][0];
+        $cacheControl = $this->defaults['headerCacheControl'][0];
         if ($expires > 0) {
             $cacheControl = !isset($this->apiMethodInfo->accessLevel) || $this->apiMethodInfo->accessLevel
                 ? 'private, ' : 'public, ';
-            $cacheControl .= end($this->app['headerCacheControl']);
+            $cacheControl .= end($this->defaults['headerCacheControl']);
             $cacheControl = str_replace('{expires}', $expires, $cacheControl);
             $expires = gmdate('D, d M Y H:i:s \G\M\T', time() + $expires);
         }
@@ -693,21 +693,21 @@ abstract class Core
         $this->responseHeaders['Expires'] = $expires;
         $this->responseHeaders['X-Powered-By'] = 'Luracast Restler v' . static::VERSION;
 
-        if ($this->app['crossOriginResourceSharing']) {
+        if ($this->defaults['crossOriginResourceSharing']) {
             if (!empty($origin)) {
                 $this->responseHeaders['Access-Control-Allow-Origin']
-                    = $this->app['accessControlAllowOrigin'] == '*'
+                    = $this->defaults['accessControlAllowOrigin'] == '*'
                     ? $origin
-                    : $this->app['accessControlAllowOrigin'];
+                    : $this->defaults['accessControlAllowOrigin'];
                 $this->responseHeaders['Access-Control-Allow-Credentials'] = 'true';
                 $this->responseHeaders['Access-Control-Max-Age'] = 86400;
             } elseif ($this->requestMethod == 'OPTIONS') {
                 $this->responseHeaders['Access-Control-Allow-Origin']
-                    = $this->app['accessControlAllowOrigin'];
+                    = $this->defaults['accessControlAllowOrigin'];
                 $this->responseHeaders['Access-Control-Allow-Credentials'] = 'true';
             }
         }
-        $this->responseHeaders['Content-Language'] = $this->app['language'];
+        $this->responseHeaders['Content-Language'] = $this->defaults['language'];
 
         if (isset($info->metadata['header'])) {
             foreach ($info->metadata['header'] as $header) {
@@ -717,7 +717,7 @@ abstract class Core
         }
 
         $code = 200;
-        if (!$this->app['suppressResponseCode']) {
+        if (!$this->defaults['suppressResponseCode']) {
             if ($e) {
                 $code = $e->getCode();
             } elseif (!$this->responseCode && isset($info->metadata['status'])) {
@@ -725,9 +725,9 @@ abstract class Core
             }
         }
         $this->responseCode = $code;
-        $this->responseFormat->charset($this->app['charset']);
+        $this->responseFormat->charset($this->defaults['charset']);
         $charset = $this->responseFormat->charset()
-            ?: $this->app['charset'];
+            ?: $this->defaults['charset'];
 
         $this->responseHeaders['Content-Type'] =
             $this->responseFormat->mediaType() . "; charset=$charset";
@@ -807,7 +807,7 @@ abstract class Core
             /** @noinspection PhpParamsInspection */
             $value = Validator::validate($value, new ValidationInfo($detail));
         }
-        $this->app[$property] = $value;
+        $this->defaults[$property] = $value;
         return true;
     }
 }
