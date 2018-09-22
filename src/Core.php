@@ -3,8 +3,15 @@
 use ArrayAccess;
 use Exception;
 use Luracast\Restler\Contracts\{
-    AuthenticationInterface, ComposerInterface, ContainerInterface, FilterInterface, RequestMediaTypeInterface,
-    ResponseMediaTypeInterface, SelectivePathsInterface, UsesAuthenticationInterface, ValidationInterface
+    AuthenticationInterface,
+    ComposerInterface,
+    ContainerInterface,
+    FilterInterface,
+    RequestMediaTypeInterface,
+    ResponseMediaTypeInterface,
+    SelectivePathsInterface,
+    UsesAuthenticationInterface,
+    ValidationInterface
 };
 use Luracast\Restler\Exceptions\{
     HttpException, InvalidAuthCredentials
@@ -12,9 +19,7 @@ use Luracast\Restler\Exceptions\{
 use Luracast\Restler\MediaTypes\{
     Json, UrlEncoded, Xml
 };
-use Luracast\Restler\Utils\{
-    ApiMethodInfo, ClassName, CommentParser, Header, Validator, ValidationInfo
-};
+use Luracast\Restler\Utils\{ApiMethodInfo, ClassName, CommentParser, Header, Text, Validator, ValidationInfo};
 use Psr\Http\Message\{
     ResponseInterface, ServerRequestInterface
 };
@@ -172,8 +177,9 @@ abstract class Core
 
     abstract protected function get(): void;
 
-    protected function getPath(string $path): string
+    protected function getPath(string $path, string $scriptName = ''): string
     {
+        $path = Text::removeCommon($path, $scriptName);
         $path = str_replace(
             array_merge(
                 $this->router['responseFormatMap']['extensions'],

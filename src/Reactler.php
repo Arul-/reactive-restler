@@ -23,7 +23,8 @@ class Reactler extends Core
      */
     protected function get(): void
     {
-        $this->path = $this->getPath($this->request->getUri()->getPath());
+        $scriptName = $this->request->getServerParams()['SCRIPT_NAME'] ?? '';
+        $this->path = $this->getPath($this->request->getUri()->getPath(), $scriptName);
         $this->query = $this->getQuery($this->request->getQueryParams());
         $this->requestFormat = $this->getRequestMediaType($this->request->getHeaderLine('content-type'));
         $this->body = $this->getBody($this->rawRequestBody);

@@ -85,4 +85,25 @@ class Text
     {
         return preg_replace('/[^a-zA-Z]+/', '-', strtolower(strip_tags($name)));
     }
+
+    public static function removeCommon($fromPath, $usingPath, $separator = '/')
+    {
+        if (empty($fromPath)) {
+            return '';
+        }
+        if (empty($usingPath)) {
+            return $fromPath;
+        }
+        $fromPath = explode($separator, $fromPath);
+        $usingPath = explode($separator, $usingPath);
+        while (count($usingPath)) {
+            if (count($fromPath) && $fromPath[0] == $usingPath[0]) {
+                array_shift($fromPath);
+            } else {
+                break;
+            }
+            array_shift($usingPath);
+        }
+        return implode($separator, $fromPath);
+    }
 }
