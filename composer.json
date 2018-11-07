@@ -9,7 +9,8 @@
     "ralouphie/getallheaders": "^2.0",
     "react/event-loop": "@stable",
     "react/http": "@stable",
-    "psr/http-server-middleware": "^1.0"
+    "psr/http-server-middleware": "^1.0",
+    "logicalsteps/async": "v2.x-dev"
   },
   "require-dev": {
     "behat/behat": "~3",

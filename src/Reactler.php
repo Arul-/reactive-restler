@@ -1,11 +1,16 @@
 <?php namespace Luracast\Restler;
 
 use Exception;
+use GuzzleHttp\Psr7\ServerRequest;
+use function GuzzleHttp\Psr7\stream_for;
+use LogicalSteps\Async\Async;
 use Luracast\Restler\Contracts\ComposerInterface;
 use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\MediaTypes\Json;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use React\Promise\FulfilledPromise;
+use React\Promise\PromiseInterface;
 use Throwable;
 
 class Reactler extends Core
@@ -94,12 +99,14 @@ class Reactler extends Core
             [$this->responseCode, $this->responseHeaders, $data]);
     }
 
-    /**
-     * @param ServerRequestInterface $request
-     * @return ResponseInterface
-     */
-    public function handle(ServerRequestInterface $request): ResponseInterface
+    public function handle(ServerRequestInterface $request = null): PromiseInterface
     {
+        if (!$request) {
+            $request = ServerRequest::fromGlobals();
+            if (isset($GLOBALS['HTTP_RAW_REQUEST_DATA'])) {
+                $request = $request->withBody(stream_for($GLOBALS['HTTP_RAW_REQUEST_DATA']));
+            }
+        }
         $this->container->instance(ServerRequestInterface::class, $request);
         $this->rawRequestBody = (string)$request->getBody();
         $this->requestMethod = $request->getMethod();
@@ -123,22 +130,24 @@ class Reactler extends Core
                 $headers = $data->getHeaders() + $this->responseHeaders;
                 $data = $this->container->make(ResponseInterface::class,
                     [$data->getStatusCode(), $headers, $data->getBody()]);
-                return $data;
+                return new FulfilledPromise($data);
             }
             if (is_resource($data) && get_resource_type($data) == 'stream') {
-                return $this->stream($data);
+                return new FulfilledPromise($this->stream($data));
             }
-            return $this->respond($this->compose($data));
+            return Async::await($data)->then(function ($data) {
+                return $this->respond($this->compose($data));
+            });
         } catch (Throwable $error) {
             if (!$this->responseFormat) {
                 $this->responseFormat = new Json();
             }
-            return $this->respond(
+            return new FulfilledPromise($this->respond(
                 $this->message(
                     $error,
                     $this->request->getHeaderLine('origin')
                 )
-            );
+            ));
         }
     }
 }

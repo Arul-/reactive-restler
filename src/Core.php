@@ -23,6 +23,7 @@ use Luracast\Restler\Utils\{ApiMethodInfo, ClassName, CommentParser, Header, Tex
 use Psr\Http\Message\{
     ResponseInterface, ServerRequestInterface
 };
+use React\Promise\PromiseInterface;
 use ReflectionException;
 use ReflectionMethod;
 use Throwable;
@@ -757,11 +758,9 @@ abstract class Core
 
     abstract protected function respond($response = []): ResponseInterface;
 
-
     abstract protected function stream($data): ResponseInterface;
 
-
-    abstract public function handle(ServerRequestInterface $request): ResponseInterface;
+    abstract public function handle(ServerRequestInterface $request = null): PromiseInterface;
 
     private static function isPathSelected(string $class, string $path): bool
     {
