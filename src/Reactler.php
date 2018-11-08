@@ -7,6 +7,7 @@ use LogicalSteps\Async\Async;
 use Luracast\Restler\Contracts\ComposerInterface;
 use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\MediaTypes\Json;
+use Luracast\Restler\Utils\Dump;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use React\Promise\FulfilledPromise;
@@ -106,7 +107,24 @@ class Reactler extends Core
             if (isset($GLOBALS['HTTP_RAW_REQUEST_DATA'])) {
                 $request = $request->withBody(stream_for($GLOBALS['HTTP_RAW_REQUEST_DATA']));
             }
+        } elseif (is_null($this->defaults['returnResponse'])) {
+            $this->defaults['returnResponse'] = true;
         }
+        $promise = $this->_handle($request);
+        if (true === $this->defaults['returnResponse']) {
+            return $promise;
+        }
+        $promise->then(function ($response) {
+            die(Dump::response($response, false));
+        });
+    }
+
+    /**
+     * @param ServerRequestInterface $request
+     * @return PromiseInterface
+     */
+    private function _handle(ServerRequestInterface $request)
+    {
         $this->container->instance(ServerRequestInterface::class, $request);
         $this->rawRequestBody = (string)$request->getBody();
         $this->requestMethod = $request->getMethod();
