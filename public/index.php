@@ -5,6 +5,4 @@ use Luracast\Restler\Utils\Dump;
 
 require __DIR__ . '/../api/bootstrap.php';
 
-(new Reactler)->handle()->then(function ($response) {
-    echo Dump::response($response, false);
-});
+(new Reactler)->handle();

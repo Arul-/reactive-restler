@@ -1,5 +1,6 @@
 <?php declare(strict_types=1);
 
+use Luracast\Restler\Defaults;
 use Luracast\Restler\Reactler;
 use Luracast\Restler\Utils\Dump;
 use Psr\Http\Message\ResponseInterface;
@@ -7,6 +8,8 @@ use Workerman\Connection\TcpConnection;
 use Workerman\Worker;
 
 require __DIR__ . '/../api/bootstrap.php';
+
+Defaults::$returnResponse = true;
 
 // #### http worker ####
 $http_worker = new Worker("http://0.0.0.0:8080");
