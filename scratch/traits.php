@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-use Luracast\Restler\iUseAuthentication;
+use Luracast\Restler\Contracts\UsesAuthenticationInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\UriInterface;
@@ -15,13 +15,13 @@ trait Authentication
 {
     private $authenticated = false;
 
-    public function __setAuthenticationStatus($isAuthenticated = false)
+    public function __setAuthenticationStatus(bool $isAuthenticated = false, bool $isAuthFinished = false)
     {
         $this->authenticated = $isAuthenticated;
     }
 }
 
-class A implements iUseAuthentication
+class A implements UsesAuthenticationInterface
 {
     use Authentication;
 
