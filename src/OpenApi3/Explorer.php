@@ -17,7 +17,7 @@ use stdClass;
 
 class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationInterface
 {
-    const SWAGGER = '3.0';
+    const SWAGGER = '3.0.0';
     public static $infoClass = ExplorerInfo::class;
     public static $excludedPaths = ['explorer','_'];
     public static $excludedHttpMethods = ['OPTIONS'];
