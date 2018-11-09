@@ -25,7 +25,8 @@
   ],
   "autoload": {
     "psr-4": {
-      "Luracast\\Restler\\": "src"
+      "Luracast\\Restler\\": "src",
+      "Workerman\\Protocols\\": "src/Workerman/Protocols"
     }
   },
   "autoload-dev": {
