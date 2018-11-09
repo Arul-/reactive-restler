@@ -116,7 +116,7 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
         $s->info = $this->info($version);
         $s->servers = $this->servers();
 
-        $s->paths = $this->paths($version, $s->servers[0]);
+        $s->paths = $this->paths($s->servers[0], $version);
 
         $s->components = $this->components();
         return $s;
@@ -139,12 +139,12 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
     }
 
     /**
-     * @param int $version
      * @param string $basePath
+     * @param int $version
      * @return array
      * @throws HttpException
      */
-    private function paths(int $version = 1, string $basePath)
+    private function paths(string $basePath, int $version = 1)
     {
         $map = Router::findAll(
             static::$excludedPaths + [$basePath],
