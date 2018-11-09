@@ -4,19 +4,19 @@
 class ExplorerInfo
 {
     public static $title = 'Restler API Explorer';
-    public static $description = 'Live API Documentation';
+    public static $description = 'Example api documentation brought to you by **restler team**';
     public static $termsOfServiceUrl = null;
     public static $contactName = 'Restler Support';
-    public static $contactEmail = 'luracast.com/products/restler';
-    public static $contactUrl = 'arul@luracast.com';
+    public static $contactEmail = 'arul@luracast.com';
+    public static $contactUrl = 'https://luracast.com/products/restler';
     public static $license = 'LGPL-2.1';
     public static $licenseUrl = 'https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html';
 
     public static function format($swaggerVersion)
     {
+        $swaggerVersion = (int)$swaggerVersion;
         switch ($swaggerVersion) {
             case 1:
-            case 1.2:
                 return [
                     'title' => static::$title,
                     'description' => static::$description,
