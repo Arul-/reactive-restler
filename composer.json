@@ -5,17 +5,16 @@
   "require": {
     "php": "^7.1",
     "psr/container": "^1.0",
-    "workerman/workerman": "@dev",
+    "guzzlehttp/guzzle": "~6.0",
     "ralouphie/getallheaders": "^2.0",
-    "react/event-loop": "@stable",
-    "react/http": "@stable",
-    "psr/http-server-middleware": "^1.0",
     "logicalsteps/async": "v2.x-dev"
   },
   "require-dev": {
     "behat/behat": "~3",
-    "guzzlehttp/guzzle": "~6.0",
-    "psy/psysh": "@stable"
+    "psy/psysh": "@stable",
+    "react/event-loop": "@stable",
+    "react/http": "@stable",
+    "workerman/workerman": "@dev"
   },
   "license": "MIT",
   "authors": [
