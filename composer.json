@@ -14,7 +14,8 @@
     "psy/psysh": "@stable",
     "react/event-loop": "@stable",
     "react/http": "@stable",
-    "workerman/workerman": "@dev"
+    "workerman/workerman": "@dev",
+    "amphp/http-server": "^0.8"
   },
   "license": "MIT",
   "authors": [
