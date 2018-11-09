@@ -19,7 +19,7 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
 {
     const SWAGGER = '3.0.0';
     public static $infoClass = ExplorerInfo::class;
-    public static $excludedPaths = ['explorer','_'];
+    public static $excludedPaths = ['explorer', '_'];
     public static $excludedHttpMethods = ['OPTIONS'];
     public static $hideProtected = true;
     public static $allowScalarValueOnRequestBody = false;
@@ -116,7 +116,7 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
         $s->info = $this->info($version);
         $s->servers = $this->servers();
 
-        $s->paths = $this->paths($s->servers[0], $version);
+        $s->paths = $this->paths($s->servers[0]['url'], $version);
 
         $s->components = $this->components();
         return $s;
@@ -135,7 +135,7 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
     {
         $url = (string)$this->request->getUri();
         $url = substr($url, 0, -strlen($this->request->getUri()->getPath()));
-        return [$url];
+        return [['url' => $url, 'description' => 'server']];
     }
 
     /**
