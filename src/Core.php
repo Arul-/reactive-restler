@@ -20,15 +20,16 @@ use Luracast\Restler\MediaTypes\{
     Json, UrlEncoded, Xml
 };
 use Luracast\Restler\Utils\{ApiMethodInfo, ClassName, CommentParser, Header, Text, Validator, ValidationInfo};
-use Psr\Http\Message\{
-    ResponseInterface, ServerRequestInterface
-};
+use Psr\Http\Message\{ResponseInterface, ServerRequestInterface, UriInterface};
 use React\Promise\PromiseInterface;
 use ReflectionException;
 use ReflectionMethod;
 use Throwable;
 use TypeError;
 
+/**
+ * @property UriInterface baseUrl
+ */
 abstract class Core
 {
     const VERSION = '4.0.0';
@@ -83,6 +84,8 @@ abstract class Core
      * @var int for calculating execution time
      */
     protected $startTime;
+    /** @var UriInterface */
+    private $_baseUrl;
 
     /**
      * Core constructor.
@@ -178,9 +181,9 @@ abstract class Core
 
     abstract protected function get(): void;
 
-    protected function getPath(string $path, string $scriptName = ''): string
+    protected function getPath(UriInterface $uri, string $scriptName = ''): string
     {
-        $path = Text::removeCommon($path, $scriptName);
+        $path = Text::removeCommon($uri->getPath(), $scriptName);
         $path = str_replace(
             array_merge(
                 $this->router['responseFormatMap']['extensions'],
@@ -189,6 +192,10 @@ abstract class Core
             '',
             trim($path, '/')
         );
+        $url = (string)$uri;
+        $url = strtok($url, '.?');
+        $uriClass = get_class($uri);
+        $this->_baseUrl = new $uriClass(substr($url, 0, -strlen($path)));
         if (Defaults::$useUrlBasedVersioning && strlen($path) && $path{0} == 'v') {
             $version = intval(substr($path, 1));
             if ($version && $version <= $this->router['maximumVersion']) {
@@ -785,6 +792,11 @@ abstract class Core
             }
         }
         return true;
+    }
+
+    public function __get($name)
+    {
+        return $this->{'_' . $name} ?? null;
     }
 
     /**
