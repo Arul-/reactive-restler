@@ -29,6 +29,7 @@ class Psr7 extends Http
             list ($key, $value) = explode(': ', $header_string);
             $headers[$key] = $value;
         }
+        $uri = ($connection->transport == 'ssl' ? 'https://' : 'http://') . $headers['Host'] . $uri;
         $server = [
             'REMOTE_ADDR' => $connection->getRemoteIp(),
             'REMOTE_PORT' => $connection->getRemotePort()
