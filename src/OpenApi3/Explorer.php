@@ -133,9 +133,7 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
      */
     private function servers()
     {
-        $url = (string)$this->request->getUri();
-        $url = substr($url, 0, -strlen($this->request->getUri()->getPath()));
-        return [['url' => $url, 'description' => 'server']];
+        return [['url' => (string)$this->restler->baseUrl, 'description' => 'server']];
     }
 
     /**
