@@ -3,7 +3,6 @@
 namespace Workerman\Protocols;
 
 
-use function GuzzleHttp\Psr7\parse_query;
 use Luracast\Restler\Utils\ClassName;
 use Psr\Http\Message\ServerRequestInterface;
 use Workerman\Connection\TcpConnection;
@@ -37,7 +36,9 @@ class Psr7 extends Http
         $class = ClassName::get(ServerRequestInterface::class);
         /** @var ServerRequestInterface $request */
         $request = new $class($method, $uri, $headers, $http_body, $protocol, $server);
-        $request = $request->withQueryParams(parse_query(parse_url($uri, PHP_URL_QUERY)));
+        $query = [];
+        parse_str(parse_url($uri, PHP_URL_QUERY), $query);
+        $request = $request->withQueryParams($query);
         return $request;
     }
 }
