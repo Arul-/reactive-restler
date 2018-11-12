@@ -3,6 +3,7 @@
 namespace Workerman\Protocols;
 
 
+use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\Utils\ClassName;
 use Psr\Http\Message\ServerRequestInterface;
 use Workerman\Connection\TcpConnection;
@@ -15,7 +16,7 @@ class Psr7 extends Http
      * @param string $recv_buffer
      * @param TcpConnection $connection
      * @return ServerRequestInterface
-     * @throws \Luracast\Restler\Exceptions\HttpException
+     * @throws HttpException
      */
     public static function decode($recv_buffer, TcpConnection $connection)
     {
