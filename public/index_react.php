@@ -2,7 +2,7 @@
 
 require __DIR__ . '/../api/bootstrap.php';
 
-use Luracast\Restler\Reactler;
+use Luracast\Restler\Restler;
 use Psr\Http\Message\ServerRequestInterface;
 use React\Http\Middleware\LimitConcurrentRequestsMiddleware;
 use React\Http\Middleware\RequestBodyBufferMiddleware;
@@ -16,7 +16,7 @@ $server = new StreamingServer([
     new RequestBodyBufferMiddleware(16 * 1024 * 1024), // 16 MiB
     function (ServerRequestInterface $request) {
         echo '      ' . $request->getMethod() . ' ' . $request->getUri()->getPath() . PHP_EOL;
-        return (new Reactler)->handle($request);
+        return (new Restler)->handle($request);
     }
 ]);
 

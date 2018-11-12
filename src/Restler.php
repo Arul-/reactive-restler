@@ -14,7 +14,7 @@ use React\Promise\FulfilledPromise;
 use React\Promise\PromiseInterface;
 use Throwable;
 
-class Reactler extends Core
+class Restler extends Core
 {
     /**
      * @var ServerRequestInterface
@@ -72,6 +72,7 @@ class Reactler extends Core
     /**
      * @param array $response
      * @return ResponseInterface
+     * @throws Exception
      */
     protected function respond($response = []): ResponseInterface
     {
@@ -122,6 +123,7 @@ class Reactler extends Core
     /**
      * @param ServerRequestInterface $request
      * @return PromiseInterface
+     * @throws Exception
      */
     private function _handle(ServerRequestInterface $request)
     {

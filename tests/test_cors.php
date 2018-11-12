@@ -1,7 +1,7 @@
 <?php
 
 use Luracast\Restler\Defaults;
-use Luracast\Restler\Reactler;
+use Luracast\Restler\Restler;
 use Luracast\Restler\Router;
 use Luracast\Restler\Utils\Dump;
 use RingCentral\Psr7\ServerRequest;
@@ -19,7 +19,7 @@ class Home
 Defaults::$crossOriginResourceSharing = true;
 Router::addAPI(Home::class, '');
 
-$h = new Reactler();
+$h = new Restler();
 
 $request = new ServerRequest('OPTIONS', 'http://localhost:4000', [
     'Access-Control-Request-Method' => 'GET',

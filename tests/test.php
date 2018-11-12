@@ -2,7 +2,7 @@
 
 use Luracast\Restler\Defaults;
 use Luracast\Restler\Core;
-use Luracast\Restler\Reactler;
+use Luracast\Restler\Restler;
 use Luracast\Restler\Router;
 
 include __DIR__ . "/../vendor/autoload.php";
@@ -22,7 +22,7 @@ Router::$responseFormatMap = [
         ],
 ];
 
-$h = new Reactler();
+$h = new Restler();
 
 $m = new ReflectionMethod($h, 'negotiateResponseMediaType');
 

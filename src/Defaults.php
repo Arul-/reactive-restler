@@ -315,7 +315,7 @@ class Defaults
      */
     public static $aliases = [
         // Core
-        'Application' => Reactler::class,
+        'Application' => Restler::class,
         // Formats
         'Amf' => Amf::class,
         'Csv' => Csv::class,
@@ -333,7 +333,7 @@ class Defaults
         'HttpException' => HttpException::class,
         // Backward Compatibility
         'RestException' => HttpException::class,
-        'Restler' => Reactler::class,
+        'Restler' => Restler::class,
         'JsonFormat' => Json::class,
         'JsFormat' => Js::class,
         'XmlFormat' => Xml::class,
