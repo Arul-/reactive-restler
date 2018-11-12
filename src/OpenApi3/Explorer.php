@@ -85,10 +85,9 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
      */
     public function index()
     {
-        $base = '/' . rtrim($this->info->url, '*');
+        $base = rtrim($this->info->url, '*');
         $path = $this->request->getUri()->getPath();
-        //make sure explorer is called with trailing slash
-        if (!Text::beginsWith($path, $base)) {
+        if (!Text::contains($path, $base)) {
             //if not add and redirect
             throw new Redirect((string)$this->request->getUri() . '/');
         }
