@@ -29,6 +29,7 @@ use TypeError;
 
 /**
  * @property UriInterface baseUrl
+ * @property string path
  */
 abstract class Core
 {
@@ -54,7 +55,7 @@ abstract class Core
      * @var ResponseMediaTypeInterface
      */
     public $responseFormat;
-    protected $path = '';
+    protected $_path = '';
     /**
      * @var RequestMediaTypeInterface
      */
@@ -131,7 +132,7 @@ abstract class Core
         $this->requestFormatDiffered = false;
         $this->apiMethodInfo = null;
         $this->responseFormat = null;
-        $this->path = '';
+        $this->_path = '';
         $this->requestFormat = null;
         $this->body = [];
         $this->query = [];
@@ -287,7 +288,7 @@ abstract class Core
     protected function route(): void
     {
         $this->apiMethodInfo = $o = Router::find(
-            $this->path,
+            $this->_path,
             $this->requestMethod,
             $this->requestedApiVersion,
             $this->body + $this->query
@@ -530,7 +531,7 @@ abstract class Core
         $name = $postAuth ? 'postAuthFilterClasses' : 'preAuthFilterClasses';
         foreach ($this->router[$name] as $i => $filerClass) {
             //exclude invalid paths
-            if (!static::isPathSelected($filerClass, $this->path)) {
+            if (!static::isPathSelected($filerClass, $this->_path)) {
                 array_splice($this->router[$name], $i, 1);
                 continue;
             }
@@ -563,7 +564,7 @@ abstract class Core
             foreach ($this->router['authClasses'] as $i => $authClass) {
                 try {
                     //exclude invalid paths
-                    if (!static::isPathSelected($authClass, $this->path)) {
+                    if (!static::isPathSelected($authClass, $this->_path)) {
                         array_splice($this->router['authClasses'], $i, 1);
                         continue;
                     }
@@ -590,7 +591,7 @@ abstract class Core
             if (!count($this->router['authClasses']) && $accessLevel > 1) {
                 throw new HttpException(
                     403,
-                    'at least one Authentication Class should apply to path `' . $this->path . '`'
+                    'at least one Authentication Class should apply to path `' . $this->_path . '`'
                 );
             }
             $this->authVerified = true;
