@@ -1,0 +1,85 @@
+<?php
+
+
+namespace Luracast\Restler\MediaTypes;
+
+
+use Luracast\Restler\Contracts\ResponseMediaTypeInterface;
+use Luracast\Restler\Exceptions\HttpException;
+use Luracast\Restler\Restler;
+
+class Html extends MediaType implements ResponseMediaTypeInterface
+{
+    const MIME = 'text/html';
+    const EXTENSION = 'html';
+
+    public static $view;
+    public static $errorView = 'debug.php';
+    public static $template = 'php';
+    public static $handleSession = true;
+    public static $convertResponseToArray = false;
+    public static $useSmartViews = true;
+    /**
+     * @var null|string defaults to template named folder in Defaults::$cacheDirectory
+     */
+    public static $cacheDirectory = null;
+    /**
+     * @var array global key value pair to be supplied to the templates. All
+     * keys added here will be available as a variable inside the template
+     */
+    public static $data = array();
+    /**
+     * @var string set it to the location of your the view files. Defaults to
+     * views folder which is same level as vendor directory.
+     */
+    public static $viewPath;
+    /**
+     * @var array template and its custom extension key value pair
+     */
+    public static $customTemplateExtensions = array('blade' => 'blade.php');
+    /**
+     * @var bool used internally for error handling
+     */
+    protected static $parseViewMetadata = true;
+    /**
+     * /**
+     * @var Restler
+     */
+    private $restler;
+
+    public function __construct(Restler $restler)
+    {
+        $this->restler = $restler;
+        if (!static::$viewPath) {
+            $array = explode('vendor', __DIR__, 2);
+            static::$viewPath = $array[0] . 'views';
+        }
+    }
+
+    public function encode($data, bool $humanReadable = false): string
+    {
+        if (!is_readable(static::$viewPath)) {
+            throw new HttpException(
+                501,
+                'The views directory `'
+                . self::$viewPath . '` should exist with read permission.'
+            );
+        }
+        static::$data['basePath'] = dirname($_SERVER['SCRIPT_NAME']);
+        static::$data['baseUrl'] = $this->restler->baseUrl;
+        static::$data['currentPath'] = $this->restler->path;
+
+        $data += static::$data;
+        if (false === ($i = strrpos(self::$view, '.'))) {
+            $template = self::$template;
+        } else {
+            self::$template = $template = substr(self::$view, $i + 1);
+            self::$view = substr(self::$view, 0, $i);
+        }
+
+        if (method_exists($class = get_called_class(), $template)) {
+            return call_user_func("$class::$template", $data, $humanReadable);
+        }
+        throw new HttpException(500, "Unsupported template system `$template`");
+    }
+}

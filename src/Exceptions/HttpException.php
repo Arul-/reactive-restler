@@ -65,7 +65,7 @@ class HttpException extends Exception
      * @param null $previous
      */
     public function __construct(
-        string $httpStatusCode,
+        int $httpStatusCode,
         ?string $errorMessage = null,
         array $details = array(),
         $previous = null

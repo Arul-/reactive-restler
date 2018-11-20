@@ -15,9 +15,7 @@ use Luracast\Restler\Contracts\{
 };
 use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\Filters\RateLimiter;
-use Luracast\Restler\MediaTypes\{
-    Amf, Csv, Js, Json, Plist, Tsv, Upload, UrlEncoded, Xml, Yaml
-};
+use Luracast\Restler\MediaTypes\{Amf, Csv, Html, Js, Json, Plist, Tsv, Upload, UrlEncoded, Xml, Yaml};
 use Luracast\Restler\Utils\Validator;
 use Psr\{
     Http\Message\RequestInterface, Http\Message\ResponseInterface, Http\Message\ServerRequestInterface
