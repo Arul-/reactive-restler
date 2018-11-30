@@ -3,6 +3,7 @@
 namespace Workerman\Protocols;
 
 
+use function GuzzleHttp\Psr7\stream_for;
 use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\Utils\ClassName;
 use Psr\Http\Message\ServerRequestInterface;
@@ -10,6 +11,35 @@ use Workerman\Connection\TcpConnection;
 
 class Psr7 extends Http
 {
+    /**
+     * Check the integrity of the package.
+     *
+     * @param string $recv_buffer
+     * @param TcpConnection $connection
+     * @return int
+     */
+    public static function input($recv_buffer, TcpConnection $connection)
+    {
+        static $seperator = "\r\n\r\n";
+        if (!strpos($recv_buffer, $seperator)) {
+            // Judge whether the package length exceeds the limit.
+            if (strlen($recv_buffer) >= $connection->maxPackageSize) {
+                $connection->close();
+            }
+            return 0;
+        }
+
+        list($header, $body) = explode($seperator, $recv_buffer, 2);
+        $method = substr($header, 0, strpos($header, ' '));
+
+        if (in_array($method, static::$methods)) {
+            return strlen($header) + 4;
+        } else {
+            $connection->send("HTTP/1.1 400 Bad Request$seperator", true);
+            return 0;
+        }
+    }
+
     /**
      * Parse $_POST、$_GET、$_COOKIE.
      *
@@ -36,7 +66,7 @@ class Psr7 extends Http
         ];
         $class = ClassName::get(ServerRequestInterface::class);
         /** @var ServerRequestInterface $request */
-        $request = new $class($method, $uri, $headers, $http_body, $protocol, $server);
+        $request = new $class($method, $uri, $headers, stream_for($connection->getSocket()), $protocol, $server);
         $query = [];
         parse_str(parse_url($uri, PHP_URL_QUERY), $query);
         $request = $request->withQueryParams($query);
