@@ -32,6 +32,8 @@ use TypeError;
  * @property string path
  * @property bool authenticated
  * @property bool authVerified
+ * @property int requestedApiVersion
+ * @property ApiMethodInfo apiMethodInfo
  */
 abstract class Core
 {
@@ -52,7 +54,7 @@ abstract class Core
     /**
      * @var ApiMethodInfo
      */
-    protected $apiMethodInfo;
+    protected $_apiMethodInfo;
     /**
      * @var ResponseMediaTypeInterface
      */
@@ -132,7 +134,7 @@ abstract class Core
         $this->requestedApiVersion = 1;
         $this->requestMethod = 'GET';
         $this->requestFormatDiffered = false;
-        $this->apiMethodInfo = null;
+        $this->_apiMethodInfo = null;
         $this->responseFormat = null;
         $this->_path = '';
         $this->requestFormat = null;
@@ -153,7 +155,7 @@ abstract class Core
     {
         $properties = [];
         $fullName = $className;
-        if ($m = $this->apiMethodInfo->metadata ?? false) {
+        if ($m = $this->_apiMethodInfo->metadata ?? false) {
             $shortName = ClassName::short($fullName);
             $properties = $m['class'][$fullName][CommentParser::$embeddedDataName] ??
                 $m['class'][$shortName][CommentParser::$embeddedDataName] ?? [];
@@ -289,7 +291,7 @@ abstract class Core
      */
     protected function route(): void
     {
-        $this->apiMethodInfo = $o = Router::find(
+        $this->_apiMethodInfo = $o = Router::find(
             $this->_path,
             $this->requestMethod,
             $this->requestedApiVersion,
@@ -322,7 +324,7 @@ abstract class Core
     protected function negotiateResponseMediaType(string $path, string $acceptHeader = ''): ResponseMediaTypeInterface
     {
         //check if the api method insists on response format using @format comment
-        if (($metadata = $this->apiMethodInfo->metadata ?? false) && ($formats = $metadata['format'] ?? false)) {
+        if (($metadata = $this->_apiMethodInfo->metadata ?? false) && ($formats = $metadata['format'] ?? false)) {
             $formats = explode(',', (string)$formats);
             foreach ($formats as $i => $f) {
                 if ($f = ClassName::resolve(trim($f), $metadata['scope'])) {
@@ -553,7 +555,7 @@ abstract class Core
      */
     protected function authenticate(ServerRequestInterface $request)
     {
-        $o = &$this->apiMethodInfo;
+        $o = &$this->_apiMethodInfo;
         $accessLevel = max($this->defaults['apiAccessLevel'], $o->accessLevel);
         if ($accessLevel) {
             if (!count($this->router['authClasses']) && $accessLevel > 1) {
@@ -618,7 +620,7 @@ abstract class Core
             return;
         }
 
-        $o = &$this->apiMethodInfo;
+        $o = &$this->_apiMethodInfo;
         foreach ($o->metadata['param'] as $index => $param) {
             $info = &$param [CommentParser::$embeddedDataName];
             if (!isset ($info['validate'])
@@ -693,7 +695,7 @@ abstract class Core
         }
         $cacheControl = $this->defaults['headerCacheControl'][0];
         if ($expires > 0) {
-            $cacheControl = !isset($this->apiMethodInfo->accessLevel) || $this->apiMethodInfo->accessLevel
+            $cacheControl = !isset($this->_apiMethodInfo->accessLevel) || $this->_apiMethodInfo->accessLevel
                 ? 'private, ' : 'public, ';
             $cacheControl .= end($this->defaults['headerCacheControl']);
             $cacheControl = str_replace('{expires}', $expires, $cacheControl);
@@ -754,7 +756,7 @@ abstract class Core
         }
         $this->responseCode = $e->getCode();
         $this->composeHeaders(
-            $this->apiMethodInfo,
+            $this->_apiMethodInfo,
             $origin,
             $e
         );
