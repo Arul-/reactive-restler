@@ -325,6 +325,7 @@ class Defaults
         'UrlEncoded' => UrlEncoded::class,
         'Xml' => Xml::class,
         'Yaml' => Yaml::class,
+        'Html' => Html::class,
         //Filters,
         'RateLimiter' => RateLimiter::class,
         // Exception
