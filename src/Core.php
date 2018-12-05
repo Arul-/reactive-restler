@@ -30,12 +30,13 @@ use TypeError;
 /**
  * @property UriInterface baseUrl
  * @property string path
+ * @property bool authenticated
  */
 abstract class Core
 {
     const VERSION = '4.0.0';
 
-    protected $authenticated = false;
+    protected $_authenticated = false;
     protected $authVerified = false;
     /**
      * @var int
@@ -125,7 +126,7 @@ abstract class Core
     protected function reset()
     {
 
-        $this->authenticated = false;
+        $this->_authenticated = false;
         $this->authVerified = false;
         $this->requestedApiVersion = 1;
         $this->requestMethod = 'GET';
@@ -174,7 +175,7 @@ abstract class Core
             }
         }
         if ($instance instanceof UsesAuthenticationInterface) {
-            $instance->__setAuthenticationStatus($this->authenticated, $this->authVerified);
+            $instance->__setAuthenticationStatus($this->_authenticated, $this->authVerified);
         }
 
         return $instance;
@@ -579,7 +580,7 @@ abstract class Core
                     array_unshift($this->router['authClasses'], $authClass);
                     break;
                 } catch (InvalidAuthCredentials $e) { //provided credentials does not authenticate
-                    $this->authenticated = false;
+                    $this->_authenticated = false;
                     throw $e;
                 } catch (HttpException $e) {
                     if (!$unauthorized) {
@@ -599,10 +600,10 @@ abstract class Core
                 if ($accessLevel > 1) { //when it is not a hybrid api
                     throw $unauthorized;
                 } else {
-                    $this->authenticated = false;
+                    $this->_authenticated = false;
                 }
             } else {
-                $this->authenticated = true;
+                $this->_authenticated = true;
             }
         }
     }
