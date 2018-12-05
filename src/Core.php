@@ -31,13 +31,14 @@ use TypeError;
  * @property UriInterface baseUrl
  * @property string path
  * @property bool authenticated
+ * @property bool authVerified
  */
 abstract class Core
 {
     const VERSION = '4.0.0';
 
     protected $_authenticated = false;
-    protected $authVerified = false;
+    protected $_authVerified = false;
     /**
      * @var int
      */
@@ -127,7 +128,7 @@ abstract class Core
     {
 
         $this->_authenticated = false;
-        $this->authVerified = false;
+        $this->_authVerified = false;
         $this->requestedApiVersion = 1;
         $this->requestMethod = 'GET';
         $this->requestFormatDiffered = false;
@@ -175,7 +176,7 @@ abstract class Core
             }
         }
         if ($instance instanceof UsesAuthenticationInterface) {
-            $instance->__setAuthenticationStatus($this->_authenticated, $this->authVerified);
+            $instance->__setAuthenticationStatus($this->_authenticated, $this->_authVerified);
         }
 
         return $instance;
@@ -595,7 +596,7 @@ abstract class Core
                     'at least one Authentication Class should apply to path `' . $this->_path . '`'
                 );
             }
-            $this->authVerified = true;
+            $this->_authVerified = true;
             if ($unauthorized) {
                 if ($accessLevel > 1) { //when it is not a hybrid api
                     throw $unauthorized;
