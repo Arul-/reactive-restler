@@ -59,7 +59,7 @@ class Html extends MediaType implements ResponseMediaTypeInterface
             static::$viewPath = $array[0] . 'views';
         }
         $this->html = $html;
-        \Psy\Shell::debug(get_defined_vars());
+        var_export($html);
     }
 
     public function encode($data, bool $humanReadable = false): string
