@@ -34,6 +34,7 @@ use TypeError;
  * @property bool authVerified
  * @property int requestedApiVersion
  * @property ApiMethodInfo apiMethodInfo
+ * @property HttpException exception
  */
 abstract class Core
 {
@@ -91,6 +92,8 @@ abstract class Core
     protected $startTime;
     /** @var UriInterface */
     private $_baseUrl;
+    /** @var HttpException */
+    private $_exception;
 
     /**
      * Core constructor.
@@ -118,8 +121,8 @@ abstract class Core
         } else {
             $container = new Container($config);
         }
+        $container->instance(Core::class, $this);
         $this->container = $container;
-        $this->container->instance(Core::class, $this);
     }
 
 

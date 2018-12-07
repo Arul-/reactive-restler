@@ -65,9 +65,17 @@ class Html extends MediaType implements ResponseMediaTypeInterface
                 . self::$viewPath . '` should exist with read permission.'
             );
         }
-        static::$data['basePath'] = dirname($_SERVER['SCRIPT_NAME']);
-        static::$data['baseUrl'] = $this->restler->baseUrl;
-        static::$data['currentPath'] = $this->restler->path;
+        $data['basePath'] = dirname($_SERVER['SCRIPT_NAME']);
+        $data['baseUrl'] = $this->restler->baseUrl;
+        $data['currentPath'] = $this->restler->path;
+        $api = $data['api'] = $this->restler->apiMethodInfo;
+        $metadata = $api->metadata;
+        $static  =$this->restler->container['']
+        $exception = $this->restler->exception;
+        $success = is_null($exception);
+        $error = $success ? null : $exception->getMessage();
+
+        $view = $success ? 'view' : 'errorView';
 
         $data += static::$data;
         if (false === ($i = strrpos(self::$view, '.'))) {
