@@ -326,6 +326,7 @@ abstract class Core
      */
     protected function negotiateResponseMediaType(string $path, string $acceptHeader = ''): ResponseMediaTypeInterface
     {
+        $readableFormats = [];
         //check if the api method insists on response format using @format comment
         if (($metadata = $this->_apiMethodInfo->metadata ?? false) && ($formats = $metadata['format'] ?? false)) {
             $formats = explode(',', (string)$formats);
@@ -339,10 +340,13 @@ abstract class Core
                         );
                     }
                     $formats[$i] = $f;
+                    if (is_a($f, RequestMediaTypeInterface::class, true)) {
+                        $readableFormats[] = $f;
+                    }
                 }
             }
             /** @noinspection PhpInternalEntityUsedInspection */
-            Router::_setMediaTypes(RequestMediaTypeInterface::class, $formats,
+            Router::_setMediaTypes(RequestMediaTypeInterface::class, $readableFormats,
                 $this->router['requestFormatMap'],
                 $this->router['readableMediaTypes']);
 
