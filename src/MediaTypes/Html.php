@@ -46,14 +46,20 @@ class Html extends MediaType implements ResponseMediaTypeInterface
      * @var Restler
      */
     private $restler;
+    /**
+     * @var array
+     */
+    private $html;
 
-    public function __construct(Restler $restler)
+    public function __construct(Restler $restler, array &$html)
     {
         $this->restler = $restler;
         if (!static::$viewPath) {
             $array = explode('vendor', __DIR__, 2);
             static::$viewPath = $array[0] . 'views';
         }
+        $this->html = $html;
+        \Psy\Shell::debug(get_defined_vars());
     }
 
     public function encode($data, bool $humanReadable = false): string
@@ -70,7 +76,6 @@ class Html extends MediaType implements ResponseMediaTypeInterface
         $data['currentPath'] = $this->restler->path;
         $api = $data['api'] = $this->restler->apiMethodInfo;
         $metadata = $api->metadata;
-        $static  =$this->restler->container['']
         $exception = $this->restler->exception;
         $success = is_null($exception);
         $error = $success ? null : $exception->getMessage();

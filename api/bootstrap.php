@@ -4,6 +4,7 @@ use improved\Authors as ImprovedAuthors;
 use Luracast\Restler\Defaults;
 use Luracast\Restler\Cache\HumanReadableCache;
 use Luracast\Restler\Filters\RateLimiter;
+use Luracast\Restler\MediaTypes\Html;
 use Luracast\Restler\MediaTypes\Json;
 use Luracast\Restler\MediaTypes\Xml;
 use Luracast\Restler\OpenApi3\Explorer;
@@ -17,12 +18,24 @@ include BASE . "/vendor/autoload.php";
 
 Defaults::$cacheDirectory = HumanReadableCache::$cacheDir = BASE . '/api/common/store';
 Defaults::$implementations[DataProviderInterface::class] = [SerializedFileDataProvider::class];
-RateLimiter::setLimit('hour', 10);
-RateLimiter::setIncludedPaths('examples/_009_rate_limiting');
 Defaults::$useUrlBasedVersioning = true;
 Defaults::$apiVendor = "SomeVendor";
 Defaults::$useVendorMIMEVersioning = true;
 Router::setApiVersion(2);
+RateLimiter::setLimit('hour', 10);
+RateLimiter::setIncludedPaths('examples/_009_rate_limiting');
+
+/**
+ * Class HtmlTest
+ * @format Html
+ */
+class HtmlTest
+{
+    function index()
+    {
+        return ['a' => 1, 'b' => 2];
+    }
+}
 
 class ResetForTests
 {
@@ -75,8 +88,10 @@ try {
         'tests/request_data' => Data::class,
         //Explorer
         'explorer' => Explorer::class,
+        //Temporary
+        'html' => HtmlTest::class,
     ]);
-    Router::setOverridingResponseMediaTypes(Json::class, Xml::class);
+    Router::setOverridingResponseMediaTypes(Json::class, Xml::class, Html::class);
     SimpleAuth::setIncludedPaths('examples/_005_protected_api');
     Router::addAuthenticator(SimpleAuth::class, 'examples/_005_protected_api/simpleauth');
     KeyAuth::setIncludedPaths('examples/_009_rate_limiting');
