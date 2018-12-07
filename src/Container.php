@@ -111,7 +111,7 @@ class Container implements ContainerInterface
      * @throws HttpException
      * @throws \ReflectionException
      */
-    public function resolve(string $abstract, array $arguments = [])
+    public function &resolve(string $abstract, array &$arguments = [])
     {
         if ($instance = $this->instances[$abstract] ?? false) {
             return $instance;
@@ -130,7 +130,7 @@ class Container implements ContainerInterface
             $instance = new $class;
         } else {
             $parameters = $constructor->getParameters();
-            $dependencies = $this->getDependencies($parameters, $arguments);
+            $dependencies = &$this->getDependencies($parameters, $arguments);
             $instance = $reflector->newInstanceArgs($dependencies);
         }
         if (is_object($instance)) {
@@ -150,21 +150,30 @@ class Container implements ContainerInterface
      * @return array
      * @throws Exception
      */
-    public function getDependencies(array $parameters, array $arguments = [])
+    public function &getDependencies(array $parameters, array &$arguments = [])
     {
         $dependencies = array();
         /**
          * @var ReflectionParameter $parameter
          */
         foreach ($parameters as $index => $parameter) {
+            $byRef = $parameter->isPassedByReference();
             if (isset($arguments[$parameter->name])) {
-                $dependencies[] = $arguments[$parameter->name];
+                $byRef
+                    ? $dependencies[] = &$arguments[$parameter->name]
+                    : $dependencies[] = $arguments[$parameter->name];
             } elseif (isset($arguments[$index])) {
-                $dependencies[] = $arguments[$index];
+                $byRef
+                    ? $dependencies[] = &$arguments[$index]
+                    : $dependencies[] = $arguments[$index];
             } elseif (is_null($dependency = $parameter->getClass())) {
-                $dependencies[] = $this->resolvePrimitive($parameter);
+                $byRef
+                    ? $dependencies[] = &$this->resolvePrimitive($parameter)
+                    : $dependencies[] = $this->resolvePrimitive($parameter);
             } else {
-                $dependencies[] = $this->resolve($dependency->name);
+                $byRef
+                    ? $dependencies[] = &$this->resolve($dependency->name)
+                    : $dependencies[] = $this->resolve($dependency->name);
             }
         }
 
@@ -176,7 +185,7 @@ class Container implements ContainerInterface
      * @return mixed|null|string
      * @throws Exception
      */
-    protected function resolvePrimitive(ReflectionParameter $parameter)
+    protected function &resolvePrimitive(ReflectionParameter $parameter)
     {
         if ($parameter->isArray()) {
             if ($value = $this->config[$parameter->name] ?? false) {
