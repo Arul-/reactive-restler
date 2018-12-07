@@ -4,6 +4,7 @@
   "type": "project",
   "require": {
     "php": "^7.1",
+    "ext-json": "*",
     "psr/container": "^1.0",
     "guzzlehttp/guzzle": "~6.0",
     "ralouphie/getallheaders": "^2.0",
