@@ -110,7 +110,7 @@ abstract class Core
 
         $this->startTime = time();
 
-        $config = $config ?? [];
+        $config = &$config ?? [];
         $this->config = &$config;
 
         $this->config['defaults'] = $this->defaults = get_class_vars(Defaults::class);
@@ -122,6 +122,9 @@ abstract class Core
             $container = new Container($config);
         }
         $container->instance(Core::class, $this);
+        $container->instance(static::class, $this);
+        $container->instance(ContainerInterface::class, $container);
+        $container->instance(get_class($container), $container);
         $this->container = $container;
     }
 
