@@ -1,6 +1,7 @@
 <?php namespace Luracast\Restler;
 
 use ArrayAccess;
+use ArrayObject;
 use Exception;
 use Luracast\Restler\Contracts\{
     AuthenticationInterface,
@@ -110,11 +111,11 @@ abstract class Core
 
         $this->startTime = time();
 
-        $config = &$config ?? [];
+        $config = &$config ?? new ArrayObject();
         $this->config = &$config;
 
-        $this->config['defaults'] = $this->defaults = get_class_vars(Defaults::class);
-        $this->config['router'] = $this->router = get_class_vars(Router::class);
+        $this->config['defaults'] = $this->defaults = new ArrayObject(get_class_vars(Defaults::class));
+        $this->config['router'] = $this->router = new ArrayObject(get_class_vars(Router::class));
 
         if ($container) {
             $container->init($config);

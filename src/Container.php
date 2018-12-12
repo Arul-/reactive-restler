@@ -1,5 +1,6 @@
 <?php namespace Luracast\Restler;
 
+use ArrayObject;
 use Exception;
 use Luracast\Restler\Contracts\ContainerInterface;
 use Luracast\Restler\Exceptions\ContainerException;
@@ -193,7 +194,7 @@ class Container implements ContainerInterface
             }
             $class = ucfirst($parameter->name);
             if (class_exists($class) || $class = $this->aliases[$class] ?? false) {
-                $value = $this->config[$parameter->name] = get_class_vars($class);
+                $value = $this->config[$parameter->name] = new ArrayObject(get_class_vars($class));
                 return $value;
             }
         }
