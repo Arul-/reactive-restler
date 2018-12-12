@@ -1,6 +1,5 @@
 <?php namespace Luracast\Restler;
 
-use ArrayObject;
 use Exception;
 use Luracast\Restler\Contracts\ContainerInterface;
 use Luracast\Restler\Exceptions\ContainerException;
@@ -31,6 +30,11 @@ class Container implements ContainerInterface
     {
         $this->instances = [];
         $this->config = &$config;
+    }
+
+    public function config(string $name)
+    {
+        return $this->config[$name] ?? false;
     }
 
     /**
@@ -171,6 +175,10 @@ class Container implements ContainerInterface
                 $byRef
                     ? $dependencies[] = &$this->resolvePrimitive($parameter)
                     : $dependencies[] = $this->resolvePrimitive($parameter);
+            } elseif ($dependency->name === StaticProperties::class) {
+                $byRef
+                    ? $dependencies[] = &$this->resolveStaticProperties($parameter)
+                    : $dependencies[] = $this->resolveStaticProperties($parameter);
             } else {
                 $byRef
                     ? $dependencies[] = &$this->resolve($dependency->name)
@@ -181,6 +189,23 @@ class Container implements ContainerInterface
         return $dependencies;
     }
 
+    protected function &resolveStaticProperties(ReflectionParameter $parameter)
+    {
+        if ($value = $this->config[$parameter->name] ?? false) {
+            return $value;
+        }
+        $class = ucfirst($parameter->name);
+        if (class_exists($class) || $class = ClassName::get($class) ?? false) {
+            $value = $this->config[$parameter->name] = new StaticProperties(get_class_vars($class));
+            return $value;
+        }
+        if ($parameter->isDefaultValueAvailable()) {
+            return $parameter->getDefaultValue();
+        }
+
+        $this->unresolvablePrimitive($parameter);
+    }
+
     /**
      * @param ReflectionParameter $parameter
      * @return mixed|null|string
@@ -189,12 +214,7 @@ class Container implements ContainerInterface
     protected function &resolvePrimitive(ReflectionParameter $parameter)
     {
         if ($parameter->isArray()) {
-            if ($value = $this->config[$parameter->name] ?? false) {
-                return $value;
-            }
-            $class = ucfirst($parameter->name);
-            if (class_exists($class) || $class = $this->aliases[$class] ?? false) {
-                $value = $this->config[$parameter->name] = new ArrayObject(get_class_vars($class));
+            if (($value = $this->config[$parameter->name] ?? false) && is_array($value)) {
                 return $value;
             }
         }
