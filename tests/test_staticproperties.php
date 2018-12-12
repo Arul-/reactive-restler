@@ -30,12 +30,19 @@ class Holder
     }
 }
 
+/*
 $html = new StaticProperties(get_class_vars(Html::class));
-
-#$container = new Container();
-#$html = $container->make(Holder::class);
-
+$config = new StaticProperties(compact('html'));
+$container = new Container($config);
 $holder = new Holder($html);
+*/
+
+$container = new Container($config);
+$holder = $container->make(Holder::class);
+
 
 $holder->a();
 $holder->b();
+
+var_export($container->config('html'));
+
