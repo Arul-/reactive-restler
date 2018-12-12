@@ -9,6 +9,7 @@ use Luracast\Restler\MediaTypes\Json;
 use Luracast\Restler\MediaTypes\Xml;
 use Luracast\Restler\OpenApi3\Explorer;
 use Luracast\Restler\Router;
+use Luracast\Restler\StaticProperties;
 use Luracast\Restler\Utils\ClassName;
 use ratelimited\Authors as RateLimitedAuthors;
 use v1\BMI as BMI1;
@@ -31,8 +32,21 @@ RateLimiter::setIncludedPaths('examples/_009_rate_limiting');
  */
 class HtmlTest
 {
+    /**
+     * @var StaticProperties
+     */
+    private $html;
+
+    public function __construct(StaticProperties $html)
+    {
+        $this->html = $html;
+    }
+
     function index()
     {
+        $this->html['super'] = 'star';
+        var_export($this->html);
+        die();
         return ['a' => 1, 'b' => 2];
     }
 }

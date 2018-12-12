@@ -4,9 +4,11 @@
 namespace Luracast\Restler\MediaTypes;
 
 
+use ArrayObject;
 use Luracast\Restler\Contracts\ResponseMediaTypeInterface;
 use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\Restler;
+use Luracast\Restler\StaticProperties;
 
 class Html extends MediaType implements ResponseMediaTypeInterface
 {
@@ -47,11 +49,11 @@ class Html extends MediaType implements ResponseMediaTypeInterface
      */
     private $restler;
     /**
-     * @var array
+     * @var StaticProperties
      */
     private $html;
 
-    public function __construct(Restler $restler, array &$html)
+    public function __construct(Restler $restler, StaticProperties $html)
     {
         $this->restler = $restler;
         if (!static::$viewPath) {
