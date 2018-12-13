@@ -22,6 +22,7 @@ class Holder
     function a()
     {
         $this->html['viewPath'] = 'good';
+        $this->html->data->age = 26;
     }
 
     function b()

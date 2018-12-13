@@ -7,6 +7,11 @@ use BadMethodCallException;
 
 class StaticProperties extends ArrayObject
 {
+    public function __construct($input = array())
+    {
+        parent::__construct($input, self::ARRAY_AS_PROPS);
+    }
+
     public static function fromArray(array $input): self
     {
         $instance = new static($input);
