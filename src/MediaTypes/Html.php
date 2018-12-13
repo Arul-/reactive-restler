@@ -4,7 +4,6 @@
 namespace Luracast\Restler\MediaTypes;
 
 
-use ArrayObject;
 use Luracast\Restler\Contracts\ResponseMediaTypeInterface;
 use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\Restler;
@@ -62,8 +61,6 @@ class Html extends MediaType implements ResponseMediaTypeInterface
         }
         $this->html = &$html;
         $html['viewPath']='Gold';
-        var_export($html);
-        var_export($this->html);
     }
 
     public function encode($data, bool $humanReadable = false): string
