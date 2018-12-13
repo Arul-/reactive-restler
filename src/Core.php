@@ -99,7 +99,7 @@ abstract class Core
     /**
      * Core constructor.
      * @param ContainerInterface $container
-     * @param array $config
+     * @param array|ArrayAccess $config
      * @throws TypeError
      */
     public function __construct(ContainerInterface $container = null, &$config = [])
@@ -168,7 +168,7 @@ abstract class Core
                 $m['class'][$shortName][CommentParser::$embeddedDataName] ?? [];
             $name = lcfirst($shortName);
             if (!isset($this->config[$name])) {
-                $this->config[$name] = get_class_vars($fullName);
+                $this->config[$name] = new StaticProperties(get_class_vars($fullName));
             }
             foreach ($properties as $property => $value) {
                 if (isset($this->config[$name][$property])) {
