@@ -168,7 +168,7 @@ abstract class Core
                 $m['class'][$shortName][CommentParser::$embeddedDataName] ?? [];
             $name = lcfirst($shortName);
             if (!isset($this->config[$name])) {
-                $this->config[$name] = new StaticProperties(get_class_vars($fullName));
+                $this->config[$name] = StaticProperties::forClass($fullName);;
             }
             foreach ($properties as $property => $value) {
                 if (isset($this->config[$name][$property])) {
