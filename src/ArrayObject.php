@@ -12,6 +12,7 @@ use BadMethodCallException;
  * @method array combine(array $keys, array $values) Creates an array by using one array for keys and another for
  * its values
  */
+
 class ArrayObject extends Base
 {
     public function __construct($input = array())
@@ -31,6 +32,16 @@ class ArrayObject extends Base
                 return call_user_func_array($func, array_merge(array($this->getArrayCopy()), $argv));
         }
         throw new BadMethodCallException(__CLASS__ . '->' . $name);
+    }
+
+    public function merge(ArrayObject $arrayObject, bool $overwrite = false)
+    {
+        foreach ($arrayObject as $key => $val) {
+            if ($overwrite || !$this->offsetExists($key)) {
+                $this[$key] = $val;
+            }
+        }
+        return $this;
     }
 
     public static function fromArray(array $input)
