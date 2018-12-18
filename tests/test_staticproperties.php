@@ -7,6 +7,12 @@ use Luracast\Restler\StaticProperties;
 
 include __DIR__ . "/../vendor/autoload.php";
 
+$a = StaticProperties::fromArray(['a' => true]);
+$b = StaticProperties::fromArray(['b' => 5]);
+
+var_export($a->merge($b));
+die();
+
 class Holder
 {
     /**
