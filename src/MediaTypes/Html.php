@@ -4,10 +4,12 @@
 namespace Luracast\Restler\MediaTypes;
 
 
+use Luracast\Restler\ArrayObject;
 use Luracast\Restler\Contracts\ResponseMediaTypeInterface;
 use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\Restler;
 use Luracast\Restler\StaticProperties;
+use Throwable;
 
 class Html extends MediaType implements ResponseMediaTypeInterface
 {
@@ -51,49 +53,111 @@ class Html extends MediaType implements ResponseMediaTypeInterface
      * @var StaticProperties
      */
     private $html;
+    /**
+     * @var StaticProperties
+     */
+    private $defaults;
 
-    public function __construct(Restler $restler, StaticProperties $html)
+    public function __construct(Restler $restler, StaticProperties $html, StaticProperties $defaults)
     {
         $this->restler = $restler;
-        if (!static::$viewPath) {
-            $array = explode('vendor', __DIR__, 2);
-            static::$viewPath = $array[0] . 'views';
+        if (!$html->viewPath) {
+            $html->viewPath = dirname(dirname(__DIR__)) . DIRECTORY_SEPARATOR . 'views';
         }
-        $this->html = &$html;
-        $html['viewPath']='Gold';
+        $this->html = $html;
+        $this->defaults = $defaults;
+    }
+
+    public function guessViewName($path)
+    {
+        if (empty($path)) {
+            $path = 'index';
+        } elseif (strpos($path, '/')) {
+            $path .= '/index';
+        }
+        $file = $this->html['viewPath'] . '/' . $path . '.' . $this->getViewExtension();
+
+        return $this->html['useSmartViews'] && is_readable($file)
+            ? $path
+            : $this->html->errorView;
+    }
+
+    public function getViewExtension()
+    {
+        return $this->html['customTemplateExtensions'][$this->html['template']] ?? $this->html['template'];
     }
 
     public function encode($data, bool $humanReadable = false): string
     {
-        if (!is_readable(static::$viewPath)) {
-            throw new HttpException(
-                501,
-                'The views directory `'
-                . self::$viewPath . '` should exist with read permission.'
-            );
-        }
-        $data['basePath'] = dirname($_SERVER['SCRIPT_NAME']);
-        $data['baseUrl'] = $this->restler->baseUrl;
-        $data['currentPath'] = $this->restler->path;
-        $api = $data['api'] = $this->restler->apiMethodInfo;
-        $metadata = $api->metadata;
-        $exception = $this->restler->exception;
-        $success = is_null($exception);
-        $error = $success ? null : $exception->getMessage();
+        try {
+            if (!is_readable($this->html->viewPath)) {
+                throw new HttpException(
+                    501,
+                    'The views directory `'
+                    . $this->html->viewPath . '` should exist with read permission.'
+                );
+            }
+            $exception = $this->restler->exception;
+            $success = is_null($exception);
+            $error = $success ? null : $exception->getMessage();
+            $data = ArrayObject::fromArray([
+                'response' => $data,
+                'success' => $success,
+                'error' => $error
+            ]);
+            $data->basePath = dirname($_SERVER['SCRIPT_NAME']);
+            $data->baseUrl = $this->restler->baseUrl;
+            $data->currentPath = $this->restler->path;
+            $api = $data->api = $this->restler->apiMethodInfo;
+            $metadata = $api->metadata;
+            $view = $success ? 'view' : 'errorView';
+            $value = false;
+            if ($this->html['parseViewMetadata'] && isset($metadata[$view])) {
+                if (is_array($metadata[$view])) {
+                    $this->html['view'] = $metadata[$view]['description'];
+                    $value = $metadata[$view]['properties']['value'];
+                } else {
+                    $this->html['view'] = $metadata[$view];
+                }
+            } elseif (!$this->html['view']) {
+                $this->html['view'] = $this->guessViewName($this->restler->path);
+            }
+            if ($value) {
+                $data = $data->nested($value);
+            }
+            $data->merge($this->html['data']);
+            if (false === ($i = strrpos($this->html['view'], '.'))) {
+                $template = $this->html['template'];
+            } else {
+                $this->html['template'] = $template = substr($this->html['view'], $i + 1);
+                $this->html['view'] = substr($this->html['view'], 0, $i);
+            }
+            if (!$this->html['cacheDirectory']) {
+                $this->html['cacheDirectory'] = $this->defaults['cacheDirectory'] . DIRECTORY_SEPARATOR . $template;
 
-        $view = $success ? 'view' : 'errorView';
-
-        $data += static::$data;
-        if (false === ($i = strrpos(self::$view, '.'))) {
-            $template = self::$template;
-        } else {
-            self::$template = $template = substr(self::$view, $i + 1);
-            self::$view = substr(self::$view, 0, $i);
+            }
+            if (!file_exists($this->html['cacheDirectory'])) {
+                if (!mkdir($this->html['cacheDirectory'], 0770, true)) {
+                    throw new HttpException(500,
+                        'Unable to create cache directory `' . $this->html['cacheDirectory'] . '`');
+                }
+            }
+            if (method_exists($class = get_called_class(), $template)) {
+                return call_user_func("$class::$template", $data, $humanReadable);
+            }
+            throw new HttpException(500, "Unsupported template system `$template`");
+        } catch (Throwable $throwable) {
+            $this->html->parseViewMetadata = false;
+            $this->reset();
+            throw $throwable;
         }
+    }
 
-        if (method_exists($class = get_called_class(), $template)) {
-            return call_user_func("$class::$template", $data, $humanReadable);
-        }
-        throw new HttpException(500, "Unsupported template system `$template`");
+    private function reset()
+    {
+        $this->html->mime = 'text/html';
+        $this->html->extension = 'html';
+        $this->html->view = 'debug';
+        $this->html->template = 'php';
     }
 }

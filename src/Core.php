@@ -1,10 +1,8 @@
 <?php namespace Luracast\Restler;
 
 use ArrayAccess;
-use ArrayObject;
 use Exception;
-use Luracast\Restler\Contracts\{
-    AuthenticationInterface,
+use Luracast\Restler\Contracts\{AuthenticationInterface,
     ComposerInterface,
     ContainerInterface,
     FilterInterface,
@@ -12,15 +10,10 @@ use Luracast\Restler\Contracts\{
     ResponseMediaTypeInterface,
     SelectivePathsInterface,
     UsesAuthenticationInterface,
-    ValidationInterface
-};
-use Luracast\Restler\Exceptions\{
-    HttpException, InvalidAuthCredentials
-};
-use Luracast\Restler\MediaTypes\{
-    Json, UrlEncoded, Xml
-};
-use Luracast\Restler\Utils\{ApiMethodInfo, ClassName, CommentParser, Header, Text, Validator, ValidationInfo};
+    ValidationInterface};
+use Luracast\Restler\Exceptions\{HttpException, InvalidAuthCredentials};
+use Luracast\Restler\MediaTypes\{Json, UrlEncoded, Xml};
+use Luracast\Restler\Utils\{ApiMethodInfo, ClassName, CommentParser, Header, Text, ValidationInfo, Validator};
 use Psr\Http\Message\{ResponseInterface, ServerRequestInterface, UriInterface};
 use React\Promise\PromiseInterface;
 use ReflectionException;
@@ -76,15 +69,15 @@ abstract class Core
      */
     protected $container;
     /**
-     * @var iterable
+     * @var StaticProperties
      */
     protected $config;
     /**
-     * @var iterable
+     * @var StaticProperties
      */
     protected $defaults;
     /**
-     * @var iterable
+     * @var StaticProperties
      */
     protected $router;
     /**
@@ -114,8 +107,8 @@ abstract class Core
         $config = &$config ?? new ArrayObject();
         $this->config = &$config;
 
-        $this->config['defaults'] = $this->defaults = new ArrayObject(get_class_vars(Defaults::class));
-        $this->config['router'] = $this->router = new ArrayObject(get_class_vars(Router::class));
+        $this->config['defaults'] = $this->defaults = StaticProperties::forClass(Defaults::class);
+        $this->config['router'] = $this->router = StaticProperties::forClass(Router::class);
 
         if ($container) {
             $container->init($config);
@@ -129,34 +122,6 @@ abstract class Core
         $this->container = $container;
     }
 
-
-    /**
-     * reset all properties to initial stage
-     */
-    protected function reset()
-    {
-
-        $this->_authenticated = false;
-        $this->_authVerified = false;
-        $this->requestedApiVersion = 1;
-        $this->requestMethod = 'GET';
-        $this->requestFormatDiffered = false;
-        $this->_apiMethodInfo = null;
-        $this->responseFormat = null;
-        $this->_path = '';
-        $this->requestFormat = null;
-        $this->body = [];
-        $this->query = [];
-        $this->responseHeaders = [];
-        $this->responseCode = null;
-        $this->startTime = time();
-
-        $this->config['defaults'] = $this->defaults = get_class_vars(Defaults::class);
-        $this->config['router'] = $this->router = get_class_vars(Router::class);
-
-        $this->container->init($this->config);
-        $this->container->instance(Core::class, $this);
-    }
 
     public function make($className)
     {
@@ -198,8 +163,8 @@ abstract class Core
         $path = Text::removeCommon($uri->getPath(), $scriptName);
         $path = str_replace(
             array_merge(
-                $this->router['responseFormatMap']['extensions'],
-                $this->router['formatOverridesMap']['extensions']
+                $this->router['responseFormatMap']['extensions']->getArrayCopy(),
+                $this->router['formatOverridesMap']['extensions']->getArrayCopy()
             ),
             '',
             trim($path, '/')
@@ -336,39 +301,40 @@ abstract class Core
             $formats = explode(',', (string)$formats);
             foreach ($formats as $i => $f) {
                 if ($f = ClassName::resolve(trim($f), $metadata['scope'])) {
-                    if (!in_array($f, $this->router['formatOverridesMap'])) {
+                    if (!in_array($f, $this->router->formatOverridesMap->getArrayCopy())) {
                         throw new HttpException(
                             500,
                             "Given @format is not present in overriding formats. " .
-                            "Please call `Router::\$setOverridingResponseMediaTypes('$f');` first."
+                            "Please call `Router::setOverridingResponseMediaTypes('$f');` first."
                         );
                     }
-                    $formats[$i] = $f;
-                    if (is_a($f, RequestMediaTypeInterface::class, true)) {
-                        $readableFormats[] = $f;
-                    }
+                }
+                $formats[$i] = $f;
+                if (is_a($f, RequestMediaTypeInterface::class, true)) {
+                    $readableFormats[] = $f;
                 }
             }
-            /** @noinspection PhpInternalEntityUsedInspection */
-            Router::_setMediaTypes(RequestMediaTypeInterface::class, $readableFormats,
-                $this->router['requestFormatMap'],
-                $this->router['readableMediaTypes']);
-
-            if (
-                $this->requestFormatDiffered &&
-                !isset($this->router['requestFormatMap'][$this->requestFormat->mediaType()])
-            ) {
-                throw new HttpException(
-                    403,
-                    "Content type `'.$this->requestFormat->mediaType().'` is not supported."
-                );
-            }
-
-            /** @noinspection PhpInternalEntityUsedInspection */
-            Router::_setMediaTypes(ResponseMediaTypeInterface::class, $formats,
-                $this->router['responseFormatMap'],
-                $this->router['writableMediaTypes']);
         }
+        /** @noinspection PhpInternalEntityUsedInspection */
+        Router::_setMediaTypes(RequestMediaTypeInterface::class, $readableFormats,
+            $this->router['requestFormatMap'],
+            $this->router['readableMediaTypes']);
+
+        if (
+            $this->requestFormatDiffered &&
+            !isset($this->router['requestFormatMap'][$this->requestFormat->mediaType()])
+        ) {
+            throw new HttpException(
+                403,
+                "Content type `'.$this->requestFormat->mediaType().'` is not supported."
+            );
+        }
+
+        /** @noinspection PhpInternalEntityUsedInspection */
+        Router::_setMediaTypes(ResponseMediaTypeInterface::class, $formats,
+            $this->router['responseFormatMap'],
+            $this->router['writableMediaTypes']);
+
 
         // check if client has specified an extension
         /** @var $format ResponseMediaTypeInterface */
@@ -547,7 +513,6 @@ abstract class Core
         foreach ($this->router[$name] as $i => $filerClass) {
             //exclude invalid paths
             if (!static::isPathSelected($filerClass, $this->_path)) {
-                array_splice($this->router[$name], $i, 1);
                 continue;
             }
             /** @var FilterInterface $filter */
