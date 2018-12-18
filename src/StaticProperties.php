@@ -30,6 +30,7 @@ class StaticProperties extends ArrayObject
             case 'chunk':
             case 'column':
             case 'combine':
+                //TODO: add more array methods and document them
                 $func = "array_$name";
                 return call_user_func_array($func, array_merge(array($this->getArrayCopy()), $argv));
         }
@@ -50,5 +51,21 @@ class StaticProperties extends ArrayObject
     public static function forClass(string $className): self
     {
         return static::fromArray(get_class_vars($className));
+    }
+
+    public function nested(...$keys)
+    {
+        if (count($keys) == 1) {
+            $keys = explode('.', $keys[0]);
+        }
+        $from = $this;
+        foreach ($keys as $key) {
+            if (isset($from[$key])) {
+                $from = $from[$key];
+                continue;
+            }
+            return null;
+        }
+        return $from;
     }
 }
