@@ -45,8 +45,6 @@ class HtmlTest
     function index()
     {
         $this->html['super'] = 'star';
-        var_export($this->html);
-        die();
         return ['a' => 1, 'b' => 2];
     }
 }

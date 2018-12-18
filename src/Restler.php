@@ -76,15 +76,11 @@ class Restler extends Core
      */
     protected function respond($response = []): ResponseInterface
     {
-        echo "Responding \n";
-        var_dump(get_class($this->responseFormat));
         try {
             $body = is_null($response) ? '' : $this->responseFormat->encode($response, !Defaults::$productionMode);
         } catch (Throwable $throwable) {
-            $body = $this->message($throwable, $this->request->getHeaderLine('origin'));
+            $body = json_encode($this->message($throwable, $this->request->getHeaderLine('origin')));
         }
-
-        var_dump(($this->config['html']));
         //handle throttling
         if ($throttle = $this->defaults['throttle'] ?? 0) {
             $elapsed = time() - $this->startTime;
