@@ -9,12 +9,18 @@ class Dump
 
     public static function request(ServerRequestInterface $request): string
     {
+        $text = static::requestHeaders($request);
+        $text .= static::CRLF;
+        $text .= urldecode((string)$request->getBody()) . static::CRLF . static::CRLF;
+        return $text;
+    }
+
+    public static function requestHeaders(ServerRequestInterface $request): string
+    {
         $text = $request->getMethod() . ' ' . $request->getUri() . ' HTTP/' . $request->getProtocolVersion() . PHP_EOL;
         foreach ($request->getHeaders() as $k => $v) {
             $text .= ucwords($k) . ': ' . implode(', ', $v) . PHP_EOL;
         }
-        $text .= static::CRLF;
-        $text .= urldecode((string)$request->getBody()) . static::CRLF . static::CRLF;
         return $text;
     }
 
