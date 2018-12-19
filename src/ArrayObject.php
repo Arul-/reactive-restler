@@ -70,4 +70,9 @@ class ArrayObject extends Base
         }
         return $from;
     }
+
+    public function jsonSerialize()
+    {
+        return $this->getArrayCopy();
+    }
 }
