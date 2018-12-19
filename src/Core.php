@@ -666,7 +666,7 @@ abstract class Core
     {
         //only GET method should be cached if allowed by API developer
         $expires = $this->requestMethod == 'GET' ? $this->defaults['headerExpires'] : 0;
-        if (!is_array($this->defaults['headerCacheControl'])) {
+        if (!count($this->defaults['headerCacheControl'])) {
             $this->defaults['headerCacheControl'] = [$this->defaults['headerCacheControl']];
         }
         $cacheControl = $this->defaults['headerCacheControl'][0];
