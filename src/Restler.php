@@ -88,20 +88,20 @@ class Restler extends Core
                 usleep(1e6 * ($throttle / 1e3 - $elapsed));
             }
         }
-        if ($this->responseCode == 401 && !isset($this->responseHeaders['WWW-Authenticate'])) {
+        if ($this->responseCode == 401 && !isset($this->_responseHeaders['WWW-Authenticate'])) {
             $authString = count($this->router['authClasses'])
                 ? $this->router['authClasses'][0]::getWWWAuthenticateString()
                 : 'Unknown';
-            $this->responseHeaders['WWW-Authenticate'] = $authString;
+            $this->_responseHeaders['WWW-Authenticate'] = $authString;
         }
         return $this->container->make(ResponseInterface::class,
-            [$this->responseCode, $this->responseHeaders, $body]);
+            [$this->responseCode, $this->_responseHeaders, $body]);
     }
 
     protected function stream($data): ResponseInterface
     {
         return $this->container->make(ResponseInterface::class,
-            [$this->responseCode, $this->responseHeaders, $data]);
+            [$this->responseCode, $this->_responseHeaders, $data]);
     }
 
     public function handle(ServerRequestInterface $request = null): PromiseInterface
@@ -150,7 +150,7 @@ class Restler extends Core
             $data = $this->call($this->_apiMethodInfo);
             if ($data instanceof ResponseInterface) {
                 $this->composeHeaders(null, $this->request->getHeaderLine('origin'));
-                $headers = $data->getHeaders() + $this->responseHeaders;
+                $headers = $data->getHeaders() + $this->_responseHeaders;
                 $data = $this->container->make(ResponseInterface::class,
                     [$data->getStatusCode(), $headers, $data->getBody()]);
                 return new FulfilledPromise($data);

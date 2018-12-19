@@ -62,7 +62,7 @@ abstract class Core
     protected $body = [];
     protected $query = [];
 
-    protected $responseHeaders = [];
+    protected $_responseHeaders = [];
     protected $responseCode = null;
     /**
      * @var ContainerInterface
@@ -358,7 +358,7 @@ abstract class Core
                     $format = $this->make($this->router['responseFormatMap'][$accept]);
                     $format->mediaType($accept);
                     // Tell cache content is based on Accept header
-                    $this->responseHeaders['Vary'] = 'Accept';
+                    $this->_responseHeaders['Vary'] = 'Accept';
                     return $format;
 
                 } elseif (false !== ($index = strrpos($accept, '+'))) {
@@ -378,7 +378,7 @@ abstract class Core
                                 $format = $this->make($this->router['responseFormatMap'][$extension]);
                                 $format->mediaType("$vendor$version+$extension");
                                 //$this->app['useVendorMIMEVersioning'] = true;
-                                $this->responseHeaders['Vary'] = 'Accept';
+                                $this->_responseHeaders['Vary'] = 'Accept';
                                 return $format;
                             }
                         }
@@ -415,7 +415,7 @@ abstract class Core
             );
         } else {
             // Tell cache content is based at Accept header
-            $this->responseHeaders['Vary'] = 'Accept';
+            $this->_responseHeaders['Vary'] = 'Accept';
             return $format;
         }
     }
@@ -437,10 +437,10 @@ abstract class Core
             return;
         }
         if (!empty($accessControlRequestMethod)) {
-            $this->responseHeaders['Access-Control-Allow-Methods'] = $this->defaults['accessControlAllowMethods'];
+            $this->_responseHeaders['Access-Control-Allow-Methods'] = $this->defaults['accessControlAllowMethods'];
         }
         if (!empty($accessControlRequestHeaders)) {
-            $this->responseHeaders['Access-Control-Allow-Headers'] = $accessControlRequestHeaders;
+            $this->_responseHeaders['Access-Control-Allow-Headers'] = $accessControlRequestHeaders;
         }
         $e = new HttpException(200);
         $e->emptyMessageBody = true;
@@ -517,7 +517,7 @@ abstract class Core
             }
             /** @var FilterInterface $filter */
             $filter = $this->make($filerClass);
-            if (!$filter->__isAllowed($request, $this->responseHeaders)) {
+            if (!$filter->__isAllowed($request, $this->_responseHeaders)) {
                 throw new HttpException(403);
             }
         }
@@ -550,7 +550,7 @@ abstract class Core
                     }
                     /** @var AuthenticationInterface $auth */
                     $auth = $this->make($authClass);
-                    if (!$auth->__isAllowed($request, $this->responseHeaders)) {
+                    if (!$auth->__isAllowed($request, $this->_responseHeaders)) {
                         throw new HttpException(401);
                     }
                     $unauthorized = false;
@@ -677,31 +677,31 @@ abstract class Core
             $cacheControl = str_replace('{expires}', $expires, $cacheControl);
             $expires = gmdate('D, d M Y H:i:s \G\M\T', time() + $expires);
         }
-        $this->responseHeaders['Date'] = gmdate('D, d M Y H:i:s \G\M\T', $this->startTime);
-        $this->responseHeaders['Cache-Control'] = $cacheControl;
-        $this->responseHeaders['Expires'] = $expires;
-        $this->responseHeaders['X-Powered-By'] = 'Luracast Restler v' . static::VERSION;
+        $this->_responseHeaders['Date'] = gmdate('D, d M Y H:i:s \G\M\T', $this->startTime);
+        $this->_responseHeaders['Cache-Control'] = $cacheControl;
+        $this->_responseHeaders['Expires'] = $expires;
+        $this->_responseHeaders['X-Powered-By'] = 'Luracast Restler v' . static::VERSION;
 
         if ($this->defaults['crossOriginResourceSharing']) {
             if (!empty($origin)) {
-                $this->responseHeaders['Access-Control-Allow-Origin']
+                $this->_responseHeaders['Access-Control-Allow-Origin']
                     = $this->defaults['accessControlAllowOrigin'] == '*'
                     ? $origin
                     : $this->defaults['accessControlAllowOrigin'];
-                $this->responseHeaders['Access-Control-Allow-Credentials'] = 'true';
-                $this->responseHeaders['Access-Control-Max-Age'] = 86400;
+                $this->_responseHeaders['Access-Control-Allow-Credentials'] = 'true';
+                $this->_responseHeaders['Access-Control-Max-Age'] = 86400;
             } elseif ($this->requestMethod == 'OPTIONS') {
-                $this->responseHeaders['Access-Control-Allow-Origin']
+                $this->_responseHeaders['Access-Control-Allow-Origin']
                     = $this->defaults['accessControlAllowOrigin'];
-                $this->responseHeaders['Access-Control-Allow-Credentials'] = 'true';
+                $this->_responseHeaders['Access-Control-Allow-Credentials'] = 'true';
             }
         }
-        $this->responseHeaders['Content-Language'] = $this->defaults['language'];
+        $this->_responseHeaders['Content-Language'] = $this->defaults['language'];
 
         if (isset($info->metadata['header'])) {
             foreach ($info->metadata['header'] as $header) {
                 $parts = explode(': ', $header, 2);
-                $this->responseHeaders[$parts[0]] = $parts[1];
+                $this->_responseHeaders[$parts[0]] = $parts[1];
             }
         }
 
@@ -718,10 +718,10 @@ abstract class Core
         $charset = $this->responseFormat->charset()
             ?: $this->defaults['charset'];
 
-        $this->responseHeaders['Content-Type'] =
+        $this->_responseHeaders['Content-Type'] =
             $this->responseFormat->mediaType() . "; charset=$charset";
         if ($e && $e instanceof HttpException) {
-            $this->responseHeaders = $e->getHeaders() + $this->responseHeaders;
+            $this->_responseHeaders = $e->getHeaders() + $this->_responseHeaders;
         }
     }
 
