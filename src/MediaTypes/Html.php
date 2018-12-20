@@ -218,6 +218,12 @@ class Html extends MediaType implements ResponseMediaTypeInterface
                 $args = func_get_args();
                 $task = array_shift($args);
                 switch ($task) {
+                    case 'read':
+                        $file = $path . $args[0];
+                        if (is_readable($file)) {
+                            return file_get_contents($file);
+                        }
+                        break;
                     case 'require':
                     case 'include':
                         $file = $path . $args[0];
