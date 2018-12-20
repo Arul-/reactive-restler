@@ -5,7 +5,7 @@ use Luracast\Restler\Restler;
 use Luracast\Restler\Utils\Dump;
 use Psr\Http\Message\RequestInterface;
 
-$data['render'] = function ($data, $shadow = true) {
+$data['render'] = $render = function ($data, $shadow = true) use (&$render) {
     $r = '';
     if (empty($data)) {
         return $r;
@@ -19,9 +19,9 @@ $data['render'] = function ($data, $shadow = true) {
                 ? "<strong>[$key]</strong> "
                 : "<strong>$key: </strong>";
             $r .= '<span>';
-            if (is_array($value)) {
+            if (is_iterable($value)) {
                 // recursive
-                $r .= render($value, false);
+                $r .= $render($value, false);
             } else {
                 // value, with hyperlinked hyperlinks
                 if (is_bool($value)) {
