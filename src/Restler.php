@@ -88,20 +88,20 @@ class Restler extends Core
                 usleep(1e6 * ($throttle / 1e3 - $elapsed));
             }
         }
-        if ($this->responseCode == 401 && !isset($this->_responseHeaders['WWW-Authenticate'])) {
+        if ($this->_responseCode == 401 && !isset($this->_responseHeaders['WWW-Authenticate'])) {
             $authString = count($this->router['authClasses'])
                 ? $this->router['authClasses'][0]::getWWWAuthenticateString()
                 : 'Unknown';
             $this->_responseHeaders['WWW-Authenticate'] = $authString;
         }
         return $this->container->make(ResponseInterface::class,
-            [$this->responseCode, $this->_responseHeaders, $body]);
+            [$this->_responseCode, $this->_responseHeaders, $body]);
     }
 
     protected function stream($data): ResponseInterface
     {
         return $this->container->make(ResponseInterface::class,
-            [$this->responseCode, $this->_responseHeaders, $data]);
+            [$this->_responseCode, $this->_responseHeaders, $data]);
     }
 
     public function handle(ServerRequestInterface $request = null): PromiseInterface

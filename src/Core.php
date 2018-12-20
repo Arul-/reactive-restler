@@ -29,6 +29,8 @@ use TypeError;
  * @property int requestedApiVersion
  * @property ApiMethodInfo apiMethodInfo
  * @property HttpException exception
+ * @property array responseHeaders
+ * @property int responseCode
  */
 abstract class Core
 {
@@ -63,7 +65,7 @@ abstract class Core
     protected $query = [];
 
     protected $_responseHeaders = [];
-    protected $responseCode = null;
+    protected $_responseCode = null;
     /**
      * @var ContainerInterface
      */
@@ -709,11 +711,11 @@ abstract class Core
         if (!$this->defaults['suppressResponseCode']) {
             if ($e) {
                 $code = $e->getCode();
-            } elseif (!$this->responseCode && isset($info->metadata['status'])) {
+            } elseif (!$this->_responseCode && isset($info->metadata['status'])) {
                 $code = $info->metadata['status'];
             }
         }
-        $this->responseCode = $code;
+        $this->_responseCode = $code;
         $this->responseFormat->charset($this->defaults['charset']);
         $charset = $this->responseFormat->charset()
             ?: $this->defaults['charset'];
@@ -730,7 +732,7 @@ abstract class Core
         if (!$e instanceof HttpException) {
             $e = new HttpException($e->getCode(), $e->getMessage(), [], $e);
         }
-        $this->responseCode = $e->getCode();
+        $this->_responseCode = $e->getCode();
         $this->composeHeaders(
             $this->_apiMethodInfo,
             $origin,
