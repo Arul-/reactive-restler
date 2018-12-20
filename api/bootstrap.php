@@ -3,6 +3,7 @@
 use improved\Authors as ImprovedAuthors;
 use Luracast\Restler\Defaults;
 use Luracast\Restler\Cache\HumanReadableCache;
+use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\Filters\RateLimiter;
 use Luracast\Restler\MediaTypes\Html;
 use Luracast\Restler\MediaTypes\Json;
@@ -44,7 +45,8 @@ class HtmlTest
 
     function index()
     {
-        $this->html['super'] = 'star';
+        throw new HttpException(400);
+        $this->html->data['age'] = 'star';
         return ['a' => 1, 'b' => 2];
     }
 }
