@@ -159,7 +159,8 @@ class Restler extends Core
                 return new FulfilledPromise($this->stream($data));
             }
             return Async::await($data)->then(function ($data) {
-                return $this->respond($this->compose($data));
+                $data = $this->compose($data);
+                return $this->respond($data);
             });
         } catch (Throwable $error) {
             if (!$this->responseFormat) {
