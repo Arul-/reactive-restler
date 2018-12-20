@@ -5,6 +5,7 @@ namespace Luracast\Restler\MediaTypes;
 
 
 use Luracast\Restler\ArrayObject;
+use Luracast\Restler\Contracts\ContainerInterface;
 use Luracast\Restler\Contracts\ResponseMediaTypeInterface;
 use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\Restler;
@@ -57,8 +58,12 @@ class Html extends MediaType implements ResponseMediaTypeInterface
      * @var StaticProperties
      */
     private $defaults;
+    /**
+     * @var ContainerInterface
+     */
+    private $container;
 
-    public function __construct(Restler $restler, StaticProperties $html, StaticProperties $defaults)
+    public function __construct(Restler $restler, ContainerInterface $container, StaticProperties $html, StaticProperties $defaults)
     {
         $this->restler = $restler;
         if (!$html->viewPath) {
@@ -66,6 +71,7 @@ class Html extends MediaType implements ResponseMediaTypeInterface
         }
         $this->html = $html;
         $this->defaults = $defaults;
+        $this->container = $container;
     }
 
     public function guessViewName($path)
@@ -87,6 +93,16 @@ class Html extends MediaType implements ResponseMediaTypeInterface
         return $this->html['customTemplateExtensions'][$this->html['template']] ?? $this->html['template'];
     }
 
+    public function getViewFile($fullPath = false, $includeExtension = true): string
+    {
+        $v = $fullPath ? $this->html->viewPath . '/' : '';
+        $v .= $this->html->view;
+        if ($includeExtension) {
+            $v .= '.' . $this->getViewExtension();
+        }
+        return $v;
+    }
+
     public function encode($data, bool $humanReadable = false): string
     {
         try {
@@ -103,7 +119,9 @@ class Html extends MediaType implements ResponseMediaTypeInterface
             $data = ArrayObject::fromArray([
                 'response' => $data,
                 'success' => $success,
-                'error' => $error
+                'error' => $error,
+                'restler' => $this->restler,
+                'container' => $this->container
             ]);
             $data->basePath = dirname($_SERVER['SCRIPT_NAME']);
             $data->baseUrl = $this->restler->baseUrl;
@@ -159,5 +177,88 @@ class Html extends MediaType implements ResponseMediaTypeInterface
         $this->html->extension = 'html';
         $this->html->view = 'debug';
         $this->html->template = 'php';
+    }
+
+    public function php(ArrayObject $data, $debug = true)
+    {
+        if ($this->html->view == 'debug') {
+            $this->html->viewPath = dirname(__DIR__) . '/views';
+        }
+        $view = $this->getViewFile(true);
+        if (!is_readable($view)) {
+            throw new HttpException(
+                500,
+                "view file `$view` is not readable. " .
+                'Check for file presence and file permissions'
+            );
+        }
+        $path = $this->html->viewPath . DIRECTORY_SEPARATOR;
+        $template = function ($view) use ($data, $path) {
+            $form = function () {
+                return call_user_func_array(
+                    'Luracast\Restler\UI\Forms::get',
+                    func_get_args()
+                );
+            };
+            if (!isset($data['form'])) {
+                $data['form'] = $form;
+            }
+            $nav = function () {
+                return call_user_func_array(
+                    'Luracast\Restler\UI\Nav::get',
+                    func_get_args()
+                );
+            };
+            if (!isset($data['nav'])) {
+                $data['nav'] = $nav;
+            }
+
+            $_ = function () use ($data, $path) {
+                extract($data->getArrayCopy());
+                $args = func_get_args();
+                $task = array_shift($args);
+                switch ($task) {
+                    case 'require':
+                    case 'include':
+                        $file = $path . $args[0];
+                        if (is_readable($file)) {
+                            if (
+                                isset($args[1]) &&
+                                ($arrays = $data->nested($args[1]))
+                            ) {
+                                $str = '';
+                                foreach ($arrays as $arr) {
+                                    extract($arr->getArrayCopy());
+                                    $str .= include $file;
+                                }
+                                return $str;
+                            } else {
+                                return include $file;
+                            }
+                        }
+                        break;
+                    case 'if':
+                        if (count($args) < 2) {
+                            $args[1] = '';
+                        }
+                        if (count($args) < 3) {
+                            $args[2] = '';
+                        }
+                        return $args[0] ? $args[1] : $args[2];
+                        break;
+                    default:
+                        if (isset($data[$task]) && is_callable($data[$task])) {
+                            return call_user_func_array($data[$task], $args);
+                        }
+                }
+                return '';
+            };
+            extract($data->getArrayCopy());
+            return @include $view;
+        };
+        $value = $template($view);
+        if (is_string($value)) {
+            return $value;
+        }
     }
 }
