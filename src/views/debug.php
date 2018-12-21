@@ -5,6 +5,45 @@ use Luracast\Restler\Restler;
 use Luracast\Restler\Utils\Dump;
 use Psr\Http\Message\RequestInterface;
 
+function exceptions(Restler $r, $path)
+{
+    if ($source = $r->exception) {
+        $traces = array();
+        do {
+            $traces += $source->getTrace();
+        } while ($source = $source->getPrevious());
+        $traces += debug_backtrace();
+        return parse_backtrace($traces, $path, 0);
+    } else {
+        return parse_backtrace(debug_backtrace(), $path);
+    }
+
+}
+
+function parse_backtrace($raw, $path, $skip = 1)
+{
+    $base = strlen($path) + 1;
+    $output = [];
+    $index = 0;
+    foreach ($raw as $entry) {
+        if ($skip-- > 0) {
+            continue;
+        }
+        $key = '';
+        if (isset($entry['line'])) {
+            $file = substr($entry['file'], $base);
+            $key = "$file:" . $entry['line'].' ';
+        }
+        if (isset($entry['class'])) {
+            $output[++$index][$key] = ' '.$entry['class'] . "::" . $entry['function']
+                . '('  . ')'; //substr(json_encode($entry['args']), 1, -1)
+        }
+    }
+    return $output;
+}
+
+$trace = exceptions($restler, dirname($path, 2));
+
 $data['render'] = $render = function ($data, $shadow = true) use (&$render) {
     $r = '';
     if (empty($data)) {
@@ -98,6 +137,8 @@ return <<<TEMPLATE
             {$_('render', $response)}
             <h2>Additional Template Data:</h2>
             {$_('render', $template_vars)}
+            <h2>Trace:</h2>
+            {$_('render', $trace)}
             <p>Restler v{$version}</p>
         </article>
     </body>
