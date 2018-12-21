@@ -163,6 +163,7 @@ class Restler extends Core
                 return $this->respond($data);
             });
         } catch (Throwable $error) {
+            $this->_exception = $error;
             if (!$this->responseFormat) {
                 $this->responseFormat = new Json();
             }

@@ -89,7 +89,7 @@ abstract class Core
     /** @var UriInterface */
     private $_baseUrl;
     /** @var HttpException */
-    private $_exception;
+    protected $_exception;
 
     /**
      * Core constructor.
