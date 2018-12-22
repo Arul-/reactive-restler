@@ -44,7 +44,7 @@ class Html extends MediaType implements ResponseMediaTypeInterface
     /**
      * @var bool used internally for error handling
      */
-    protected static $parseViewMetadata = true;
+    protected $parseViewMetadata = true;
     /**
      * /**
      * @var Restler
@@ -63,8 +63,12 @@ class Html extends MediaType implements ResponseMediaTypeInterface
      */
     private $container;
 
-    public function __construct(Restler $restler, ContainerInterface $container, StaticProperties $html, StaticProperties $defaults)
-    {
+    public function __construct(
+        Restler $restler,
+        ContainerInterface $container,
+        StaticProperties $html,
+        StaticProperties $defaults
+    ) {
         $this->restler = $restler;
         if (!$html->viewPath) {
             $html->viewPath = dirname(dirname(__DIR__)) . DIRECTORY_SEPARATOR . 'views';
@@ -130,7 +134,7 @@ class Html extends MediaType implements ResponseMediaTypeInterface
             $metadata = $api->metadata;
             $view = $success ? 'view' : 'errorView';
             $value = false;
-            if ($this->html['parseViewMetadata'] && isset($metadata[$view])) {
+            if ($this->parseViewMetadata && isset($metadata[$view])) {
                 if (is_array($metadata[$view])) {
                     $this->html['view'] = $metadata[$view]['description'];
                     $value = $metadata[$view]['properties']['value'];
@@ -165,7 +169,7 @@ class Html extends MediaType implements ResponseMediaTypeInterface
             }
             throw new HttpException(500, "Unsupported template system `$template`");
         } catch (Throwable $throwable) {
-            $this->html->parseViewMetadata = false;
+            $this->parseViewMetadata = false;
             $this->reset();
             throw $throwable;
         }
@@ -234,7 +238,12 @@ class Html extends MediaType implements ResponseMediaTypeInterface
                             ) {
                                 $str = '';
                                 foreach ($arrays as $arr) {
-                                    extract($arr->getArrayCopy());
+                                    if ($arr instanceof ArrayObject) {
+                                        $arr = $arr->getArrayCopy();
+                                    }
+                                    if (is_array($arr)) {
+                                        extract($arr);
+                                    }
                                     $str .= include $file;
                                 }
                                 return $str;
