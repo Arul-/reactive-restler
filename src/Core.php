@@ -331,11 +331,12 @@ abstract class Core
                 "Content type `'.$this->requestFormat->mediaType().'` is not supported."
             );
         }
-
-        /** @noinspection PhpInternalEntityUsedInspection */
-        Router::_setMediaTypes(ResponseMediaTypeInterface::class, $formats,
-            $this->router['responseFormatMap'],
-            $this->router['writableMediaTypes']);
+        if (!is_null($formats)) {
+            /** @noinspection PhpInternalEntityUsedInspection */
+            Router::_setMediaTypes(ResponseMediaTypeInterface::class, $formats,
+                $this->router['responseFormatMap'],
+                $this->router['writableMediaTypes']);
+        }
 
 
         // check if client has specified an extension
