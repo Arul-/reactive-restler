@@ -11,9 +11,6 @@ $(document).ready(function () {
             var arr = $(".todoList").sortable('toArray');
 
             $.ajax({
-                beforeSend: function(xhr) {
-                    xhr.setRequestHeader('X-HTTP-Method-Override', 'PATCH');
-                },
                 url : 'tasks/' + id.replace('todo-', '') + '.json',
                 contentType : 'application/json',
                 type : 'PATCH',
@@ -121,9 +118,6 @@ $(document).ready(function () {
         var text = currentTODO.find("input[type=text]").val();
 
         $.ajax({
-            beforeSend: function(xhr) {
-                xhr.setRequestHeader('X-HTTP-Method-Override', 'PATCH');
-            },
             url : 'tasks/' + currentTODO.data('id') + '.json',
             type : 'PATCH',
             data : {text:text}

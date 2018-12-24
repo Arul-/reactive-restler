@@ -31,12 +31,13 @@ interface TasksInterface
     /**
      * Update a task
      *
-     * @param int   $id
+     * @param int $id
      * @param array $data
+     * @param bool $create
      *
      * @return Task
      */
-    public function update($id, array $data);
+    public function update($id, array $data, $create = true);
 
     /**
      * Delete a task

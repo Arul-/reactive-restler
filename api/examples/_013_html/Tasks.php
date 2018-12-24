@@ -1,7 +1,7 @@
 <?php
 
 use DB\TasksInterface;
-use DB\TasksInSession;
+use DB\TasksStore;
 use Luracast\Restler\StaticProperties;
 
 /**
@@ -18,7 +18,7 @@ class Tasks
     function __construct(StaticProperties $html)
     {
         if (!$this->db) {
-            $this->setDB(new TasksInSession());
+            $this->setDB(new TasksStore());
         }
         $html->data->title = 'What\'s Next on Restler 3?';
         $html->data->description = 'What should we focus on as the next?';
