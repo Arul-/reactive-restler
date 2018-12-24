@@ -27,29 +27,6 @@ Router::setApiVersion(2);
 RateLimiter::setLimit('hour', 10);
 RateLimiter::setIncludedPaths('examples/_009_rate_limiting');
 
-/**
- * Class HtmlTest
- * @format Html
- */
-class HtmlTest
-{
-    /**
-     * @var StaticProperties
-     */
-    private $html;
-
-    public function __construct(StaticProperties $html)
-    {
-        $this->html = $html;
-    }
-
-    function index()
-    {
-        throw new HttpException(400);
-        $this->html->data['age'] = 'star';
-        return ['a' => 1, 'b' => 2];
-    }
-}
 
 class ResetForTests
 {
@@ -94,6 +71,7 @@ try {
         'examples/_009_rate_limiting/authors' => RateLimitedAuthors::class,
         'examples/_010_access_control' => Access::class,
         'examples/_011_versioning/bmi' => BMI1::class,
+        'examples/_013_html/tasks' => Tasks::class,
         //tests
         'tests/param/minmax' => MinMax::class,
         'tests/param/minmaxfix' => MinMaxFix::class,
@@ -102,8 +80,6 @@ try {
         'tests/request_data' => Data::class,
         //Explorer
         'explorer' => Explorer::class,
-        //Temporary
-        'html' => HtmlTest::class,
     ]);
     Router::setOverridingResponseMediaTypes(Json::class, Xml::class, Html::class);
     SimpleAuth::setIncludedPaths('examples/_005_protected_api');
