@@ -4,6 +4,7 @@
 namespace Luracast\Restler\MediaTypes;
 
 
+use JsonSerializable;
 use Luracast\Restler\ArrayObject;
 use Luracast\Restler\Contracts\ContainerInterface;
 use Luracast\Restler\Contracts\ResponseMediaTypeInterface;
@@ -238,8 +239,8 @@ class Html extends MediaType implements ResponseMediaTypeInterface
                             ) {
                                 $str = '';
                                 foreach ($arrays as $arr) {
-                                    if ($arr instanceof ArrayObject) {
-                                        $arr = $arr->getArrayCopy();
+                                    if ($arr instanceof JsonSerializable) {
+                                        $arr = $arr->jsonSerialize();
                                     }
                                     if (is_array($arr)) {
                                         extract($arr);
