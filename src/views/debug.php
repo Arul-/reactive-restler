@@ -99,11 +99,12 @@ if ($success && isset($api)) {
         $title = 'No Matching Resource';
     }
 }
-$template_vars = $data;
+$template_vars = $data->getArrayCopy();
 unset($template_vars['response']);
 unset($template_vars['api']);
 unset($template_vars['request']);
 unset($template_vars['restler']);
+unset($template_vars['render']);
 
 $requestHeaders = Dump::requestHeaders($container->get(RequestInterface::class));
 $responseHeaders = 'HTTP/1.1 ' . $restler->responseCode . ' ' . HttpException::$codes[$restler->responseCode] . PHP_EOL;
