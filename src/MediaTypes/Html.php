@@ -282,8 +282,6 @@ class Html extends MediaType implements ResponseMediaTypeInterface
             return @include $view;
         };
         $value = $template($view);
-        if (is_string($value)) {
-            return $value;
-        }
+        return is_string($value) ? $value : '';
     }
 }
