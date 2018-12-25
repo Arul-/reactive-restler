@@ -11,10 +11,11 @@ $(document).ready(function () {
             var arr = $(".todoList").sortable('toArray');
 
             $.ajax({
-                url : 'tasks/' + id.replace('todo-', '') + '.json',
-                contentType : 'application/json',
-                type : 'PATCH',
-                data : '{"position":'+arr.indexOf(id)+'}'
+                url: 'tasks/' + id.replace('todo-', '') + '.json',
+                contentType: 'application/json',
+                type: 'PATCH',
+                dataType: 'json',
+                data: '{"position": ' + arr.indexOf(id) + '}'
             });
         },
 
@@ -118,9 +119,10 @@ $(document).ready(function () {
         var text = currentTODO.find("input[type=text]").val();
 
         $.ajax({
-            url : 'tasks/' + currentTODO.data('id') + '.json',
-            type : 'PATCH',
-            data : {text:text}
+            url: 'tasks/' + currentTODO.data('id') + '.json',
+            type: 'PATCH',
+            data: '{"' + text + '": "' + text + '"}',
+            dataType: 'json'
         });
 
         currentTODO.removeData('origText')
