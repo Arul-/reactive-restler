@@ -4,6 +4,7 @@
   "type": "project",
   "require": {
     "php": "^7.1",
+    "ext-json": "*",
     "psr/container": "^1.0",
     "guzzlehttp/guzzle": "~6.0",
     "ralouphie/getallheaders": "^2.0",
@@ -46,7 +47,8 @@
       "api/examples/_009_rate_limiting/ratelimited",
       "api/examples/_010_access_control",
       "api/examples/_011_versioning/v1",
-      "api/examples/_011_versioning/v2"
+      "api/examples/_011_versioning/v2",
+      "api/examples/_013_html"
     ]
   },
   "config": {

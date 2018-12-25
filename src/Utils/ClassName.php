@@ -3,11 +3,24 @@
 
 use Luracast\Restler\Defaults;
 use Luracast\Restler\Exceptions\HttpException;
+use Luracast\Restler\MediaTypes\{Amf, Html, Plist, Yaml};
 
 class ClassName
 {
 
     const NAMESPACE_SEPARATOR = '\\';
+
+    /**
+     * @var array class => [ package, used by class ]
+     */
+    public static $dependencies = [
+        'ZendAmf\Parser\Amf3\Deserializer' => ['zendframework/zendamf', Amf::class],
+        'CFPropertyList\CFPropertyList' => ['rodneyrehm/plist', Plist::class],
+        'Symfony\Component\Yaml\Yaml' => ['symfony/yaml', Yaml::class],
+        'Twig_Loader_Filesystem' => ['twig/twig:^2.0', Html::class],
+        'Mustache_Loader_FilesystemLoader' => ['mustache/mustache', Html::class],
+        'Illuminate\View\Engines\EngineResolver' => ['mustache/mustache', Html::class],
+    ];
 
     /**
      * Build versioned class name
@@ -87,9 +100,15 @@ class ClassName
         if (class_exists($interface)) {
             return $interface;
         }
+        if ($info = static::$dependencies[$interface]) {
+            $message = $info[1] . ' has external dependency. Please run `composer require ' .
+                $info[0] . '` from the project root. Read https://getcomposer.org for more info';
+        } else {
+            $message = 'Could not find a class for ' . $interface;
+        }
         throw new HttpException(
             501,
-            'Could not find a class for ' . $interface
+            $message
         );
     }
 

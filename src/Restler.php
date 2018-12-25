@@ -59,7 +59,7 @@ class Restler extends Core
     protected function compose($response = null)
     {
         $this->composeHeaders(
-            $this->apiMethodInfo,
+            $this->_apiMethodInfo,
             $this->request->getHeaderLine('origin')
         );
         /** @var ComposerInterface $compose */
@@ -76,8 +76,11 @@ class Restler extends Core
      */
     protected function respond($response = []): ResponseInterface
     {
-        $body = is_null($response) ? '' : $this->responseFormat->encode($response, !Defaults::$productionMode);
-
+        try {
+            $body = is_null($response) ? '' : $this->responseFormat->encode($response, !Defaults::$productionMode);
+        } catch (Throwable $throwable) {
+            $body = json_encode($this->message($throwable, $this->request->getHeaderLine('origin')));
+        }
         //handle throttling
         if ($throttle = $this->defaults['throttle'] ?? 0) {
             $elapsed = time() - $this->startTime;
@@ -85,20 +88,20 @@ class Restler extends Core
                 usleep(1e6 * ($throttle / 1e3 - $elapsed));
             }
         }
-        if ($this->responseCode == 401 && !isset($this->responseHeaders['WWW-Authenticate'])) {
+        if ($this->_responseCode == 401 && !isset($this->_responseHeaders['WWW-Authenticate'])) {
             $authString = count($this->router['authClasses'])
                 ? $this->router['authClasses'][0]::getWWWAuthenticateString()
                 : 'Unknown';
-            $this->responseHeaders['WWW-Authenticate'] = $authString;
+            $this->_responseHeaders['WWW-Authenticate'] = $authString;
         }
         return $this->container->make(ResponseInterface::class,
-            [$this->responseCode, $this->responseHeaders, $body]);
+            [$this->_responseCode, $this->_responseHeaders, $body]);
     }
 
     protected function stream($data): ResponseInterface
     {
         return $this->container->make(ResponseInterface::class,
-            [$this->responseCode, $this->responseHeaders, $data]);
+            [$this->_responseCode, $this->_responseHeaders, $data]);
     }
 
     public function handle(ServerRequestInterface $request = null): PromiseInterface
@@ -144,10 +147,10 @@ class Restler extends Core
             $this->authenticate($this->request);
             $this->filter($this->request, true);
             $this->validate();
-            $data = $this->call($this->apiMethodInfo);
+            $data = $this->call($this->_apiMethodInfo);
             if ($data instanceof ResponseInterface) {
                 $this->composeHeaders(null, $this->request->getHeaderLine('origin'));
-                $headers = $data->getHeaders() + $this->responseHeaders;
+                $headers = $data->getHeaders() + $this->_responseHeaders;
                 $data = $this->container->make(ResponseInterface::class,
                     [$data->getStatusCode(), $headers, $data->getBody()]);
                 return new FulfilledPromise($data);
@@ -156,9 +159,11 @@ class Restler extends Core
                 return new FulfilledPromise($this->stream($data));
             }
             return Async::await($data)->then(function ($data) {
-                return $this->respond($this->compose($data));
+                $data = $this->compose($data);
+                return $this->respond($data);
             });
         } catch (Throwable $error) {
+            $this->_exception = $error;
             if (!$this->responseFormat) {
                 $this->responseFormat = new Json();
             }

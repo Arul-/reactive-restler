@@ -3,8 +3,13 @@
 
 use Exception;
 use Luracast\Restler\Contracts\{
-    AccessControlInterface, AuthenticationInterface, FilterInterface, ProvidesMultiVersionApiInterface,
-    RequestMediaTypeInterface, ResponseMediaTypeInterface, UsesAuthenticationInterface
+    AccessControlInterface,
+    AuthenticationInterface,
+    FilterInterface,
+    ProvidesMultiVersionApiInterface,
+    RequestMediaTypeInterface,
+    ResponseMediaTypeInterface,
+    UsesAuthenticationInterface
 };
 use Luracast\Restler\Utils\ApiMethodInfo;
 use Luracast\Restler\Utils\Text;
@@ -159,8 +164,8 @@ class Router
     public static function _setMediaTypes(
         string $interface,
         array $types,
-        array &$formatMap,
-        array &$mediaTypes
+        &$formatMap,
+        &$mediaTypes
     ): void {
         $formatMap = [];
         $mediaTypes = [];
