@@ -17,7 +17,7 @@ class TasksStore implements TasksInterface
     function __construct(string $name = 'tasks')
     {
         if (empty(static::$folder)) {
-            static::$folder =  BASE . DIRECTORY_SEPARATOR . 'api/common/store' . DIRECTORY_SEPARATOR;
+            static::$folder = BASE . DIRECTORY_SEPARATOR . 'api/common/store' . DIRECTORY_SEPARATOR;
         }
         $this->file = $file = static::$folder . $name . '.serialized.php';
         /** load data from file **/
@@ -96,17 +96,17 @@ class TasksStore implements TasksInterface
         $task = $this->arr['rs'][$position];
         if (isset($data['text'])) {
             $this->modified = true;
+            $task->text = $data['text'];
         }
-        $task->text = $data['text'];
         if (isset($data['position'])) {
             $new_pos = min(count($this->arr['rs']), $data['position']);
             $new_pos = max(0, $new_pos);
+            //if position has changed re-arrange
             if ($position != $new_pos) {
-                //if position has changed re-arrange
+                $this->modified = true;
                 array_splice($this->arr['rs'], $position, 1);
                 array_splice($this->arr['rs'], $new_pos, 0, array($task));
                 $task->position = $new_pos;
-                $this->modified = true;
             }
         }
         $this->save();
