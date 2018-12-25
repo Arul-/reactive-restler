@@ -145,10 +145,19 @@ class Html extends MediaType implements ResponseMediaTypeInterface
             } elseif (!$this->html['view']) {
                 $this->html['view'] = $this->guessViewName($this->restler->path);
             }
+            $data->merge($this->html['data']);
             if ($value) {
                 $data = $data->nested($value);
+                if (is_object($data)) {
+                    $data = $data instanceof JsonSerializable
+                        ? $data->jsonSerialize()
+                        : get_object_vars($data);
+                }
+                if (!is_array($data)) {
+                    $data = ['data' => $data];
+                }
+                $data = ArrayObject::fromArray($data);
             }
-            $data->merge($this->html['data']);
             if (false === ($i = strrpos($this->html['view'], '.'))) {
                 $template = $this->html['template'];
             } else {
