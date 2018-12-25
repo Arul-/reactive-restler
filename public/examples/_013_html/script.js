@@ -120,9 +120,10 @@ $(document).ready(function () {
 
         $.ajax({
             url: 'tasks/' + currentTODO.data('id') + '.json',
+            contentType: 'application/json',
             type: 'PATCH',
-            data: '{"' + text + '": "' + text + '"}',
-            dataType: 'json'
+            dataType: 'json',
+            data: '{"text": "' + text + '"}'
         });
 
         currentTODO.removeData('origText')
