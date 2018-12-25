@@ -15,7 +15,8 @@
     "psy/psysh": "@stable",
     "react/event-loop": "@stable",
     "react/http": "@stable",
-    "workerman/workerman": "@dev"
+    "workerman/workerman": "@dev",
+    "twig/twig": "^2.0"
   },
   "license": "MIT",
   "authors": [
