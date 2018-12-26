@@ -4,10 +4,20 @@
 namespace Luracast\Restler\MediaTypes;
 
 
+use Illuminate\Events\Dispatcher;
+use Illuminate\Filesystem\Filesystem;
+use Illuminate\View\Compilers\BladeCompiler;
+use Illuminate\View\Engines\CompilerEngine;
+use Illuminate\View\Engines\EngineResolver;
+use Illuminate\View\Engines\PhpEngine;
+use Illuminate\View\Factory;
+use Illuminate\View\FileViewFinder;
+use Illuminate\View\View;
 use JsonSerializable;
 use Luracast\Restler\ArrayObject;
 use Luracast\Restler\Contracts\ContainerInterface;
 use Luracast\Restler\Contracts\ResponseMediaTypeInterface;
+use Luracast\Restler\Defaults;
 use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\Restler;
 use Luracast\Restler\StaticProperties;
@@ -372,5 +382,41 @@ class Html extends MediaType implements ResponseMediaTypeInterface
         }
         $m = new \Mustache_Engine($options);
         return $m->render($this->getViewFile(), $data);
+    }
+
+    public function blade(ArrayObject $data, $debug = true)
+    {
+        $resolver = new EngineResolver();
+        $filesystem = new Filesystem();
+        $compiler = new BladeCompiler($filesystem, $this->html->cacheDirectory);
+        $engine = new CompilerEngine($compiler);
+        $resolver->register('blade', function () use ($engine) {
+            return $engine;
+        });
+        $phpEngine = new PhpEngine();
+        $resolver->register('php', function () use ($phpEngine) {
+            return $phpEngine;
+        });
+
+        /** @var Restler $restler */
+        $restler = $this->restler;
+
+        //Lets expose shortcuts for our classes
+        spl_autoload_register(function ($className) use ($restler) {
+            if (isset($restler->apiMethodInfo->metadata['scope'][$className])) {
+                return class_alias($restler->apiMethodInfo->metadata['scope'][$className], $className);
+            }
+            if (isset(Defaults::$aliases[$className])) {
+                return class_alias(Defaults::$aliases[$className], $className);
+            }
+            return false;
+        }, true, true);
+
+        $viewFinder = new FileViewFinder($filesystem, [$this->html->viewPath]);
+        $factory = new Factory($resolver, $viewFinder, new Dispatcher());
+        $path = $viewFinder->find($this->html->view);
+        $view = new View($factory, $engine, $this->html->view, $path, $data);
+        $factory->callCreator($view);
+        return $view->render();
     }
 }

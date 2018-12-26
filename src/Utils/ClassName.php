@@ -19,7 +19,7 @@ class ClassName
         'Symfony\Component\Yaml\Yaml' => ['symfony/yaml', Yaml::class],
         'Twig_Loader_Filesystem' => ['twig/twig:^2.0', Html::class],
         'Mustache_Loader_FilesystemLoader' => ['mustache/mustache', Html::class],
-        'Illuminate\View\Engines\EngineResolver' => ['mustache/mustache', Html::class],
+        'Illuminate\View\Engines\EngineResolver' => ['illuminate/view', Html::class],
     ];
 
     /**

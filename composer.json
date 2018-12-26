@@ -17,7 +17,8 @@
     "react/http": "@stable",
     "workerman/workerman": "@dev",
     "twig/twig": "^2.0",
-    "mustache/mustache": "^2.12"
+    "mustache/mustache": "^2.12",
+    "illuminate/view": "^5.7"
   },
   "license": "MIT",
   "authors": [
