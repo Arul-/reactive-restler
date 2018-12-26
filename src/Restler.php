@@ -43,7 +43,7 @@ class Restler extends Core
     protected function negotiate(): void
     {
         $this->negotiateCORS(
-            $this->requestMethod,
+            $this->_requestMethod,
             $this->request->getHeaderLine('Access-Control-Request-Method'),
             $this->request->getHeaderLine('Access-Control-Request-Headers'),
             $this->request->getHeaderLine('origin')
@@ -132,7 +132,7 @@ class Restler extends Core
     {
         $this->container->instance(ServerRequestInterface::class, $request);
         $this->rawRequestBody = (string)$request->getBody();
-        $this->requestMethod = $request->getMethod();
+        $this->_requestMethod = $request->getMethod();
         $this->request = $request;
         try {
             try {

@@ -27,6 +27,7 @@ use TypeError;
  * @property bool authenticated
  * @property bool authVerified
  * @property int requestedApiVersion
+ * @property string requestMethod
  * @property ApiMethodInfo apiMethodInfo
  * @property HttpException exception
  * @property array responseHeaders
@@ -43,7 +44,7 @@ abstract class Core
      */
     public $requestedApiVersion = 1;
 
-    protected $requestMethod = 'GET';
+    protected $_requestMethod = 'GET';
     /**
      * @var bool
      */
@@ -246,9 +247,9 @@ abstract class Core
     protected function getBody(string $raw = ''): array
     {
         $r = [];
-        if ($this->requestMethod == 'PUT'
-            || $this->requestMethod == 'PATCH'
-            || $this->requestMethod == 'POST'
+        if ($this->_requestMethod == 'PUT'
+            || $this->_requestMethod == 'PATCH'
+            || $this->_requestMethod == 'POST'
         ) {
             $r = $this->requestFormat->decode($raw);
 
@@ -267,7 +268,7 @@ abstract class Core
     {
         $this->_apiMethodInfo = $o = Router::find(
             $this->_path,
-            $this->requestMethod,
+            $this->_requestMethod,
             $this->requestedApiVersion,
             $this->body + $this->query
         );
@@ -668,7 +669,7 @@ abstract class Core
     protected function composeHeaders(?ApiMethodInfo $info, string $origin = '', HttpException $e = null): void
     {
         //only GET method should be cached if allowed by API developer
-        $expires = $this->requestMethod == 'GET' ? $this->defaults['headerExpires'] : 0;
+        $expires = $this->_requestMethod == 'GET' ? $this->defaults['headerExpires'] : 0;
         if (!count($this->defaults['headerCacheControl'])) {
             $this->defaults['headerCacheControl'] = [$this->defaults['headerCacheControl']];
         }
@@ -693,7 +694,7 @@ abstract class Core
                     : $this->defaults['accessControlAllowOrigin'];
                 $this->_responseHeaders['Access-Control-Allow-Credentials'] = 'true';
                 $this->_responseHeaders['Access-Control-Max-Age'] = 86400;
-            } elseif ($this->requestMethod == 'OPTIONS') {
+            } elseif ($this->_requestMethod == 'OPTIONS') {
                 $this->_responseHeaders['Access-Control-Allow-Origin']
                     = $this->defaults['accessControlAllowOrigin'];
                 $this->_responseHeaders['Access-Control-Allow-Credentials'] = 'true';
