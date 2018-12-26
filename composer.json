@@ -16,7 +16,8 @@
     "react/event-loop": "@stable",
     "react/http": "@stable",
     "workerman/workerman": "@dev",
-    "twig/twig": "^2.0"
+    "twig/twig": "^2.0",
+    "mustache/mustache": "^2.12"
   },
   "license": "MIT",
   "authors": [

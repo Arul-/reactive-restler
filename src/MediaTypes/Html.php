@@ -341,4 +341,36 @@ class Html extends MediaType implements ResponseMediaTypeInterface
         $data = $data->getArrayCopy() ?? [];
         return $template->render($data) ?? '';
     }
+
+    public function handlebar(ArrayObject $data, $debug = true)
+    {
+        return $this->mustache($data, $debug);
+    }
+
+    public function mustache(ArrayObject $data, $debug = true)
+    {
+        if (!isset($data['nav'])) {
+            //$data['nav'] = array_values(Nav::get()); //TODO get nav to work
+        }
+        $options = array(
+            'loader' => new \Mustache_Loader_FilesystemLoader(
+                $this->html->viewPath,
+                array('extension' => $this->getViewExtension())
+            ),
+            'helpers' => array(
+                'form' => function ($text, \Mustache_LambdaHelper $m) {
+                    $params = explode(',', $m->render($text));
+                    return call_user_func_array(
+                        'Luracast\Restler\UI\Forms::get',
+                        $params
+                    );
+                },
+            )
+        );
+        if (!$debug) {
+            $options['cache'] = $this->html->cacheDirectory;
+        }
+        $m = new \Mustache_Engine($options);
+        return $m->render($this->getViewFile(), $data);
+    }
 }

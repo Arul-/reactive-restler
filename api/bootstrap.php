@@ -26,7 +26,7 @@ Defaults::$useVendorMIMEVersioning = true;
 Router::setApiVersion(2);
 RateLimiter::setLimit('hour', 10);
 RateLimiter::setIncludedPaths('examples/_009_rate_limiting');
-Html::$template = 'twig'; //'php';
+Html::$template = 'handlebar'; //'twig'; //'php';
 
 
 class ResetForTests
