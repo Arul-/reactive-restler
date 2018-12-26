@@ -166,7 +166,6 @@ class Html extends MediaType implements ResponseMediaTypeInterface
             }
             if (!$this->html['cacheDirectory']) {
                 $this->html['cacheDirectory'] = $this->defaults['cacheDirectory'] . DIRECTORY_SEPARATOR . $template;
-
             }
             if (!file_exists($this->html['cacheDirectory'])) {
                 if (!mkdir($this->html['cacheDirectory'], 0770, true)) {
@@ -283,5 +282,63 @@ class Html extends MediaType implements ResponseMediaTypeInterface
         };
         $value = $template($view);
         return is_string($value) ? $value : '';
+    }
+
+    /**
+     * @param ArrayObject $data
+     * @param bool $debug
+     * @return false|string
+     * @throws Throwable
+     * @throws \Twig_Error_Loader
+     * @throws \Twig_Error_Runtime
+     * @throws \Twig_Error_Syntax
+     */
+    public function twig(ArrayObject $data, $debug = true)
+    {
+        $loader = new \Twig_Loader_Filesystem($this->html->viewPath);
+        $twig = new \Twig_Environment($loader, array(
+            'cache' => $this->html->cacheDirectory,
+            'debug' => $debug,
+            'use_strict_variables' => $debug,
+        ));
+        if ($debug) {
+            $twig->addExtension(new \Twig_Extension_Debug());
+        }
+
+        $twig->addFunction(
+            new \Twig_SimpleFunction(
+                'form',
+                'Luracast\Restler\UI\Forms::get',
+                array('is_safe' => array('html'))
+            )
+        );
+        $twig->addFunction(
+            new \Twig_SimpleFunction(
+                'form_key',
+                'Luracast\Restler\UI\Forms::key'
+            )
+        );
+        $twig->addFunction(
+            new \Twig_SimpleFunction(
+                'nav',
+                'Luracast\Restler\UI\Nav::get'
+            )
+        );
+
+        $twig->registerUndefinedFunctionCallback(function ($name) {
+            if (
+                isset($this->html->data[$name]) &&
+                is_callable($this->html->data[$name])
+            ) {
+                return new \Twig_SimpleFunction(
+                    $name,
+                    $this->html->data[$name]
+                );
+            }
+            return false;
+        });
+        $template = $twig->loadTemplate($this->getViewFile());
+        $data = $data->getArrayCopy() ?? [];
+        return $template->render($data) ?? '';
     }
 }

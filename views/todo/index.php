@@ -7,7 +7,7 @@
     <base href="{$basePath}/examples/_013_html/"/>
     <title>{$title}</title>
 
-    <!-- Including the jQuery UI Human Theme -->
+    <!-- Including the jQuery UI Theme -->
     <link rel="stylesheet"
           href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.min.css"
           type="text/css" media="all"/>
