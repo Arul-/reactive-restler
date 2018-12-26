@@ -51,7 +51,8 @@
       "api/examples/_010_access_control",
       "api/examples/_011_versioning/v1",
       "api/examples/_011_versioning/v2",
-      "api/examples/_013_html"
+      "api/examples/_013_html",
+      "api/examples/_016_forms"
     ]
   },
   "config": {

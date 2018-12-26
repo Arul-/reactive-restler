@@ -73,6 +73,7 @@ try {
         'examples/_010_access_control' => Access::class,
         'examples/_011_versioning/bmi' => BMI1::class,
         'examples/_013_html/tasks' => Tasks::class,
+        'examples/_016_forms/users' => Users::class,
         //tests
         'tests/param/minmax' => MinMax::class,
         'tests/param/minmaxfix' => MinMaxFix::class,
