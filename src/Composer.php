@@ -49,10 +49,21 @@ class Composer implements ComposerInterface
             $r += [
                 'debug' => [
                     'source' => $exception->getSource(),
-                    'trace' => $innerException->getTrace()
+                    'trace' => array_map([static::class,'simplifyTrace'],$innerException->getTrace())
                 ],
             ];
         }
         return $r;
+    }
+
+    public static function simplifyTrace(array $trace)
+    {
+        $class = array_pop(explode('\\', $trace['class']));
+
+        return [
+            'file' => array_pop(explode('/', $trace['file'])) . ':' . $trace['line'],
+            'function' => $class . $trace['type'] . $trace['function'],
+            'args' => $trace['args'],
+        ];
     }
 }
