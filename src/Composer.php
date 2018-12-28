@@ -35,18 +35,23 @@ class Composer implements ComposerInterface
      */
     public function message(HttpException $exception)
     {
-        $r = array(
-            'error' => array(
+        $r = [
+            'error' => [
                     'code' => $exception->getCode(),
                     'message' => $exception->getErrorMessage(),
-                ) + $exception->getDetails()
-        );
+                ] + $exception->getDetails()
+        ];
         if (!Defaults::$productionMode && self::$includeDebugInfo) {
-            $r += array(
-                'debug' => array(
-                    'source' => $exception->getSource()
-                )
-            );
+            $innerException = $exception;
+            while ($prev = $innerException->getPrevious()) {
+                $innerException = $prev;
+            }
+            $r += [
+                'debug' => [
+                    'source' => $exception->getSource(),
+                    'trace' => $innerException->getTrace()
+                ],
+            ];
         }
         return $r;
     }
