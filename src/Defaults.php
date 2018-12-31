@@ -16,6 +16,9 @@ use Luracast\Restler\Contracts\{
 use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\Filters\RateLimiter;
 use Luracast\Restler\MediaTypes\{Amf, Csv, Html, Js, Json, Plist, Tsv, Upload, UrlEncoded, Xml, Yaml};
+use Luracast\Restler\UI\Forms;
+use Luracast\Restler\UI\Nav;
+use Luracast\Restler\Utils\Text;
 use Luracast\Restler\Utils\Validator;
 use Psr\{
     Http\Message\RequestInterface, Http\Message\ResponseInterface, Http\Message\ServerRequestInterface
@@ -336,5 +339,10 @@ class Defaults
         'JsonFormat' => Json::class,
         'JsFormat' => Js::class,
         'XmlFormat' => Xml::class,
+        //Utils
+        'Text' => Text::class,
+        //UI
+        'Forms' => Forms::class,
+        'Nav' => Nav::class
     ];
 }
