@@ -332,7 +332,7 @@ abstract class Core
                 "Content type `'.$this->requestFormat->mediaType().'` is not supported."
             );
         }
-        if (!is_null($formats)) {
+        if (is_array($formats) && count($formats)) {
             /** @noinspection PhpInternalEntityUsedInspection */
             Router::_setMediaTypes(ResponseMediaTypeInterface::class, $formats,
                 $this->router['responseFormatMap'],
@@ -549,7 +549,8 @@ abstract class Core
                 try {
                     //exclude invalid paths
                     if (!static::isPathSelected($authClass, $this->_path)) {
-                        array_splice($this->router['authClasses'], $i, 1);
+                        $this->router->authClasses->splice($i, 1);
+                        //array_splice($this->router['authClasses'], $i, 1);
                         continue;
                     }
                     /** @var AuthenticationInterface $auth */
@@ -559,8 +560,10 @@ abstract class Core
                     }
                     $unauthorized = false;
                     //make this auth class as the first one
-                    array_splice($this->router['authClasses'], $i, 1);
-                    array_unshift($this->router['authClasses'], $authClass);
+                    $this->router->authClasses->splice($i, 1);
+                    $this->router->authClasses->unshift($authClass);
+                    //array_splice($this->router['authClasses'], $i, 1);
+                    //array_unshift($this->router['authClasses'], $authClass);
                     break;
                 } catch (InvalidAuthCredentials $e) { //provided credentials does not authenticate
                     $this->_authenticated = false;
