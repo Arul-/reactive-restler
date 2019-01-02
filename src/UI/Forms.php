@@ -119,7 +119,7 @@ class Forms implements FilterInterface
                 $action = $this->restler->path;
             }
 
-            $info = $this->restler->path == $action
+            $this->apiMethodInfo = $info = $this->restler->path == $action
             && $this->restler->requestMethod == $method
                 ? $this->apiMethodInfo
                 : Router::find(
@@ -177,22 +177,21 @@ class Forms implements FilterInterface
             }
         }
 
-        $s = array(
+        $s = [
             'tag' => 'button',
             'type' => 'submit',
-            'label' =>
-                Util::nestedValue($m, 'return', CommentParser::$embeddedDataName, 'label')
-                    ?: 'Submit'
-        );
+            'label' => $m['return'][CommentParser::$embeddedDataName]['label']
+                ?? 'Submit'
+        ];
 
         if (!$dataOnly) {
             $s = Emmet::make(static::style('submit', $m), $s);
         }
         $r[] = $s;
-        $t = array(
+        $t = [
             'action' => $this->restler->baseUrl . '/' . rtrim($action, '/'),
             'method' => $method,
-        );
+        ];
         if ($this->fileUpload) {
             $this->fileUpload = false;
             $t['enctype'] = 'multipart/form-data';
@@ -229,7 +228,7 @@ class Forms implements FilterInterface
         $m = $this->apiMethodInfo->metadata;
         $params = $m['param'];
         $values = $this->apiMethodInfo->parameters;
-        $r = array();
+        $r = [];
         foreach ($params as $k => $p) {
             $value = $values[$k] ?? null;
             if (
