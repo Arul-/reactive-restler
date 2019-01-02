@@ -1,16 +1,16 @@
 <?php declare(strict_types=1);
 
 use improved\Authors as ImprovedAuthors;
-use Luracast\Restler\Defaults;
 use Luracast\Restler\Cache\HumanReadableCache;
-use Luracast\Restler\Exceptions\HttpException;
+use Luracast\Restler\Defaults;
 use Luracast\Restler\Filters\RateLimiter;
 use Luracast\Restler\MediaTypes\Html;
 use Luracast\Restler\MediaTypes\Json;
 use Luracast\Restler\MediaTypes\Xml;
 use Luracast\Restler\OpenApi3\Explorer;
 use Luracast\Restler\Router;
-use Luracast\Restler\StaticProperties;
+use Luracast\Restler\UI\Forms;
+use Luracast\Restler\UI\FormStyles;
 use Luracast\Restler\Utils\ClassName;
 use ratelimited\Authors as RateLimitedAuthors;
 use v1\BMI as BMI1;
@@ -27,6 +27,54 @@ Router::setApiVersion(2);
 RateLimiter::setLimit('hour', 10);
 RateLimiter::setIncludedPaths('examples/_009_rate_limiting');
 Html::$template = 'blade'; //'handlebar'; //'twig'; //'php';
+$themes4 = [
+    'cerulean',
+    'cosmo',
+    'cyborg',
+    'darkly',
+    'flatly',
+    'journal',
+    'litera',
+    'lumen',
+    'lux',
+    'materia',
+    'minty',
+    'pulse',
+    'sandstone',
+    'simplex',
+    'sketchy',
+    'slate',
+    'solar',
+    'spacelab',
+    'superhero',
+    'united',
+    'yeti',
+];
+//bootstarp 3
+$themes = [
+    'cerulean',
+    'cosmo',
+    'cyborg',
+    'darkly',
+    'flatly',
+    'journal',
+    'lumen',
+    'paper',
+    'readable',
+    'sandstone',
+    'simplex',
+    'slate',
+    'solar',
+    'spacelab',
+    'superhero',
+    'united',
+    'yeti',
+];
+$theme = $themes[array_rand($themes, 1)];
+$style = $theme == 'foundation5' ? 'foundation5' : 'bootstrap3';
+Html::$data += compact('theme', 'themes', 'style');
+
+Forms::$style = FormStyles::$$style;
 
 
 class ResetForTests

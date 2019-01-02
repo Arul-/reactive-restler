@@ -1,10 +1,14 @@
 <?php
 
+/**
+ * Class Users
+ * @format Html,Json
+ */
 class Users
 {
     function index()
     {
-        return array();
+        return [];
     }
 
     /**

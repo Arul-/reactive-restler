@@ -7,10 +7,10 @@
     <meta name="description" content="">
     <meta name="author" content="">
 
-    <title>Forms Example - Twitter Bootsrap 3 - {{ String::title($theme) }}</title>
+    <title>Forms Example - Twitter Bootsrap 3 - {{ Text::title($theme) }}</title>
 
     <!-- Bootstrap core CSS -->
-    <link href="http://bootswatch.com/{{ $theme }}/bootstrap.min.css" rel="stylesheet">
+    <link href="http://bootswatch.com/3/{{ $theme }}/bootstrap.min.css" rel="stylesheet">
 </head>
 
 <body>
@@ -25,18 +25,18 @@
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
             </button>
-            <a class="navbar-brand" href="#">Twitter Bootsrap 3 - {{ String::title($theme) }}</a>
+            <a class="navbar-brand" href="#">Twitter Bootsrap 3 - {{ Text::title($theme) }}</a>
         </div>
         <div class="navbar-collapse collapse">
             <ul class="nav navbar-nav navbar-right">
                 <li class="dropdown">
                     <a href="#" class="dropdown-toggle" data-toggle="dropdown">Choose Your Style<b
-                            class="caret"></b></a>
+                                class="caret"></b></a>
                     <ul class="dropdown-menu">
                         <li><a href="?theme=foundation5">Foundation</a></li>
                         <li class="dropdown-header">Bootstrap Themes</li>
                         @foreach ($themes as $option)
-                        <li><a href="?theme={{ $option }}">{{ String::title($option) }}</a></li>
+                            <li><a href="?theme={{ $option }}">{{ Text::title($option) }}</a></li>
                         @endforeach
                     </ul>
                 </li>
@@ -47,7 +47,7 @@
 
                     <div class="dropdown-menu" style="padding: 15px; padding-bottom: 0px;">
                         <!-- Login form here -->
-                        {{ Forms::get('POST', 'users/signin') }}
+                        {!! $forms->get('POST', 'examples/_016_forms/users/signin') !!}
                         <p>&nbsp;</p>
                     </div>
                 </li>
@@ -68,7 +68,7 @@
             </div>
             <div class="col-md-8">
                 <h3>Sign Up</h3>
-                {{ Forms::get('POST', 'users/signup') }}
+                {!! $forms->get('POST', $path.'examples/_016_forms/users/signup') !!}
             </div>
         </div>
     </div>
