@@ -21,6 +21,8 @@ use Luracast\Restler\Defaults;
 use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\Restler;
 use Luracast\Restler\StaticProperties;
+use Luracast\Restler\UI\Forms;
+use Luracast\Restler\UI\Nav;
 use Throwable;
 
 class Html extends MediaType implements ResponseMediaTypeInterface
@@ -97,7 +99,7 @@ class Html extends MediaType implements ResponseMediaTypeInterface
             $path .= '/index';
         }
         $file = $this->html['viewPath'] . '/' . $path . '.' . $this->getViewExtension();
-
+        $this->html->data['guessedView'] = $file;
         return $this->html['useSmartViews'] && is_readable($file)
             ? $path
             : $this->html->errorView;
@@ -153,7 +155,9 @@ class Html extends MediaType implements ResponseMediaTypeInterface
                     $this->html['view'] = $metadata[$view];
                 }
             } elseif (!$this->html['view']) {
-                $this->html['view'] = $this->guessViewName($this->restler->path);
+                $file = explode('/', $this->restler->path);
+                $file = end($file);
+                $this->html['view'] = $this->guessViewName($file);
             }
             $data->merge($this->html['data']);
             if ($value) {
@@ -415,6 +419,8 @@ class Html extends MediaType implements ResponseMediaTypeInterface
         $viewFinder = new FileViewFinder($filesystem, [$this->html->viewPath]);
         $factory = new Factory($resolver, $viewFinder, new Dispatcher());
         $path = $viewFinder->find($this->html->view);
+        $data->forms = $this->container->make(Forms::class);
+        $data->nav = $this->container->make(Nav::class);
         $view = new View($factory, $engine, $this->html->view, $path, $data);
         $factory->callCreator($view);
         return $view->render();
