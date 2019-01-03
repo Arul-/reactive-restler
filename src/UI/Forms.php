@@ -200,7 +200,7 @@ class Forms implements FilterInterface
             $t += $m[CommentParser::$embeddedDataName];
         }
         if (!$dataOnly) {
-            $t = Emmet::make(static::style('form', $m), $t);
+            $t = Emmet::make($this->style('form', $m), $t);
             $t->prefix = $prefix;
             $t->indent = $indent;
             $t[] = $r;
@@ -210,14 +210,14 @@ class Forms implements FilterInterface
         return $t;
     }
 
-    public static function style($name, array $metadata, $type = '')
+    public function style($name, array $metadata, $type = '')
     {
         return isset($metadata[CommentParser::$embeddedDataName][$name])
             ? $metadata[CommentParser::$embeddedDataName][$name]
-            : (!empty($type) && isset(static::$style["$name-$type"])
-                ? static::$style["$name-$type"]
-                : (isset(static::$style[$name])
-                    ? static::$style[$name]
+            : (!empty($type) && isset($this->forms->style["$name-$type"])
+                ? $this->forms->style["$name-$type"]
+                : (isset($this->forms->style[$name])
+                    ? $this->forms->style[$name]
                     : null
                 )
             );
