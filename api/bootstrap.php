@@ -70,7 +70,7 @@ $themes = [
     'united',
     'yeti',
 ];
-$theme = $themes[array_rand($themes, 1)];
+$theme = 'foundation5'; //$themes[array_rand($themes, 1)];
 $style = $theme == 'foundation5' ? 'foundation5' : 'bootstrap3';
 Html::$data += compact('theme', 'themes', 'style');
 
