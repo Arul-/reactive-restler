@@ -121,7 +121,7 @@ class Forms implements FilterInterface
 
             $this->apiMethodInfo = $info = $this->restler->path == $action
             && $this->restler->requestMethod == $method
-                ? $this->apiMethodInfo
+                ? $this->restler->apiMethodInfo
                 : Router::find(
                     trim($action, '/'),
                     $method,
@@ -228,8 +228,6 @@ class Forms implements FilterInterface
         $m = $this->apiMethodInfo->metadata;
         $params = $m['param'];
         $values = $this->apiMethodInfo->parameters;
-        //print_r($params);
-        print_r($values);
         $r = [];
         foreach ($params as $k => $p) {
             $value = $values[$k] ?? null;
