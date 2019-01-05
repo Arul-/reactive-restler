@@ -254,8 +254,8 @@ abstract class Core
             $r = $this->requestFormat->decode($raw);
 
             $r = is_array($r)
-                ? array_merge($r, array($this->defaults['fullRequestDataName'] => $r))
-                : array($this->defaults['fullRequestDataName'] => $r);
+                ? array_merge($r, [$this->defaults['fullRequestDataName'] => $r])
+                : [$this->defaults['fullRequestDataName'] => $r];
         }
         return $r;
     }
@@ -658,10 +658,10 @@ abstract class Core
                 );
                 break;
             default :
-                $result = call_user_func_array(array(
+                $result = call_user_func_array([
                     $object,
                     $info->methodName
-                ), $info->parameters);
+                ], $info->parameters);
         }
         return $result;
     }

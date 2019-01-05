@@ -357,11 +357,11 @@ class Router
             ) {
                 continue;
             }
-            $arguments = array();
-            $defaults = array();
+            $arguments = [];
+            $defaults = [];
             $params = $method->getParameters();
             $position = 0;
-            $pathParams = array();
+            $pathParams = [];
             $allowAmbiguity
                 = (isset($metadata['smart-auto-routing'])
                     && $metadata['smart-auto-routing'] != 'true')
@@ -375,7 +375,7 @@ class Router
                     = $classMetadata['longDescription'];
             }
             if (!isset($metadata['param'])) {
-                $metadata['param'] = array();
+                $metadata['param'] = [];
             }
             if (isset($metadata['return']['type'])) {
                 if ($qualified = ClassName::resolve($metadata['return']['type'], $scope)) {
@@ -387,19 +387,19 @@ class Router
                 $metadata['return']['type'] = 'array';
             }
             foreach ($params as $param) {
-                $children = array();
+                $children = [];
                 $type =
                     $param->isArray() ? 'array' : $param->getClass();
                 $arguments[$param->getName()] = $position;
                 $defaults[$position] = $param->isDefaultValueAvailable() ?
                     $param->getDefaultValue() : null;
                 if (!isset($metadata['param'][$position])) {
-                    $metadata['param'][$position] = array();
+                    $metadata['param'][$position] = [];
                 }
                 $m = &$metadata ['param'] [$position];
                 $m ['name'] = $param->getName();
                 if (!isset($m[$dataName])) {
-                    $m[$dataName] = array();
+                    $m[$dataName] = [];
                 }
                 $p = &$m[$dataName];
                 if (empty($m['label'])) {
@@ -657,7 +657,7 @@ class Router
         }
         $status = 404;
         $message = null;
-        $methods = array();
+        $methods = [];
         if (isset($p[$path][$httpMethod])) {
             //================== static routes ==========================
             return static::populate($p[$path][$httpMethod], $data);
@@ -672,7 +672,7 @@ class Router
                     $path = substr($path, strlen($key) + 1);
                     $call = ApiMethodInfo::__set_state($value[$httpMethod]);
                     $call->parameters = empty($path)
-                        ? array()
+                        ? []
                         : explode('/', $path);
                     return $call;
                 }
@@ -690,8 +690,8 @@ class Router
             if (!isset($value[$httpMethod])) {
                 continue;
             }
-            $regex = str_replace(array('{', '}'),
-                array('(?P<', '>[^/]+)'), $key);
+            $regex = str_replace(['{', '}'],
+                ['(?P<', '>[^/]+)'], $key);
             if (preg_match_all(":^$regex$:i", $path, $matches, PREG_SET_ORDER)) {
                 $matches = $matches[0];
                 $found = true;
@@ -784,14 +784,14 @@ class Router
      * @throws HttpException
      */
     public static function findAll(
-        array $excludedPaths = array(),
-        array $excludedHttpMethods = array(),
+        array $excludedPaths = [],
+        array $excludedHttpMethods = [],
         $version = 1,
         $authenticated = false
     ) {
-        $map = array();
+        $map = [];
         $all = self::$routes["v$version"];
-        $filter = array();
+        $filter = [];
         if (isset($all['*'])) {
             $all = $all['*'] + $all;
             unset($all['*']);
@@ -947,7 +947,7 @@ class Router
             return false;
         }
         $p = 'property';
-        $r = empty($c[$p]) ? array() : $c[$p];
+        $r = empty($c[$p]) ? [] : $c[$p];
         $p .= '-' . ($forResponse ? 'read' : 'write');
         if (!empty($c[$p])) {
             $r = array_merge($r, $c[$p]);
@@ -981,7 +981,7 @@ class Router
         if (isset(static::$models[$prefix . $className])) {
             return static::$models[$prefix . $className];
         }
-        $children = array();
+        $children = [];
         try {
             if ($magic_properties = static::parseMagic($class, empty($prefix))) {
                 foreach ($magic_properties as $prop) {
@@ -1000,7 +1000,7 @@ class Router
                 $props = $class->getProperties(ReflectionProperty::IS_PUBLIC);
                 foreach ($props as $prop) {
                     $name = $prop->getName();
-                    $child = array('name' => $name);
+                    $child = ['name' => $name];
                     if ($c = $prop->getDocComment()) {
                         $child += CommentParser::parse($c)['var'] ?? [];
                     } else {
@@ -1018,14 +1018,14 @@ class Router
                             }
                         }
                     }
-                    $child += array(
+                    $child += [
                         'type' => isset(static::$fieldTypesByName[$child['name']])
                             ? static::$fieldTypesByName[$child['name']]
                             : 'string',
                         'label' => Text::title($child['name'])
-                    );
+                    ];
                     isset($child[$dataName])
-                        ? $child[$dataName] += array('required' => true)
+                        ? $child[$dataName] += ['required' => true]
                         : $child[$dataName]['required'] = true;
                     if ($prop->class != $className && $qualified = ClassName::resolve($child['type'], $scope)) {
                         list($child['type'], $child['children'])
@@ -1047,9 +1047,9 @@ class Router
         }
         if ($properties = $rules['properties'] ?? false) {
             if (is_string($properties)) {
-                $properties = array($properties);
+                $properties = [$properties];
             }
-            $c = array();
+            $c = [];
             foreach ($properties as $property) {
                 if (isset($children[$property])) {
                     $c[$property] = $children[$property];
@@ -1061,16 +1061,16 @@ class Router
             //override required on children
             if (is_bool($required)) {
                 // true means all are required false means none are required
-                $required = $required ? array_keys($children) : array();
+                $required = $required ? array_keys($children) : [];
             } elseif (is_string($required)) {
-                $required = array($required);
+                $required = [$required];
             }
             $required = array_fill_keys($required, true);
             foreach ($children as $name => $child) {
                 $children[$name][$dataName]['required'] = isset($required[$name]);
             }
         }
-        static::$models[$prefix . $className] = array($className, $children, $prefix . $className);
+        static::$models[$prefix . $className] = [$className, $children, $prefix . $className];
         return static::$models[$prefix . $className];
     }
 
@@ -1114,9 +1114,9 @@ class Router
     public static function scope(ReflectionClass $class)
     {
         $namespace = $class->getNamespaceName();
-        $imports = array(
+        $imports = [
             '*' => empty($namespace) ? '' : $namespace . '\\'
-        );
+        ];
         $file = file_get_contents($class->getFileName());
         $tokens = token_get_all($file);
         $namespace = '';
