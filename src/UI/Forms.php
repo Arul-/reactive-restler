@@ -129,7 +129,7 @@ class Forms implements FilterInterface
                     $this->forms->preFill ||
                     ($this->restler->requestMethod == $method &&
                         $this->restler->path == $action)
-                        ? $this->apiMethodInfo->arguments
+                        ? $this->restler->getRequestData()
                         : array()
                 );
 
@@ -185,7 +185,7 @@ class Forms implements FilterInterface
         ];
 
         if (!$dataOnly) {
-            $s = Emmet::make(static::style('submit', $m), $s);
+            $s = Emmet::make($this->style('submit', $m), $s);
         }
         $r[] = $s;
         $t = [
@@ -228,6 +228,8 @@ class Forms implements FilterInterface
         $m = $this->apiMethodInfo->metadata;
         $params = $m['param'];
         $values = $this->apiMethodInfo->parameters;
+        //print_r($params);
+        print_r($values);
         $r = [];
         foreach ($params as $k => $p) {
             $value = $values[$k] ?? null;
@@ -243,7 +245,7 @@ class Forms implements FilterInterface
                 continue;
             }
             if (!empty($v->children)) {
-                $t = Emmet::make(static::style('fieldset', $m), array('label' => $v->label));
+                $t = Emmet::make($this->style('fieldset', $m), array('label' => $v->label));
                 foreach ($v->children as $n => $c) {
                     $value = $v->value->{$n} ?? null;
                     if (
@@ -382,7 +384,7 @@ class Forms implements FilterInterface
             return Emmet::make($p->rules['form'], $r);
         }
         $m = $this->apiMethodInfo->metadata;
-        $t = Emmet::make(static::style($type, $m, $p->type) ?: static::style($tag, $m, $p->type), $r);
+        $t = Emmet::make($this->style($type, $m, $p->type) ?: $this->style($tag, $m, $p->type), $r);
         return $t;
     }
 

@@ -260,6 +260,11 @@ abstract class Core
         return $r;
     }
 
+    public function getRequestData(): array
+    {
+        return $this->body + $this->query;
+    }
+
     /**
      * @throws HttpException
      * @throws Exception
