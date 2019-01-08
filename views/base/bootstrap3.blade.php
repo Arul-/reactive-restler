@@ -68,7 +68,7 @@
             </div>
             <div class="col-md-8">
                 <h3>Sign Up</h3>
-                {!! $forms->get('POST', $path.'examples/_016_forms/users/signup') !!}
+                {!! $forms->get('POST', 'examples/_016_forms/users/signup') !!}
             </div>
         </div>
     </div>

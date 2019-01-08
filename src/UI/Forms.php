@@ -189,7 +189,7 @@ class Forms implements FilterInterface
         }
         $r[] = $s;
         $t = [
-            'action' => $this->restler->baseUrl . '/' . rtrim($action, '/'),
+            'action' => $this->restler->baseUrl . trim($action, '/'),
             'method' => $method,
         ];
         if ($this->fileUpload) {
