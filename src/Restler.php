@@ -10,9 +10,12 @@ use Luracast\Restler\MediaTypes\Json;
 use Luracast\Restler\Utils\Dump;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use React\Cache\ArrayCache;
 use React\Promise\FulfilledPromise;
 use React\Promise\PromiseInterface;
 use Throwable;
+use WyriHaximus\React\Http\Middleware\Session;
+use WyriHaximus\React\Http\Middleware\SessionMiddleware;
 
 class Restler extends Core
 {
@@ -114,7 +117,9 @@ class Restler extends Core
         } elseif (is_null($this->defaults['returnResponse'])) {
             $this->defaults['returnResponse'] = true;
         }
-        $promise = $this->_handle($request);
+        $middleware = new SessionMiddleware('RestlerSession', new ArrayCache());
+        $promise = $middleware->__invoke($request, [$this, '_handle']);
+        //$promise = $this->_handle($request);
         if (true === $this->defaults['returnResponse']) {
             return $promise;
         }
@@ -128,9 +133,14 @@ class Restler extends Core
      * @return PromiseInterface
      * @throws Exception
      */
-    private function _handle(ServerRequestInterface $request)
+    public function _handle(ServerRequestInterface $request)
     {
         $this->container->instance(ServerRequestInterface::class, $request);
+        $session = $request->getAttribute(SessionMiddleware::ATTRIBUTE_NAME);
+        if ($session) {
+            $this->container->instance(Session::class, $session);
+        }
+        $request = $request->withAttribute('container', $this->container);
         $this->rawRequestBody = (string)$request->getBody();
         $this->_requestMethod = $request->getMethod();
         $this->request = $request;

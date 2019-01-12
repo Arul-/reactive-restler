@@ -8,7 +8,8 @@
     "psr/container": "^1.0",
     "guzzlehttp/guzzle": "~6.0",
     "ralouphie/getallheaders": "^2.0",
-    "logicalsteps/async": "v2.x-dev"
+    "logicalsteps/async": "v2.x-dev",
+    "wyrihaximus/react-http-middleware-session": "^2.1"
   },
   "require-dev": {
     "behat/behat": "~3",
