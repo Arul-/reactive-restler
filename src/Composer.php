@@ -49,7 +49,7 @@ class Composer implements ComposerInterface
             $r += [
                 'debug' => [
                     'source' => $exception->getSource(),
-                    'trace' => array_map([static::class,'simplifyTrace'],$innerException->getTrace())
+                    'trace' => array_map([static::class, 'simplifyTrace'], $innerException->getTrace())
                 ],
             ];
         }
@@ -58,11 +58,12 @@ class Composer implements ComposerInterface
 
     public static function simplifyTrace(array $trace)
     {
-        $class = array_pop(explode('\\', $trace['class']));
-
+        $parts = explode('\\', $trace['class'] ?? '');
+        $class = array_pop($parts);
+        $parts = explode('/', $trace['file']);
         return [
-            'file' => array_pop(explode('/', $trace['file'])) . ':' . $trace['line'],
-            'function' => $class . $trace['type'] . $trace['function'],
+            'file' => array_pop($parts) . ':' . $trace['line'],
+            'function' => $class . ($trace['type'] ?? '') . $trace['function'],
             'args' => $trace['args'],
         ];
     }
