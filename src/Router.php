@@ -189,6 +189,9 @@ class Router
                 }
             }
         }
+        if (!count($types)) {
+            throw new Exception('At least one media type is required.');
+        }
         $formatMap['default'] = $types[0];
         if ($writable) {
             $formatMap['extensions'] = array_keys($extensions);
