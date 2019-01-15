@@ -303,7 +303,7 @@ abstract class Core
      */
     protected function negotiateResponseMediaType(string $path, string $acceptHeader = ''): ResponseMediaTypeInterface
     {
-        $readableFormats = [];
+        $formats = $readableFormats = [];
         //check if the api method insists on response format using @format comment
         if (($metadata = $this->_apiMethodInfo->metadata ?? false) && ($formats = $metadata['format'] ?? false)) {
             $formats = explode(',', (string)$formats);
