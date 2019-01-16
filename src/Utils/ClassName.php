@@ -139,14 +139,14 @@ class ClassName
         } else {
             $qualified = $scope['*'] . $name;
         }
-        if (class_exists($qualified)) {
-            return $qualified;
-        }
         if (isset(Defaults::$aliases[$name])) {
             $qualified = Defaults::$aliases[$name];
             if (class_exists($qualified)) {
                 return $qualified;
             }
+        }
+        if (class_exists($qualified)) {
+            return $qualified;
         }
         return false;
     }
