@@ -140,8 +140,8 @@ class Html extends MediaType implements ResponseMediaTypeInterface
                 'restler' => $this->restler,
                 'container' => $this->container
             ]);
-            $data->basePath = dirname($_SERVER['SCRIPT_NAME']);
             $data->baseUrl = $this->restler->baseUrl;
+            $data->basePath = $data->baseUrl->getPath();
             $data->currentPath = $this->restler->path;
             $api = $data->api = $this->restler->apiMethodInfo;
             $metadata = $api->metadata;

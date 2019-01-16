@@ -8,6 +8,7 @@ use Luracast\Restler\Contracts\ComposerInterface;
 use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\MediaTypes\Json;
 use Luracast\Restler\Utils\Dump;
+use Luracast\Restler\Utils\PassThrough;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use React\Cache\ArrayCache;
@@ -116,6 +117,11 @@ class Restler extends Core
             }
         } elseif (is_null($this->defaults['returnResponse'])) {
             $this->defaults['returnResponse'] = true;
+            $path = BASE . '/public' . $request->getUri()->getPath();
+            if (file_exists($path)) {
+                $response = PassThrough::file($path);
+                return new FulfilledPromise($response);
+            }
         }
         $middleware = new SessionMiddleware('RestlerSession', new ArrayCache());
         $promise = $middleware->__invoke($request, [$this, '_handle']);

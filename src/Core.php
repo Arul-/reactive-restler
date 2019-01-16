@@ -175,7 +175,7 @@ abstract class Core
         $url = (string)$uri;
         $url = strtok($url, '.?');
         $uriClass = get_class($uri);
-        $this->_baseUrl = new $uriClass(substr($url, 0, -strlen($path)));
+        $this->_baseUrl = new $uriClass(substr($url, 0, -1 - strlen($path)));
         if (Defaults::$useUrlBasedVersioning && strlen($path) && $path{0} == 'v') {
             $version = intval(substr($path, 1));
             if ($version && $version <= $this->router['maximumVersion']) {
