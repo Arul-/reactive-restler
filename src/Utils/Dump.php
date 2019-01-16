@@ -75,9 +75,11 @@ class Dump
             }
         };
         foreach ($data as $index => $trace) {
-            $array[$index] = array_pop(explode('/', $trace['file']))
-                . ':' . $trace['line'] . ' ' . array_pop(explode('\\', $trace['class']))
-                . '::' . $trace['function'] . '(' . implode(', ', array_map($stringer, $trace['args'])) . ')';
+            $parts = explode('\\', $trace['class'] ?? '');
+            $file_parts = explode('/', $trace['file']);
+            $array[$index] = array_pop($file_parts)
+                . ':' . $trace['line'] . ' ' . array_pop($parts)
+                . '::' . $trace['function'] . '(' . implode(', ', array_map($stringer, $trace['args'] ?? [])) . ')';
         }
         array_shift($array);
         return json_encode($array) . PHP_EOL;
