@@ -46,11 +46,10 @@ class Composer implements ComposerInterface
             while ($prev = $innerException->getPrevious()) {
                 $innerException = $prev;
             }
-            $r += [
-                'debug' => [
-                    'source' => $exception->getSource(),
-                    'trace' => array_map([static::class, 'simplifyTrace'], $innerException->getTrace())
-                ],
+            $trace = array_slice($innerException->getTrace(), 0, 10);
+            $r['debug'] = [
+                'source' => $exception->getSource(),
+                'trace' => array_map([static::class, 'simplifyTrace'], $trace)
             ];
         }
         return $r;
