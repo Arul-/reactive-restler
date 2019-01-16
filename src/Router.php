@@ -143,7 +143,7 @@ class Router
     }
 
     /**
-     * @param string[] ...$types
+     * @param string ...$types
      * @throws Exception
      */
     public static function setOverridingResponseMediaTypes(string ...$types): void
@@ -167,6 +167,9 @@ class Router
         &$formatMap,
         &$mediaTypes
     ): void {
+        if (!count($types)) {
+            return;
+        }
         $formatMap = [];
         $mediaTypes = [];
         $extensions = [];
@@ -188,9 +191,6 @@ class Router
                     $formatMap[$mime] = $type;
                 }
             }
-        }
-        if (!count($types)) {
-            throw new Exception('At least one media type is required.');
         }
         $formatMap['default'] = $types[0];
         if ($writable) {
