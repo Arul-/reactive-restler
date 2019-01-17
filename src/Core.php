@@ -179,7 +179,7 @@ abstract class Core
             $url = strtok((string)$uri, '.?');
             $url = substr($url, 0, -strlen($path));
             $uriClass = get_class($uri);
-            $this->_baseUrl = new $uriClass($url);
+            $this->_baseUrl = new $uriClass(rtrim($url, '/'));
         }
         if (Defaults::$useUrlBasedVersioning && strlen($path) && $path{0} == 'v') {
             $version = intval(substr($path, 1));
