@@ -163,7 +163,7 @@ abstract class Core
 
     protected function getPath(UriInterface $uri, string $scriptName = ''): string
     {
-        $path = Text::removeCommon($uri->getPath(), $scriptName);
+        $path = $uri->getPath();
         $path = str_replace(
             array_merge(
                 $this->router['responseFormatMap']['extensions']->getArrayCopy(),
@@ -172,10 +172,15 @@ abstract class Core
             '',
             trim($path, '/')
         );
-        $url = (string)$uri;
-        $url = strtok($url, '.?');
-        $uriClass = get_class($uri);
-        $this->_baseUrl = new $uriClass(substr($url, 0, -1 - strlen($path)));
+        if (empty($scriptName)) {
+            $this->_baseUrl = $uri->withPath('')->withQuery('');
+        } else {
+            $path = Text::removeCommon($path, ltrim($scriptName, '/'));
+            $url = strtok((string)$uri, '.?');
+            $url = substr($url, 0, -strlen($path));
+            $uriClass = get_class($uri);
+            $this->_baseUrl = new $uriClass($url);
+        }
         if (Defaults::$useUrlBasedVersioning && strlen($path) && $path{0} == 'v') {
             $version = intval(substr($path, 1));
             if ($version && $version <= $this->router['maximumVersion']) {
