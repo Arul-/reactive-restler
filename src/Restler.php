@@ -117,10 +117,16 @@ class Restler extends Core
             }
         } elseif (is_null($this->defaults['returnResponse'])) {
             $this->defaults['returnResponse'] = true;
-            $path = BASE . '/public' . $request->getUri()->getPath();
-            if (file_exists($path)) {
-                $response = PassThrough::file($path);
-                return new FulfilledPromise($response);
+        }
+        if (Defaults::$serveStaticFiles) {
+            $path = $request->getUri()->getPath();
+            $extension = pathinfo($path, PATHINFO_EXTENSION);
+            if (isset(PassThrough::$mimeTypes[$extension])) {
+                $path = BASE . '/' . Defaults::$staticFilesDirectory . $path;
+                if (is_file($path)) {
+                    $response = PassThrough::file($path);
+                    return new FulfilledPromise($response);
+                }
             }
         }
         $middleware = new SessionMiddleware('RestlerSession', new ArrayCache());
