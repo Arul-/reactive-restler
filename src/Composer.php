@@ -59,9 +59,9 @@ class Composer implements ComposerInterface
     {
         $parts = explode('\\', $trace['class'] ?? '');
         $class = array_pop($parts);
-        $parts = explode('/', $trace['file']);
+        $parts = explode('/', $trace['file'] ?? '');
         return [
-            'file' => array_pop($parts) . ':' . $trace['line'],
+            'file' => array_pop($parts) . (isset($trace['line']) ? ':' . $trace['line'] : ''),
             'function' => $class . ($trace['type'] ?? '') . $trace['function'],
             'args' => $trace['args'],
         ];
