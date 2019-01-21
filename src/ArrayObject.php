@@ -50,7 +50,8 @@ class ArrayObject extends Base
             if (!$func) {
                 $func = "array_$name";
             }
-            $result = call_user_func_array($func, array_merge(array($this->getArrayCopy()), $argv));
+            $params = array_merge(array($this->getArrayCopy()), $argv);
+            $result = call_user_func_array($func, $params);
             if (!$modifier) {
                 return $result;
             }
