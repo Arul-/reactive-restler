@@ -24,7 +24,7 @@ class Restler extends Psr7
     {
         $request = parent::decode($recv_buffer, $connection);
         (new Server())->handle($request)->then(function (ResponseInterface $response) use ($connection) {
-            $connection->send(Dump::response($response), true);
+            $connection->close(Dump::response($response), true);
         });
     }
 }
