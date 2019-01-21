@@ -56,14 +56,17 @@ class Psr7 extends Http
         $stream = $connection->getSocket();
         $connection->resumeRecv();
         $http_body = fread($stream, 10);
+        /*
         echo '--------------------------' . PHP_EOL;
         echo $recv_buffer . PHP_EOL . PHP_EOL;
         echo '# ' . $http_body . PHP_EOL;
         echo '--------------------------' . PHP_EOL . PHP_EOL;
+        */
         //list($http_header, $http_body) = explode("\r\n\r\n", $recv_buffer, 2);
         $http_header = $recv_buffer;
         $header_strings = explode("\r\n", $http_header);
         list($method, $uri, $protocol) = explode(' ', $header_strings[0]);
+        echo "$method $uri\n";
         array_shift($header_strings);
         $headers = [];
         foreach ($header_strings as $header_string) {
