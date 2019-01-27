@@ -99,13 +99,13 @@ class Restler extends Core
             $this->_responseHeaders['WWW-Authenticate'] = $authString;
         }
         return $this->container->make(ResponseInterface::class,
-            [$this->_responseCode, $this->_responseHeaders, $body]);
+            [$this->_responseCode, $this->_responseHeaders, (string)$body]);
     }
 
     protected function stream($data): ResponseInterface
     {
         return $this->container->make(ResponseInterface::class,
-            [$this->_responseCode, $this->_responseHeaders, $data]);
+            [$this->_responseCode, $this->_responseHeaders, $data ?? '']);
     }
 
     public function handle(ServerRequestInterface $request = null): PromiseInterface
@@ -131,12 +131,11 @@ class Restler extends Core
         }
         $middleware = new SessionMiddleware('RestlerSession', new ArrayCache());
         $promise = $middleware->__invoke($request, [$this, '_handle']);
-        //$promise = $this->_handle($request);
         if (true === $this->defaults['returnResponse']) {
             return $promise;
         }
         $promise->then(function ($response) {
-            die(Dump::response($response, false));
+            die(Dump::response($response, true, false));
         });
     }
 
