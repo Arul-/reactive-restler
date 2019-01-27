@@ -3,7 +3,6 @@
 namespace Workerman\Protocols;
 
 
-use function GuzzleHttp\Psr7\stream_for;
 use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\Utils\ClassName;
 use Psr\Http\Message\ServerRequestInterface;

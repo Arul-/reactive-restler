@@ -4,10 +4,13 @@
 namespace Workerman\Protocols;
 
 
+use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\Restler as Server;
 use Luracast\Restler\Utils\Dump;
-use Luracast\Restler\Exceptions\HttpException;
 use Psr\Http\Message\ResponseInterface;
+use React\Promise\Promise;
+use React\Promise\PromiseInterface;
+use RingCentral\Psr7\Response;
 use Workerman\Connection\TcpConnection;
 
 class Restler extends Psr7
@@ -20,11 +23,20 @@ class Restler extends Psr7
      * @return void
      * @throws HttpException
      */
-    public static function decode($recv_buffer, TcpConnection $connection): void
+    public static function decode($recv_buffer, TcpConnection $connection)
     {
         $request = parent::decode($recv_buffer, $connection);
         (new Server())->handle($request)->then(function (ResponseInterface $response) use ($connection) {
-            $connection->close(Dump::response($response), true);
+            $data = Dump::response($response, false);
+            $data_size = strlen($data);
+            //send headers alone first
+            $connection->send(
+                Dump::responseHeaders($response->withHeader('Content-Length', $data_size), true),
+                true
+            );
+            //send body content
+            $connection->send($data, true);
         });
+
     }
 }
