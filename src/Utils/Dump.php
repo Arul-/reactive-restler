@@ -24,7 +24,22 @@ class Dump
         return $text;
     }
 
-    public static function response(ResponseInterface $response, bool $headerAsString = true): string
+    public static function response(
+        ResponseInterface $response,
+        bool $includeHeader = true,
+        bool $headerAsString = true
+    ): string {
+        $text = $includeHeader ? self::responseHeaders($response, $headerAsString) : '';
+        $text .= (string)$response->getBody();
+        return $text;
+    }
+
+    /**
+     * @param ResponseInterface $response
+     * @param bool $headerAsString
+     * @return string
+     */
+    public static function responseHeaders(ResponseInterface $response, bool $headerAsString): string
     {
         $http = sprintf('HTTP/%s %s %s',
             $response->getProtocolVersion(),
@@ -33,9 +48,9 @@ class Dump
         );
         $text = '';
         if ($headerAsString) {
-            $text .= $http . PHP_EOL;
+            $text .= $http . static::CRLF;
             foreach ($response->getHeaders() as $k => $v) {
-                $text .= ucwords($k) . ': ' . implode(', ', $v) . PHP_EOL;
+                $text .= ucwords($k) . ': ' . implode(', ', $v) . static::CRLF;
             }
             $text .= static::CRLF;
         } else {
@@ -45,10 +60,6 @@ class Dump
                     header("$name: $value", false);
                 }
             }
-        }
-        $text .= (string)$response->getBody();
-        if ($headerAsString) {
-            $text .= static::CRLF . static::CRLF;
         }
         return $text;
     }
