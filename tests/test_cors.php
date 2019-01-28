@@ -35,6 +35,6 @@ $request = new ServerRequest('OPTIONS', 'http://localhost:4000', [
 
 $response = $h->handle($request);
 
-echo Dump::response($response);
+echo Dump::response($response, true);
 
 
