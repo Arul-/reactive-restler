@@ -15,11 +15,11 @@ class Convert
      */
     public static $fix = array();
     /**
-     * @var bool|string|callable
+     * @var bool|callable
      */
     public static $stringEncoderFunction = false;
     /**
-     * @var bool|string|callable
+     * @var bool|callable
      */
     public static $numberEncoderFunction = false;
 
@@ -56,12 +56,12 @@ class Convert
             $properties = $object->__sleep();
             $array = array();
             foreach ($properties as $key) {
-                $value = self::toArray($object->{$key},
+                $value = static::toArray($object->{$key},
                     $forceObjectTypeWhenEmpty);
-                if (self::$stringEncoderFunction && is_string($value)) {
-                    $value = self::$stringEncoderFunction($value);
-                } elseif (self::$numberEncoderFunction && is_numeric($value)) {
-                    $value = self::$numberEncoderFunction($value);
+                if (static::$stringEncoderFunction && is_string($value)) {
+                    $value = static::$stringEncoderFunction($value);
+                } elseif (static::$numberEncoderFunction && is_numeric($value)) {
+                    $value = static::$numberEncoderFunction($value);
                 }
                 $array [$key] = $value;
             }
@@ -73,30 +73,30 @@ class Convert
             $array = array();
             foreach ($object as $key => $value) {
                 if (
-                    is_string(self::$separatorChar) &&
-                    false !== strpos($key, self::$separatorChar)
+                    is_string(static::$separatorChar) &&
+                    false !== strpos($key, static::$separatorChar)
                 ) {
-                    list($key, $obj) = explode(self::$separatorChar, $key, 2);
+                    list($key, $obj) = explode(static::$separatorChar, $key, 2);
                     $object[$key][$obj] = $value;
                     $value = $object[$key];
                 }
-                if (self::$removeEmpty && empty($value) && !is_numeric($value) && !is_bool($value)) {
+                if (static::$removeEmpty && empty($value) && !is_numeric($value) && !is_bool($value)) {
                     continue;
-                } elseif (self::$removeNull && is_null($value)) {
+                } elseif (static::$removeNull && is_null($value)) {
                     continue;
                 }
-                if (array_key_exists($key, self::$fix)) {
-                    if (isset(self::$fix[$key])) {
-                        $value = call_user_func(self::$fix[$key], $value);
+                if (array_key_exists($key, static::$fix)) {
+                    if (isset(static::$fix[$key])) {
+                        $value = call_user_func(static::$fix[$key], $value);
                     } else {
                         continue;
                     }
                 }
-                $value = self::toArray($value, $forceObjectTypeWhenEmpty);
-                if (self::$stringEncoderFunction && is_string($value)) {
-                    $value = self::$encoderFunctionName ($value);
-                } elseif (self::$numberEncoderFunction && is_numeric($value)) {
-                    $value = self::$numberEncoderFunction ($value);
+                $value = static::toArray($value, $forceObjectTypeWhenEmpty);
+                if (static::$stringEncoderFunction && is_string($value)) {
+                    $value = static::$encoderFunctionName ($value);
+                } elseif (static::$numberEncoderFunction && is_numeric($value)) {
+                    $value = static::$numberEncoderFunction ($value);
                 }
                 $array [$key] = $value;
                 $count++;

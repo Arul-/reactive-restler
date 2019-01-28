@@ -1,16 +1,11 @@
 <?php
 
-
 namespace Workerman\Protocols;
-
 
 use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\Restler as Server;
 use Luracast\Restler\Utils\Dump;
 use Psr\Http\Message\ResponseInterface;
-use React\Promise\Promise;
-use React\Promise\PromiseInterface;
-use RingCentral\Psr7\Response;
 use Workerman\Connection\TcpConnection;
 
 class Restler extends Psr7
