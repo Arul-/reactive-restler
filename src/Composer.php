@@ -63,7 +63,7 @@ class Composer implements ComposerInterface
         return [
             'file' => array_pop($parts) . (isset($trace['line']) ? ':' . $trace['line'] : ''),
             'function' => $class . ($trace['type'] ?? '') . $trace['function'],
-            //'args' => array_map([static::class, 'simplifyTraceArgs'], $trace['args']),
+            'args' => array_map([static::class, 'simplifyTraceArgs'], $trace['args']),
         ];
     }
 
@@ -73,7 +73,10 @@ class Composer implements ComposerInterface
             return 'new ' . get_class($argument) . '()';
         }
         if (is_array($argument)) {
-            return [];//array_map(__METHOD__, $argument);
+            return array_map(__METHOD__, $argument);
+        }
+        if (is_resource($argument)) {
+            return 'resource(' . get_resource_type($argument) . ')';
         }
         return $argument;
     }
