@@ -9,12 +9,14 @@ use BadMethodCallException;
  * @method array chunk(int $size, bool $preserve_keys = false) Split an array into chunks
  * @method array column(mixed $column_key, mixed $index_key = null) Return the values from a single
  * column in the input array
- * @method array combine(array $keys, array $values) Creates an array by using one array for keys and another for
- * its values
  * @method array slice(int $offset, int $length = null, bool $preserve_keys = false) Extract a slice as an array
- * @method self splice(int $offset, int $length = count($input), mixed $replacement = array()) Remove a portion of the arrayObject and replace it with something else
+ *
+ * @method array changeKeyCase(int $case = CASE_LOWER) Changes the case of all keys in an array
+ * @method array splice(int $offset, int $length = count($input), mixed $replacement = array()) Remove a portion of the arrayObject and replace it with something else
  * @method mixed shift() Shift an element off the beginning of arrayObject
+ * @method int unshift(mixed ...$elements) Prepend one or more elements to the beginning of an array
  * @method mixed pop() Pop the element off the end of arrayObject
+ *
  */
 
 class ArrayObject extends Base
@@ -33,15 +35,19 @@ class ArrayObject extends Base
         switch ($name) {
             //MOD functions
             case 'shift':
+            case 'unshift':
             case 'pop':
             case 'splice':
                 $found = true;
                 $modifier = true;
                 break;
-            case 'slice':
+            // NO MOD functions
+            case 'changeKeyCase':
+                $func = 'change_key_case';
+                //don't break;
             case 'chunk':
             case 'column':
-            case 'combine':
+            case 'slice':
                 $found = true;
                 break;
         }
@@ -50,13 +56,14 @@ class ArrayObject extends Base
             if (!$func) {
                 $func = "array_$name";
             }
-            $params = array_merge(array($this->getArrayCopy()), $argv);
+            $copy = $this->getArrayCopy();
+            $params = array_merge([&$copy], $argv);
             $result = call_user_func_array($func, $params);
             if (!$modifier) {
                 return $result;
             }
-            $this->exchangeArray($result);
-            return $this;
+            $this->exchangeArray($copy);
+            return $result;
         }
         throw new BadMethodCallException(__CLASS__ . '->' . $name);
     }
