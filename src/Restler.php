@@ -131,6 +131,25 @@ class Restler extends Core
         }
         $middleware = new SessionMiddleware('RestlerSession', new ArrayCache());
         $promise = $middleware->__invoke($request, [$this, '_handle']);
+        $promise = $promise->then(
+            function ($result) {
+                if ($result instanceof ResponseInterface) {
+                    return $result;
+                }
+                if ($result instanceof Throwable) {
+                    $result = $this->message($result, '');
+                }
+                return $this->respond($result);
+            },
+            function ($error) {
+                if ($error instanceof Throwable) {
+                    $error = $this->message($error, '');
+                } else {
+                    $error = new HttpException(500, (string)$error);
+                }
+                return $this->respond($error);
+            }
+        );
         if (true === $this->defaults['returnResponse']) {
             return $promise;
         }
