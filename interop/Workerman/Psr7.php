@@ -49,19 +49,6 @@ class Psr7 extends Http
      */
     public static function decode($recv_buffer, TcpConnection $connection)
     {
-        $connection->onMessage = function ($connection, $msg) {
-            echo '$ ' . $msg . PHP_EOL;
-        };
-        $stream = $connection->getSocket();
-        $connection->resumeRecv();
-        $http_body = fread($stream, 10);
-        /*
-        echo '--------------------------' . PHP_EOL;
-        echo $recv_buffer . PHP_EOL . PHP_EOL;
-        echo '# ' . $http_body . PHP_EOL;
-        echo '--------------------------' . PHP_EOL . PHP_EOL;
-        */
-        //list($http_header, $http_body) = explode("\r\n\r\n", $recv_buffer, 2);
         $http_header = $recv_buffer;
         $header_strings = explode("\r\n", $http_header);
         list($method, $uri, $protocol) = explode(' ', $header_strings[0]);
@@ -77,9 +64,17 @@ class Psr7 extends Http
             'REMOTE_ADDR' => $connection->getRemoteIp(),
             'REMOTE_PORT' => $connection->getRemotePort()
         ];
+        $stream = $connection->getSocket();
+        //$connection->resumeRecv();
+        $length = (int)$headers['Content-Length'] ?? 10;
+        //$body = fread($stream, $length);
+        $body = '';
+        while (!feof($stream)) {
+            $body .= fread($stream, 8192);
+        }
         $class = ClassName::get(ServerRequestInterface::class);
         /** @var ServerRequestInterface $request */
-        $request = new $class($method, $uri, $headers, $http_body, $protocol, $server);
+        $request = new $class($method, $uri, $headers, $body, $protocol, $server);
         $query = [];
         parse_str(parse_url($uri, PHP_URL_QUERY), $query);
         $request = $request->withQueryParams($query);
