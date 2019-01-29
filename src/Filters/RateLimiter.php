@@ -7,6 +7,7 @@ use Luracast\Restler\Contracts\UsesAuthenticationInterface;
 use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\Contracts\CacheInterface;
 use Luracast\Restler\Contracts\UserIdentificationInterface;
+use Luracast\Restler\StaticProperties;
 use Luracast\Restler\Utils\ClassName;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -59,7 +60,7 @@ class RateLimiter implements FilterInterface, SelectivePathsInterface, UsesAuthe
      */
     protected $authenticated = false;
 
-    public function __construct(array $rateLimiter)
+    public function __construct(StaticProperties $rateLimiter)
     {
         $this->runtimeValues = $rateLimiter;
         $class = ClassName::get(CacheInterface::class);
