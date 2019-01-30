@@ -555,7 +555,8 @@ abstract class Core
                 );
             }
             $unauthorized = false;
-            foreach ($this->router['authClasses'] as $i => $authClass) {
+            $authClasses = $this->router->authClasses->getArrayCopy();
+            foreach ($authClasses as $i => $authClass) {
                 try {
                     //exclude invalid paths
                     if (!static::isPathSelected($authClass, $this->_path)) {
