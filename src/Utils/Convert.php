@@ -50,25 +50,30 @@ class Convert
 
     public static function toArray($object, bool $forceObjectTypeWhenEmpty = false)
     {
-        if ($object instanceof JsonSerializable) {
-            $object = $object->jsonSerialize();
-        } elseif (method_exists($object, '__sleep')) {
-            $properties = $object->__sleep();
-            $array = array();
-            foreach ($properties as $key) {
-                $value = static::toArray($object->{$key},
-                    $forceObjectTypeWhenEmpty);
-                if (static::$stringEncoderFunction && is_string($value)) {
-                    $value = static::$stringEncoderFunction($value);
-                } elseif (static::$numberEncoderFunction && is_numeric($value)) {
-                    $value = static::$numberEncoderFunction($value);
+        $nested = false;
+        if (is_object($object)) {
+            $nested = true;
+            if ($object instanceof JsonSerializable) {
+                $object = $object->jsonSerialize();
+            } elseif (method_exists($object, '__sleep')) {
+                $properties = $object->__sleep();
+                $array = array();
+                foreach ($properties as $key) {
+                    $value = static::toArray($object->{$key},
+                        $forceObjectTypeWhenEmpty);
+                    if (static::$stringEncoderFunction && is_string($value)) {
+                        $value = static::$stringEncoderFunction($value);
+                    } elseif (static::$numberEncoderFunction && is_numeric($value)) {
+                        $value = static::$numberEncoderFunction($value);
+                    }
+                    $array [$key] = $value;
                 }
-                $array [$key] = $value;
+                return $array;
             }
-            return $array;
+        } elseif (is_array($object)) {
+            $nested = true;
         }
-
-        if (is_array($object) || is_object($object)) {
+        if ($nested) {
             $count = 0;
             $array = array();
             foreach ($object as $key => $value) {
