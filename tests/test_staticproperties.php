@@ -16,7 +16,7 @@ var_dump($p->supportedCharsets);
 
 var_dump(isset($p->supportedCharsets));
 
-$p->supportedCharsets[] = "iso9000";
+$p['supportedCharsets'][] = "iso9000";
 var_dump($p->supportedCharsets);
 var_dump(Defaults::$supportedCharsets);
 
