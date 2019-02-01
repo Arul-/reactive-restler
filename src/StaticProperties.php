@@ -2,10 +2,46 @@
 
 namespace Luracast\Restler;
 
-class StaticProperties extends ArrayObject
+class StaticProperties
 {
-    public static function forClass(string $className): self
+    private $properties = [];
+    /**
+     * @var string
+     */
+    private $className;
+
+    public function __construct(string $className)
     {
-        return static::fromArray(get_class_vars($className));
+
+        $this->className = $className;
+    }
+
+    public function &__get($name)
+    {
+        if (property_exists($this->className, $name)) {
+            $value = $this->className::$$name;
+            if (!array_key_exists($name, $this->properties)) {
+                $this->properties[$name] = [$value, $value];
+            }
+            $newValue = &$this->properties[$name][0];
+            $oldValue = &$this->properties[$name][1];
+            if ($value === $oldValue) {
+                return $newValue;
+            }
+            return $value;
+        }
+        return null;
+    }
+
+    public function __isset($name)
+    {
+        return property_exists($this->className, $name);
+    }
+
+    public function __set($name, $value)
+    {
+        if (property_exists($this->className, $name)) {
+            $this->properties[$name] = [$value, $this->className::$$name];
+        }
     }
 }
