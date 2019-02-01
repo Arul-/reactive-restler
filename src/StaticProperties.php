@@ -57,7 +57,7 @@ class StaticProperties implements ArrayAccess
         return $this->__isset($offset);
     }
 
-    public function offsetGet($offset)
+    public function &offsetGet($offset)
     {
         return $this->__get($offset);
     }

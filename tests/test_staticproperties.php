@@ -1,7 +1,9 @@
 <?php declare(strict_types=1);
 
 
+use Luracast\Restler\Cache\HumanReadableCache;
 use Luracast\Restler\Container;
+use Luracast\Restler\Contracts\CacheInterface;
 use Luracast\Restler\Defaults;
 use Luracast\Restler\MediaTypes\Html;
 use Luracast\Restler\StaticProperties;
@@ -23,6 +25,10 @@ var_dump($p->supportedCharsets);
 
 Defaults::$supportedCharsets[]='EF121';
 var_dump($p->supportedCharsets);
+
+$p->implementations[CacheInterface::class][] = HumanReadableCache::class;
+
+var_dump($p->implementations);
 
 /*
 $a = StaticProperties::fromArray(['a' => true]);
