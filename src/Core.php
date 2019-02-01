@@ -471,7 +471,7 @@ abstract class Core
             $found = false;
             $charList = Header::sortByPriority($acceptCharset);
             foreach ($charList as $charset => $quality) {
-                if (in_array($charset, $this->defaults['supportedCharsets'])) {
+                if (in_array($charset, (array)$this->defaults['supportedCharsets'])) {
                     $found = true;
                     $this->defaults['charset'] = $charset;
                     break;
@@ -684,14 +684,17 @@ abstract class Core
     {
         //only GET method should be cached if allowed by API developer
         $expires = $this->_requestMethod == 'GET' ? $this->defaults['headerExpires'] : 0;
-        if (!count($this->defaults['headerCacheControl'])) {
-            $this->defaults['headerCacheControl'] = [$this->defaults['headerCacheControl']];
+        $headerCacheControl = $this->defaults->headerCacheControl;
+        if (is_string($headerCacheControl)) {
+            $headerCacheControl = [$headerCacheControl];
+        } elseif ($headerCacheControl instanceof ArrayObject) {
+            $headerCacheControl = $headerCacheControl->getArrayCopy();
         }
-        $cacheControl = $this->defaults['headerCacheControl'][0];
+        $cacheControl = $headerCacheControl[0];
         if ($expires > 0) {
             $cacheControl = !isset($this->_apiMethodInfo->accessLevel) || $this->_apiMethodInfo->accessLevel
                 ? 'private, ' : 'public, ';
-            $cacheControl .= end($this->defaults['headerCacheControl']);
+            $cacheControl .= end($headerCacheControl);
             $cacheControl = str_replace('{expires}', $expires, $cacheControl);
             $expires = gmdate('D, d M Y H:i:s \G\M\T', time() + $expires);
         }
