@@ -2,7 +2,9 @@
 
 namespace Luracast\Restler;
 
-class StaticProperties
+use ArrayAccess;
+
+class StaticProperties implements ArrayAccess
 {
     private $properties = [];
     /**
@@ -43,5 +45,30 @@ class StaticProperties
         if (property_exists($this->className, $name)) {
             $this->properties[$name] = [$value, $this->className::$$name];
         }
+    }
+
+    public function __unset($name)
+    {
+        unset($this->properties[$name]);
+    }
+
+    public function offsetExists($offset)
+    {
+        return $this->__isset($offset);
+    }
+
+    public function offsetGet($offset)
+    {
+        return $this->__get($offset);
+    }
+
+    public function offsetSet($offset, $value)
+    {
+        return $this->__set($offset, $value);
+    }
+
+    public function offsetUnset($offset)
+    {
+        $this->__unset($offset);
     }
 }
