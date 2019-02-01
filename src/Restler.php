@@ -86,15 +86,15 @@ class Restler extends Core
             $body = json_encode($this->message($throwable, $this->request->getHeaderLine('origin')));
         }
         //handle throttling
-        if ($throttle = $this->defaults['throttle'] ?? 0) {
+        if ($throttle = $this->defaults->throttle ?? 0) {
             $elapsed = time() - $this->startTime;
             if ($throttle / 1e3 > $elapsed) {
                 usleep(1e6 * ($throttle / 1e3 - $elapsed));
             }
         }
         if ($this->_responseCode == 401 && !isset($this->_responseHeaders['WWW-Authenticate'])) {
-            $authString = count($this->router['authClasses'])
-                ? $this->router['authClasses'][0]::getWWWAuthenticateString()
+            $authString = count($this->router->authClasses)
+                ? $this->router->authClasses[0]::getWWWAuthenticateString()
                 : 'Unknown';
             $this->_responseHeaders['WWW-Authenticate'] = $authString;
         }
@@ -115,8 +115,8 @@ class Restler extends Core
             if (isset($GLOBALS['HTTP_RAW_REQUEST_DATA'])) {
                 $request = $request->withBody(stream_for($GLOBALS['HTTP_RAW_REQUEST_DATA']));
             }
-        } elseif (is_null($this->defaults['returnResponse'])) {
-            $this->defaults['returnResponse'] = true;
+        } elseif (is_null($this->defaults->returnResponse)) {
+            $this->defaults->returnResponse = true;
         }
         if (Defaults::$serveStaticFiles) {
             $path = $request->getUri()->getPath();
@@ -150,7 +150,7 @@ class Restler extends Core
                 return $this->respond($error);
             }
         );
-        if (true === $this->defaults['returnResponse']) {
+        if (true === $this->defaults->returnResponse) {
             return $promise;
         }
         $promise->then(function ($response) {

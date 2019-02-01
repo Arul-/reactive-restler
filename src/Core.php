@@ -110,8 +110,8 @@ abstract class Core
         $config = &$config ?? new ArrayObject();
         $this->config = &$config;
 
-        $this->config['defaults'] = $this->defaults = StaticProperties::forClass(Defaults::class);
-        $this->config['router'] = $this->router = StaticProperties::forClass(Router::class);
+        $this->config['defaults'] = $this->defaults = new StaticProperties(Defaults::class);
+        $this->config['router'] = $this->router = new StaticProperties(Router::class);
 
         if ($container) {
             $container->init($config);
@@ -136,7 +136,7 @@ abstract class Core
                 $m['class'][$shortName][CommentParser::$embeddedDataName] ?? [];
             $name = lcfirst($shortName);
             if (!isset($this->config[$name])) {
-                $this->config[$name] = StaticProperties::forClass($fullName);;
+                $this->config[$name] = new StaticProperties($fullName);;
             }
             foreach ($properties as $property => $value) {
                 if (isset($this->config[$name][$property])) {
@@ -166,8 +166,8 @@ abstract class Core
         $path = $uri->getPath();
         $path = str_replace(
             array_merge(
-                $this->router['responseFormatMap']['extensions']->getArrayCopy(),
-                $this->router['formatOverridesMap']['extensions']->getArrayCopy()
+                $this->router->responseFormatMap['extensions'],
+                $this->router->formatOverridesMap['extensions']
             ),
             '',
             trim($path, '/')
@@ -183,13 +183,13 @@ abstract class Core
         }
         if (Defaults::$useUrlBasedVersioning && strlen($path) && $path{0} == 'v') {
             $version = intval(substr($path, 1));
-            if ($version && $version <= $this->router['maximumVersion']) {
+            if ($version && $version <= $this->router->maximumVersion) {
                 $this->requestedApiVersion = $version;
                 $path = explode('/', $path, 2);
                 $path = count($path) == 2 ? $path[1] : '';
             }
         } else {
-            $this->requestedApiVersion = $this->router['minimumVersion'];
+            $this->requestedApiVersion = $this->router->minimumVersion;
         }
         return $path;
     }
@@ -204,7 +204,7 @@ abstract class Core
         $get = UrlEncoded::decoderTypeFix($get);
         //apply app property changes
         foreach ($get as $key => $value) {
-            if ($alias = $this->defaults['fromQuery'][$key] ?? false) {
+            if ($alias = $this->defaults->fromQuery[$key] ?? false) {
                 $this->changeAppProperty($alias, $value);
             }
         }
@@ -226,14 +226,14 @@ abstract class Core
             $mime = strtok($contentType, ';');
             if ($mime == UrlEncoded::MIME) {
                 $format = $this->make(UrlEncoded::class);
-            } elseif (isset($this->router['requestFormatMap'][$mime])) {
-                $format = $this->make($this->router['requestFormatMap'][$mime]);
+            } elseif (isset($this->router->requestFormatMap[$mime])) {
+                $format = $this->make($this->router->requestFormatMap[$mime]);
                 $format->mediaType($mime);
-            } elseif (!$this->requestFormatDiffered && isset($this->router['formatOverridesMap'][$mime])) {
+            } elseif (!$this->requestFormatDiffered && isset($this->router->formatOverridesMap[$mime])) {
                 //if our api method is not using an @format comment
                 //to point to this $mime, we need to throw 403 as in below
                 //but since we don't know that yet, we need to defer that here
-                $format = $this->make($this->router['formatOverridesMap'][$mime]);
+                $format = $this->make($this->router->formatOverridesMap[$mime]);
                 $format->mediaType($mime);
                 $this->requestFormatDiffered = true;
             } else {
@@ -244,7 +244,7 @@ abstract class Core
             }
         }
         if (!$format) {
-            $format = $this->make($this->router['requestFormatMap']['default']);
+            $format = $this->make($this->router->requestFormatMap['default']);
         }
         return $format;
     }
@@ -259,8 +259,8 @@ abstract class Core
             $r = $this->requestFormat->decode($raw);
 
             $r = is_array($r)
-                ? array_merge($r, [$this->defaults['fullRequestDataName'] => $r])
-                : [$this->defaults['fullRequestDataName'] => $r];
+                ? array_merge($r, [$this->defaults->fullRequestDataName => $r])
+                : [$this->defaults->fullRequestDataName => $r];
         }
         return $r;
     }
@@ -285,7 +285,7 @@ abstract class Core
         $this->container->instance(ApiMethodInfo::class, $o);
         //set defaults based on api method comments
         if (isset($o->metadata)) {
-            foreach ($this->defaults['fromComments'] as $key => $property) {
+            foreach ($this->defaults->fromComments as $key => $property) {
                 if (array_key_exists($key, $o->metadata)) {
                     $value = $o->metadata[$key];
                     $this->changeAppProperty($property, $value);
@@ -314,7 +314,7 @@ abstract class Core
             $formats = explode(',', (string)$formats);
             foreach ($formats as $i => $f) {
                 if ($f = ClassName::resolve(trim($f), $metadata['scope'])) {
-                    if (!in_array($f, $this->router->formatOverridesMap->getArrayCopy())) {
+                    if (!in_array($f, $this->router->formatOverridesMap)) {
                         throw new HttpException(
                             500,
                             "Given @format is not present in overriding formats. " .
@@ -330,12 +330,12 @@ abstract class Core
         }
         /** @noinspection PhpInternalEntityUsedInspection */
         Router::_setMediaTypes(RequestMediaTypeInterface::class, $readableFormats,
-            $this->router['requestFormatMap'],
-            $this->router['readableMediaTypes']);
+            $this->router->requestFormatMap,
+            $this->router->readableMediaTypes);
 
         if (
             $this->requestFormatDiffered &&
-            !isset($this->router['requestFormatMap'][$this->requestFormat->mediaType()])
+            !isset($this->router->requestFormatMap[$this->requestFormat->mediaType()])
         ) {
             throw new HttpException(
                 403,
@@ -345,8 +345,8 @@ abstract class Core
         if (is_array($formats) && count($formats)) {
             /** @noinspection PhpInternalEntityUsedInspection */
             Router::_setMediaTypes(ResponseMediaTypeInterface::class, $formats,
-                $this->router['responseFormatMap'],
-                $this->router['writableMediaTypes']);
+                $this->router->responseFormatMap,
+                $this->router->writableMediaTypes);
         }
 
 
@@ -358,8 +358,8 @@ abstract class Core
             $extension = array_pop($extensions);
             $extension = explode('/', $extension);
             $extension = array_shift($extension);
-            if ($extension && isset($this->router['responseFormatMap'][$extension])) {
-                $format = $this->make($this->router['responseFormatMap'][$extension]);
+            if ($extension && isset($this->router->responseFormatMap[$extension])) {
+                $format = $this->make($this->router->responseFormatMap[$extension]);
                 $format->extension($extension);
                 return $format;
             }
@@ -368,8 +368,8 @@ abstract class Core
         if (!empty($acceptHeader)) {
             $acceptList = Header::sortByPriority($acceptHeader);
             foreach ($acceptList as $accept => $quality) {
-                if (isset($this->router['responseFormatMap'][$accept])) {
-                    $format = $this->make($this->router['responseFormatMap'][$accept]);
+                if (isset($this->router->responseFormatMap[$accept])) {
+                    $format = $this->make($this->router->responseFormatMap[$accept]);
                     $format->mediaType($accept);
                     // Tell cache content is based on Accept header
                     $this->_responseHeaders['Vary'] = 'Accept';
@@ -378,18 +378,18 @@ abstract class Core
                 } elseif (false !== ($index = strrpos($accept, '+'))) {
                     $mime = substr($accept, 0, $index);
                     $vendor = 'application/vnd.'
-                        . $this->defaults['apiVendor'] . '-v';
-                    if (is_string($this->defaults['apiVendor']) && 0 === stripos($mime, $vendor)) {
+                        . $this->defaults->apiVendor . '-v';
+                    if (is_string($this->defaults->apiVendor) && 0 === stripos($mime, $vendor)) {
                         $extension = substr($accept, $index + 1);
-                        if (isset($this->router['responseFormatMap'][$extension])) {
+                        if (isset($this->router->responseFormatMap[$extension])) {
                             //check the MIME and extract version
                             $version = intval(substr($mime, strlen($vendor)));
 
-                            if ($version >= $this->router['minimumVersion'] &&
-                                $version <= $this->router['maximumVersion']) {
+                            if ($version >= $this->router->minimumVersion &&
+                                $version <= $this->router->maximumVersion) {
 
                                 $this->requestedApiVersion = $version;
-                                $format = $this->make($this->router['responseFormatMap'][$extension]);
+                                $format = $this->make($this->router->responseFormatMap[$extension]);
                                 $format->mediaType("$vendor$version+$extension");
                                 //$this->app['useVendorMIMEVersioning'] = true;
                                 $this->_responseHeaders['Vary'] = 'Accept';
@@ -412,7 +412,7 @@ abstract class Core
             } elseif (false !== strpos($acceptHeader, 'text/*')) {
                 $format = $this->make(Xml::class);
             } elseif (false !== strpos($acceptHeader, '*/*')) {
-                $format = $this->make($this->router['responseFormatMap']['default']);
+                $format = $this->make($this->router->responseFormatMap['default']);
             }
         }
         if (empty($format)) {
@@ -420,7 +420,7 @@ abstract class Core
             // server cannot send a response which is acceptable according to
             // the combined Accept field value, then the server SHOULD send
             // a 406 (not acceptable) response.
-            $format = $this->make($this->router['responseFormatMap']['default']);
+            $format = $this->make($this->router->responseFormatMap['default']);
             $this->responseFormat = $format;
             throw new HttpException(
                 406,
@@ -447,11 +447,11 @@ abstract class Core
         string $accessControlRequestHeaders = '',
         string $origin = ''
     ): void {
-        if (!$this->defaults['crossOriginResourceSharing'] || $requestMethod != 'OPTIONS') {
+        if (!$this->defaults->crossOriginResourceSharing || $requestMethod != 'OPTIONS') {
             return;
         }
         if (!empty($accessControlRequestMethod)) {
-            $this->_responseHeaders['Access-Control-Allow-Methods'] = $this->defaults['accessControlAllowMethods'];
+            $this->_responseHeaders['Access-Control-Allow-Methods'] = $this->defaults->accessControlAllowMethods;
         }
         if (!empty($accessControlRequestHeaders)) {
             $this->_responseHeaders['Access-Control-Allow-Headers'] = $accessControlRequestHeaders;
@@ -471,9 +471,9 @@ abstract class Core
             $found = false;
             $charList = Header::sortByPriority($acceptCharset);
             foreach ($charList as $charset => $quality) {
-                if (in_array($charset, (array)$this->defaults['supportedCharsets'])) {
+                if (in_array($charset, (array)$this->defaults->supportedCharsets)) {
                     $found = true;
-                    $this->defaults['charset'] = $charset;
+                    $this->defaults->charset = $charset;
                     break;
                 }
             }
@@ -497,10 +497,10 @@ abstract class Core
             $found = false;
             $langList = Header::sortByPriority($acceptLanguage);
             foreach ($langList as $lang => $quality) {
-                foreach ($this->defaults['supportedLanguages'] as $supported) {
+                foreach ($this->defaults->supportedLanguages as $supported) {
                     if (strcasecmp($supported, $lang) == 0) {
                         $found = true;
-                        $this->defaults['language'] = $supported;
+                        $this->defaults->language = $supported;
                         break 2;
                     }
                 }
@@ -524,7 +524,7 @@ abstract class Core
     protected function filter(ServerRequestInterface $request, bool $postAuth = false)
     {
         $name = $postAuth ? 'postAuthFilterClasses' : 'preAuthFilterClasses';
-        foreach ($this->router[$name] as $i => $filerClass) {
+        foreach ($this->router->{$name} as $i => $filerClass) {
             //exclude invalid paths
             if (!static::isPathSelected($filerClass, $this->_path)) {
                 continue;
@@ -546,22 +546,21 @@ abstract class Core
     protected function authenticate(ServerRequestInterface $request)
     {
         $o = &$this->_apiMethodInfo;
-        $accessLevel = max($this->defaults['apiAccessLevel'], $o->accessLevel);
+        $accessLevel = max($this->defaults->apiAccessLevel, $o->accessLevel);
         if ($accessLevel) {
-            if (!count($this->router['authClasses']) && $accessLevel > 1) {
+            if (!count($this->router->authClasses) && $accessLevel > 1) {
                 throw new HttpException(
                     403,
                     'at least one Authentication Class is required'
                 );
             }
             $unauthorized = false;
-            $authClasses = $this->router->authClasses->getArrayCopy();
+            $authClasses = $this->router->authClasses;
             foreach ($authClasses as $i => $authClass) {
                 try {
                     //exclude invalid paths
                     if (!static::isPathSelected($authClass, $this->_path)) {
-                        $this->router->authClasses->splice($i, 1);
-                        //array_splice($this->router['authClasses'], $i, 1);
+                        array_splice($this->router->authClasses, $i, 1);
                         continue;
                     }
                     /** @var AuthenticationInterface $auth */
@@ -571,10 +570,8 @@ abstract class Core
                     }
                     $unauthorized = false;
                     //make this auth class as the first one
-                    $this->router->authClasses->splice($i, 1);
-                    $this->router->authClasses->unshift($authClass);
-                    //array_splice($this->router['authClasses'], $i, 1);
-                    //array_unshift($this->router['authClasses'], $authClass);
+                    array_splice($this->router->authClasses, $i, 1);
+                    array_unshift($this->router->authClasses, $authClass);
                     break;
                 } catch (InvalidAuthCredentials $e) { //provided credentials does not authenticate
                     $this->_authenticated = false;
@@ -586,7 +583,7 @@ abstract class Core
                 }
             }
             //when none of the auth classes apply and it's not a hybrid api
-            if (!count($this->router['authClasses']) && $accessLevel > 1) {
+            if (!count($this->router->authClasses) && $accessLevel > 1) {
                 throw new HttpException(
                     403,
                     'at least one Authentication Class should apply to path `' . $this->_path . '`'
@@ -610,7 +607,7 @@ abstract class Core
      */
     protected function validate()
     {
-        if (!$this->defaults['autoValidationEnabled']) {
+        if (!$this->defaults->autoValidationEnabled) {
             return;
         }
 
@@ -649,7 +646,7 @@ abstract class Core
      */
     public function call(ApiMethodInfo $info)
     {
-        $accessLevel = max($this->defaults['apiAccessLevel'], $info->accessLevel);
+        $accessLevel = max($this->defaults->apiAccessLevel, $info->accessLevel);
         $object = $this->make($info->className);
         switch ($accessLevel) {
             case 3 : //protected method
@@ -683,12 +680,10 @@ abstract class Core
     protected function composeHeaders(?ApiMethodInfo $info, string $origin = '', HttpException $e = null): void
     {
         //only GET method should be cached if allowed by API developer
-        $expires = $this->_requestMethod == 'GET' ? $this->defaults['headerExpires'] : 0;
+        $expires = $this->_requestMethod == 'GET' ? $this->defaults->headerExpires : 0;
         $headerCacheControl = $this->defaults->headerCacheControl;
         if (is_string($headerCacheControl)) {
             $headerCacheControl = [$headerCacheControl];
-        } elseif ($headerCacheControl instanceof ArrayObject) {
-            $headerCacheControl = $headerCacheControl->getArrayCopy();
         }
         $cacheControl = $headerCacheControl[0];
         if ($expires > 0) {
@@ -703,21 +698,21 @@ abstract class Core
         $this->_responseHeaders['Expires'] = $expires;
         $this->_responseHeaders['X-Powered-By'] = 'Luracast Restler v' . static::VERSION;
 
-        if ($this->defaults['crossOriginResourceSharing']) {
+        if ($this->defaults->crossOriginResourceSharing) {
             if (!empty($origin)) {
                 $this->_responseHeaders['Access-Control-Allow-Origin']
-                    = $this->defaults['accessControlAllowOrigin'] == '*'
+                    = $this->defaults->accessControlAllowOrigin == '*'
                     ? $origin
-                    : $this->defaults['accessControlAllowOrigin'];
+                    : $this->defaults->accessControlAllowOrigin;
                 $this->_responseHeaders['Access-Control-Allow-Credentials'] = 'true';
                 $this->_responseHeaders['Access-Control-Max-Age'] = 86400;
             } elseif ($this->_requestMethod == 'OPTIONS') {
                 $this->_responseHeaders['Access-Control-Allow-Origin']
-                    = $this->defaults['accessControlAllowOrigin'];
+                    = $this->defaults->accessControlAllowOrigin;
                 $this->_responseHeaders['Access-Control-Allow-Credentials'] = 'true';
             }
         }
-        $this->_responseHeaders['Content-Language'] = $this->defaults['language'];
+        $this->_responseHeaders['Content-Language'] = $this->defaults->language;
 
         if (isset($info->metadata['header'])) {
             foreach ($info->metadata['header'] as $header) {
@@ -727,7 +722,7 @@ abstract class Core
         }
 
         $code = 200;
-        if (!$this->defaults['suppressResponseCode']) {
+        if (!$this->defaults->suppressResponseCode) {
             if ($e) {
                 $code = $e->getCode();
             } elseif (!$this->_responseCode && isset($info->metadata['status'])) {
@@ -735,9 +730,9 @@ abstract class Core
             }
         }
         $this->_responseCode = $code;
-        $this->responseFormat->charset($this->defaults['charset']);
+        $this->responseFormat->charset($this->defaults->charset);
         $charset = $this->responseFormat->charset()
-            ?: $this->defaults['charset'];
+            ?: $this->defaults->charset;
 
         $this->_responseHeaders['Content-Type'] =
             $this->responseFormat->mediaType() . "; charset=$charset";
@@ -820,7 +815,7 @@ abstract class Core
             /** @noinspection PhpParamsInspection */
             $value = Validator::validate($value, new ValidationInfo($detail));
         }
-        $this->defaults[$property] = $value;
+        $this->defaults->{$property} = $value;
         return true;
     }
 }

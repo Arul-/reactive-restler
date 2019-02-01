@@ -197,7 +197,7 @@ class Container implements ContainerInterface
         }
         $class = ucfirst($parameter->name);
         if (class_exists($class) || $class = ClassName::get($class) ?? false) {
-            $value = $this->config[$parameter->name] =  StaticProperties::forClass($class);
+            $value = $this->config[$parameter->name] =  new StaticProperties($class);
             return $value;
         }
         if ($parameter->isDefaultValueAvailable()) {

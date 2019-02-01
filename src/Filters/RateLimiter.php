@@ -49,7 +49,7 @@ class RateLimiter implements FilterInterface, SelectivePathsInterface, UsesAuthe
         'week' => 604800, // 60*60*24*7 seconds
         'month' => 2592000, // 60*60*24*30 seconds
     );
-    private $runtimeValues = [];
+    private $runtimeValues;
 
     /**
      * @var CacheInterface
@@ -94,13 +94,13 @@ class RateLimiter implements FilterInterface, SelectivePathsInterface, UsesAuthe
     {
         $authenticated = $this->authenticated;
         $responseHeaders['X-Auth-Status'] = ($authenticated ? 'true' : 'false');
-        $unit = $this->runtimeValues['unit'];
-        $group = $this->runtimeValues['group'];
+        $unit = $this->runtimeValues->unit;
+        $group = $this->runtimeValues->group;
         static::validate($unit);
         $timeUnit = static::$units[$unit];
         $maxPerUnit = $authenticated
-            ? $this->runtimeValues['authenticatedUsagePerUnit']
-            : $this->runtimeValues['usagePerUnit'];
+            ? $this->runtimeValues->authenticatedUsagePerUnit
+            : $this->runtimeValues->usagePerUnit;
         if ($maxPerUnit) {
             /** @var UserIdentificationInterface $user */
             $user = ClassName::get(UserIdentificationInterface::class);
