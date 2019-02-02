@@ -12,7 +12,7 @@ use Luracast\Restler\Contracts\ValueObjectInterface;
  *
  * @package DB
  */
-class Task implements ValueObjectInterface, JsonSerializable
+class Task implements ValueObjectInterface
 {
     public $id = 0;
     public $position = 0;

@@ -20,8 +20,8 @@ class Tasks
         if (!$this->db) {
             $this->setDB(new TasksStore());
         }
-        $html->data->title = 'What\'s Next on Restler 3?';
-        $html->data->description = 'What should we focus on as the next?';
+        $html->data['title'] = 'What\'s Next on Restler 3?';
+        $html->data['description'] = 'What should we focus on as the next?';
     }
 
     private function setDB(TasksInterface $db)

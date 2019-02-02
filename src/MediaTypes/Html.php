@@ -159,7 +159,7 @@ class Html extends MediaType implements ResponseMediaTypeInterface
                 $file = end($file);
                 $this->html['view'] = $this->guessViewName($file);
             }
-            $data->merge($this->html['data']);
+            $data->merge(ArrayObject::fromArray($this->html['data']));
             if ($value) {
                 $data = $data->nested($value);
                 if (is_object($data)) {
@@ -200,8 +200,6 @@ class Html extends MediaType implements ResponseMediaTypeInterface
 
     private function reset()
     {
-        $this->html->mime = 'text/html';
-        $this->html->extension = 'html';
         $this->html->view = 'debug';
         $this->html->template = 'php';
     }
