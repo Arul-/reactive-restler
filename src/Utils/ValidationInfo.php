@@ -257,5 +257,10 @@ class ValidationInfo implements ValueObjectInterface
         $o = new self ($info);
         return $o;
     }
+
+    public function jsonSerialize()
+    {
+        return get_object_vars($this);
+    }
 }
 
