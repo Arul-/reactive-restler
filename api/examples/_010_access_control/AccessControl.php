@@ -23,7 +23,7 @@ class AccessControl implements AccessControlInterface, SelectivePathsInterface
      * @return bool
      * @throws HttpException
      */
-    public function __isAllowed(ServerRequestInterface $request, array &$responseHeaders = []): bool
+    public function _isAllowed(ServerRequestInterface $request, array &$responseHeaders = []): bool
     {
         //hardcoded api_key=>role for brevity
         $roles = array('12345' => 'user', '67890' => 'admin');

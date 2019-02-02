@@ -153,7 +153,7 @@ abstract class Core
             }
         }
         if ($instance instanceof UsesAuthenticationInterface) {
-            $instance->__setAuthenticationStatus($this->_authenticated, $this->_authVerified);
+            $instance->_setAuthenticationStatus($this->_authenticated, $this->_authVerified);
         }
 
         return $instance;
@@ -531,7 +531,7 @@ abstract class Core
             }
             /** @var FilterInterface $filter */
             $filter = $this->make($filerClass);
-            if (!$filter->__isAllowed($request, $this->_responseHeaders)) {
+            if (!$filter->_isAllowed($request, $this->_responseHeaders)) {
                 throw new HttpException(403);
             }
         }
@@ -565,7 +565,7 @@ abstract class Core
                     }
                     /** @var AuthenticationInterface $auth */
                     $auth = $this->make($authClass);
-                    if (!$auth->__isAllowed($request, $this->_responseHeaders)) {
+                    if (!$auth->_isAllowed($request, $this->_responseHeaders)) {
                         throw new HttpException(401);
                     }
                     $unauthorized = false;

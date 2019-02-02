@@ -17,11 +17,4 @@ interface AuthenticationInterface extends FilterInterface
      * @example OAuth
      */
     public static function getWWWAuthenticateString(): string;
-
-    /**
-     * @inheritdoc
-     *
-     * @throws InvalidAuthCredentials
-     */
-    public function __isAllowed(ServerRequestInterface $request, array &$responseHeaders): bool;
 }

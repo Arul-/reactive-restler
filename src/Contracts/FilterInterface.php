@@ -25,5 +25,5 @@ interface FilterInterface
      *
      * @throws HttpException
      */
-    public function __isAllowed(ServerRequestInterface $request, array &$responseHeaders): bool;
+    public function _isAllowed(ServerRequestInterface $request, array &$responseHeaders): bool;
 }

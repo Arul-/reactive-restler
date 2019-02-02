@@ -4,7 +4,7 @@
  * Restler is using many ValueObjects across to make it easy for the developers
  * to use them with the help of code hinting etc.,
  */
-interface ValueObjectInterface
+interface ValueObjectInterface extends \JsonSerializable
 {
 
     /**

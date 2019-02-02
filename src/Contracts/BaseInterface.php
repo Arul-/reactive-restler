@@ -1,5 +1,6 @@
 <?php namespace Luracast\Restler\Contracts;
 
+use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\Utils\ApiMethodInfo;
 use Luracast\Restler\RestException;
 use Psr\Http\Message\ResponseInterface;
@@ -55,7 +56,7 @@ interface BaseInterface
 
     function compose($response = null);
 
-    function composeHeaders(?ApiMethodInfo $info, string $origin = '', RestException $e = null): void;
+    function composeHeaders(?ApiMethodInfo $info, string $origin = '', HttpException $e = null): void;
 
     function message(Throwable $e);
 

@@ -444,7 +444,7 @@ class Forms implements FilterInterface
      *
      * @throws HttpException 403 security violation
      */
-    public function __isAllowed(ServerRequestInterface $request, array &$responseHeaders): bool
+    public function _isAllowed(ServerRequestInterface $request, array &$responseHeaders): bool
     {
         if (session_id() == '') {
             session_start();

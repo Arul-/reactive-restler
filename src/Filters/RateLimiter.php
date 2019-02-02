@@ -90,7 +90,7 @@ class RateLimiter implements FilterInterface, SelectivePathsInterface, UsesAuthe
      * @return bool
      * @throws HttpException
      */
-    public function __isAllowed(ServerRequestInterface $request, array &$responseHeaders): bool
+    public function _isAllowed(ServerRequestInterface $request, array &$responseHeaders): bool
     {
         $authenticated = $this->authenticated;
         $responseHeaders['X-Auth-Status'] = ($authenticated ? 'true' : 'false');
@@ -140,7 +140,7 @@ class RateLimiter implements FilterInterface, SelectivePathsInterface, UsesAuthe
         return true;
     }
 
-    public function __setAuthenticationStatus(bool $isAuthenticated = false, bool $isAuthFinished = false)
+    public function _setAuthenticationStatus(bool $isAuthenticated = false, bool $isAuthFinished = false)
     {
         $this->authenticated = $isAuthenticated;
     }

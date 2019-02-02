@@ -2,5 +2,5 @@
 
 interface UsesAuthenticationInterface
 {
-    public function __setAuthenticationStatus(bool $isAuthenticated = false, bool $isAuthFinished = false);
+    public function _setAuthenticationStatus(bool $isAuthenticated = false, bool $isAuthFinished = false);
 }

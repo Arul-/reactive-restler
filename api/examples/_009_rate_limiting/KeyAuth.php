@@ -9,7 +9,7 @@ class KeyAuth implements AuthenticationInterface, SelectivePathsInterface
 {
     use SelectivePathsTrait;
 
-    public function __isAllowed(ServerRequestInterface $request, array &$responseHeaders = []): bool
+    public function _isAllowed(ServerRequestInterface $request, array &$responseHeaders = []): bool
     {
         $query = $request->getQueryParams();
         return isset($query['api_key']) && $query['api_key'] == 'r3rocks';

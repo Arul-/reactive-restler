@@ -517,7 +517,7 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
         return Router::$maximumVersion;
     }
 
-    public function __setAuthenticationStatus(bool $isAuthenticated = false, bool $isAuthFinished = false)
+    public function _setAuthenticationStatus(bool $isAuthenticated = false, bool $isAuthFinished = false)
     {
         $this->authenticated = $isAuthenticated;
     }

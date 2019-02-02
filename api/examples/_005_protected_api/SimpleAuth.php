@@ -16,7 +16,7 @@ class SimpleAuth implements AuthenticationInterface, SelectivePathsInterface
         return SimpleAuth::KEY;
     }
 
-    public function __isAllowed(ServerRequestInterface $request, array &$responseHeaders = []): bool
+    public function _isAllowed(ServerRequestInterface $request, array &$responseHeaders = []): bool
     {
         $query = $request->getQueryParams();
         return isset($query['key']) && $query['key'] == SimpleAuth::KEY ? true : false;
