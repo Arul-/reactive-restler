@@ -58,9 +58,9 @@ class Users
         ];
         $theme = $request->getQueryParams()['theme'] ?? $bootstrap3[array_rand($bootstrap3, 1)];
         $style = $theme == 'foundation5' ? 'foundation5' : 'bootstrap3';
-        $html->data->theme = $theme;
-        $html->data->themes = $bootstrap3;
-        $html->data->style = $style;
+        $html->data['theme'] = $theme;
+        $html->data['themes'] = $bootstrap3;
+        $html->data['style'] = $style;
         $forms->style = FormStyles::$$style;
     }
 
