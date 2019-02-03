@@ -2,13 +2,12 @@
 
 use Exception;
 use GuzzleHttp\Psr7\ServerRequest;
-use function GuzzleHttp\Psr7\stream_for;
 use LogicalSteps\Async\Async;
 use Luracast\Restler\Contracts\ComposerInterface;
 use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\MediaTypes\Json;
+use Luracast\Restler\Middleware\StaticFiles;
 use Luracast\Restler\Utils\Dump;
-use Luracast\Restler\Utils\PassThrough;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use React\Cache\ArrayCache;
@@ -17,6 +16,7 @@ use React\Promise\PromiseInterface;
 use Throwable;
 use WyriHaximus\React\Http\Middleware\Session;
 use WyriHaximus\React\Http\Middleware\SessionMiddleware;
+use function GuzzleHttp\Psr7\stream_for;
 
 class Restler extends Core
 {
@@ -25,6 +25,8 @@ class Restler extends Core
      */
     protected $request;
     protected $rawRequestBody = "";
+
+    public static $middleware = [];
 
 
     /**
@@ -118,19 +120,9 @@ class Restler extends Core
         } elseif (is_null($this->defaults->returnResponse)) {
             $this->defaults->returnResponse = true;
         }
-        if (Defaults::$serveStaticFiles) {
-            $path = $request->getUri()->getPath();
-            $extension = pathinfo($path, PATHINFO_EXTENSION);
-            if (isset(PassThrough::$mimeTypes[$extension])) {
-                $path = BASE . '/' . Defaults::$staticFilesDirectory . $path;
-                if (is_file($path)) {
-                    $response = PassThrough::file($path);
-                    return new FulfilledPromise($response);
-                }
-            }
-        }
-        $middleware = new SessionMiddleware('RestlerSession', new ArrayCache());
-        $promise = $middleware->__invoke($request, [$this, '_handle']);
+        $middleware = static::$middleware;
+        $middleware[] = [$this, '_handle'];
+        $promise = $this->runMiddleware($middleware, $request);
         $promise = $promise->then(
             function ($result) {
                 if ($result instanceof ResponseInterface) {
@@ -215,4 +207,24 @@ class Restler extends Core
             ));
         }
     }
+
+    /** @internal */
+    public function runMiddleware(array $middleware, ServerRequestInterface $request, $position = 0): PromiseInterface
+    {
+        // final request handler will be invoked without a next handler
+        if (!isset($middleware[$position + 1])) {
+            $handler = $middleware[$position];
+            return $handler($request);
+        }
+
+        $that = $this;
+        $next = function (ServerRequestInterface $request) use ($that, $middleware, $position) {
+            return $that->runMiddleware($middleware, $request, $position + 1);
+        };
+
+        // invoke middleware request handler with next handler
+        $handler = $middleware[$position];
+        return $handler($request, $next);
+    }
+
 }

@@ -29,16 +29,7 @@ use React\Http\Response;
 class Defaults
 {
     public static $productionMode = false;
-
-    /**
-     * @var bool to serve static files or not
-     */
-    public static $serveStaticFiles = true;
-    /**
-     * @var string folder to server static files from. Relative path to the
-     * root folder
-     */
-    public static $staticFilesDirectory = 'public';
+    
     /**
      * @var string full path of the directory where all the generated files will
      * be kept. When set to null (default) it will use the cache folder that is
