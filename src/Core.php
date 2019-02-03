@@ -743,6 +743,9 @@ abstract class Core
 
     protected function message(Throwable $e, string $origin)
     {
+        if (!$this->responseFormat) {
+            $this->responseFormat = new Json();
+        }
         if (!$e instanceof HttpException) {
             $e = new HttpException($e->getCode(), $e->getMessage(), [], $e);
         }
