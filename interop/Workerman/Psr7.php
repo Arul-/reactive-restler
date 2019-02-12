@@ -34,9 +34,18 @@ class Psr7 extends Http
             'REMOTE_ADDR' => $connection->getRemoteIp(),
             'REMOTE_PORT' => $connection->getRemotePort()
         ];
+
         $class = ClassName::get(ServerRequestInterface::class);
         /** @var ServerRequestInterface $request */
         $request = new $class($method, $uri, $headers, $http_body, $protocol, $server);
+        if ('POST' == $method && isset($headers['Content-Type'])) {
+            if (preg_match('/boundary="?(\S+)"?/', $headers['Content-Type'], $match)) {
+                $headers['Content-Type'] = 'multipart/form-data';
+                $http_post_boundary = '--' . $match[1];
+                static::parseUploadFiles($http_body, $http_post_boundary);
+                $request = $request->withUploadedFiles($_FILES);
+            }
+        }
         $query = [];
         parse_str(parse_url($uri, PHP_URL_QUERY), $query);
         $request = $request->withQueryParams($query);
