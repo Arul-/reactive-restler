@@ -7,6 +7,7 @@ use Luracast\Restler\Filters\RateLimiter;
 use Luracast\Restler\MediaTypes\Html;
 use Luracast\Restler\MediaTypes\Json;
 use Luracast\Restler\MediaTypes\Xml;
+use Luracast\Restler\Middleware\SessionMiddleware;
 use Luracast\Restler\Middleware\StaticFiles;
 use Luracast\Restler\OpenApi3\Explorer;
 use Luracast\Restler\Restler;
@@ -14,9 +15,7 @@ use Luracast\Restler\Router;
 use Luracast\Restler\Utils\ClassName;
 use Luracast\Restler\Utils\Text;
 use ratelimited\Authors as RateLimitedAuthors;
-use React\Cache\ArrayCache;
 use v1\BMI as BMI1;
-use WyriHaximus\React\Http\Middleware\SessionMiddleware;
 
 define('BASE', dirname(__DIR__));
 include BASE . "/vendor/autoload.php";
@@ -34,7 +33,8 @@ if (!Text::endsWith($_SERVER['SCRIPT_NAME'], 'index.php')) {
     //when serving through apache or nginx, static files will be served direcly by apache / nginx
     Restler::$middleware[] = new StaticFiles(BASE . '/' . 'public');
 }
-Restler::$middleware[] = new SessionMiddleware('RestlerSession', new ArrayCache());
+//Restler::$middleware[] = new SessionMiddleware('RESTLERSESSID', new ArrayCache(), [0, '', '', false, false]);
+Restler::$middleware[] = new SessionMiddleware();
 
 class ResetForTests
 {
