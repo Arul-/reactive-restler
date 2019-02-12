@@ -44,12 +44,8 @@ class Psr7 extends Http
         if (empty($cookieHeader)) {
             return $request;
         }
-        $headerCookies = explode('; ', $cookieHeader);
         $cookies = array();
-        foreach ($headerCookies as $item) {
-            list($key, $val) = explode('=', $item, 2);
-            $cookies[$key] = $val;
-        }
+        parse_str(str_replace('; ', '&', $cookieHeader), $cookies);
         return $request->withCookieParams($cookies);
 
     }
