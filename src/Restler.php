@@ -4,13 +4,12 @@ use Exception;
 use GuzzleHttp\Psr7\ServerRequest;
 use LogicalSteps\Async\Async;
 use Luracast\Restler\Contracts\ComposerInterface;
+use Luracast\Restler\Contracts\MiddlewareInterface;
 use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\MediaTypes\Json;
-use Luracast\Restler\Middleware\StaticFiles;
 use Luracast\Restler\Utils\Dump;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use React\Cache\ArrayCache;
 use React\Promise\FulfilledPromise;
 use React\Promise\PromiseInterface;
 use Throwable;
@@ -122,7 +121,7 @@ class Restler extends Core
         }
         $middleware = static::$middleware;
         $middleware[] = [$this, '_handle'];
-        $promise = $this->runMiddleware($middleware, $request);
+        $promise = $this->handleMiddleware($middleware, $request);
         $promise = $promise->then(
             function ($result) {
                 if ($result instanceof ResponseInterface) {
@@ -209,7 +208,7 @@ class Restler extends Core
     }
 
     /** @internal */
-    public function runMiddleware(array $middleware, ServerRequestInterface $request, $position = 0): PromiseInterface
+    public function handleMiddleware(array $middleware, ServerRequestInterface $request, $position = 0): PromiseInterface
     {
         // final request handler will be invoked without a next handler
         if (!isset($middleware[$position + 1])) {
@@ -219,11 +218,14 @@ class Restler extends Core
 
         $that = $this;
         $next = function (ServerRequestInterface $request) use ($that, $middleware, $position) {
-            return $that->runMiddleware($middleware, $request, $position + 1);
+            return $that->handleMiddleware($middleware, $request, $position + 1);
         };
 
         // invoke middleware request handler with next handler
         $handler = $middleware[$position];
+        if (is_object($handler) && $handler instanceof MiddlewareInterface) {
+            return $handler($request, $next, $this->container);
+        }
         return $handler($request, $next);
     }
 

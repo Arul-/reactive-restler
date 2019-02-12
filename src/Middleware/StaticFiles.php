@@ -3,6 +3,7 @@
 namespace Luracast\Restler\Middleware;
 
 
+use Luracast\Restler\Contracts\ContainerInterface;
 use Luracast\Restler\Contracts\MiddlewareInterface;
 use Luracast\Restler\Utils\ClassName;
 use Luracast\Restler\Utils\PassThrough;
@@ -22,7 +23,11 @@ class StaticFiles implements MiddlewareInterface
         $this->webRoot = rtrim($webRoot, DIRECTORY_SEPARATOR);
     }
 
-    public function __invoke(ServerRequestInterface $request, callable $next = null)
+    public function __invoke(
+        ServerRequestInterface $request,
+        callable $next = null,
+        ContainerInterface $container = null
+    )
     {
         $path = $request->getUri()->getPath();
         $extension = pathinfo($path, PATHINFO_EXTENSION);
