@@ -10,9 +10,9 @@ use Luracast\Restler\Contracts\{
     FilterInterface,
     RequestMediaTypeInterface,
     ResponseMediaTypeInterface,
+    SessionInterface,
     UserIdentificationInterface,
-    ValidationInterface
-};
+    ValidationInterface};
 use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\Filters\RateLimiter;
 use Luracast\Restler\MediaTypes\{Amf, Csv, Html, Js, Json, Plist, Tsv, Upload, UrlEncoded, Xml, Yaml};
@@ -29,7 +29,7 @@ use React\Http\Response;
 class Defaults
 {
     public static $productionMode = false;
-    
+
     /**
      * @var string full path of the directory where all the generated files will
      * be kept. When set to null (default) it will use the cache folder that is
@@ -307,6 +307,7 @@ class Defaults
         RequestInterface::class => [ServerRequest::class],
         ResponseInterface::class => [Response::class],
         ContainerInterface::class => [Container::class],
+        SessionInterface::class => [Session::class],
     ];
     /**
      * Class Aliases
@@ -318,6 +319,7 @@ class Defaults
     public static $aliases = [
         // Core
         'Application' => Restler::class,
+        'Session' => Session::class,
         // Formats
         'Amf' => Amf::class,
         'Csv' => Csv::class,
