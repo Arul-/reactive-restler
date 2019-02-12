@@ -40,6 +40,12 @@ class Psr7 extends Http
         $query = [];
         parse_str(parse_url($uri, PHP_URL_QUERY), $query);
         $request = $request->withQueryParams($query);
-        return $request;
+        $headerCookies = explode('; ', $request->getHeaderLine('Cookie'));
+        $cookies = array();
+        foreach ($headerCookies as $item) {
+            list($key, $val) = explode('=', $item, 2);
+            $cookies[$key] = $val;
+        }
+        return $request->withCookieParams($cookies);
     }
 }
