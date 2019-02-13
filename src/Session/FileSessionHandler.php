@@ -11,6 +11,7 @@ use SessionIdInterface;
 class FileSessionHandler implements SessionHandlerInterface, SessionIdInterface
 {
     private $savePath;
+    private $data = [];
 
     public function __construct(string $savePath)
     {
@@ -34,12 +35,17 @@ class FileSessionHandler implements SessionHandlerInterface, SessionIdInterface
 
     function read($id)
     {
-        return (string)@file_get_contents("$this->savePath/sess_$id");
+        $this->data[$id] = (string)@file_get_contents("$this->savePath/sess_$id");
+        return $this->data[$id];
     }
 
     function write($id, $data)
     {
-        return file_put_contents("$this->savePath/sess_$id", $data) === false ? false : true;
+        $file = "$this->savePath/sess_$id";
+        if (isset($this->data[$id]) && $this->data[$id] == $data) {
+            return touch($file);
+        }
+        return file_put_contents($file, $data) === false ? false : true;
     }
 
     function destroy($id)
