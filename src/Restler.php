@@ -157,11 +157,6 @@ class Restler extends Core
     public function _handle(ServerRequestInterface $request)
     {
         $this->container->instance(ServerRequestInterface::class, $request);
-        $session = $request->getAttribute(SessionMiddleware::ATTRIBUTE_NAME);
-        if ($session) {
-            $this->container->instance(Session::class, $session);
-        }
-        $request = $request->withAttribute('container', $this->container);
         $this->rawRequestBody = (string)$request->getBody();
         $this->_requestMethod = $request->getMethod();
         $this->request = $request;
