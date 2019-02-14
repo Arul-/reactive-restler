@@ -24,7 +24,7 @@ class Header
         }
         foreach ($accepts as $pos => $accept) {
             $parts = explode(';q=', trim($accept));
-            $type = array_shift($parts);
+            $type = strtok(array_shift($parts), ';');
             $quality = count($parts) ?
                 floatval(array_shift($parts)) :
                 (1000 - $pos) / 1000;
