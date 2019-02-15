@@ -163,6 +163,16 @@ class Restler extends Core
         try {
             try {
                 $this->get();
+                if (true === $this->defaults->useVendorMIMEVersioning) {
+                    try {
+                        $this->responseFormat = $this->negotiateResponseMediaType(
+                            $this->request->getUri()->getPath(),
+                            $this->request->getHeaderLine('accept')
+                        );
+                    } catch (Throwable $t) {
+                        //ignore
+                    }
+                }
                 $this->route();
             } catch (Throwable $t) {
                 $this->negotiate();
@@ -203,8 +213,11 @@ class Restler extends Core
     }
 
     /** @internal */
-    public function handleMiddleware(array $middleware, ServerRequestInterface $request, $position = 0): PromiseInterface
-    {
+    public function handleMiddleware(
+        array $middleware,
+        ServerRequestInterface $request,
+        $position = 0
+    ): PromiseInterface {
         // final request handler will be invoked without a next handler
         if (!isset($middleware[$position + 1])) {
             $handler = $middleware[$position];
