@@ -798,7 +798,10 @@ abstract class Core
 
     public function __get($name)
     {
-        return $this->{'_' . $name} ?? null;
+        if (property_exists($this, '_' . $name)) {
+            return $this->{'_' . $name};
+        }
+        return null;
     }
 
     /**
