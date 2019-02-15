@@ -391,7 +391,9 @@ abstract class Core
                                 $this->requestedApiVersion = $version;
                                 $format = $this->make($this->router->responseFormatMap[$extension]);
                                 $format->mediaType("$vendor$version+$extension");
-                                //$this->app['useVendorMIMEVersioning'] = true;
+                                if (is_null($this->defaults->useVendorMIMEVersioning)) {
+                                    $this->defaults->useVendorMIMEVersioning = true;
+                                }
                                 $this->_responseHeaders['Vary'] = 'Accept';
                                 return $format;
                             }
