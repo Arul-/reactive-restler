@@ -9,7 +9,7 @@
     "guzzlehttp/guzzle": "~6.0",
     "ralouphie/getallheaders": "^2.0",
     "logicalsteps/async": "v2.x-dev",
-    "wyrihaximus/react-http-middleware-session": "^2.1"
+    "hansott/psr7-cookies": "^2.0"
   },
   "require-dev": {
     "behat/behat": "~3",
