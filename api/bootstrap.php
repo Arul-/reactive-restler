@@ -16,6 +16,7 @@ use Luracast\Restler\Utils\ClassName;
 use Luracast\Restler\Utils\Text;
 use ratelimited\Authors as RateLimitedAuthors;
 use v1\BMI as BMI1;
+use SomeVendor\v1\BMI as VendorBMI1;
 
 define('BASE', dirname(__DIR__));
 include BASE . "/vendor/autoload.php";
@@ -79,6 +80,7 @@ try {
         'examples/_009_rate_limiting/authors' => RateLimitedAuthors::class,
         'examples/_010_access_control' => Access::class,
         'examples/_011_versioning/bmi' => BMI1::class,
+        'examples/_012_vendor_mime/bmi' => VendorBMI1::class,
         'examples/_013_html/tasks' => Tasks::class,
         'examples/_016_forms/users' => Users::class,
         //tests
