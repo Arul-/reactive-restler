@@ -1,11 +1,13 @@
 <?php declare(strict_types=1);
 
+use Auth\Server;
 use improved\Authors as ImprovedAuthors;
 use Luracast\Restler\Cache\HumanReadableCache;
 use Luracast\Restler\Defaults;
 use Luracast\Restler\Filters\RateLimiter;
 use Luracast\Restler\MediaTypes\Html;
 use Luracast\Restler\MediaTypes\Json;
+use Luracast\Restler\MediaTypes\Upload;
 use Luracast\Restler\MediaTypes\Xml;
 use Luracast\Restler\Middleware\SessionMiddleware;
 use Luracast\Restler\Middleware\StaticFiles;
@@ -82,6 +84,7 @@ try {
         'examples/_011_versioning/bmi' => BMI1::class,
         'examples/_012_vendor_mime/bmi' => VendorBMI1::class,
         'examples/_013_html/tasks' => Tasks::class,
+        'examples/_015_oauth2_server' => Server::class,
         'examples/_016_forms/users' => Users::class,
         //tests
         'tests/param/minmax' => MinMax::class,
@@ -92,7 +95,7 @@ try {
         //Explorer
         'explorer' => Explorer::class,
     ]);
-    Router::setOverridingResponseMediaTypes(Json::class, Xml::class, Html::class);
+    Router::setOverridingResponseMediaTypes(Json::class, Xml::class, Html::class); //, Upload::class
     SimpleAuth::setIncludedPaths('examples/_005_protected_api');
     Router::addAuthenticator(SimpleAuth::class, 'examples/_005_protected_api/simpleauth');
     KeyAuth::setIncludedPaths('examples/_009_rate_limiting');

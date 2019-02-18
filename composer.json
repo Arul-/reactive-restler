@@ -19,7 +19,8 @@
     "workerman/workerman": "@dev",
     "twig/twig": "^2.0",
     "mustache/mustache": "^2.12",
-    "illuminate/view": "^5.7"
+    "illuminate/view": "^5.7",
+    "bshaffer/oauth2-server-php": "^1.11"
   },
   "license": "MIT",
   "authors": [
@@ -31,7 +32,8 @@
   "autoload": {
     "psr-4": {
       "Luracast\\Restler\\": "src",
-      "Workerman\\Protocols\\": "interop/Workerman"
+      "Workerman\\Protocols\\": "interop/Workerman",
+      "OAuth2\\": "interop/OAuth2"
     }
   },
   "autoload-dev": {
@@ -55,6 +57,7 @@
       "api/examples/_012_vendor_mime/SomeVendor/v1",
       "api/examples/_012_vendor_mime/SomeVendor/v2",
       "api/examples/_013_html",
+      "api/examples/_015_oauth2_server",
       "api/examples/_016_forms"
     ]
   },
