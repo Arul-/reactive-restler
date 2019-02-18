@@ -57,13 +57,14 @@ class Composer implements ComposerInterface
 
     public static function simplifyTrace(array $trace)
     {
+        var_dump($trace);
         $parts = explode('\\', $trace['class'] ?? '');
         $class = array_pop($parts);
         $parts = explode('/', $trace['file'] ?? '');
         return [
             'file' => array_pop($parts) . (isset($trace['line']) ? ':' . $trace['line'] : ''),
             'function' => $class . ($trace['type'] ?? '') . $trace['function'],
-            'args' => array_map([static::class, 'simplifyTraceArgs'], $trace['args']),
+            'args' => array_map([static::class, 'simplifyTraceArgs'], $trace['args'] ?? []),
         ];
     }
 
