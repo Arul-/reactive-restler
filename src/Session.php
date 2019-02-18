@@ -12,7 +12,7 @@ use SessionIdInterface;
 class Session implements SessionInterface
 {
     private $oldIds = [];
-    private $status;
+    private $status = PHP_SESSION_NONE;
     /**
      * @var array
      */
