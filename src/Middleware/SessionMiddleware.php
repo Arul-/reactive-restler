@@ -83,6 +83,7 @@ class SessionMiddleware implements MiddlewareInterface
                 $session->commit();
                 return $cookie->addToResponse($response);
             }
+            array_shift($cookieParams);
             $cookie = SetCookie::thatDeletesCookie(static::$cookieName, ...$cookieParams);
             $session->destroy();
             return $cookie->addToResponse($response);
