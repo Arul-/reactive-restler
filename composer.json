@@ -12,6 +12,7 @@
     "hansott/psr7-cookies": "^2.0"
   },
   "require-dev": {
+    "ext-pdo": "*",
     "behat/behat": "~3",
     "psy/psysh": "@stable",
     "react/event-loop": "@stable",
@@ -57,6 +58,7 @@
       "api/examples/_012_vendor_mime/SomeVendor/v1",
       "api/examples/_012_vendor_mime/SomeVendor/v2",
       "api/examples/_013_html",
+      "api/examples/_014_oauth2_client",
       "api/examples/_015_oauth2_server",
       "api/examples/_016_forms"
     ]

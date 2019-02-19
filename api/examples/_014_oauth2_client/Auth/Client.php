@@ -1,12 +1,11 @@
 <?php
+
 namespace Auth;
 
-use Luracast\Restler\Format\HtmlFormat;
-use Luracast\Restler\RestException;
+use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\Restler;
-use Luracast\Restler\Scope;
-use Luracast\Restler\Util;
-use Auth\Curl;
+use Luracast\Restler\Session;
+use Luracast\Restler\StaticProperties;
 
 class Client
 {
@@ -30,22 +29,27 @@ class Client
     /**
      * @var Restler
      */
-    public $restler;
+    private $restler;
+    /**
+     * @var StaticProperties
+     */
+    private $html;
 
-    public function __construct()
+    public function __construct(Restler $restler, Session $session, StaticProperties $html)
     {
-        //session_start(); //no need to start session, HtmlFormat does that for us
-        HtmlFormat::$data['session_id'] = session_id();
-        $this->restler = Scope::get('Restler');
-        static::$replyBackUrl =
-            $this->restler->getBaseUrl() . '/authorized';
+        $this->restler = $restler;
+        $this->html = $html;
+        $session->start();
+        $this->html->data['session_id'] = $session->getId();
         if (!static::$serverUrl) {
+            $base = (string)$this->restler->baseUrl . '/examples/';
             static::$serverUrl =
-                dirname($this->restler->getBaseUrl()) . '/_015_oauth2_server';
+                $base . '_015_oauth2_server';
+            static::$replyBackUrl = $base . '_014_oauth2_client/authorized';
+            static::$authorizeRoute = static::fullURL(static::$authorizeRoute);
+            static::$tokenRoute = static::fullURL(static::$tokenRoute);
+            static::$resourceRoute = static::fullURL(static::$resourceRoute);
         }
-        static::$authorizeRoute = static::fullURL(static::$authorizeRoute);
-        static::$tokenRoute = static::fullURL(static::$tokenRoute);
-        static::$resourceRoute = static::fullURL(static::$resourceRoute);
     }
 
     /**
@@ -66,7 +70,7 @@ class Client
      *
      * He will then be taken to the oAuth server to grant or deny permission
      *
-     * @format HtmlFormat
+     * @format Html
      * @view   oauth2/client/index.twig
      */
     public function index()
@@ -99,14 +103,16 @@ class Client
      *
      * @return array
      *
-     * @format HtmlFormat
+     * @format Html
      */
-    public function authorized($code = null,
-                               $error_description = null, $error_uri = null)
-    {
+    public function authorized(
+        $code = null,
+        $error_description = null,
+        $error_uri = null
+    ) {
         // the user denied the authorization request
         if (!$code) {
-            HtmlFormat::$view = 'oauth2/client/denied.twig';
+            $this->html->view = 'oauth2/client/denied.twig';
             return array('error' => compact('error_description', 'error_uri'));
         }
         // exchange authorization code for access token
@@ -125,7 +131,7 @@ class Client
             $status = $response['headers']['http_code'];
             echo '<h1>something went wrong - see the raw response</h1>';
             echo '<h2> Http ' . $status . ' - '
-                . RestException::$codes[$status] . '</h2>';
+                . HttpException::$codes[$status] . '</h2>';
             exit('<pre>' . print_r($response, true) . '</pre>');
         }
         $error = array();
@@ -134,42 +140,42 @@ class Client
         // render error if applicable
         ($error['error_description'] =
             //OAuth error
-            Util::nestedValue($response, 'error_description')) ||
+            $response['error_description'] ?? null) ||
         ($error['error_description'] =
             //Restler exception
-            Util::nestedValue($response, 'error', 'message')) ||
+            $response['error']['message'] ?? null) ||
         ($error['error_description'] =
             //cURL error
-            Util::nestedValue($response, 'errorMessage')) ||
+            $response['errorMessage'] ?? null) ||
         ($error['error_description'] =
             //cURL error with out message
-            Util::nestedValue($response, 'errorNumber')) ||
+            $response['errorNumber']) ||
         ($error['error_description'] =
             'Unknown Error');
 
-        $error_uri = Util::nestedValue($response, 'error_uri');
+        $error_uri = $response['error_uri'] ?? null;
 
         if ($error_uri) {
             $error['error_uri'] = $error_uri;
         }
 
         // if it is successful, call the API with the retrieved token
-        if (($token = Util::nestedValue($response, 'access_token'))) {
+        if (($token = $response['access_token'] ?? null)) {
             // make request to the API for awesome data
-            $data = static::$resourceParams + array('access_token' => $token);
+            $data = static::$resourceParams + ['access_token' => $token];
             $response = $curl->request(
                 static::$resourceRoute,
                 $data,
                 static::$resourceMethod,
                 static::$resourceOptions
             );
-            HtmlFormat::$view = 'oauth2/client/granted.twig';
+            $this->html->view = 'oauth2/client/granted.twig';
             return array(
-                'token' => $token,
-                'endpoint' => static::$resourceRoute . '?' . http_build_query($data)
-            ) + json_decode($response['response'], true);
+                    'token' => $token,
+                    'endpoint' => static::$resourceRoute . '?' . http_build_query($data)
+                ) + json_decode($response['response'], true);
         }
-        HtmlFormat::$view = 'oauth2/client/error.twig';
-        return array('error' => $error);
+        $this->html->view = 'oauth2/client/error.twig';
+        return ['error' => $error];
     }
 }

@@ -1,5 +1,6 @@
 <?php declare(strict_types=1);
 
+use Auth\Client;
 use Auth\Server;
 use improved\Authors as ImprovedAuthors;
 use Luracast\Restler\Cache\HumanReadableCache;
@@ -7,7 +8,6 @@ use Luracast\Restler\Defaults;
 use Luracast\Restler\Filters\RateLimiter;
 use Luracast\Restler\MediaTypes\Html;
 use Luracast\Restler\MediaTypes\Json;
-use Luracast\Restler\MediaTypes\Upload;
 use Luracast\Restler\MediaTypes\Xml;
 use Luracast\Restler\Middleware\SessionMiddleware;
 use Luracast\Restler\Middleware\StaticFiles;
@@ -17,8 +17,8 @@ use Luracast\Restler\Router;
 use Luracast\Restler\Utils\ClassName;
 use Luracast\Restler\Utils\Text;
 use ratelimited\Authors as RateLimitedAuthors;
-use v1\BMI as BMI1;
 use SomeVendor\v1\BMI as VendorBMI1;
+use v1\BMI as BMI1;
 
 define('BASE', dirname(__DIR__));
 include BASE . "/vendor/autoload.php";
@@ -84,6 +84,7 @@ try {
         'examples/_011_versioning/bmi' => BMI1::class,
         'examples/_012_vendor_mime/bmi' => VendorBMI1::class,
         'examples/_013_html/tasks' => Tasks::class,
+        'examples/_014_oauth2_client' => Client::class,
         'examples/_015_oauth2_server' => Server::class,
         'examples/_016_forms/users' => Users::class,
         //tests
