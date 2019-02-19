@@ -68,7 +68,7 @@ class Server implements AuthenticationInterface
     public function authorize()
     {
         // validate the authorize request.  if it is invalid,
-        // redirect back to the client with the errors in tow
+        // redirect back to the client with the errors
         if (!static::$server->validateAuthorizeRequest($this->request)) {
             return Convert::toPSR7(static::$server->getResponse());
         }
