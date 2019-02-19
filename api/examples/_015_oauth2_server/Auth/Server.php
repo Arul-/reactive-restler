@@ -37,13 +37,12 @@ class Server implements AuthenticationInterface
 
     public function __construct(ServerRequestInterface $psrRequest)
     {
-        $dir = __DIR__ . '/db/';
-        $file = 'oauth.sqlite';
-        if (!file_exists($dir . $file)) {
-            include_once $dir . 'rebuild_db.php';
+        define('OAUTH2_DATABASE', BASE . '/api/common/store/oauth2_server.sqlite');
+        if (!file_exists(OAUTH2_DATABASE)) {
+            include_once __DIR__ . '/db/rebuild_db.php';
         }
         static::$storage = new Pdo(
-            array('dsn' => 'sqlite:' . $dir . $file)
+            array('dsn' => 'sqlite:' . OAUTH2_DATABASE)
         );
         // create array of supported grant types
         $grantTypes = array(
