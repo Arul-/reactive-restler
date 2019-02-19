@@ -749,7 +749,7 @@ abstract class Core
             $this->responseFormat = new Json();
         }
         if (!$e instanceof HttpException) {
-            $e = new HttpException($e->getCode(), $e->getMessage(), [], $e);
+            $e = new HttpException(500, $e->getMessage(), [], $e);
         }
         $this->_responseCode = $e->getCode();
         $this->composeHeaders(
