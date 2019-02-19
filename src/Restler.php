@@ -13,8 +13,6 @@ use Psr\Http\Message\ServerRequestInterface;
 use React\Promise\FulfilledPromise;
 use React\Promise\PromiseInterface;
 use Throwable;
-use WyriHaximus\React\Http\Middleware\Session;
-use WyriHaximus\React\Http\Middleware\SessionMiddleware;
 use function GuzzleHttp\Psr7\stream_for;
 
 class Restler extends Core
