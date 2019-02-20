@@ -8,6 +8,7 @@ use Luracast\Restler\Defaults;
 use Luracast\Restler\Filters\RateLimiter;
 use Luracast\Restler\MediaTypes\Html;
 use Luracast\Restler\MediaTypes\Json;
+use Luracast\Restler\MediaTypes\Upload;
 use Luracast\Restler\MediaTypes\Xml;
 use Luracast\Restler\Middleware\SessionMiddleware;
 use Luracast\Restler\Middleware\StaticFiles;
@@ -96,7 +97,8 @@ try {
         //Explorer
         'explorer' => Explorer::class,
     ]);
-    Router::setOverridingResponseMediaTypes(Json::class, Xml::class, Html::class); //, Upload::class
+    Router::setOverridingResponseMediaTypes(Json::class, Xml::class, Html::class);
+    Router::setOverridingRequestMediaTypes(Json::class, Upload::class);
     SimpleAuth::setIncludedPaths('examples/_005_protected_api');
     Router::addAuthenticator(SimpleAuth::class, 'examples/_005_protected_api/simpleauth');
     KeyAuth::setIncludedPaths('examples/_009_rate_limiting');
