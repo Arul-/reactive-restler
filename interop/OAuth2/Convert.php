@@ -7,13 +7,18 @@ use Luracast\Restler\Utils\ClassName;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\UploadedFileInterface;
 use Psr\Http\Message\ResponseInterface as PSRResponse;
+use Throwable;
 
 class Convert
 {
     public final static function fromPSR7(ServerRequestInterface $psrRequest): Request
     {
         $contents = $psrRequest->getBody()->getContents();
-        $psrRequest->getBody()->rewind();
+        try {
+            $psrRequest->getBody()->rewind();
+        } catch (Throwable $throwable) {
+            //some streams cant be rewound so just ignore
+        }
         return new Request(
             (array)$psrRequest->getQueryParams(),
             (array)$psrRequest->getParsedBody(),
