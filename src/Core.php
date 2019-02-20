@@ -167,7 +167,7 @@ abstract class Core
         $path = str_replace(
             array_merge(
                 $this->router->responseFormatMap['extensions'],
-                $this->router->formatOverridesMap['extensions']
+                $this->router->responseFormatOverridesMap['extensions']
             ),
             '',
             trim($path, '/')
@@ -229,11 +229,11 @@ abstract class Core
             } elseif (isset($this->router->requestFormatMap[$mime])) {
                 $format = $this->make($this->router->requestFormatMap[$mime]);
                 $format->mediaType($mime);
-            } elseif (!$this->requestFormatDiffered && isset($this->router->formatOverridesMap[$mime])) {
+            } elseif (!$this->requestFormatDiffered && isset($this->router->requestFormatOverridesMap[$mime])) {
                 //if our api method is not using an @format comment
                 //to point to this $mime, we need to throw 403 as in below
                 //but since we don't know that yet, we need to defer that here
-                $format = $this->make($this->router->formatOverridesMap[$mime]);
+                $format = $this->make($this->router->requestFormatOverridesMap[$mime]);
                 $format->mediaType($mime);
                 $this->requestFormatDiffered = true;
             } else {
@@ -308,21 +308,28 @@ abstract class Core
      */
     protected function negotiateResponseMediaType(string $path, string $acceptHeader = ''): ResponseMediaTypeInterface
     {
-        $formats = $readableFormats = [];
+        $formats = $readableFormats = $writableFormats = [];
         //check if the api method insists on response format using @format comment
         if (($metadata = $this->_apiMethodInfo->metadata ?? false) && ($formats = $metadata['format'] ?? false)) {
             $formats = explode(',', (string)$formats);
             foreach ($formats as $i => $f) {
                 if ($f = ClassName::resolve(trim($f), $metadata['scope'])) {
-                    if (!in_array($f, $this->router->formatOverridesMap)) {
+                    if (
+                        !in_array($f, $this->router->responseFormatOverridesMap) &&
+                        !in_array($f, $this->router->requestFormatOverridesMap)
+                    ) {
                         throw new HttpException(
                             500,
                             "Given @format is not present in overriding formats. " .
-                            "Please call `Router::setOverridingResponseMediaTypes('$f');` first."
+                            "Please call `Router::setOverridingResponseMediaTypes('$f');` or " .
+                            "`Router::setOverridingRequestMediaTypes('$f');` first."
                         );
                     }
                 }
                 $formats[$i] = $f;
+                if (is_a($f, ResponseMediaTypeInterface::class, true)) {
+                    $writableFormats[] = $f;
+                }
                 if (is_a($f, RequestMediaTypeInterface::class, true)) {
                     $readableFormats[] = $f;
                 }
@@ -339,12 +346,12 @@ abstract class Core
         ) {
             throw new HttpException(
                 403,
-                "Content type `'.$this->requestFormat->mediaType().'` is not supported."
+                'Content type `' . $this->requestFormat->mediaType() . '` is not supported.'
             );
         }
-        if (is_array($formats) && count($formats)) {
+        if (!empty($writableFormats)) {
             /** @noinspection PhpInternalEntityUsedInspection */
-            Router::_setMediaTypes(ResponseMediaTypeInterface::class, $formats,
+            Router::_setMediaTypes(ResponseMediaTypeInterface::class, $writableFormats,
                 $this->router->responseFormatMap,
                 $this->router->writableMediaTypes);
         }

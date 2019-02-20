@@ -85,7 +85,8 @@ class Router
      * @var array
      * @internal
      */
-    public static $formatOverridesMap = ['extensions' => []];
+    public static $requestFormatOverridesMap = [];
+    public static $responseFormatOverridesMap = ['extensions' => []];
     /**
      * @var array
      * @internal
@@ -142,6 +143,13 @@ class Router
             static::$responseFormatMap, static::$writableMediaTypes);
     }
 
+    public static function setOverridingRequestMediaTypes(string ...$types): void
+    {
+        $ignore = [];
+        static::_setMediaTypes(RequestMediaTypeInterface::class, $types,
+            static::$requestFormatOverridesMap, $ignore);
+    }
+
     /**
      * @param string ...$types
      * @throws Exception
@@ -150,7 +158,7 @@ class Router
     {
         $ignore = [];
         static::_setMediaTypes(ResponseMediaTypeInterface::class, $types,
-            static::$formatOverridesMap, $ignore);
+            static::$responseFormatOverridesMap, $ignore);
     }
 
     /**
