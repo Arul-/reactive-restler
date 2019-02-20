@@ -342,6 +342,8 @@ class Defaults
         'JsonFormat' => Json::class,
         'JsFormat' => Js::class,
         'XmlFormat' => Xml::class,
+        'HtmlFormat' => Html::class,
+        'UploadFormat' => Upload::class,
         //Utils
         'Text' => Text::class,
         //UI
