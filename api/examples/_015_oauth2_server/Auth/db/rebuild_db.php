@@ -1,21 +1,23 @@
 <?php
 
 // remove sqlite file if it exists
-if (file_exists(OAUTH2_DATABASE)) {
-    unlink(OAUTH2_DATABASE);
+use Auth\Server;
+
+if (file_exists(Server::$databaseFile)) {
+    unlink(Server::$databaseFile);
 }
 
-$dir = dirname(OAUTH2_DATABASE);
+$dir = dirname(Server::$databaseFile);
 
 if (!is_writable($dir)) {
     // try to set permissions.
     if (!@chmod($dir, 0777)) {
-        throw new Exception("Unable to write to " . OAUTH2_DATABASE);
+        throw new Exception("Unable to write to " . Server::$databaseFile);
     }
 }
 
 // rebuild the DB
-$db = new PDO(sprintf('sqlite:%s', OAUTH2_DATABASE));
+$db = new PDO(sprintf('sqlite:%s', Server::$databaseFile));
 $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
 $db->exec('
@@ -91,6 +93,6 @@ $db->exec('
 $db->exec('INSERT INTO oauth_clients (client_id, client_secret) VALUES ("demoapp", "demopass")');
 $db->exec(sprintf('INSERT INTO oauth_users (username, password) VALUES ("demouser", "%s")', sha1("testpass")));
 
-chmod(OAUTH2_DATABASE, 0777);
+chmod(Server::$databaseFile, 0777);
 // $db->exec('INSERT INTO oauth_access_tokens (access_token, client_id) VALUES ("testtoken", "Some Client")');
 // $db->exec('INSERT INTO oauth_authorization_codes (authorization_code, client_id) VALUES ("testcode", "Some Client")');
