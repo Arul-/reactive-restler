@@ -1,7 +1,13 @@
 # behat.yml
 default:
-    suites:
-        default:
-          contexts:
-            - RestContext:
-                - http://localhost:8080
+  suites:
+    default:
+      contexts:
+        - RestContext:
+            - http://localhost:8080
+fpm:
+  suites:
+    default:
+      contexts:
+        - RestContext:
+            - http://localhost/restler4/
