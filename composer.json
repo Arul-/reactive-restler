@@ -65,5 +65,13 @@
   },
   "config": {
     "bin-dir": "./"
+  },
+  "scripts": {
+    "test": [
+      "behat --stop-on-failure --profile=fpm --colors",
+      "behat --stop-on-failure --colors"
+    ],
+    "react-server": "php public/index_react.php",
+    "workerman-server": "php public/index_workerman.php start"
   }
 }
