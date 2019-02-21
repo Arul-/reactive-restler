@@ -9,26 +9,27 @@ class Curl
     public function __construct($options = array())
     {
         $this->options = array_merge(array(
-            'debug'      => false,
-            'http_port'  => '80',
+            'debug' => false,
+            'http_port' => '80',
             'user_agent' => 'PHP-curl-client (https://github.com/bshaffer/oauth2-server-demo)',
-            'timeout'    => 20,
-            'curlopts'   => null,
-            'verifyssl'  => true,
+            'timeout' => 20,
+            'curlopts' => null,
+            'verifyssl' => true,
         ), $options);
     }
 
     /**
-    * Send a request to the server, receive a response
-    *
-    * @param  string   $apiPath       Request API path
-    * @param  array    $parameters    Parameters
-    * @param  string   $httpMethod    HTTP method to use
-    *
-    * @return string   HTTP response
-    */
+     * Send a request to the server, receive a response
+     *
+     * @param  string $apiPath Request API path
+     * @param  array $parameters Parameters
+     * @param  string $httpMethod HTTP method to use
+     *
+     * @return string   HTTP response
+     */
     public function request($url, array $parameters = array(), $httpMethod = 'GET', array $options = array())
     {
+        $options['http_port'] = parse_url($url, PHP_URL_PORT) ?? 80;
         $options = array_merge($this->options, $options);
 
         $curlOptions = array();
@@ -36,34 +37,30 @@ class Curl
 
         if ('POST' === $httpMethod) {
             $curlOptions += array(
-                CURLOPT_POST  => true,
+                CURLOPT_POST => true,
             );
-        }
-        elseif ('PUT' === $httpMethod) {
+        } elseif ('PUT' === $httpMethod) {
             $curlOptions += array(
-                CURLOPT_POST  => true, // This is so cURL doesn't strip CURLOPT_POSTFIELDS
+                CURLOPT_POST => true, // This is so cURL doesn't strip CURLOPT_POSTFIELDS
                 CURLOPT_CUSTOMREQUEST => 'PUT',
             );
-        }
-        elseif ('DELETE' === $httpMethod) {
+        } elseif ('DELETE' === $httpMethod) {
             $curlOptions += array(
                 CURLOPT_CUSTOMREQUEST => 'DELETE',
             );
         }
 
-        if (!empty($parameters))
-        {
-            if('GET' === $httpMethod)
-            {
+        if (!empty($parameters)) {
+            if ('GET' === $httpMethod) {
                 $queryString = utf8_encode($this->buildQuery($parameters));
                 $url .= '?' . $queryString;
             } elseif ('POST' === $httpMethod) {
                 $curlOptions += array(
-                    CURLOPT_POSTFIELDS  => $parameters,
+                    CURLOPT_POSTFIELDS => $parameters,
                 );
             } else {
                 $curlOptions += array(
-                    CURLOPT_POSTFIELDS  => json_encode($parameters)
+                    CURLOPT_POSTFIELDS => json_encode($parameters)
                 );
                 $headers[] = 'Content-Type: application/json';
             }
@@ -71,16 +68,16 @@ class Curl
             $headers[] = 'Content-Length: 0';
         }
 
-        $this->debug('send '.$httpMethod.' request: '.$url);
+        $this->debug('send ' . $httpMethod . ' request: ' . $url);
 
         $curlOptions += array(
-            CURLOPT_URL             => $url,
-            CURLOPT_PORT            => $options['http_port'],
-            CURLOPT_USERAGENT       => $options['user_agent'],
-            CURLOPT_RETURNTRANSFER  => true,
-            CURLOPT_TIMEOUT         => $options['timeout'],
-            CURLOPT_HTTPHEADER      => $headers,
-            CURLOPT_SSL_VERIFYPEER  => $options['verifyssl'],
+            CURLOPT_URL => $url,
+            CURLOPT_PORT => $options['http_port'],
+            CURLOPT_USERAGENT => $options['user_agent'],
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT => $options['timeout'],
+            CURLOPT_HTTPHEADER => $headers,
+            CURLOPT_SSL_VERIFYPEER => $options['verifyssl'],
         );
 
         if (ini_get('open_basedir') == '' && ini_get('safe_mode') != 'On') {
@@ -138,9 +135,8 @@ class Curl
 
     protected function debug($message)
     {
-        if($this->options['debug'])
-        {
-            print $message."\n";
+        if ($this->options['debug']) {
+            print $message . "\n";
         }
     }
 }
