@@ -6,6 +6,8 @@ use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\Restler;
 use Luracast\Restler\Session;
 use Luracast\Restler\StaticProperties;
+use Luracast\Restler\Utils\ClassName;
+use Psr\Http\Message\ResponseInterface;
 
 class Client
 {
@@ -129,10 +131,12 @@ class Client
         $response = $curl->request($endpoint, $query, 'POST');
         if (!(json_decode($response['response'], true))) {
             $status = $response['headers']['http_code'];
-            echo '<h1>something went wrong - see the raw response</h1>';
-            echo '<h2> Http ' . $status . ' - '
+            $body = '<h1>Remote Server call failed - See the raw response</h1>';
+            $body .= '<h2>' . $status . ' - '
                 . HttpException::$codes[$status] . '</h2>';
-            exit('<pre>' . print_r($response, true) . '</pre>');
+            $body .= '<pre>' . print_r($response, true) . '</pre>';
+            $class = ClassName::get(ResponseInterface::class);
+            return (new $class(200, [], $body));
         }
         $error = array();
         $response = json_decode($response['response'], true);
