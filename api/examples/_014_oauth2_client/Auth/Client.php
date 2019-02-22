@@ -131,9 +131,16 @@ class Client
         $response = $curl->request($endpoint, $query, 'POST');
         if (!(json_decode($response['response'], true))) {
             $status = $response['headers']['http_code'];
-            $body = '<h1>Remote Server call failed - See the raw response</h1>';
-            $body .= '<h2>' . $status . ' - '
-                . HttpException::$codes[$status] . '</h2>';
+            $body = '<h1>Remote Server call failed</h1>';
+            if (isset(HttpException::$codes[$status])) {
+                $body .= '<h2>' . $status . ' - '
+                    . HttpException::$codes[$status] . '</h2>';
+            } else {
+                $body .= '<h2>' . $response['errorMessage'] . '</h2>';
+            }
+            $body.='<h3>Request</h3><hr/>';
+            $body .= '<pre>' . var_export(compact('endpoint','query'), true) . '</pre>';
+            $body.='<h3>Response</h3><hr/>';
             $body .= '<pre>' . print_r($response, true) . '</pre>';
             $class = ClassName::get(ResponseInterface::class);
             return (new $class(200, [], $body));
