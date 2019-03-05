@@ -50,15 +50,17 @@ class Dump
         if ($headerAsString) {
             $text .= $http . static::CRLF;
             foreach ($response->getHeaders() as $k => $v) {
-                $text .= ucwords($k) . ': ' . implode(', ', $v) . static::CRLF;
+                $text .= ucwords($k) . ': ' . $response->getHeaderLine($k) . static::CRLF;
             }
             $text .= static::CRLF;
         } else {
             header($http, true, $response->getStatusCode());
             foreach ($response->getHeaders() as $name => $values) {
-                foreach ($values as $value) {
-                    header("$name: $value", false);
+                if ('Date' == $name && PHP_SAPI == 'cli-server') {
+                    continue;
                 }
+                $value = $response->getHeaderLine($name);
+                header("$name: $value", true);
             }
         }
         return $text;
