@@ -64,7 +64,8 @@
     ]
   },
   "config": {
-    "bin-dir": "./"
+    "bin-dir": "./",
+    "process-timeout": 0
   },
   "scripts": {
     "test": "behat --stop-on-failure --profile=default --colors",
