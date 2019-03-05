@@ -155,7 +155,13 @@ class Restler extends Core
     public function _handle(ServerRequestInterface $request)
     {
         $this->container->instance(ServerRequestInterface::class, $request);
-        $this->rawRequestBody = (string)$request->getBody();
+        $body = $request->getBody();
+        $this->rawRequestBody = $body->getContents();
+        if ($body->isSeekable()) {
+            $body->rewind();
+        } elseif ($body->isWritable()) {
+            $body->write($this->rawRequestBody);
+        }
         $this->_requestMethod = $request->getMethod();
         $this->request = $request;
         try {
