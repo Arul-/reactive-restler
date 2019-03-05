@@ -4,6 +4,7 @@ namespace OAuth2;
 
 
 use Luracast\Restler\Utils\ClassName;
+use Luracast\Restler\Utils\Text;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\UploadedFileInterface;
 use Psr\Http\Message\ResponseInterface as PSRResponse;
@@ -13,21 +14,40 @@ class Convert
 {
     public final static function fromPSR7(ServerRequestInterface $psrRequest): Request
     {
-        $contents = $psrRequest->getBody()->getContents();
-        try {
-            $psrRequest->getBody()->rewind();
-        } catch (Throwable $throwable) {
-            //some streams cant be rewound so just ignore
+        $body = $psrRequest->getBody();
+        $contents = $body->getContents();
+        if ($body->isSeekable()) {
+            $body->rewind();
+        } elseif ($body->isWritable()) {
+            $body->write($contents);
+        }
+
+        $type = $psrRequest->getHeaderLine('Content-Type');
+        $data = [];
+        switch ($psrRequest->getMethod()) {
+            case'GET':
+                $data = $psrRequest->getQueryParams();
+                break;
+            case 'POST':
+                $data = (array)$psrRequest->getParsedBody();
+                if (!$data) {
+                    Text::beginsWith($type, 'application/json')
+                        ? json_decode($contents)
+                        : parse_str($contents, $data);
+                }
+        }
+        if (!$data) {
+            $data = [];
         }
         return new Request(
             (array)$psrRequest->getQueryParams(),
-            (array)$psrRequest->getParsedBody(),
+            $data,
             $psrRequest->getAttributes(),
             $psrRequest->getCookieParams(),
-            self::convertUploadedFiles($psrRequest->getUploadedFiles()),
-            $psrRequest->getServerParams(),
+            static::convertUploadedFiles($psrRequest->getUploadedFiles()),
+            static::serverParameters($psrRequest),
             $contents,
-            self::cleanupHeaders($psrRequest->getHeaders())
+            static::cleanupHeaders($psrRequest->getHeaders())
         );
     }
 
@@ -46,6 +66,73 @@ class Convert
         $response = new $class($oauthrResponse->getStatusCode(), $headers, (string)$body);
 
         return $response;
+    }
+
+    public static function multipartFormData(string $rawBody, string $contentType)
+    {
+        $post = [];
+        $files = [];
+        // grab multipart boundary from content type header
+        preg_match('/boundary=(.*)$/', $contentType, $matches);
+        $boundary = $matches[1];
+
+        // split content by boundary and get rid of last -- element
+        $blocks = preg_split("/-+$boundary/", $rawBody);
+        array_pop($blocks);
+
+        $key = -1;
+        foreach ($blocks as $boundary_data_buffer) {
+            if (empty($boundary_data_buffer)) {
+                continue;
+            }
+            list($boundary_header_buffer, $boundary_value) = explode("\r\n\r\n", $boundary_data_buffer, 2);
+            // Remove \r\n from the end of buffer.
+            $boundary_value = substr($boundary_value, 0, -2);
+            $key++;
+            foreach (explode("\r\n", $boundary_header_buffer) as $item) {
+                list($header_key, $header_value) = explode(": ", $item);
+                $header_key = strtolower($header_key);
+                switch ($header_key) {
+                    case "content-disposition":
+                        // Is file data.
+                        if (preg_match('/name="(.*?)"; filename="(.*?)"$/', $header_value, $match)) {
+                            // Parse $_FILES.
+                            $files[$key] = array(
+                                'name' => $match[1],
+                                'file_name' => $match[2],
+                                'file_data' => $boundary_value,
+                                'file_size' => strlen($boundary_value),
+                            );
+                            continue 2;
+                        } // Is post field.
+                        else {
+                            // Parse $_POST.
+                            if (preg_match('/name="(.*?)"$/', $header_value, $match)) {
+                                $post[$match[1]] = $boundary_value;
+                            }
+                        }
+                        break;
+                    case "content-type":
+                        // add file_type
+                        $files[$key]['file_type'] = trim($header_value);
+                        break;
+                }
+            }
+        }
+        $post['files'] = $files;
+        return $post;
+    }
+
+    private static function serverParameters(ServerRequestInterface $psrRequest)
+    {
+        $params = $psrRequest->getServerParams();
+        if (!isset($params['REQUEST_METHOD'])) {
+            $params['REQUEST_METHOD'] = $psrRequest->getMethod();
+            $params['PATH_INFO'] = $params['REQUEST_URI'] = $psrRequest->getUri()->getPath();
+            $params['CONTENT_TYPE'] = $psrRequest->getHeaderLine('Content-Type');
+            $params['CONTENT_LENGTH'] = $psrRequest->getHeaderLine('Content-Length');
+        }
+        return $params;
     }
 
     /**
