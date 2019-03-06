@@ -30,10 +30,14 @@ class Convert
                 break;
             case 'POST':
                 $data = (array)$psrRequest->getParsedBody();
-                if (!$data) {
-                    Text::beginsWith($type, 'application/json')
-                        ? json_decode($contents)
-                        : parse_str($contents, $data);
+                if (empty($data)) {
+                    if (Text::beginsWith($type, 'application/json')) {
+                        $data = json_decode($contents);
+                    } elseif (Text::beginsWith($type, 'multipart/form-data')) {
+                        $data = static::multipartFormData($contents, $type);
+                    } else {
+                        parse_str($contents, $data);
+                    }
                 }
         }
         if (!$data) {
@@ -90,6 +94,9 @@ class Convert
             $boundary_value = substr($boundary_value, 0, -2);
             $key++;
             foreach (explode("\r\n", $boundary_header_buffer) as $item) {
+                if (empty($item)) {
+                    continue;
+                }
                 list($header_key, $header_value) = explode(": ", $item);
                 $header_key = strtolower($header_key);
                 switch ($header_key) {
