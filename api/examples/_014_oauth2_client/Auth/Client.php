@@ -138,9 +138,9 @@ class Client
             } else {
                 $body .= '<h2>' . $response['errorMessage'] . '</h2>';
             }
-            $body.='<h3>Request</h3><hr/>';
-            $body .= '<pre>' . var_export(compact('endpoint','query'), true) . '</pre>';
-            $body.='<h3>Response</h3><hr/>';
+            $body .= '<h3>Request</h3><hr/>';
+            $body .= '<pre>' . var_export(compact('endpoint', 'query'), true) . '</pre>';
+            $body .= '<h3>Response</h3><hr/>';
             $body .= '<pre>' . print_r($response, true) . '</pre>';
             $class = ClassName::get(ResponseInterface::class);
             return (new $class(200, [], $body));
@@ -160,7 +160,7 @@ class Client
             $response['errorMessage'] ?? null) ||
         ($error['error_description'] =
             //cURL error with out message
-            $response['errorNumber']) ||
+            $response['errorNumber'] ?? null) ||
         ($error['error_description'] =
             'Unknown Error');
 
