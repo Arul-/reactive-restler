@@ -10,6 +10,12 @@ require __DIR__ . '/../api/bootstrap.php';
 
 $http = new swoole_http_server("127.0.0.1", 8080);
 
+$http->set([
+    'worker_num' => 4, // The number of worker processes
+    'daemonize' => false, // Whether start as a daemon process
+    'backlog' => 128, // TCP backlog connection number
+]);
+
 $http->on('start', function ($server) {
     echo "Swoole http server is started at http://127.0.0.1:8080\n";
 });

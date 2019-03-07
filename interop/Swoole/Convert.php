@@ -17,7 +17,7 @@ class Convert
         /** @var ServerRequestInterface $instance */
         $instance = new $implementation(
             $request->server['request_method'] ?? 'GET',
-            $request->server['request_uri'] ?? '',
+            'http://' . $request->header['host'] . ($request->server['request_uri'] ?? ''),
             $request->header ?? [],
             $rawContent,
             $request->server['server_protocol'] ?? '1.1',
@@ -74,7 +74,7 @@ class Convert
         $return['DOCUMENT_ROOT'] = realpath(__DIR__ . '/../../bin');
         $return['DOCUMENT_URI'] = '/';
         $return['REQUEST_URI'] = $server['request_uri'] ?? '';
-        $return['SCRIPT_NAME'] = '/swoole-expressive';
+        $return['SCRIPT_NAME'] = '/index_swoole.php';
         $return['CONTENT_LENGTH'] = $header['content-length'] ?? null;
         $return['CONTENT_TYPE'] = $header['content-type'] ?? null;
         $return['REQUEST_METHOD'] = $server['request_method'] ?? 'GET';
