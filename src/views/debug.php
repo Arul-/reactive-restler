@@ -4,6 +4,7 @@ use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\Restler;
 use Luracast\Restler\Utils\Dump;
 use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
 
 function exceptions(Restler $r, $path)
 {
@@ -32,11 +33,11 @@ function parse_backtrace($raw, $path, $skip = 1)
         $key = '';
         if (isset($entry['line'])) {
             $file = substr($entry['file'], $base);
-            $key = "$file:" . $entry['line'].' ';
+            $key = "$file:" . $entry['line'] . ' ';
         }
         if (isset($entry['class'])) {
-            $output[++$index][$key] = ' '.$entry['class'] . "::" . $entry['function']
-                . '('  . ')'; //substr(json_encode($entry['args']), 1, -1)
+            $output[++$index][$key] = ' ' . $entry['class'] . "::" . $entry['function']
+                . '(' . ')'; //substr(json_encode($entry['args']), 1, -1)
         }
     }
     return $output;
@@ -77,6 +78,12 @@ $data['render'] = $render = function ($data, $shadow = true) use (&$render) {
         }
     } elseif (is_bool($data)) {
         $r .= '<li>' . ($data ? 'true' : 'false') . '</li>';
+    } elseif (is_object($data)) {
+        if ($data instanceof ResponseInterface) {
+            $r .= '<li>' . $data->getBody()->getContents() . '</li>';
+        } else {
+            $r .= '<li>' . get_class($data) . '</li>';
+        }
     } else {
         $r .= "<li><strong>$data</strong></li>";
     }
