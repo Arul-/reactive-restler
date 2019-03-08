@@ -22,7 +22,8 @@
     "mustache/mustache": "^2.12",
     "illuminate/view": "^5.7",
     "bshaffer/oauth2-server-php": "^1.11",
-    "eaglewu/swoole-ide-helper": "dev-master"
+    "eaglewu/swoole-ide-helper": "dev-master",
+    "react/http-client": "^0.5.9"
   },
   "license": "MIT",
   "authors": [
