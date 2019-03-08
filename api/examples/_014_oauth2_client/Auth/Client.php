@@ -125,68 +125,35 @@ class Client
             'client_secret' => static::$clientSecret,
             'redirect_uri' => static::$replyBackUrl,
         );
-        //call the API using cURL
-        $curl = new Curl();
-        $endpoint = static::$tokenRoute;
-        $response = $curl->request($endpoint, $query, 'POST');
-        if (!(json_decode($response['response'], true))) {
-            $status = $response['headers']['http_code'];
-            $body = '<h1>Remote Server call failed</h1>';
-            if (isset(HttpException::$codes[$status])) {
-                $body .= '<h2>' . $status . ' - '
-                    . HttpException::$codes[$status] . '</h2>';
-            } else {
-                $body .= '<h2>' . $response['errorMessage'] . '</h2>';
-            }
-            $body .= '<h3>Request</h3><hr/>';
-            $body .= '<pre>' . var_export(compact('endpoint', 'query'), true) . '</pre>';
-            $body .= '<h3>Response</h3><hr/>';
-            $body .= '<pre>' . print_r($response, true) . '</pre>';
-            $class = ClassName::get(ResponseInterface::class);
-            return (new $class(200, [], $body));
-        }
-        $error = array();
-        $response = json_decode($response['response'], true);
-
-        // render error if applicable
-        ($error['error_description'] =
-            //OAuth error
-            $response['error_description'] ?? null) ||
-        ($error['error_description'] =
-            //Restler exception
-            $response['error']['message'] ?? null) ||
-        ($error['error_description'] =
-            //cURL error
-            $response['errorMessage'] ?? null) ||
-        ($error['error_description'] =
-            //cURL error with out message
-            $response['errorNumber'] ?? null) ||
-        ($error['error_description'] =
-            'Unknown Error');
-
-        $error_uri = $response['error_uri'] ?? null;
-
-        if ($error_uri) {
-            $error['error_uri'] = $error_uri;
-        }
-
+        //
+        $param = [
+            'http' => [
+                'method' => 'POST',
+                'header' => "Content-type: application/x-www-form-urlencoded\r\n",
+                'content' => http_build_query($query)
+            ]
+        ];
+        $context = stream_context_create($param);
+        $fp = fopen(static::$tokenRoute, 'rb', false, $context);
+        $response = stream_get_contents($fp);
+        fclose($fp);
+        $response = json_decode($response,true);
         // if it is successful, call the API with the retrieved token
         if (($token = $response['access_token'] ?? null)) {
             // make request to the API for awesome data
             $data = static::$resourceParams + ['access_token' => $token];
-            $response = $curl->request(
-                static::$resourceRoute,
-                $data,
-                static::$resourceMethod,
-                static::$resourceOptions
-            );
+            $param['http']['content'] = http_build_query($data);
+            $context2 = stream_context_create($param);
+            $fp2 = fopen(static::$resourceRoute, 'rb', false, $context2);
+            $response = stream_get_contents($fp2);
             $this->html->view = 'oauth2/client/granted.twig';
             return array(
                     'token' => $token,
                     'endpoint' => static::$resourceRoute . '?' . http_build_query($data)
-                ) + json_decode($response['response'], true);
+                ) + json_decode($response, true);
         }
         $this->html->view = 'oauth2/client/error.twig';
-        return ['error' => $error];
+        //return ['error' => $error];
+        return ['error' => 'server call failed'];
     }
 }
