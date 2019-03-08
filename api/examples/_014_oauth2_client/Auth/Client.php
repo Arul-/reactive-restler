@@ -127,66 +127,52 @@ class Client
         );
         //call the API using cURL
         $curl = new Curl();
-        $endpoint = static::$tokenRoute;
-        $response = $curl->request($endpoint, $query, 'POST');
-        if (!(json_decode($response['response'], true))) {
-            $status = $response['headers']['http_code'];
-            $body = '<h1>Remote Server call failed</h1>';
-            if (isset(HttpException::$codes[$status])) {
-                $body .= '<h2>' . $status . ' - '
-                    . HttpException::$codes[$status] . '</h2>';
-            } else {
-                $body .= '<h2>' . $response['errorMessage'] . '</h2>';
+        try {
+            $response = yield [$curl, 'request', static::$tokenRoute, $query, 'POST', []];
+            if (!$decoded = json_decode($response['response'], true)) {
+                $status = $response['headers']['http_code'];
+                $body = '<h1>Remote Server call failed</h1>';
+                if (isset(HttpException::$codes[$status])) {
+                    $body .= '<h2>' . $status . ' - '
+                        . HttpException::$codes[$status] . '</h2>';
+                } else {
+                    $body .= '<h2>' . $response['errorMessage'] . '</h2>';
+                }
+                $body .= '<h3>Request</h3><hr/>';
+                $body .= '<pre>' . var_export(compact('endpoint', 'query'), true) . '</pre>';
+                $body .= '<h3>Response</h3><hr/>';
+                $body .= '<pre>' . print_r($response, true) . '</pre>';
+                $class = ClassName::get(ResponseInterface::class);
+                return (new $class(200, [], $body));
             }
-            $body .= '<h3>Request</h3><hr/>';
-            $body .= '<pre>' . var_export(compact('endpoint', 'query'), true) . '</pre>';
-            $body .= '<h3>Response</h3><hr/>';
-            $body .= '<pre>' . print_r($response, true) . '</pre>';
-            $class = ClassName::get(ResponseInterface::class);
-            return (new $class(200, [], $body));
+            $response = $decoded;
+            // if it is successful, call the API with the retrieved token
+            if (($token = $response['access_token'] ?? null)) {
+                // make request to the API for awesome data
+                $data = static::$resourceParams + ['access_token' => $token];
+                $response = yield [
+                    $curl,
+                    'request',
+                    static::$resourceRoute,
+                    $data,
+                    static::$resourceMethod,
+                    static::$resourceOptions
+                ];
+                $this->html->view = 'oauth2/client/granted.twig';
+                return array(
+                        'token' => $token,
+                        'endpoint' => static::$resourceRoute . '?' . http_build_query($data)
+                    ) + json_decode($response['response'], true);
+            }
+
+        } catch (\Error $exception) {
+            $this->html->view = 'oauth2/client/error.twig';
+            return [
+                'error' => [
+                    'error_description' => $exception->getMessage(),
+                    'error_uri' => $exception->uri ?? null
+                ]
+            ];
         }
-        $error = array();
-        $response = json_decode($response['response'], true);
-
-        // render error if applicable
-        ($error['error_description'] =
-            //OAuth error
-            $response['error_description'] ?? null) ||
-        ($error['error_description'] =
-            //Restler exception
-            $response['error']['message'] ?? null) ||
-        ($error['error_description'] =
-            //cURL error
-            $response['errorMessage'] ?? null) ||
-        ($error['error_description'] =
-            //cURL error with out message
-            $response['errorNumber'] ?? null) ||
-        ($error['error_description'] =
-            'Unknown Error');
-
-        $error_uri = $response['error_uri'] ?? null;
-
-        if ($error_uri) {
-            $error['error_uri'] = $error_uri;
-        }
-
-        // if it is successful, call the API with the retrieved token
-        if (($token = $response['access_token'] ?? null)) {
-            // make request to the API for awesome data
-            $data = static::$resourceParams + ['access_token' => $token];
-            $response = $curl->request(
-                static::$resourceRoute,
-                $data,
-                static::$resourceMethod,
-                static::$resourceOptions
-            );
-            $this->html->view = 'oauth2/client/granted.twig';
-            return array(
-                    'token' => $token,
-                    'endpoint' => static::$resourceRoute . '?' . http_build_query($data)
-                ) + json_decode($response['response'], true);
-        }
-        $this->html->view = 'oauth2/client/error.twig';
-        return ['error' => $error];
     }
 }

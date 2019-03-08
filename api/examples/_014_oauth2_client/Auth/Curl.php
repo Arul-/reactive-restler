@@ -21,14 +21,21 @@ class Curl
     /**
      * Send a request to the server, receive a response
      *
-     * @param  string $apiPath Request API path
+     * @param $url
      * @param  array $parameters Parameters
      * @param  string $httpMethod HTTP method to use
      *
-     * @return string   HTTP response
+     * @param array $options
+     * @param callable|null $callback
+     * @return void
      */
-    public function request($url, array $parameters = array(), $httpMethod = 'GET', array $options = array())
-    {
+    public function request(
+        $url,
+        array $parameters = [],
+        $httpMethod = 'GET',
+        array $options = [],
+        callable $callback = null
+    ) {
         $options['http_port'] = parse_url($url, PHP_URL_PORT) ?? 80;
         $options = array_merge($this->options, $options);
 
@@ -94,7 +101,34 @@ class Curl
 
         $response = $this->doCurlCall($curlOptions);
 
-        return $response;
+        if (!empty($response['response'])) {
+            //success
+            if (is_callable($callback)) {
+                $callback(null, $response);
+            }
+        } else {
+            // render error if applicable
+            ($error =
+                //OAuth error
+                $response['error_description'] ?? null) ||
+            ($error =
+                //Restler exception
+                $response['error']['message'] ?? null) ||
+            ($error =
+                //cURL error
+                $response['errorMessage'] ?? null) ||
+            ($error =
+                //cURL error with out message
+                $response['errorNumber'] ?? null) ||
+            ($error =
+                'Unknown Error');
+            //success
+            if (is_callable($callback)) {
+                $exception = new \Error($error);
+                $exception->uri = $response['error_uri'] ?? null;
+                $callback($exception, null);
+            }
+        }
     }
 
     /**
