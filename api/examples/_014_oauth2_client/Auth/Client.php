@@ -2,6 +2,7 @@
 
 namespace Auth;
 
+use HttpClientInterface;
 use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\Restler;
 use Luracast\Restler\Session;
@@ -125,47 +126,35 @@ class Client
             'client_secret' => static::$clientSecret,
             'redirect_uri' => static::$replyBackUrl,
         );
-        //call the API using cURL
-        $curl = new Curl();
+        /** @var HttpClientInterface $clientClass */
+        $clientClass = ClassName::get(HttpClientInterface::class);
         try {
-            $response = yield [$curl, 'request', static::$tokenRoute, $query, 'POST', []];
-            if (!$decoded = json_decode($response['response'], true)) {
-                $status = $response['headers']['http_code'];
-                $body = '<h1>Remote Server call failed</h1>';
-                if (isset(HttpException::$codes[$status])) {
-                    $body .= '<h2>' . $status . ' - '
-                        . HttpException::$codes[$status] . '</h2>';
-                } else {
-                    $body .= '<h2>' . $response['errorMessage'] . '</h2>';
-                }
-                $body .= '<h3>Request</h3><hr/>';
-                $body .= '<pre>' . var_export(compact('endpoint', 'query'), true) . '</pre>';
-                $body .= '<h3>Response</h3><hr/>';
-                $body .= '<pre>' . print_r($response, true) . '</pre>';
-                $class = ClassName::get(ResponseInterface::class);
-                return (new $class(200, [], $body));
-            }
-            $response = $decoded;
-            // if it is successful, call the API with the retrieved token
+            $response = yield [
+                $clientClass,
+                'request',
+                'POST',
+                static::$tokenRoute,
+                ['Content-Type' => 'application/x-www-form-urlencoded'],
+                http_build_query($query)
+            ];
+            $response = json_decode($response, true);
             if (($token = $response['access_token'] ?? null)) {
-                // make request to the API for awesome data
                 $data = static::$resourceParams + ['access_token' => $token];
                 $response = yield [
-                    $curl,
+                    $clientClass,
                     'request',
-                    static::$resourceRoute,
-                    $data,
                     static::$resourceMethod,
-                    static::$resourceOptions
+                    static::$resourceRoute,
+                    ['Content-Type' => 'application/x-www-form-urlencoded'],
+                    http_build_query($data)
                 ];
                 $this->html->view = 'oauth2/client/granted.twig';
-                return array(
+                return [
                         'token' => $token,
                         'endpoint' => static::$resourceRoute . '?' . http_build_query($data)
-                    ) + json_decode($response['response'], true);
+                    ] + json_decode($response, true);
             }
-
-        } catch (\Error $exception) {
+        } catch (\Throwable $exception) {
             $this->html->view = 'oauth2/client/error.twig';
             return [
                 'error' => [

@@ -2,6 +2,7 @@
 
 require __DIR__ . '/../api/bootstrap.php';
 
+use Luracast\Restler\Defaults;
 use Luracast\Restler\Restler;
 use Psr\Http\Message\ServerRequestInterface;
 use React\Http\Middleware\LimitConcurrentRequestsMiddleware;
@@ -10,6 +11,9 @@ use React\Http\StreamingServer;
 
 
 $loop = React\EventLoop\Factory::create();
+
+ReactHttpClient::setLoop($loop);
+Defaults::$implementations[HttpClientInterface::class] = [ReactHttpClient::class];
 
 $server = new StreamingServer([
     new LimitConcurrentRequestsMiddleware(100), // 100 concurrent buffering handlers
