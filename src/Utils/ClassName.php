@@ -100,7 +100,7 @@ class ClassName
         if (class_exists($interface)) {
             return $interface;
         }
-        if ($info = static::$dependencies[$interface]) {
+        if ($info = static::$dependencies[$interface] ?? false) {
             $message = $info[1] . ' has external dependency. Please run `composer require ' .
                 $info[0] . '` from the project root. Read https://getcomposer.org for more info';
         } else {
