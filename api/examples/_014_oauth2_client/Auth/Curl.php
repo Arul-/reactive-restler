@@ -6,6 +6,15 @@ class Curl
 {
     private $options;
 
+    public static $request;
+
+    public static function __callStatic($name, $arguments)
+    {
+        if (property_exists(static::class, $name) && is_callable([static::class, $name])) {
+            return static::$$name(...$arguments);
+        }
+    }
+
     public function __construct($options = array())
     {
         $this->options = array_merge(array(
@@ -29,7 +38,7 @@ class Curl
      * @param callable|null $callback
      * @return void
      */
-    public function request(
+    public function requestOLD(
         $url,
         array $parameters = [],
         $httpMethod = 'GET',
