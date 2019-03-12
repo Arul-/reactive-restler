@@ -32,7 +32,7 @@ class ReactHttpClient implements HttpClientInterface
             $response->on('data', function (string $chunk) use (&$body) {
                 $body .= $chunk;
             });
-            $response->on('end', function () use (&$body, &$callback) {
+            $response->on('end', function () use (&$body, $callback) {
                 $callback(null, $body);
             });
         });
