@@ -145,6 +145,7 @@ class Restler extends Core
         $promise->then(function ($response) {
             die(Dump::response($response, true, false));
         });
+        return $promise;
     }
 
     /**
