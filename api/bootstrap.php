@@ -29,6 +29,7 @@ Defaults::$implementations[DataProviderInterface::class] = [SerializedFileDataPr
 Defaults::$useUrlBasedVersioning = true;
 Defaults::$apiVendor = "SomeVendor";
 Defaults::$useVendorMIMEVersioning = true;
+Defaults::$implementations[HttpClientInterface::class] = [CurlHttpClient::class];
 Router::setApiVersion(2);
 RateLimiter::setLimit('hour', 10);
 RateLimiter::setIncludedPaths('examples/_009_rate_limiting');
