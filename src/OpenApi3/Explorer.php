@@ -123,8 +123,9 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
 
     private function info(int $version)
     {
-        return compact('version') +
-            array_filter(call_user_func(static::$infoClass . '::format', static::SWAGGER));
+        $info = array_filter(call_user_func(static::$infoClass . '::format', static::SWAGGER));
+        $info['version'] = (string)$version;
+        return $info;
     }
 
     /**
