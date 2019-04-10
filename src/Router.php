@@ -162,12 +162,12 @@ class Router
     }
 
     /**
-     * @internal
      * @param string $interface
      * @param array $types
      * @param array $formatMap
      * @param array $mediaTypes
      * @throws Exception
+     * @internal
      */
     public static function _setMediaTypes(
         string $interface,
@@ -354,18 +354,19 @@ class Router
             if ($methodUrl{0} == '_') {
                 continue;
             }
-            $doc = $method->getDocComment();
-
-            try {
-                $metadata = CommentParser::parse($doc) + $classMetadata;
-            } catch (Exception $e) {
-                throw new HttpException(500,
-                    "Error while parsing comments of `{$className}::{$method->getName()}` method. " . $e->getMessage());
+            if ($doc = $method->getDocComment()) {
+                try {
+                    $metadata = CommentParser::parse($doc) + $classMetadata;
+                } catch (Exception $e) {
+                    throw new HttpException(500,
+                        "Error while parsing comments of `{$className}::{$method->getName()}` method. " . $e->getMessage());
+                }
+            } else {
+                $metadata = $classMetadata;
             }
+
             //@access should not be private
-            if (isset($metadata['access'])
-                && $metadata['access'] == 'private'
-            ) {
+            if ('private' == ($metadata['access'] ?? false)) {
                 continue;
             }
             $arguments = [];
@@ -397,18 +398,18 @@ class Router
                 //assume return type is array
                 $metadata['return']['type'] = 'array';
             }
+            $paramMetadata = array_combine(array_column($metadata['param'], 'name'), $metadata['param']);
+            $metadata['param'] = [];
             foreach ($params as $param) {
+                $name = $param->getName();
                 $children = [];
                 $type =
                     $param->isArray() ? 'array' : $param->getClass();
-                $arguments[$param->getName()] = $position;
-                $defaults[$position] = $param->isDefaultValueAvailable() ?
-                    $param->getDefaultValue() : null;
-                if (!isset($metadata['param'][$position])) {
-                    $metadata['param'][$position] = [];
-                }
-                $m = &$metadata ['param'] [$position];
-                $m ['name'] = $param->getName();
+                $arguments[$name] = $position;
+                $defaults[$position] = $param->isDefaultValueAvailable() ? $param->getDefaultValue() : null;
+                $metadata['param'][$position] = $paramMetadata[$name] ?? [];
+                $m = &$metadata['param'][$position];
+                $m ['name'] = $name;
                 if (!isset($m[$dataName])) {
                     $m[$dataName] = [];
                 }
