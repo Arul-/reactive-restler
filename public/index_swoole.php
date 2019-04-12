@@ -1,5 +1,6 @@
 <?php declare(strict_types=1);
 
+use Luracast\Restler\Defaults;
 use Luracast\Restler\Restler;
 use Psr\Http\Message\ResponseInterface;
 use Swoole\Http\Convert;
@@ -8,10 +9,12 @@ use Swoole\Http\Response;
 
 require __DIR__ . '/../api/bootstrap.php';
 
+Defaults::$implementations[HttpClientInterface::class] = [SwooleHttpClient::class];
+
 $http = new swoole_http_server("127.0.0.1", 8080);
 
 $http->set([
-    'worker_num' => 4, // The number of worker processes
+    'worker_num' => 1, // The number of worker processes
     'daemonize' => false, // Whether start as a daemon process
     'backlog' => 128, // TCP backlog connection number
 ]);
