@@ -453,7 +453,7 @@ class RestContext implements Context
             throw new Exception("Response header $header was not found\n\n"
                 . $this->echoLastResponse());
         }
-        if ((string)$this->_response->getHeaderLine($header) !== $value) {
+        if (strcasecmp((string)$this->_response->getHeaderLine($header), $value)) {
             throw new Exception("Response header $header ("
                 . (string)$this->_response->getHeaderLine($header)
                 . ") does not match `$value`\n\n"
