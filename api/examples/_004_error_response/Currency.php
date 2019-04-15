@@ -18,7 +18,7 @@ class Currency
         }
 
         // let's print the international format for the en_US locale
-        setlocale(LC_MONETARY, 'en_US');
+        setlocale(LC_MONETARY, 'en_US.UTF-8');
         return money_format('%i', $number);
     }
 }
