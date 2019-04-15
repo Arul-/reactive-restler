@@ -1,6 +1,7 @@
 <?php
 
 use Behat\Behat\Context\Context;
+use Behat\Behat\Tester\Exception\PendingException;
 use Behat\Gherkin\Node\PyStringNode;
 use Behat\Testwork\Hook\Scope\BeforeSuiteScope;
 use GuzzleHttp\Client;
@@ -636,8 +637,8 @@ class RestContext implements Context
 
         if (!empty($data)) {
             $p = $data;
-            $properties = explode('.',$propertyName);
-            foreach ($properties as $property){
+            $properties = explode('.', $propertyName);
+            foreach ($properties as $property) {
                 if (!isset($p->$property)) {
                     throw new Exception("Property '"
                         . $propertyName . "' is not set!\n\n"
@@ -755,5 +756,23 @@ class RestContext implements Context
         }
         echo PHP_EOL;
         echo (string)$res->getBody();
+    }
+
+
+    /**
+     * @Given /^the value equals "([^"]*)" or "([^"]*)"$/
+     */
+    public function theValueEqualsOr($arg1, $arg2)
+    {
+        try {
+            $this->theValueEquals($arg1);
+        } catch (Exception $exception) {
+            try {
+                $this->theValueEquals($arg2);
+            } catch (Exception $exception2) {
+                throw new Exception("Response value does not match both '$arg1' and '$arg2'\n\n"
+                    . $this->echoLastResponse());
+            }
+        }
     }
 }
