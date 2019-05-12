@@ -24,14 +24,14 @@ class Json extends MediaType implements RequestMediaTypeInterface, ResponseMedia
         if (!strlen($data)) {
             return [];
         }
-        $decoded = json_decode($data, static::$decodeOptions);
+        $decoded = json_decode($data, true, 512, static::$decodeOptions);
         if (json_last_error() != JSON_ERROR_NONE) {
             throw new HttpException(400, 'JSON Parser: ' . json_last_error_msg());
         }
         if (strlen($data) && $decoded === null || $decoded === $data) {
             throw new HttpException(400, 'Error parsing JSON');
         }
-        return Convert::toArray($decoded);
+        return $decoded; //Convert::toArray($decoded);
     }
 
     /**
