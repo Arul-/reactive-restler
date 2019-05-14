@@ -352,10 +352,13 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
     private function responses(array $route)
     {
         $code = '200';
+        if (isset($route['metadata']['status'])) {
+            $code = $route['metadata']['status'];
+        }
         $schema = new stdClass();
         $r = array(
             $code => array(
-                'description' => 'Success',
+                'description' => HttpException::$codes[$code] ?? 'Success',
                 'content' => ["application/json" => ['schema' => $schema]]
             )
         );
