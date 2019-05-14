@@ -369,7 +369,7 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
         $required = array();
         foreach ($children as $child) {
             $info = new ValidationInfo($child);
-            $p =  new stdClass();
+            $p = new stdClass();
             $this->setType($p, $info);
             if (isset($child['description'])) {
                 $p->description = $child['description'];
@@ -394,6 +394,7 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
         if (!empty($required)) {
             $r->required = $required;
         }
+        $r->xml = ['name' => $type];
         //TODO: add $r->subTypes https://github.com/wordnik/swagger-spec/blob/master/versions/1.2.md#527-model-object
         //TODO: add $r->discriminator https://github.com/wordnik/swagger-spec/blob/master/versions/1.2.md#527-model-object
         $this->models[$type] = $r;
