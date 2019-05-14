@@ -38,13 +38,17 @@ class CurlHttpClient implements HttpClientInterface
                 unset($curlOptions[CURLOPT_POST]);
                 unset($curlOptions[CURLOPT_POSTFIELDS]);
         }
+        $h = [];
+        foreach ($headers as $k => $v) {
+            $h[] = is_string($k) ? "$k:$v" : $v;
+        }
         $curlOptions += [
             CURLOPT_URL => $uri,
             CURLOPT_PORT => static::$options['http_port'],
             CURLOPT_USERAGENT => static::$options['user_agent'],
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_TIMEOUT => static::$options['timeout'],
-            CURLOPT_HTTPHEADER => $headers,
+            CURLOPT_HTTPHEADER => $h,
             CURLOPT_SSL_VERIFYPEER => static::$options['verifyssl'],
         ];
         if (ini_get('open_basedir') == '' && ini_get('safe_mode') != 'On') {
