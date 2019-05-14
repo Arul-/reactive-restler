@@ -338,15 +338,16 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
     private function responses(array $route)
     {
         $code = '200';
+        $schema = new stdClass();
         $r = array(
-            $code => (object)array(
+            $code => array(
                 'description' => 'Success',
-                'schema' => new stdClass()
+                'content' => ["*/*" => ['schema' => $schema]]
             )
         );
         $return = $route['metadata']['return'];
         if (!empty($return)) {
-            $this->setType($r[$code]->schema, new ValidationInfo($return));
+            $this->setType($schema, new ValidationInfo($return));
         }
 
         if (is_array($throws = $route['metadata']['throws'] ?? null)) {
