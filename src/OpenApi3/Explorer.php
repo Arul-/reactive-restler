@@ -364,13 +364,16 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
             return $this->models[$type];
         }
         $r = new stdClass();
+        $r->type = 'object';
         $r->properties = array();
         $required = array();
         foreach ($children as $child) {
             $info = new ValidationInfo($child);
-            $p = (object)['schema' => new stdClass()];
-            $this->setType($p->schema, $info);
-            $p->description = isset($child['description']) ? $child['description'] : '';
+            $p =  new stdClass();
+            $this->setType($p, $info);
+            if (isset($child['description'])) {
+                $p->description = $child['description'];
+            }
             if ($info->default) {
                 $p->defaultValue = $info->default;
             }
