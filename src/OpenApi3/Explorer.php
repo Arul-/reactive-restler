@@ -300,7 +300,7 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
     {
         $p = $this->parameter($info, $description);
         $this->requestBodies[$info->type] = [
-            'content' => ['*/*' => ['schema' => $p->schema]]
+            'content' => ['application/json' => ['schema' => $p->schema]]
         ];
         return (object)['$ref' => "#/components/requestBodies/{$info->type}"];
     }
@@ -356,7 +356,7 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
         $r = array(
             $code => array(
                 'description' => 'Success',
-                'content' => ["*/*" => ['schema' => $schema]]
+                'content' => ["application/json" => ['schema' => $schema]]
             )
         );
         $return = $route['metadata']['return'];
