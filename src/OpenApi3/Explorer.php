@@ -35,6 +35,7 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
     protected $authenticated = false;
 
     protected $models = [];
+    protected $requestBodies = [];
 
     public static $dataTypeAlias = [
         //'string' => 'string',
@@ -177,8 +178,11 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
             $base = 'root';
         }
         $r->tags = array($base);
-        $r->parameters = $this->parameters($route);
+        [$r->parameters, $r->requestBody] = $this->parameters($route);
 
+        if (is_null($r->requestBody)) {
+            unset($r->requestBody);
+        }
 
         $r->summary = isset($m['description'])
             ? $m['description']
@@ -220,6 +224,7 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
     {
         $c = (object)[
             'schemas' => new stdClass(),
+            'requestBodies' => $this->requestBodies,
             'securitySchemes' => $this->securitySchemes(),
         ];
         foreach ($this->models as $type => $model) {
@@ -231,7 +236,8 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
     private function parameters(array $route)
     {
         $r = array();
-        $children = array();
+        $requestBody = null;
+        $body = array();
         $required = false;
         foreach ($route['metadata']['param'] as $param) {
             $info = new ValidationInfo($param);
@@ -241,37 +247,36 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
                     $required = true;
                 }
                 $param['description'] = $description;
-                $children[] = $param;
+                $body[] = $param;
             } else {
                 $r[] = $this->parameter($info, $description);
             }
         }
-        if (!empty($children)) {
+        if (!empty($body)) {
             if (
-                1 == count($children) &&
-                (static::$allowScalarValueOnRequestBody || !empty($children[0]['children']))
+                1 == count($body) &&
+                (static::$allowScalarValueOnRequestBody || !empty($body[0]['children']))
             ) {
-                $firstChild = $children[0];
+                $firstChild = $body[0];
                 if (empty($firstChild['children'])) {
                     $description = $firstChild['description'];
                 } else {
-                    $description = ''; //'<section class="body-param">';
+                    $description = '';
                     foreach ($firstChild['children'] as $child) {
                         $description .= isset($child['required']) && $child['required']
                             ? '**' . $child['name'] . '** (required)  ' . PHP_EOL
                             : $child['name'] . '  ' . PHP_EOL;
                     }
-                    //$description .= '</section>';
                 }
-                $r[] = $this->parameter(new ValidationInfo($firstChild), $description);
+                $requestBody = $this->requestBody(new ValidationInfo($firstChild), $description);
+
             } else {
-                $description = ''; //'<section class="body-param">';
-                foreach ($children as $child) {
+                $description = '';
+                foreach ($body as $child) {
                     $description .= isset($child['required']) && $child['required']
                         ? '**' . $child['name'] . '** (required)  ' . PHP_EOL
                         : $child['name'] . '  ' . PHP_EOL;
                 }
-                //$description .= '</section>';
 
                 //lets group all body parameters under a generated model name
                 $name = $this->modelName($route);
@@ -281,14 +286,23 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
                         'type' => $name,
                         'from' => 'body',
                         'required' => $required,
-                        'children' => $children
+                        'children' => $body
                     )),
                     $description
                 );
             }
         }
 
-        return $r;
+        return [$r, $requestBody];
+    }
+
+    private function requestBody(ValidationInfo $info, $description = '')
+    {
+        $p = $this->parameter($info, $description);
+        $this->requestBodies[$info->type] = [
+            'content' => ['*/*' => ['schema' => $p->schema]]
+        ];
+        return (object)['$ref' => "#/components/requestBodies/{$info->type}"];
     }
 
     private function parameter(ValidationInfo $info, $description = '')
