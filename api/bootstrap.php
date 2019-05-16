@@ -107,9 +107,13 @@ try {
     AccessControl::setIncludedPaths('examples/_010_access_control');
     Router::addAuthenticator(AccessControl::class, 'examples/_010_access_control/accesscontrol');
     Router::setFilters(RateLimiter::class);
+    $cache =  new HumanReadableCache();
+    $cache->set('route', Router::toArray());
 } catch (Throwable $t) {
     die($t->getMessage());
 }
+
+
 //$routes = Router::toArray();
 //var_export($routes);
 //var_export(array_sort(array_keys($routes['v1'])));
