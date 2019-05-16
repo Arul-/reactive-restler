@@ -33,6 +33,11 @@ class Route extends ValueObject
     public $requestMediaTypes = ['application/json'];
     public $responseMediaTypes = ['application/json'];
 
+    /**
+     * @var array
+     */
+    private $arguments = [];
+
     public function addParameter(ValidationInfo $parameter)
     {
         $parameter->index = count($this->parameters);
@@ -43,12 +48,20 @@ class Route extends ValueObject
     {
         $p = [];
         foreach ($this->parameters as $parameter) {
-            $p[$parameter->index] = $parameter->value = $arguments[$parameter->name]
+            $p[$parameter->index] = $arguments[$parameter->name]
                 ?? $arguments[$parameter->index]
                 ?? $parameter->default
                 ?? null;
         }
+        $this->arguments = $p;
         return $p;
+    }
+
+    public function body()
+    {
+        return array_filter($this->parameters, function ($v) {
+            return $v->from === 'body';
+        });
     }
 
     public function call(array $arguments)
