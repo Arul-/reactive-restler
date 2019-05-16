@@ -23,7 +23,7 @@ class ValidationInfo implements ValueObjectInterface
     public $label;
     /**
      * @var string html element that can be used to represent the parameter for
-     *             input
+     *      input
      */
     public $field;
     /**
@@ -44,7 +44,7 @@ class ValidationInfo implements ValueObjectInterface
 
     /**
      * @var string body or header or query where this parameter is coming from
-     * in the http request
+     *      in the http request
      */
     public $from;
 
@@ -62,7 +62,7 @@ class ValidationInfo implements ValueObjectInterface
      * contents of the array
      *
      * @var string|null when all the items in an array are of certain type, we
-     * can set this property. It will be null if the items can be of any type
+     *      can set this property. It will be null if the items can be of any type
      */
     public $contentType;
 
