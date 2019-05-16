@@ -39,16 +39,21 @@ class Route extends ValueObject
         $this->parameters[$parameter->name] = $parameter;
     }
 
-    public function call(array $arguments)
+    public function apply(array $arguments): array
     {
         $p = [];
         foreach ($this->parameters as $parameter) {
-            $p[$parameter->index] = $arguments[$parameter->name]
+            $p[$parameter->index] = $parameter->value = $arguments[$parameter->name]
                 ?? $arguments[$parameter->index]
                 ?? $parameter->default
                 ?? null;
-
         }
+        return $p;
+    }
+
+    public function call(array $arguments)
+    {
+        $p = $this->apply($arguments);
         return call_user_func_array($this->action, $p);
     }
 
