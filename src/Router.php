@@ -12,12 +12,14 @@ use Luracast\Restler\Contracts\{
     UsesAuthenticationInterface
 };
 use Luracast\Restler\Utils\ApiMethodInfo;
+use Luracast\Restler\Utils\Route;
 use Luracast\Restler\Utils\Text;
 use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\MediaTypes\Json;
 use Luracast\Restler\Utils\CommentParser;
 use Luracast\Restler\Utils\Type;
 use Luracast\Restler\Utils\ClassName;
+use Luracast\Restler\Utils\ValidationInfo;
 use ReflectionClass;
 use ReflectionMethod;
 use ReflectionProperty;
@@ -774,15 +776,23 @@ class Router
             },
             $path
         );
+        $route =  Route::__set_state([
+            'url' => $call['url'],
+            'action' => [$call['className'], $call['methodName']],
+            'access' => $call['accessLevel'],
+        ]);
+        foreach ($call['metadata']['param'] as $param) {
+            $route->addParameter(new ValidationInfo($param));
+        }
         //check for wildcard routes
         if (substr($path, -1, 1) == '*') {
             $path = rtrim($path, '/*');
-            static::$routes["v$version"]['*'][$path][$httpMethod] = $call;
+            static::$routes["v$version"]['*'][$path][$httpMethod] = $route;
         } else {
-            static::$routes["v$version"][$path][$httpMethod] = $call;
+            static::$routes["v$version"][$path][$httpMethod] = $route;
             //create an alias with index if the method name is index
             if ($call['methodName'] == 'index') {
-                static::$routes["v$version"][ltrim("$path/index", '/')][$httpMethod] = $call;
+                static::$routes["v$version"][ltrim("$path/index", '/')][$httpMethod] = $route;
             }
         }
     }
