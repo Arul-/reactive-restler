@@ -64,10 +64,21 @@ class Route extends ValueObject
         });
     }
 
-    public function call(array $arguments)
+    public function call(array $arguments = null)
     {
-        $p = $this->apply($arguments);
-        return call_user_func_array($this->action, $p);
+        if (is_array($arguments)) {
+            $this->apply($arguments);
+        }
+        foreach ($this->parameters as $parameter) {
+            $i = $parameter->index;
+            $this->arguments[$i] = Validator::validate($this->arguments[$i], $parameter);
+        }
+        //if (!is_callable($this->action)) {
+            if (is_array($this->action) && count($this->action) && class_exists($this->action[0])) {
+                $this->action[0] = new $this->action[0];
+            }
+        //}
+        return call_user_func_array($this->action, $this->arguments);
     }
 
 }
