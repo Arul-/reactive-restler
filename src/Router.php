@@ -653,7 +653,7 @@ class Router
      * @param string $httpMethod
      * @param int $version
      * @param array $data
-     * @return \Luracast\Restler\Utils\ApiMethodInfo
+     * @return Route
      * @throws HttpException
      */
     public static function find(
@@ -776,7 +776,7 @@ class Router
             },
             $path
         );
-        $route =  Route::__set_state([
+        $route = Route::__set_state([
             'url' => $call['url'],
             'action' => [$call['className'], $call['methodName']],
             'access' => $call['accessLevel'],
@@ -878,54 +878,42 @@ class Router
     /**
      * Populates the parameter values
      *
-     * @param array $call
+     * @param Route $route
      * @param       $data
      *
-     * @return ApiMethodInfo
+     * @return Route
      *
      * @access private
      */
-    protected static function populate(array $call, $data)
+    protected static function populate(Route $route, $data)
     {
-        $call['parameters'] = $call['defaults'];
-        $p = &$call['parameters'];
-        $dataName = CommentParser::$embeddedDataName;
-        foreach ($data as $key => $value) {
-            if (isset($call['arguments'][$key])) {
-                $p[$call['arguments'][$key]] = $value;
-            }
-        }
         if (Defaults::$smartParameterParsing) {
-            if (($m = $call['metadata']['param'][0] ?? false) &&
-                !array_key_exists($m['name'], $data) &&
-                array_key_exists(Defaults::$fullRequestDataName, $data) &&
-                !is_null($d = $data[Defaults::$fullRequestDataName]) &&
-                isset($m['type']) &&
-                static::typeMatch($m['type'], $d)
-            ) {
-                $p[0] = $d;
-            } else {
-                $bodyParamCount = 0;
-                $lastBodyParamIndex = -1;
-                $lastM = null;
-                foreach ($call['metadata']['param'] as $k => $m) {
-                    if ($m[$dataName]['from'] == 'body') {
-                        $bodyParamCount++;
-                        $lastBodyParamIndex = $k;
-                        $lastM = $m;
+            if (count($route->parameters)) {
+                /** @var ValidationInfo $param */
+                $param = array_values($route->parameters)[0];
+                if (
+                    !array_key_exists($param->name, $data) &&
+                    array_key_exists(Defaults::$fullRequestDataName, $data) &&
+                    !is_null($d = $data[Defaults::$fullRequestDataName]) &&
+                    static::typeMatch($param->type, $d)
+                ) {
+                    $data[$param->name] = $d;
+                } else {
+                    $bodyParams = $route->body();
+                    if (1 == count($bodyParams)) {
+                        /** @var ValidationInfo $param */
+                        $param = $bodyParams[0];
+                        if (!array_key_exists($param->name, $data) &&
+                            array_key_exists(Defaults::$fullRequestDataName, $data) &&
+                            !is_null($d = $data[Defaults::$fullRequestDataName])) {
+                            $data[$param->name] = $d;
+                        }
                     }
                 }
-                if (
-                    $bodyParamCount == 1 &&
-                    !array_key_exists($lastM['name'], $data) &&
-                    array_key_exists(Defaults::$fullRequestDataName, $data) &&
-                    !is_null($d = $data[Defaults::$fullRequestDataName])
-                ) {
-                    $p[$lastBodyParamIndex] = $d;
-                }
             }
         }
-        return ApiMethodInfo::__set_state($call);
+        $route->apply($data);
+        return $route;
     }
 
     /**
