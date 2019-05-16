@@ -21,20 +21,9 @@ class Route extends ValueObject
     public $action;
 
     /**
-     * @var array
+     * @var array[ValidationInfo]
      */
-    public $parameters = [
-        //name => [
-        //  type     => array,
-        //  of       => strings
-        //  index    => 0,
-        //  default  => '',
-        //  nullable => true,
-        //  min      => 3,
-        //  max      => 10
-        //  ...
-        //], ...
-    ];
+    public $parameters = [];
 
     /**
      * @var int access level
@@ -43,5 +32,24 @@ class Route extends ValueObject
 
     public $requestMediaTypes = ['application/json'];
     public $responseMediaTypes = ['application/json'];
+
+    public function addParameter(ValidationInfo $parameter)
+    {
+        $parameter->index = count($this->parameters);
+        $this->parameters[$parameter->name] = $parameter;
+    }
+
+    public function call(array $arguments)
+    {
+        $p = [];
+        foreach ($this->parameters as $parameter) {
+            $p[$parameter->index] = $arguments[$parameter->name]
+                ?? $arguments[$parameter->index]
+                ?? $parameter->default
+                ?? null;
+
+        }
+        return call_user_func_array($this->action, $p);
+    }
 
 }

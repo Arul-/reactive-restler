@@ -10,6 +10,10 @@ use Luracast\Restler\Contracts\ValueObjectInterface;
 class ValidationInfo implements ValueObjectInterface
 {
     /**
+     * @var int
+     */
+    public $index;
+    /**
      * @var mixed given value for the parameter
      */
     public $value;
