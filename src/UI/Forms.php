@@ -14,7 +14,7 @@ use Luracast\Restler\UI\Tags as T;
 use Luracast\Restler\Data\ApiMethodInfo;
 use Luracast\Restler\Utils\CommentParser;
 use Luracast\Restler\Utils\Text;
-use Luracast\Restler\Data\ValidationInfo;
+use Luracast\Restler\Data\Param;
 use Luracast\Restler\Utils\Validator;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -40,7 +40,7 @@ class Forms implements FilterInterface
      */
     public static $preFill = true;
     /**
-     * @var \Luracast\Restler\Data\ValidationInfo
+     * @var \Luracast\Restler\Data\Param
      */
     public static $validationInfo = null;
     protected $inputTypes = array(
@@ -238,7 +238,7 @@ class Forms implements FilterInterface
             ) {
                 $p['value'] = $value;
             }
-            $this->forms->validationInfo = $v = new ValidationInfo($p);
+            $this->forms->validationInfo = $v = new Param($p);
             if ($v->from == 'path') {
                 continue;
             }
@@ -253,7 +253,7 @@ class Forms implements FilterInterface
                     ) {
                         $c['value'] = $value;
                     }
-                    $this->forms->validationInfo = $vc = new ValidationInfo($c);
+                    $this->forms->validationInfo = $vc = new Param($c);
                     if ($vc->from == 'path') {
                         continue;
                     }
@@ -272,13 +272,13 @@ class Forms implements FilterInterface
     }
 
     /**
-     * @param \Luracast\Restler\Data\ValidationInfo $p
+     * @param \Luracast\Restler\Data\Param $p
      *
      * @param bool $dataOnly
      *
      * @return array|T
      */
-    public function field(ValidationInfo $p, $dataOnly = false)
+    public function field(Param $p, $dataOnly = false)
     {
         if (is_string($p->value)) {
             //prevent XSS attacks
@@ -386,7 +386,7 @@ class Forms implements FilterInterface
         return $t;
     }
 
-    protected function guessFieldType(ValidationInfo $p, $type = 'type')
+    protected function guessFieldType(Param $p, $type = 'type')
     {
         if (in_array($p->$type, $this->inputTypes)) {
             return $p->$type;

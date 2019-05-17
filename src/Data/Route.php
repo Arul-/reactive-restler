@@ -4,7 +4,7 @@
 namespace Luracast\Restler\Data;
 
 
-use Luracast\Restler\Data\ValidationInfo;
+use Luracast\Restler\Data\Param;
 use Luracast\Restler\Utils\Validator;
 
 class Route extends ValueObject
@@ -24,7 +24,7 @@ class Route extends ValueObject
     public $action;
 
     /**
-     * @var array[ValidationInfo]
+     * @var array[Param]
      */
     public $parameters = [];
 
@@ -47,7 +47,7 @@ class Route extends ValueObject
     public $description;
 
     /**
-     * @var ValidationInfo
+     * @var Param
      */
     public $return;
 
@@ -72,7 +72,7 @@ class Route extends ValueObject
      */
     private $arguments = [];
 
-    public function addParameter(ValidationInfo $parameter)
+    public function addParameter(Param $parameter)
     {
         $parameter->index = count($this->parameters);
         $this->parameters[$parameter->name] = $parameter;

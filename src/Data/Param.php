@@ -8,7 +8,7 @@ use Luracast\Restler\Utils\CommentParser;
  * populated by Restler to pass it to iValidate implementing classes for
  * validation
  */
-class ValidationInfo implements ValueObjectInterface
+class Param implements ValueObjectInterface
 {
     /**
      * @var int
@@ -210,7 +210,7 @@ class ValidationInfo implements ValueObjectInterface
 
     public function __toString()
     {
-        return ' new ValidationInfo() ';
+        return ' new Param() ';
     }
 
     private function getProperty(array &$from, $property)

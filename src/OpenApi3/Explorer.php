@@ -6,7 +6,7 @@ use Luracast\Restler\Core;
 use Luracast\Restler\Exceptions\Redirect;
 use Luracast\Restler\Data\ApiMethodInfo;
 use Luracast\Restler\Utils\Text;
-use Luracast\Restler\Data\ValidationInfo;
+use Luracast\Restler\Data\Param;
 use Luracast\Restler\ExplorerInfo;
 use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\Router;
@@ -198,7 +198,7 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
         /*
         $this->setType(
             $r,
-            new ValidationInfo($m['return'] ?? [])
+            new Param($m['return'] ?? [])
         );
         if (is_null($r->type) || 'mixed' == $r->type) {
             $r->type = 'array';
@@ -240,7 +240,7 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
         $body = array();
         $required = false;
         foreach ($route['metadata']['param'] as $param) {
-            $info = new ValidationInfo($param);
+            $info = new Param($param);
             $description = $param['description'] ?? '';
             if ('body' == $info->from) {
                 if ($info->required) {
@@ -268,7 +268,7 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
                             : $child['name'] . '  ' . PHP_EOL;
                     }
                 }
-                $requestBody = $this->requestBody(new ValidationInfo($firstChild), $description);
+                $requestBody = $this->requestBody(new Param($firstChild), $description);
 
             } else {
                 $description = '';
@@ -281,7 +281,7 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
                 //lets group all body parameters under a generated model name
                 $name = $this->modelName($route);
                 $r[] = $this->parameter(
-                    new ValidationInfo(array(
+                    new Param(array(
                         'name' => $name,
                         'type' => $name,
                         'from' => 'body',
@@ -296,7 +296,7 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
         return [$r, $requestBody];
     }
 
-    private function requestBody(ValidationInfo $info, $description = '')
+    private function requestBody(Param $info, $description = '')
     {
         $p = $this->parameter($info, $description);
         $this->requestBodies[$info->type] = [
@@ -305,7 +305,7 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
         return (object)['$ref' => "#/components/requestBodies/{$info->type}"];
     }
 
-    private function parameter(ValidationInfo $info, $description = '')
+    private function parameter(Param $info, $description = '')
     {
         $p = (object)[
             'name' => '',
@@ -364,7 +364,7 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
         );
         $return = $route['metadata']['return'];
         if (!empty($return)) {
-            $this->setType($schema, new ValidationInfo($return));
+            $this->setType($schema, new Param($return));
         }
 
         if (is_array($throws = $route['metadata']['throws'] ?? null)) {
@@ -386,7 +386,7 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
         $r->properties = array();
         $required = array();
         foreach ($children as $child) {
-            $info = new ValidationInfo($child);
+            $info = new Param($child);
             $p = new stdClass();
             $this->setType($p, $info);
             if (isset($child['description'])) {
@@ -420,7 +420,7 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
         return $r;
     }
 
-    private function setType(&$object, ValidationInfo $info)
+    private function setType(&$object, Param $info)
     {
         //TODO: proper type management
         $type = ClassName::short($info->type);

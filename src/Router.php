@@ -19,7 +19,7 @@ use Luracast\Restler\MediaTypes\Json;
 use Luracast\Restler\Utils\CommentParser;
 use Luracast\Restler\Utils\Type;
 use Luracast\Restler\Utils\ClassName;
-use Luracast\Restler\Data\ValidationInfo;
+use Luracast\Restler\Data\Param;
 use ReflectionClass;
 use ReflectionMethod;
 use ReflectionProperty;
@@ -780,10 +780,10 @@ class Router
             'url' => $call['url'],
             'action' => [$call['className'], $call['methodName']],
             'access' => $call['accessLevel'],
-            'return' => new ValidationInfo($call['metadata']['return']??['type'=>'array'])
+            'return' => new Param($call['metadata']['return']??['type'=>'array'])
         ]);
         foreach ($call['metadata']['param'] as $param) {
-            $route->addParameter(new ValidationInfo($param));
+            $route->addParameter(new Param($param));
         }
         //check for wildcard routes
         if (substr($path, -1, 1) == '*') {
@@ -890,7 +890,7 @@ class Router
     {
         if (Defaults::$smartParameterParsing) {
             if (count($route->parameters)) {
-                /** @var \Luracast\Restler\Data\ValidationInfo $param */
+                /** @var \Luracast\Restler\Data\Param $param */
                 $param = array_values($route->parameters)[0];
                 if (
                     !array_key_exists($param->name, $data) &&
@@ -902,7 +902,7 @@ class Router
                 } else {
                     $bodyParams = $route->body();
                     if (1 == count($bodyParams)) {
-                        /** @var \Luracast\Restler\Data\ValidationInfo $param */
+                        /** @var \Luracast\Restler\Data\Param $param */
                         $param = $bodyParams[0];
                         if (!array_key_exists($param->name, $data) &&
                             array_key_exists(Defaults::$fullRequestDataName, $data) &&

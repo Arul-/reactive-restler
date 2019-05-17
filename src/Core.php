@@ -12,7 +12,7 @@ use Luracast\Restler\Contracts\{AuthenticationInterface,
     UsesAuthenticationInterface,
     ValidationInterface};
 use Luracast\Restler\Data\ApiMethodInfo;
-use Luracast\Restler\Data\ValidationInfo;
+use Luracast\Restler\Data\Param;
 use Luracast\Restler\Exceptions\{HttpException, InvalidAuthCredentials};
 use Luracast\Restler\MediaTypes\{Json, UrlEncoded, Xml};
 use Luracast\Restler\Utils\{ClassName, CommentParser, Header, Text, Validator};
@@ -631,8 +631,8 @@ abstract class Core
                 if (isset($info['method'])) {
                     $info ['apiClassInstance'] = $this->make($o->className);
                 }
-                //convert to instance of ValidationInfo
-                $info = new ValidationInfo($param);
+                //convert to instance of Param
+                $info = new Param($param);
                 //initialize validator
                 /** @var ValidationInterface $validator */
                 $validator = $this->make(ValidationInterface::class);
@@ -830,7 +830,7 @@ abstract class Core
         }
         if ($detail = Defaults::$propertyValidations[$property] ?? false) {
             /** @noinspection PhpParamsInspection */
-            $value = Validator::validate($value, new ValidationInfo($detail));
+            $value = Validator::validate($value, new Param($detail));
         }
         $this->defaults->{$property} = $value;
         return true;
