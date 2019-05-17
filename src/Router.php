@@ -780,6 +780,7 @@ class Router
             'url' => $call['url'],
             'action' => [$call['className'], $call['methodName']],
             'access' => $call['accessLevel'],
+            'return' => new ValidationInfo($call['metadata']['return']??['type'=>'array'])
         ]);
         foreach ($call['metadata']['param'] as $param) {
             $route->addParameter(new ValidationInfo($param));
