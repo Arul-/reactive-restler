@@ -1,6 +1,7 @@
-<?php namespace Luracast\Restler\Utils;
+<?php namespace Luracast\Restler\Data;
 
 use Luracast\Restler\Contracts\ValueObjectInterface;
+use Luracast\Restler\Utils\CommentParser;
 
 /**
  * ValueObject for validation information. An instance is created and

@@ -11,9 +11,11 @@ use Luracast\Restler\Contracts\{AuthenticationInterface,
     SelectivePathsInterface,
     UsesAuthenticationInterface,
     ValidationInterface};
+use Luracast\Restler\Data\ApiMethodInfo;
+use Luracast\Restler\Data\ValidationInfo;
 use Luracast\Restler\Exceptions\{HttpException, InvalidAuthCredentials};
 use Luracast\Restler\MediaTypes\{Json, UrlEncoded, Xml};
-use Luracast\Restler\Utils\{ApiMethodInfo, ClassName, CommentParser, Header, Text, ValidationInfo, Validator};
+use Luracast\Restler\Utils\{ClassName, CommentParser, Header, Text, Validator};
 use Psr\Http\Message\{ResponseInterface, ServerRequestInterface, UriInterface};
 use React\Promise\PromiseInterface;
 use ReflectionException;

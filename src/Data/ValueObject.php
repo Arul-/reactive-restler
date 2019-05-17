@@ -1,4 +1,4 @@
-<?php namespace Luracast\Restler\Utils;
+<?php namespace Luracast\Restler\Data;
 
 use Luracast\Restler\Contracts\ValueObjectInterface;
 

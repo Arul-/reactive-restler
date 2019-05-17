@@ -1,6 +1,7 @@
 <?php namespace Luracast\Restler\Utils;
 
 use Luracast\Restler\Contracts\ValidationInterface;
+use Luracast\Restler\Data\ValidationInfo;
 use Luracast\Restler\Exceptions\Invalid;
 use Luracast\Restler\Exceptions\HttpException;
 

@@ -11,10 +11,10 @@ use Luracast\Restler\Restler;
 use Luracast\Restler\Router;
 use Luracast\Restler\StaticProperties;
 use Luracast\Restler\UI\Tags as T;
-use Luracast\Restler\Utils\ApiMethodInfo;
+use Luracast\Restler\Data\ApiMethodInfo;
 use Luracast\Restler\Utils\CommentParser;
 use Luracast\Restler\Utils\Text;
-use Luracast\Restler\Utils\ValidationInfo;
+use Luracast\Restler\Data\ValidationInfo;
 use Luracast\Restler\Utils\Validator;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -40,7 +40,7 @@ class Forms implements FilterInterface
      */
     public static $preFill = true;
     /**
-     * @var ValidationInfo
+     * @var \Luracast\Restler\Data\ValidationInfo
      */
     public static $validationInfo = null;
     protected $inputTypes = array(
@@ -73,7 +73,7 @@ class Forms implements FilterInterface
     protected $fileUpload = false;
     private $key = array();
     /**
-     * @var ApiMethodInfo;
+     * @var \Luracast\Restler\Data\ApiMethodInfo;
      */
     private $apiMethodInfo;
     /**
@@ -272,7 +272,7 @@ class Forms implements FilterInterface
     }
 
     /**
-     * @param ValidationInfo $p
+     * @param \Luracast\Restler\Data\ValidationInfo $p
      *
      * @param bool $dataOnly
      *

@@ -11,7 +11,7 @@ use Luracast\Restler\Contracts\{
     ResponseMediaTypeInterface,
     UsesAuthenticationInterface
 };
-use Luracast\Restler\Utils\ApiMethodInfo;
+use Luracast\Restler\Data\ApiMethodInfo;
 use Luracast\Restler\Data\Route;
 use Luracast\Restler\Utils\Text;
 use Luracast\Restler\Exceptions\HttpException;
@@ -19,7 +19,7 @@ use Luracast\Restler\MediaTypes\Json;
 use Luracast\Restler\Utils\CommentParser;
 use Luracast\Restler\Utils\Type;
 use Luracast\Restler\Utils\ClassName;
-use Luracast\Restler\Utils\ValidationInfo;
+use Luracast\Restler\Data\ValidationInfo;
 use ReflectionClass;
 use ReflectionMethod;
 use ReflectionProperty;
@@ -890,7 +890,7 @@ class Router
     {
         if (Defaults::$smartParameterParsing) {
             if (count($route->parameters)) {
-                /** @var ValidationInfo $param */
+                /** @var \Luracast\Restler\Data\ValidationInfo $param */
                 $param = array_values($route->parameters)[0];
                 if (
                     !array_key_exists($param->name, $data) &&
@@ -902,7 +902,7 @@ class Router
                 } else {
                     $bodyParams = $route->body();
                     if (1 == count($bodyParams)) {
-                        /** @var ValidationInfo $param */
+                        /** @var \Luracast\Restler\Data\ValidationInfo $param */
                         $param = $bodyParams[0];
                         if (!array_key_exists($param->name, $data) &&
                             array_key_exists(Defaults::$fullRequestDataName, $data) &&

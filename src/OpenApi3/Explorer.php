@@ -4,9 +4,9 @@ use Luracast\Restler\Contracts\ProvidesMultiVersionApiInterface;
 use Luracast\Restler\Contracts\UsesAuthenticationInterface;
 use Luracast\Restler\Core;
 use Luracast\Restler\Exceptions\Redirect;
-use Luracast\Restler\Utils\ApiMethodInfo;
+use Luracast\Restler\Data\ApiMethodInfo;
 use Luracast\Restler\Utils\Text;
-use Luracast\Restler\Utils\ValidationInfo;
+use Luracast\Restler\Data\ValidationInfo;
 use Luracast\Restler\ExplorerInfo;
 use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\Router;
@@ -68,7 +68,7 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
      */
     private $restler;
     /**
-     * @var ApiMethodInfo
+     * @var \Luracast\Restler\Data\ApiMethodInfo
      */
     private $info;
 

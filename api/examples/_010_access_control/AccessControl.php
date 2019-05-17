@@ -4,7 +4,7 @@ use Luracast\Restler\Defaults;
 use Luracast\Restler\Contracts\AccessControlInterface;
 use Luracast\Restler\Contracts\SelectivePathsInterface;
 use Luracast\Restler\Contracts\SelectivePathsTrait;
-use Luracast\Restler\Utils\ApiMethodInfo;
+use Luracast\Restler\Data\ApiMethodInfo;
 use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\Contracts\UserIdentificationInterface;
 use Luracast\Restler\Utils\ClassName;

@@ -1,6 +1,6 @@
 <?php namespace Luracast\Restler\Contracts;
 
-use Luracast\Restler\Utils\ValidationInfo;
+use Luracast\Restler\Data\ValidationInfo;
 
 /**
  * Validation classes should implement this interface
@@ -13,7 +13,7 @@ interface ValidationInterface
      *
      * @param mixed $input
      *            data that needs to be validated
-     * @param ValidationInfo $info
+     * @param \Luracast\Restler\Data\ValidationInfo $info
      *            information to be used for validation
      * @return boolean false in case of failure or fixed value in the expected
      *         type

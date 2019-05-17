@@ -4,9 +4,8 @@
 namespace Luracast\Restler\Data;
 
 
-use Luracast\Restler\Utils\ValidationInfo;
+use Luracast\Restler\Data\ValidationInfo;
 use Luracast\Restler\Utils\Validator;
-use Luracast\Restler\Utils\ValueObject;
 
 class Route extends ValueObject
 {
@@ -55,7 +54,7 @@ class Route extends ValueObject
     /**
      * @var array
      */
-    public $responses=[
+    public $responses = [
         //200 => [
         //  'message'=> 'OK',
         //  'type'=> Class::name,
@@ -109,9 +108,9 @@ class Route extends ValueObject
             $this->arguments[$i] = Validator::validate($this->arguments[$i], $parameter);
         }
         //if (!is_callable($this->action)) {
-            if (is_array($this->action) && count($this->action) && class_exists($this->action[0])) {
-                $this->action[0] = new $this->action[0];
-            }
+        if (is_array($this->action) && count($this->action) && class_exists($this->action[0])) {
+            $this->action[0] = new $this->action[0];
+        }
         //}
         return call_user_func_array($this->action, $this->arguments);
     }
