@@ -781,6 +781,9 @@ class Router
             'url' => $call['url'],
             'action' => [$call['className'], $call['methodName']],
             'access' => $call['accessLevel'],
+            'summary' => $call['description'] ?? '',
+            'description' => $call['longDescription'] ?? '',
+
             'return' => Returns::__set_state($call['metadata']['return'] ?? ['type' => 'array'])
         ]);
         foreach ($call['metadata']['param'] as $param) {
