@@ -34,6 +34,37 @@ class Route extends ValueObject
     public $responseMediaTypes = ['application/json'];
 
     /**
+     * @var string
+     */
+    public $summary;
+
+    /**
+     * @var string
+     */
+    public $description;
+
+    /**
+     * @var ValidationInfo
+     */
+    public $return;
+
+    /**
+     * @var array
+     */
+    public $responses=[
+        //200 => [
+        //  'message'=> 'OK',
+        //  'type'=> Class::name,
+        //  'description'=> '',
+        //],
+        //404 => [
+        //  'message'=> 'Not Found',
+        //  'type'=> Exception:name,
+        //  'description'=> '',
+        //],
+    ];
+
+    /**
      * @var array
      */
     private $arguments = [];
