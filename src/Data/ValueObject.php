@@ -38,7 +38,7 @@ class ValueObject implements ValueObjectInterface
         return $instance;
     }
 
-    public function jsonSerialize()
+    public function jsonSerialize(): array
     {
         $r = get_object_vars($this);
         $methods = get_class_methods($this);

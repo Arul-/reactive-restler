@@ -8,7 +8,7 @@ use Luracast\Restler\Utils\CommentParser;
  * populated by Restler to pass it to iValidate implementing classes for
  * validation
  */
-class Param implements ValueObjectInterface
+class Param extends ValueObject
 {
     /**
      * @var int
@@ -208,11 +208,6 @@ class Param implements ValueObjectInterface
         return $r;
     }
 
-    public function __toString()
-    {
-        return ' new Param() ';
-    }
-
     private function getProperty(array &$from, $property)
     {
         $p = $from[$property] ?? null;
@@ -239,33 +234,21 @@ class Param implements ValueObjectInterface
         return $r;
     }
 
-    public function __construct(array $info)
+    public static function parse(array $metadata): self
     {
-        $properties = get_object_vars($this);
+        $instance = new self();
+        $properties = get_object_vars($instance);
         unset($properties['contentType']);
         foreach ($properties as $property => $value) {
-            $this->{$property} = $this->getProperty($info, $property);
+            $instance->{$property} = $instance->getProperty($metadata, $property);
         }
-        $inner = $info['properties'] ?? null;
-        $this->rules = !empty($inner) ? $inner + $info : $info;
-        unset($this->rules['properties']);
-        if (is_string($this->type) && $this->type == 'integer') {
-            $this->type = 'int';
+        $inner = $metadata['properties'] ?? null;
+        $instance->rules = !empty($inner) ? $inner + $metadata : $metadata;
+        unset($instance->rules['properties']);
+        if (is_string($instance->type) && $instance->type == 'integer') {
+            $instance->type = 'int';
         }
-    }
-
-    /**
-     * Magic Method used for creating instance at run time
-     */
-    public static function __set_state(array $info)
-    {
-        $o = new self ($info);
-        return $o;
-    }
-
-    public function jsonSerialize()
-    {
-        return get_object_vars($this);
+        return $instance;
     }
 }
 

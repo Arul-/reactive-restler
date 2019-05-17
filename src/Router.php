@@ -12,6 +12,7 @@ use Luracast\Restler\Contracts\{
     UsesAuthenticationInterface
 };
 use Luracast\Restler\Data\ApiMethodInfo;
+use Luracast\Restler\Data\Returns;
 use Luracast\Restler\Data\Route;
 use Luracast\Restler\Utils\Text;
 use Luracast\Restler\Exceptions\HttpException;
@@ -780,10 +781,10 @@ class Router
             'url' => $call['url'],
             'action' => [$call['className'], $call['methodName']],
             'access' => $call['accessLevel'],
-            'return' => new Param($call['metadata']['return']??['type'=>'array'])
+            'return' => Returns::__set_state($call['metadata']['return'] ?? ['type' => 'array'])
         ]);
         foreach ($call['metadata']['param'] as $param) {
-            $route->addParameter(new Param($param));
+            $route->addParameter(Param::parse($param));
         }
         //check for wildcard routes
         if (substr($path, -1, 1) == '*') {
