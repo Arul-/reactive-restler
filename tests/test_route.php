@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-use Luracast\Restler\Utils\Route;
+use Luracast\Restler\Data\Route;
 use Luracast\Restler\Utils\ValidationInfo;
 
 include __DIR__ . "/../vendor/autoload.php";

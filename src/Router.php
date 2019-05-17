@@ -12,7 +12,7 @@ use Luracast\Restler\Contracts\{
     UsesAuthenticationInterface
 };
 use Luracast\Restler\Utils\ApiMethodInfo;
-use Luracast\Restler\Utils\Route;
+use Luracast\Restler\Data\Route;
 use Luracast\Restler\Utils\Text;
 use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\MediaTypes\Json;

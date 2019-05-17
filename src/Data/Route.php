@@ -1,8 +1,12 @@
 <?php
 
 
-namespace Luracast\Restler\Utils;
+namespace Luracast\Restler\Data;
 
+
+use Luracast\Restler\Utils\ValidationInfo;
+use Luracast\Restler\Utils\Validator;
+use Luracast\Restler\Utils\ValueObject;
 
 class Route extends ValueObject
 {
