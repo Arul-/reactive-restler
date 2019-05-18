@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-use Luracast\Restler\Utils\ValidationInfo as VI2;
+use Luracast\Restler\Data\Param as VI2;
 
 use Luracast\Restler\Utils\CommentParser as CP2;
 
@@ -8,7 +8,7 @@ include __DIR__ . "/../vendor/autoload.php";
 
 $data = ['name' => 'date', 'type' => 'string', 'properties' => ['type' => 'date']];
 
-//var_export(new ValidationInfo($data));
+//var_export(new Param($data));
 //var_export(new OldVI($data));
 
 $comment = '/**
