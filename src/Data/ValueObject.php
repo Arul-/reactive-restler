@@ -14,27 +14,43 @@ class ValueObject implements ValueObjectInterface
         return ' new ' . get_called_class() . '() ';
     }
 
-    public static function __set_state(array $properties)
+    protected function applyProperties(array $properties, bool $filter = false)
     {
-        $class = get_called_class();
-        $instance = new $class ();
-        $vars = get_object_vars($instance);
-        foreach ($properties as $property => $value) {
-            if (property_exists($instance, $property)) {
-                // see if the property is accessible
-                if (array_key_exists($property, $vars)) {
-                    $instance->{$property} = $value;
-                } else {
-                    $method = 'set' . ucfirst($property);
-                    if (method_exists($instance, $method)) {
-                        call_user_func(array(
-                            $instance,
-                            $method
-                        ), $value);
+        if ($filter) {
+            $vars = get_object_vars($this);
+            foreach ($properties as $property => $value) {
+                if (property_exists($this, $property)) {
+                    // see if the property is accessible
+                    if (array_key_exists($property, $vars)) {
+                        $this->{$property} = $value;
+                    } else {
+                        $method = 'set' . ucfirst($property);
+                        if (method_exists($this, $method)) {
+                            call_user_func(array(
+                                $this,
+                                $method
+                            ), $value);
+                        }
                     }
                 }
             }
+        } else {
+            foreach ($properties as $property => $value) {
+                $this->{$property} = $value;
+            }
         }
+    }
+
+    /**
+     * @param array $properties
+     * @return static
+     */
+    public static function __set_state(array $properties)
+    {
+        $class = get_called_class();
+        /** @var ValueObject $instance */
+        $instance = new $class ();
+        $instance->applyProperties($properties);
         return $instance;
     }
 

@@ -215,7 +215,7 @@ class Param extends ValueObject
         $p2 = $from[CommentParser::$embeddedDataName][$property] ?? null;
         unset($from[CommentParser::$embeddedDataName][$property]);
 
-        if ($property == 'type' && $p == 'array' && $p2) {
+        if ($property == 'type' && $p2) {
             $this->contentType = $p2;
             return $p;
         }
