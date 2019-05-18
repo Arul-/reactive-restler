@@ -4,7 +4,6 @@
 namespace Luracast\Restler\Data;
 
 
-use Luracast\Restler\Data\Param;
 use Luracast\Restler\Utils\Validator;
 
 class Route extends ValueObject
@@ -87,7 +86,11 @@ class Route extends ValueObject
                 ?? $parameter->default
                 ?? null;
         }
-        $this->arguments = $p;
+        if (empty($p) && !empty($arguments)) {
+            $this->arguments = array_values($arguments);
+        } else {
+            $this->arguments = $p;
+        }
         return $p;
     }
 
