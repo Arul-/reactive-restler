@@ -11,16 +11,10 @@ use Luracast\Restler\Contracts\{
     ResponseMediaTypeInterface,
     UsesAuthenticationInterface
 };
-use Luracast\Restler\Data\ApiMethodInfo;
-use Luracast\Restler\Data\Returns;
-use Luracast\Restler\Data\Route;
-use Luracast\Restler\Utils\Text;
+use Luracast\Restler\Data\{Param, Returns, Route};
 use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\MediaTypes\Json;
-use Luracast\Restler\Utils\CommentParser;
-use Luracast\Restler\Utils\Type;
-use Luracast\Restler\Utils\ClassName;
-use Luracast\Restler\Data\Param;
+use Luracast\Restler\Utils\{ClassName, CommentParser, Text, Type};
 use ReflectionClass;
 use ReflectionMethod;
 use ReflectionProperty;
@@ -685,11 +679,11 @@ class Router
                 if (strpos($path, $key) === 0 && isset($value[$httpMethod])) {
                     //path found, convert rest of the path to parameters
                     $path = substr($path, strlen($key) + 1);
-                    $call = ApiMethodInfo::__set_state($value[$httpMethod]);
-                    $call->parameters = empty($path)
-                        ? []
-                        : explode('/', $path);
-                    return $call;
+                    $route = Route::__set_state($value[$httpMethod]);
+                    if (!empty($path)) {
+                        $route->apply(explode('/', $path));
+                    }
+                    return $route;
                 }
             }
         }
@@ -777,6 +771,7 @@ class Router
             },
             $path
         );
+        /** @var Route $route */
         $route = Route::__set_state([
             'url' => $call['url'],
             'action' => [$call['className'], $call['methodName']],
@@ -784,7 +779,7 @@ class Router
             'summary' => $call['description'] ?? '',
             'description' => $call['longDescription'] ?? '',
 
-            'return' => Returns::__set_state($call['metadata']['return'] ?? ['type' => 'array'])
+            'return' => Returns::parse($call['metadata']['return'] ?? ['type' => 'array'])
         ]);
         foreach ($call['metadata']['param'] as $param) {
             $route->addParameter(Param::parse($param));
@@ -825,6 +820,10 @@ class Router
         }
         if (is_array($all)) {
             foreach ($all as $fullPath => $routes) {
+                /**
+                 * @var string $httpMethod
+                 * @var Route $route
+                 */
                 foreach ($routes as $httpMethod => $route) {
                     if (in_array($httpMethod, $excludedHttpMethods)) {
                         continue;
@@ -838,9 +837,9 @@ class Router
                             continue 2;
                         }
                     }
-                    $hash = "$httpMethod " . $route['url'];
+                    $hash = "$httpMethod " . $route->url;
                     if (!isset($filter[$hash])) {
-                        $route['httpMethod'] = $httpMethod;
+                        $route->httpMethod = $httpMethod;
                         $map[$route['metadata']['resourcePath']][] = [
                             'access' => static::verifyAccess($route, $authenticated),
                             'route' => $route,
@@ -860,19 +859,19 @@ class Router
      * @return bool
      * @throws HttpException
      */
-    public static function verifyAccess(array $route, $authenticated)
+    public static function verifyAccess(Route $route, $authenticated)
     {
-        if ($route['accessLevel'] < 2) {
+        if ($route->access <= Route::HYBRID) {
             return true;
         }
-        if (!$authenticated && $route['accessLevel'] > 1) {
+        if (!$authenticated && $route->access > Route::HYBRID) {
             return false;
         }
         /** @var AccessControlInterface $class */
         if (
             $authenticated &&
             $class = ClassName::get(AccessControlInterface::class) &&
-                $class::verifyAccess(ApiMethodInfo::__set_state($route))
+                $class::verifyAccess($route)
         ) {
             return false;
         }

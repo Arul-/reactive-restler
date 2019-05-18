@@ -1,12 +1,11 @@
 <?php
 
-use Luracast\Restler\Defaults;
 use Luracast\Restler\Contracts\AccessControlInterface;
 use Luracast\Restler\Contracts\SelectivePathsInterface;
 use Luracast\Restler\Contracts\SelectivePathsTrait;
-use Luracast\Restler\Data\ApiMethodInfo;
-use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\Contracts\UserIdentificationInterface;
+use Luracast\Restler\Data\Route;
+use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\Utils\ClassName;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -46,9 +45,9 @@ class AccessControl implements AccessControlInterface, SelectivePathsInterface
         return 'Query name="api_key"';
     }
 
-    public static function verifyAccess(ApiMethodInfo $info): bool
+    public static function verifyAccess(Route $route): bool
     {
-        $requires = $info->metadata['class']['AccessControl']['properties']['requires'] ?? false;
+        $requires = $route->requires ?? false;
         return $requires
             ? static::$role == 'admin' || static::$role == $requires
             : true;
