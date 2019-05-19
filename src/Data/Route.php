@@ -4,6 +4,7 @@
 namespace Luracast\Restler\Data;
 
 
+use Luracast\Restler\Utils\CommentParser;
 use Luracast\Restler\Utils\Validator;
 
 class Route extends ValueObject
@@ -70,6 +71,64 @@ class Route extends ValueObject
      * @var array
      */
     private $arguments = [];
+
+    public static function parse(array $call): Route
+    {
+        $transform = [
+            //----- RENAME -----------
+            'url' => 'url',
+            'className' => ['action', 0],
+            'methodName' => ['action', 1],
+            'accessLevel' => 'access',
+            'summary' => 'description',
+            'description' => 'longDescription',
+            //----- REMOVE -----------
+            'metadata' => true,
+            'arguments' => true,
+            'defaults' => true,
+            'access' => true,
+
+        ];
+        $args = [];
+        foreach ($call as $key => $value) {
+            if ($k = $transform[$key] ?? false) {
+                if (is_array($k)) {
+                    $args[$k[0]][$k[1]] = $value;
+                } elseif (true !== $k) {
+                    $args[$k] = $value;
+                }
+            } else {
+                $args[$key] = $value;
+            }
+        }
+        $meta = $call['metadata'] ?? [];
+        $return = $meta['return'] ?? ['type' => 'array'];
+        unset($meta['return']);
+        $args['return'] = Returns::parse($return);
+        $params = $meta['param'];
+        unset($meta['param']);
+        $classes = $meta['class'] ?? [];
+        unset($meta['class']);
+        $scope = $meta['scope'] ?? [];
+        unset($meta['scope']);
+        foreach ($transform as $key => $value) {
+            unset($meta[$key]);
+        }
+        $route = new static();
+        $route->applyProperties($args);
+        $route->applyProperties($meta);
+        foreach ($classes as $class => $value) {
+            $class = $scope[$class] ?? $class;
+            $value = $value[CommentParser::$embeddedDataName] ?? [];
+            foreach ($value as $k => $v) {
+                $route->set[$class][$k] = $v;
+            }
+        }
+        foreach ($params as $param) {
+            $route->addParameter(Param::parse($param));
+        }
+        return $route;
+    }
 
     public function addParameter(Param $parameter)
     {

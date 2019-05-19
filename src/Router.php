@@ -11,7 +11,7 @@ use Luracast\Restler\Contracts\{
     ResponseMediaTypeInterface,
     UsesAuthenticationInterface
 };
-use Luracast\Restler\Data\{Param, Returns, Route};
+use Luracast\Restler\Data\Route;
 use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\MediaTypes\Json;
 use Luracast\Restler\Utils\{ClassName, CommentParser, Text, Type};
@@ -679,7 +679,7 @@ class Router
                 if (strpos($path, $key) === 0 && isset($value[$httpMethod])) {
                     //path found, convert rest of the path to parameters
                     $path = substr($path, strlen($key) + 1);
-                    $route = Route::__set_state($value[$httpMethod]);
+                    $route = Route::parse($value[$httpMethod]);
                     if (!empty($path)) {
                         $route->apply(explode('/', $path));
                     }
@@ -771,19 +771,7 @@ class Router
             },
             $path
         );
-        /** @var Route $route */
-        $route = Route::__set_state([
-            'url' => $call['url'],
-            'action' => [$call['className'], $call['methodName']],
-            'access' => $call['accessLevel'],
-            'summary' => $call['description'] ?? '',
-            'description' => $call['longDescription'] ?? '',
-
-            'return' => Returns::parse($call['metadata']['return'] ?? ['type' => 'array'])
-        ]);
-        foreach ($call['metadata']['param'] as $param) {
-            $route->addParameter(Param::parse($param));
-        }
+        $route = Route::parse($call);
         //check for wildcard routes
         if (substr($path, -1, 1) == '*') {
             $path = rtrim($path, '/*');
