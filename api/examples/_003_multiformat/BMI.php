@@ -2,7 +2,7 @@
 
 /**
  * Class BMI
- * @format Json,Xml
+ * @response-format Json,Xml
  */
 class BMI
 {
