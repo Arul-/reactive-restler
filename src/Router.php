@@ -98,6 +98,9 @@ class Router
     public static $readableMediaTypes = [Json::class];
     public static $writableMediaTypes = [Json::class];
 
+    public static $readableMediaTypeOverrides = [];
+    public static $writableMediaTypeOverrides = [];
+
     protected static $routes = [];
     protected static $models = [];
 
@@ -142,9 +145,12 @@ class Router
 
     public static function setOverridingRequestMediaTypes(string ...$types): void
     {
+        static::$readableMediaTypeOverrides = $types;
+        /*
         $ignore = [];
         static::_setMediaTypes(RequestMediaTypeInterface::class, $types,
             static::$requestFormatOverridesMap, $ignore);
+        */
     }
 
     /**
@@ -153,9 +159,12 @@ class Router
      */
     public static function setOverridingResponseMediaTypes(string ...$types): void
     {
+        static::$writableMediaTypeOverrides = $types;
+        /*
         $ignore = [];
         static::_setMediaTypes(ResponseMediaTypeInterface::class, $types,
             static::$responseFormatOverridesMap, $ignore);
+        */
     }
 
     /**

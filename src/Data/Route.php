@@ -4,6 +4,13 @@
 namespace Luracast\Restler\Data;
 
 
+use Exception;
+use Luracast\Restler\Contracts\RequestMediaTypeInterface;
+use Luracast\Restler\Contracts\ResponseMediaTypeInterface;
+use Luracast\Restler\Exceptions\HttpException;
+use Luracast\Restler\MediaTypes\Json;
+use Luracast\Restler\Router;
+use Luracast\Restler\Utils\ClassName;
 use Luracast\Restler\Utils\CommentParser;
 use Luracast\Restler\Utils\Validator;
 
@@ -33,8 +40,19 @@ class Route extends ValueObject
      */
     public $access = self::PUBLIC;
 
-    public $requestMediaTypes = ['application/json'];
-    public $responseMediaTypes = ['application/json'];
+    public $readableMediaTypes = [];
+    public $writableMediaTypes = [];
+
+    /**
+     * @var array
+     * @internal
+     */
+    public $requestFormatMap = [];
+    /**
+     * @var array
+     * @internal
+     */
+    public $responseFormatMap = [];
 
     /**
      * @var string
@@ -117,8 +135,67 @@ class Route extends ValueObject
         $route = new static();
         $route->applyProperties($args);
         $route->applyProperties($meta);
+        $overrides = [];
+        $resolver = function ($value) use ($scope, &$overrides) {
+            $value = ClassName::resolve(trim($value), $scope);
+            foreach ($overrides as $key => $override) {
+                if (false === array_search($value, $override)) {
+                    throw new HttpException(
+                        500,
+                        "Given media type is not present in overriding list. " .
+                        "Please call `Router::setOverriding{$key}MediaTypes(\"$value\");` first."
+                    );
+                }
+            }
+            return $value;
+        };
+        if ($formats = $meta['format'] ?? false) {
+            unset($meta['format']);
+            $overrides = [
+                'Request' => Router::$readableMediaTypeOverrides,
+                'Response' => Router::$writableMediaTypeOverrides,
+            ];
+            $formats = explode(',', $formats);
+            $formats = array_map($resolver, $formats);
+            $route->setRequestMediaTypes(...$formats);
+            $route->setResponseMediaTypes(...$formats);
+        }
+        if ($formats = $meta['response-format'] ?? false) {
+            unset($meta['response-format']);
+            $overrides = [
+                'Response' => Router::$writableMediaTypeOverrides,
+            ];
+            $formats = explode(',', $formats);
+            $formats = array_map($resolver, $formats);
+            $route->setResponseMediaTypes(...$formats);
+        }
+        if ($formats = $meta['request-format'] ?? false) {
+            unset($meta['request-format']);
+            $overrides = [
+                'Request' => Router::$readableMediaTypeOverrides,
+            ];
+            $formats = explode(',', $formats);
+            $formats = array_map($resolver, $formats);
+            $route->setRequestMediaTypes(...$formats);
+        }
+        if (empty($route->writableMediaTypes)) {
+            $route->writableMediaTypes = Router::$writableMediaTypes;
+        }
+        if (empty($route->requestFormatMap)) {
+            $route->requestFormatMap = Router::$requestFormatMap;
+        } elseif (empty($route->requestFormatMap['default'])) {
+            $route->requestFormatMap['default'] = array_values($route->requestFormatMap)[0];
+        }
+        if (empty($route->readableMediaTypes)) {
+            $route->readableMediaTypes = Router::$readableMediaTypes;
+        }
+        if (empty($route->responseFormatMap)) {
+            $route->responseFormatMap = Router::$responseFormatMap;
+        } elseif (empty($route->responseFormatMap['default'])) {
+            $route->responseFormatMap['default'] = array_values($route->responseFormatMap)[0];
+        }
         foreach ($classes as $class => $value) {
-            $class = $scope[$class] ?? $class;
+            $class = ClassName::resolve($class, $scope);
             $value = $value[CommentParser::$embeddedDataName] ?? [];
             foreach ($value as $k => $v) {
                 $route->set[$class][$k] = $v;
@@ -128,6 +205,18 @@ class Route extends ValueObject
             $route->addParameter(Param::parse($param));
         }
         return $route;
+    }
+
+    public function setRequestMediaTypes(string ...$types): void
+    {
+        Router::_setMediaTypes(RequestMediaTypeInterface::class, $types,
+            $this->requestFormatMap, $this->readableMediaTypes);
+    }
+
+    public function setResponseMediaTypes(string ...$types): void
+    {
+        Router::_setMediaTypes(ResponseMediaTypeInterface::class, $types,
+            $this->responseFormatMap, $this->writableMediaTypes);
     }
 
     public function addParameter(Param $parameter)
