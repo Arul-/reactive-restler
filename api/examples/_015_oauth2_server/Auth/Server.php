@@ -64,7 +64,7 @@ class Server implements AuthenticationInterface
      * User responds by accepting or denying
      *
      * @view oauth2/server/authorize.twig
-     * @format Html
+     * @response-format Html
      */
     public function authorize()
     {
@@ -89,7 +89,7 @@ class Server implements AuthenticationInterface
      *
      * @return ResponseInterface
      *
-     * @format Json,Upload
+     * @request-format Json,Upload
      */
     public function postAuthorize($authorize = false)
     {
@@ -107,7 +107,7 @@ class Server implements AuthenticationInterface
      *
      * It can then use this access token to make calls to protected api
      *
-     * @format Json,Upload
+     * @request-format Json,Upload
      */
     public function postGrant()
     {

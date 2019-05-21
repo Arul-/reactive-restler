@@ -6,7 +6,7 @@ use Luracast\Restler\StaticProperties;
 
 /**
  * Class Tasks
- * @format Html,Json
+ * @response-format Html,Json
  */
 class Tasks
 {

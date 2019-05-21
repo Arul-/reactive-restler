@@ -139,7 +139,7 @@ class Route extends ValueObject
                     throw new HttpException(
                         500,
                         "Given media type is not present in overriding list. " .
-                        "Please call `Router::setOverriding{$key}MediaTypes(\"$value\");` first."
+                        "Please call `Router::setOverriding{$key}MediaTypes(\"$value\");` before other router methods."
                     );
                 }
             }
@@ -258,13 +258,6 @@ class Route extends ValueObject
         }
     }
 
-    public function body()
-    {
-        return array_filter($this->parameters, function ($v) {
-            return $v->from === 'body';
-        });
-    }
-
     public function call(int $access, callable $maker)
     {
         switch ($access) {
@@ -285,6 +278,13 @@ class Route extends ValueObject
                 }
                 return call_user_func_array($this->action, $this->arguments);
         }
+    }
+
+    public function body()
+    {
+        return array_filter($this->parameters, function ($v) {
+            return $v->from === 'body';
+        });
     }
 
 }

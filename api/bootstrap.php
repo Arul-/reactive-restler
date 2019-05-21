@@ -68,6 +68,8 @@ class ResetForTests
 }
 
 try {
+    Router::setOverridingResponseMediaTypes(Json::class, Xml::class, Html::class);
+    Router::setOverridingRequestMediaTypes(Json::class, Upload::class);
     Router::mapApiClasses([
         //clean up db for tests
         '__cleanup_db' => ResetForTests::class,
@@ -98,8 +100,6 @@ try {
         //Explorer
         'explorer' => Explorer::class,
     ]);
-    Router::setOverridingResponseMediaTypes(Json::class, Xml::class, Html::class);
-    Router::setOverridingRequestMediaTypes(Json::class, Upload::class);
     SimpleAuth::setIncludedPaths('examples/_005_protected_api');
     Router::addAuthenticator(SimpleAuth::class, 'examples/_005_protected_api/simpleauth');
     KeyAuth::setIncludedPaths('examples/_009_rate_limiting');

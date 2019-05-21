@@ -73,7 +73,7 @@ class Client
      *
      * He will then be taken to the oAuth server to grant or deny permission
      *
-     * @format Html
+     * @response-format Html
      * @view   oauth2/client/index.twig
      */
     public function index()
@@ -106,7 +106,8 @@ class Client
      *
      * @return array
      *
-     * @format Html
+     * @response-format Html
+     * @throws HttpException
      */
     public function authorized(
         $code = null,

@@ -7,7 +7,7 @@ use Psr\Http\Message\ServerRequestInterface;
 
 /**
  * Class Users
- * @format Html,Json
+ * @response-format Html,Json
  */
 class Users
 {
