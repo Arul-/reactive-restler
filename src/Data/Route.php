@@ -262,7 +262,7 @@ class Route extends ValueObject
     {
         switch ($access) {
             case self::PROTECTED_METHOD:
-                $object = $maker[$this->action[0]];
+                $object = $maker($this->action[0]);
                 $reflectionMethod = new ReflectionMethod(
                     $object,
                     $this->action[1]
