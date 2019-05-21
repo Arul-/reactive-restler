@@ -104,13 +104,13 @@ class Validator implements ValidationInterface
                 }
             }
 
-            if (method_exists($class = get_called_class(), $param->type) && $param->type != 'validate') {
+            if ('string' == $param->type && method_exists($class = get_called_class(), $param->contentType) && $param->contentType != 'validate') {
                 if (!$param->required && empty($input)) {
                     //optional parameter with a empty value assume null
                     return null;
                 }
                 try {
-                    return call_user_func("$class::$param->type", $input, $param);
+                    return call_user_func("$class::$param->contentType", $input, $param);
                 } catch (Invalid $e) {
                     throw new HttpException(400, $error . '. ' . $e->getMessage());
                 }
@@ -155,8 +155,6 @@ class Validator implements ValidationInterface
                     return $r;
 
                 case 'string' :
-                case 'password' : //password fields with string
-                case 'search' : //search field with string
                     if (is_bool($input)) {
                         $input = $input ? 'true' : 'false';
                     }
