@@ -308,6 +308,7 @@ abstract class Core
      */
     protected function negotiateResponseMediaType(string $path, string $acceptHeader = ''): ResponseMediaTypeInterface
     {
+        $map = $this->_route->responseFormatMap ?? $this->router->responseFormatMap;
         // check if client has specified an extension
         /** @var $format ResponseMediaTypeInterface */
         $format = null;
@@ -316,8 +317,8 @@ abstract class Core
             $extension = array_pop($extensions);
             $extension = explode('/', $extension);
             $extension = array_shift($extension);
-            if ($extension && isset($this->router->responseFormatMap[$extension])) {
-                $format = $this->make($this->router->responseFormatMap[$extension]);
+            if ($extension && isset($map[$extension])) {
+                $format = $this->make($map[$extension]);
                 $format->extension($extension);
                 return $format;
             }
@@ -326,8 +327,8 @@ abstract class Core
         if (!empty($acceptHeader)) {
             $acceptList = Header::sortByPriority($acceptHeader);
             foreach ($acceptList as $accept => $quality) {
-                if (isset($this->_route->responseFormatMap[$accept])) {
-                    $format = $this->make($this->_route->responseFormatMap[$accept]);
+                if (isset($map[$accept])) {
+                    $format = $this->make($map[$accept]);
                     $format->mediaType($accept);
                     // Tell cache content is based on Accept header
                     $this->_responseHeaders['Vary'] = 'Accept';
@@ -339,7 +340,7 @@ abstract class Core
                         . $this->defaults->apiVendor . '-v';
                     if (is_string($this->defaults->apiVendor) && 0 === stripos($mime, $vendor)) {
                         $extension = substr($accept, $index + 1);
-                        if (isset($this->_route->responseFormatMap[$extension])) {
+                        if (isset($map[$extension])) {
                             //check the MIME and extract version
                             $version = intval(substr($mime, strlen($vendor)));
 
@@ -347,7 +348,7 @@ abstract class Core
                                 $version <= $this->router->maximumVersion) {
 
                                 $this->requestedApiVersion = $version;
-                                $format = $this->make($this->_route->responseFormatMap[$extension]);
+                                $format = $this->make($map[$extension]);
                                 $format->mediaType("$vendor$version+$extension");
                                 if (is_null($this->defaults->useVendorMIMEVersioning)) {
                                     $this->defaults->useVendorMIMEVersioning = true;
@@ -372,7 +373,7 @@ abstract class Core
             } elseif (false !== strpos($acceptHeader, 'text/*')) {
                 $format = $this->make(Xml::class);
             } elseif (false !== strpos($acceptHeader, '*/*')) {
-                $format = $this->make($this->_route->responseFormatMap['default']);
+                $format = $this->make($map['default']);
             }
         }
         if (empty($format)) {
@@ -380,7 +381,7 @@ abstract class Core
             // server cannot send a response which is acceptable according to
             // the combined Accept field value, then the server SHOULD send
             // a 406 (not acceptable) response.
-            $format = $this->make($this->_route->responseFormatMap['default']);
+            $format = $this->make($map['default']);
             $this->responseFormat = $format;
             throw new HttpException(
                 406,
