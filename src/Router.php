@@ -147,11 +147,9 @@ class Router
     public static function setOverridingRequestMediaTypes(string ...$types): void
     {
         static::$readableMediaTypeOverrides = $types;
-        /*
         $ignore = [];
         static::_setMediaTypes(RequestMediaTypeInterface::class, $types,
             static::$requestFormatOverridesMap, $ignore);
-        */
     }
 
     /**
@@ -161,11 +159,9 @@ class Router
     public static function setOverridingResponseMediaTypes(string ...$types): void
     {
         static::$writableMediaTypeOverrides = $types;
-        /*
         $ignore = [];
         static::_setMediaTypes(ResponseMediaTypeInterface::class, $types,
             static::$responseFormatOverridesMap, $ignore);
-        */
     }
 
     /**
@@ -717,13 +713,13 @@ class Router
             if (preg_match_all(":^$regex$:i", $path, $matches, PREG_SET_ORDER)) {
                 $matches = $matches[0];
                 $found = true;
-                $params = array_combine(array_column($route->parameters,'index'),$route->parameters);
+                $params = array_combine(array_column($route->parameters, 'index'), $route->parameters);
                 foreach ($matches as $k => $v) {
                     if (is_numeric($k)) {
                         unset($matches[$k]);
                         continue;
                     }
-                        //TODO: optimize this
+                    //TODO: optimize this
                     $index = intval(substr($k, 1));
 
                     /** @var Param $param */
