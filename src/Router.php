@@ -11,6 +11,7 @@ use Luracast\Restler\Contracts\{
     ResponseMediaTypeInterface,
     UsesAuthenticationInterface
 };
+use Luracast\Restler\Data\Param;
 use Luracast\Restler\Data\Route;
 use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\MediaTypes\Json;
@@ -688,7 +689,8 @@ class Router
                 if (strpos($path, $key) === 0 && isset($value[$httpMethod])) {
                     //path found, convert rest of the path to parameters
                     $path = substr($path, strlen($key) + 1);
-                    $route = Route::parse($value[$httpMethod]);
+                    /** @var Route $route */
+                    $route = $value[$httpMethod];
                     if (!empty($path)) {
                         $route->apply(explode('/', $path));
                     }
@@ -708,31 +710,37 @@ class Router
             if (!isset($value[$httpMethod])) {
                 continue;
             }
+            /** @var Route $route */
+            $route = $value[$httpMethod];
             $regex = str_replace(['{', '}'],
                 ['(?P<', '>[^/]+)'], $key);
             if (preg_match_all(":^$regex$:i", $path, $matches, PREG_SET_ORDER)) {
                 $matches = $matches[0];
                 $found = true;
+                $params = array_combine(array_column($route->parameters,'index'),$route->parameters);
                 foreach ($matches as $k => $v) {
                     if (is_numeric($k)) {
                         unset($matches[$k]);
                         continue;
                     }
+                        //TODO: optimize this
                     $index = intval(substr($k, 1));
-                    $details = $value[$httpMethod]['metadata']['param'][$index];
+
+                    /** @var Param $param */
+                    $param = $params[$index];
                     if ($k{0} == 's' || strpos($k, static::pathVarTypeOf($v)) === 0) {
                         //remove the newlines
-                        $data[$details['name']] = trim($v, PHP_EOL);
+                        $data[$param->name] = trim($v, PHP_EOL);
                     } else {
                         $status = 400;
                         $message = 'invalid value specified for `'
-                            . $details['name'] . '`';
+                            . $param->name . '`';
                         $found = false;
                         break;
                     }
                 }
                 if ($found) {
-                    return static::populate($value[$httpMethod], $data);
+                    return static::populate($route, $data);
                 }
             }
         }
