@@ -907,7 +907,7 @@ class Router
                     $bodyParams = $route->body();
                     if (1 == count($bodyParams)) {
                         /** @var \Luracast\Restler\Data\Param $param */
-                        $param = $bodyParams[0];
+                        $param = array_values($bodyParams)[0];
                         if (!array_key_exists($param->name, $data) &&
                             array_key_exists(Defaults::$fullRequestDataName, $data) &&
                             !is_null($d = $data[Defaults::$fullRequestDataName])) {
