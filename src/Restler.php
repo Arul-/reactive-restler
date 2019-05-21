@@ -62,7 +62,7 @@ class Restler extends Core
     protected function compose($response = null)
     {
         $this->composeHeaders(
-            $this->_apiMethodInfo,
+            $this->_route,
             $this->request->getHeaderLine('origin')
         );
         /** @var ComposerInterface $compose */
@@ -188,7 +188,7 @@ class Restler extends Core
             $this->authenticate($this->request);
             $this->filter($this->request, true);
             $this->validate();
-            $data = $this->call($this->_apiMethodInfo);
+            $data = $this->call($this->_route);
             if ($data instanceof ResponseInterface) {
                 $this->composeHeaders(null, $this->request->getHeaderLine('origin'));
                 $headers = $data->getHeaders() + $this->_responseHeaders;

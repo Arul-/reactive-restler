@@ -2,7 +2,8 @@
 
 use ArrayAccess;
 use Exception;
-use Luracast\Restler\Contracts\{AuthenticationInterface,
+use Luracast\Restler\Contracts\{
+    AuthenticationInterface,
     ComposerInterface,
     ContainerInterface,
     FilterInterface,
@@ -10,9 +11,9 @@ use Luracast\Restler\Contracts\{AuthenticationInterface,
     ResponseMediaTypeInterface,
     SelectivePathsInterface,
     UsesAuthenticationInterface,
-    ValidationInterface};
-use Luracast\Restler\Data\ApiMethodInfo;
-use Luracast\Restler\Data\Param;
+    ValidationInterface
+};
+use Luracast\Restler\Data\{Param, Route};
 use Luracast\Restler\Exceptions\{HttpException, InvalidAuthCredentials};
 use Luracast\Restler\MediaTypes\{Json, UrlEncoded, Xml};
 use Luracast\Restler\Utils\{ClassName, CommentParser, Header, Text, Validator};
@@ -30,7 +31,7 @@ use TypeError;
  * @property bool authVerified
  * @property int requestedApiVersion
  * @property string requestMethod
- * @property ApiMethodInfo apiMethodInfo
+ * @property Route route
  * @property HttpException exception
  * @property array responseHeaders
  * @property int responseCode
@@ -52,9 +53,9 @@ abstract class Core
      */
     protected $requestFormatDiffered = false;
     /**
-     * @var ApiMethodInfo
+     * @var Route
      */
-    protected $_apiMethodInfo;
+    protected $_route;
     /**
      * @var ResponseMediaTypeInterface
      */
@@ -132,10 +133,9 @@ abstract class Core
     {
         $properties = [];
         $fullName = $className;
-        if ($m = $this->_apiMethodInfo->metadata ?? false) {
+        if ($this->_route && property_exists($this->_route, 'set')) {
             $shortName = ClassName::short($fullName);
-            $properties = $m['class'][$fullName][CommentParser::$embeddedDataName] ??
-                $m['class'][$shortName][CommentParser::$embeddedDataName] ?? [];
+            $properties = $this->_route->set[$fullName] ?? $this->_route->set[$shortName] ?? [];
             $name = lcfirst($shortName);
             if (!isset($this->config[$name])) {
                 $this->config[$name] = new StaticProperties($fullName);;
@@ -278,23 +278,21 @@ abstract class Core
      */
     protected function route(): void
     {
-        $this->_apiMethodInfo = $o = Router::find(
+        $this->_route = $o = Router::find(
             $this->_path,
             $this->_requestMethod,
             $this->requestedApiVersion,
             $this->body + $this->query
         );
-        $this->container->instance(ApiMethodInfo::class, $o);
+        $this->container->instance(Route::class, $o);
         //set defaults based on api method comments
-        if (isset($o->metadata)) {
-            foreach ($this->defaults->fromComments as $key => $property) {
-                if (array_key_exists($key, $o->metadata)) {
-                    $value = $o->metadata[$key];
-                    $this->changeAppProperty($property, $value);
-                }
+        foreach ($this->defaults->fromComments as $key => $property) {
+            if (property_exists($o, $key)) {
+                $value = $o->{$key};
+                $this->changeAppProperty($property, $value);
             }
         }
-        if (!isset($o->className)) {
+        if (!isset($o->action)) {
             throw new HttpException(404);
         }
     }
@@ -310,55 +308,6 @@ abstract class Core
      */
     protected function negotiateResponseMediaType(string $path, string $acceptHeader = ''): ResponseMediaTypeInterface
     {
-        $formats = $readableFormats = $writableFormats = [];
-        //check if the api method insists on response format using @format comment
-        if (($metadata = $this->_apiMethodInfo->metadata ?? false) && ($formats = $metadata['format'] ?? false)) {
-            $formats = explode(',', (string)$formats);
-            foreach ($formats as $i => $f) {
-                if ($f = ClassName::resolve(trim($f), $metadata['scope'])) {
-                    if (
-                        !in_array($f, $this->router->responseFormatOverridesMap) &&
-                        !in_array($f, $this->router->requestFormatOverridesMap)
-                    ) {
-                        throw new HttpException(
-                            500,
-                            "Given @format is not present in overriding formats. " .
-                            "Please call `Router::setOverridingResponseMediaTypes('$f');` or " .
-                            "`Router::setOverridingRequestMediaTypes('$f');` first."
-                        );
-                    }
-                }
-                $formats[$i] = $f;
-                if (is_a($f, ResponseMediaTypeInterface::class, true)) {
-                    $writableFormats[] = $f;
-                }
-                if (is_a($f, RequestMediaTypeInterface::class, true)) {
-                    $readableFormats[] = $f;
-                }
-            }
-        }
-        /** @noinspection PhpInternalEntityUsedInspection */
-        Router::_setMediaTypes(RequestMediaTypeInterface::class, $readableFormats,
-            $this->router->requestFormatMap,
-            $this->router->readableMediaTypes);
-
-        if (
-            $this->requestFormatDiffered &&
-            !isset($this->router->requestFormatMap[$this->requestFormat->mediaType()])
-        ) {
-            throw new HttpException(
-                403,
-                'Content type `' . $this->requestFormat->mediaType() . '` is not supported.'
-            );
-        }
-        if (!empty($writableFormats)) {
-            /** @noinspection PhpInternalEntityUsedInspection */
-            Router::_setMediaTypes(ResponseMediaTypeInterface::class, $writableFormats,
-                $this->router->responseFormatMap,
-                $this->router->writableMediaTypes);
-        }
-
-
         // check if client has specified an extension
         /** @var $format ResponseMediaTypeInterface */
         $format = null;
@@ -377,8 +326,8 @@ abstract class Core
         if (!empty($acceptHeader)) {
             $acceptList = Header::sortByPriority($acceptHeader);
             foreach ($acceptList as $accept => $quality) {
-                if (isset($this->router->responseFormatMap[$accept])) {
-                    $format = $this->make($this->router->responseFormatMap[$accept]);
+                if (isset($this->_route->responseFormatMap[$accept])) {
+                    $format = $this->make($this->_route->responseFormatMap[$accept]);
                     $format->mediaType($accept);
                     // Tell cache content is based on Accept header
                     $this->_responseHeaders['Vary'] = 'Accept';
@@ -390,7 +339,7 @@ abstract class Core
                         . $this->defaults->apiVendor . '-v';
                     if (is_string($this->defaults->apiVendor) && 0 === stripos($mime, $vendor)) {
                         $extension = substr($accept, $index + 1);
-                        if (isset($this->router->responseFormatMap[$extension])) {
+                        if (isset($this->_route->responseFormatMap[$extension])) {
                             //check the MIME and extract version
                             $version = intval(substr($mime, strlen($vendor)));
 
@@ -398,7 +347,7 @@ abstract class Core
                                 $version <= $this->router->maximumVersion) {
 
                                 $this->requestedApiVersion = $version;
-                                $format = $this->make($this->router->responseFormatMap[$extension]);
+                                $format = $this->make($this->_route->responseFormatMap[$extension]);
                                 $format->mediaType("$vendor$version+$extension");
                                 if (is_null($this->defaults->useVendorMIMEVersioning)) {
                                     $this->defaults->useVendorMIMEVersioning = true;
@@ -423,7 +372,7 @@ abstract class Core
             } elseif (false !== strpos($acceptHeader, 'text/*')) {
                 $format = $this->make(Xml::class);
             } elseif (false !== strpos($acceptHeader, '*/*')) {
-                $format = $this->make($this->router->responseFormatMap['default']);
+                $format = $this->make($this->_route->responseFormatMap['default']);
             }
         }
         if (empty($format)) {
@@ -431,7 +380,7 @@ abstract class Core
             // server cannot send a response which is acceptable according to
             // the combined Accept field value, then the server SHOULD send
             // a 406 (not acceptable) response.
-            $format = $this->make($this->router->responseFormatMap['default']);
+            $format = $this->make($this->_route->responseFormatMap['default']);
             $this->responseFormat = $format;
             throw new HttpException(
                 406,
@@ -556,8 +505,8 @@ abstract class Core
      */
     protected function authenticate(ServerRequestInterface $request)
     {
-        $o = &$this->_apiMethodInfo;
-        $accessLevel = max($this->defaults->apiAccessLevel, $o->accessLevel);
+        $o = &$this->_route;
+        $accessLevel = max($this->defaults->apiAccessLevel, $o->access);
         if ($accessLevel) {
             if (!count($this->router->authClasses) && $accessLevel > 1) {
                 throw new HttpException(
@@ -621,74 +570,30 @@ abstract class Core
         if (!$this->defaults->autoValidationEnabled) {
             return;
         }
-
-        $o = &$this->_apiMethodInfo;
-        foreach ($o->metadata['param'] as $index => $param) {
-            $info = &$param [CommentParser::$embeddedDataName];
-            if (!isset ($info['validate'])
-                || $info['validate'] != false
-            ) {
-                if (isset($info['method'])) {
-                    $info ['apiClassInstance'] = $this->make($o->className);
-                }
-                //convert to instance of Param
-                $info = new Param($param);
-                //initialize validator
-                /** @var ValidationInterface $validator */
-                $validator = $this->make(ValidationInterface::class);
-                $valid = $o->parameters[$index];
-                $o->parameters[$index] = null;
-                if (empty(Validator::$exceptions)) {
-                    $o->metadata['param'][$index]['autofocus'] = true;
-                }
-                $valid = $validator::validate(
-                    $valid, $info
-                );
-                $o->parameters[$index] = $valid;
-                unset($o->metadata['param'][$index]['autofocus']);
-            }
-        }
+        $validator = $this->make(ValidationInterface::class);
+        $this->_route->validate($validator, [$this, 'make']);
     }
 
     /**
-     * @param ApiMethodInfo $info
+     * @param ApiMethodInfo $route
      * @return mixed
      * @throws ReflectionException
      */
-    public function call(ApiMethodInfo $info)
+    public function call(Route $route)
     {
-        $accessLevel = max($this->defaults->apiAccessLevel, $info->accessLevel);
-        $object = $this->make($info->className);
-        switch ($accessLevel) {
-            case 3 : //protected method
-                $reflectionMethod = new ReflectionMethod(
-                    $object,
-                    $info->methodName
-                );
-                $reflectionMethod->setAccessible(true);
-                $result = $reflectionMethod->invokeArgs(
-                    $object,
-                    $info->parameters
-                );
-                break;
-            default :
-                $result = call_user_func_array([
-                    $object,
-                    $info->methodName
-                ], $info->parameters);
-        }
-        return $result;
+        $access = max($this->defaults->apiAccessLevel, $route->access);
+        $route->validate($access, [$this, 'make']);
     }
 
     abstract protected function compose($response = null);
 
 
     /**
-     * @param ApiMethodInfo|null $info
+     * @param Route|null $route
      * @param string $origin
      * @param HttpException|null $e
      */
-    protected function composeHeaders(?ApiMethodInfo $info, string $origin = '', HttpException $e = null): void
+    protected function composeHeaders(?Route $route, string $origin = '', HttpException $e = null): void
     {
         //only GET method should be cached if allowed by API developer
         $expires = $this->_requestMethod == 'GET' ? $this->defaults->headerExpires : 0;
@@ -698,7 +603,7 @@ abstract class Core
         }
         $cacheControl = $headerCacheControl[0];
         if ($expires > 0) {
-            $cacheControl = !isset($this->_apiMethodInfo->accessLevel) || $this->_apiMethodInfo->accessLevel
+            $cacheControl = !isset($this->_route->accessLevel) || $this->_route->accessLevel
                 ? 'private, ' : 'public, ';
             $cacheControl .= end($headerCacheControl);
             $cacheControl = str_replace('{expires}', $expires, $cacheControl);
@@ -725,8 +630,8 @@ abstract class Core
         }
         $this->_responseHeaders['Content-Language'] = $this->defaults->language;
 
-        if (isset($info->metadata['header'])) {
-            foreach ($info->metadata['header'] as $header) {
+        if (isset($route->header)) {
+            foreach ($route->header as $header) {
                 $parts = explode(': ', $header, 2);
                 $this->_responseHeaders[$parts[0]] = $parts[1];
             }
@@ -736,8 +641,8 @@ abstract class Core
         if (!$this->defaults->suppressResponseCode) {
             if ($e) {
                 $code = $e->getCode();
-            } elseif (!$this->_responseCode && isset($info->metadata['status'])) {
-                $code = $info->metadata['status'];
+            } elseif (!$this->_responseCode && isset($route->status)) {
+                $code = $route->status;
             }
         }
         $this->_responseCode = $code;
@@ -762,7 +667,7 @@ abstract class Core
         }
         $this->_responseCode = $e->getCode();
         $this->composeHeaders(
-            $this->_apiMethodInfo,
+            $this->_route,
             $origin,
             $e
         );
@@ -830,7 +735,7 @@ abstract class Core
         }
         if ($detail = Defaults::$propertyValidations[$property] ?? false) {
             /** @noinspection PhpParamsInspection */
-            $value = Validator::validate($value, new Param($detail));
+            $value = Validator::validate($value, Param::parse($detail));
         }
         $this->defaults->{$property} = $value;
         return true;
