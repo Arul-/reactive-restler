@@ -21,9 +21,9 @@ class Validator implements ValidationInterface
     public static $holdException = false;
     public static $exceptions = [];
 
-    public static function validate($input, Param $info, $full = null)
+    public static function validate($input, Param $param, $full = null)
     {
-        $name = "`$info->name`";
+        $name = "`$param->name`";
         if (
             isset(static::$preFilters['*']) &&
             is_scalar($input) &&
@@ -32,40 +32,40 @@ class Validator implements ValidationInterface
             $input = $func($input);
         }
         if (
-            isset(static::$preFilters[$info->type]) &&
-            (is_scalar($input) || !empty($info->children)) &&
-            is_callable($func = static::$preFilters[$info->type])
+            isset(static::$preFilters[$param->type]) &&
+            (is_scalar($input) || !empty($param->children)) &&
+            is_callable($func = static::$preFilters[$param->type])
         ) {
             $input = $func($input);
         }
         try {
             if (is_null($input)) {
-                if ($info->required) {
+                if ($param->required) {
                     throw new HttpException(400,
                         "$name is required.");
                 }
                 return null;
             }
-            $error = isset ($info->message)
-                ? $info->message
+            $error = isset ($param->message)
+                ? $param->message
                 : "Invalid value specified for $name";
 
             //if a validation method is specified
-            if (!empty($info->method)) {
-                $method = $info->method;
-                $info->method = '';
-                $r = self::validate($input, $info);
-                return $info->apiClassInstance->{$method} ($r);
+            if (!empty($param->method)) {
+                $method = $param->method;
+                $param->method = '';
+                $r = self::validate($input, $param);
+                return $param->apiClassInstance->{$method} ($r);
             }
 
             // when type is an array check if it passes for any type
-            if (is_array($info->type)) {
+            if (is_array($param->type)) {
                 //trace("types are ".print_r($info->type, true));
-                $types = $info->type;
+                $types = $param->type;
                 foreach ($types as $type) {
-                    $info->type = $type;
+                    $param->type = $type;
                     try {
-                        $r = self::validate($input, $info);
+                        $r = self::validate($input, $param);
                         if ($r !== false) {
                             return $r;
                         }
@@ -77,78 +77,78 @@ class Validator implements ValidationInterface
             }
 
             //patterns are supported only for non numeric types
-            if (isset ($info->pattern)
-                && $info->type != 'int'
-                && $info->type != 'float'
-                && $info->type != 'number'
+            if (isset ($param->pattern)
+                && $param->type != 'int'
+                && $param->type != 'float'
+                && $param->type != 'number'
             ) {
-                if (!preg_match($info->pattern, $input)) {
+                if (!preg_match($param->pattern, $input)) {
                     throw new HttpException(400, $error);
                 }
             }
 
-            if (isset ($info->choice)) {
-                if (!$info->required && empty($input)) {
+            if (isset ($param->choice)) {
+                if (!$param->required && empty($input)) {
                     //since its optional, and empty let it pass.
                     $input = null;
                 } elseif (is_array($input)) {
                     foreach ($input as $i) {
-                        if (!in_array($i, $info->choice)) {
-                            $error .= ". Expected one of (" . implode(',', $info->choice) . ").";
+                        if (!in_array($i, $param->choice)) {
+                            $error .= ". Expected one of (" . implode(',', $param->choice) . ").";
                             throw new HttpException(400, $error);
                         }
                     }
-                } elseif (!in_array($input, $info->choice)) {
-                    $error .= ". Expected one of (" . implode(',', $info->choice) . ").";
+                } elseif (!in_array($input, $param->choice)) {
+                    $error .= ". Expected one of (" . implode(',', $param->choice) . ").";
                     throw new HttpException(400, $error);
                 }
             }
 
-            if (method_exists($class = get_called_class(), $info->type) && $info->type != 'validate') {
-                if (!$info->required && empty($input)) {
+            if (method_exists($class = get_called_class(), $param->type) && $param->type != 'validate') {
+                if (!$param->required && empty($input)) {
                     //optional parameter with a empty value assume null
                     return null;
                 }
                 try {
-                    return call_user_func("$class::$info->type", $input, $info);
+                    return call_user_func("$class::$param->type", $input, $param);
                 } catch (Invalid $e) {
                     throw new HttpException(400, $error . '. ' . $e->getMessage());
                 }
             }
 
-            switch ($info->type) {
+            switch ($param->type) {
                 case 'int' :
                 case 'float' :
                 case 'number' :
                     if (!is_numeric($input)) {
                         $error .= '. Expecting '
-                            . ($info->type == 'int' ? 'integer' : 'numeric')
+                            . ($param->type == 'int' ? 'integer' : 'numeric')
                             . ' value';
                         break;
                     }
-                    if ($info->type == 'int' && (int)$input != $input) {
-                        if ($info->fix) {
+                    if ($param->type == 'int' && (int)$input != $input) {
+                        if ($param->fix) {
                             $r = (int)$input;
                         } else {
                             $error .= '. Expecting integer value';
                             break;
                         }
                     } else {
-                        $r = $info->numericValue($input);
+                        $r = $param->numericValue($input);
                     }
-                    if (isset ($info->min) && $r < $info->min) {
-                        if ($info->fix) {
-                            $r = $info->min;
+                    if (isset ($param->min) && $r < $param->min) {
+                        if ($param->fix) {
+                            $r = $param->min;
                         } else {
-                            $error .= ". Minimum required value is $info->min.";
+                            $error .= ". Minimum required value is $param->min.";
                             break;
                         }
                     }
-                    if (isset ($info->max) && $r > $info->max) {
-                        if ($info->fix) {
-                            $r = $info->max;
+                    if (isset ($param->max) && $r > $param->max) {
+                        if ($param->fix) {
+                            $r = $param->max;
                         } else {
-                            $error .= ". Maximum allowed value is $info->max.";
+                            $error .= ". Maximum allowed value is $param->max.";
                             break;
                         }
                     }
@@ -164,26 +164,26 @@ class Validator implements ValidationInterface
                         $error .= '. Expecting alpha numeric value';
                         break;
                     }
-                    if ($info->required && $input === '') {
+                    if ($param->required && $input === '') {
                         $error = "$name is required.";
                         break;
                     }
                     $r = strlen($input);
-                    if (isset ($info->min) && $r < $info->min) {
-                        if ($info->fix) {
-                            $input = str_pad($input, $info->min, $input);
+                    if (isset ($param->min) && $r < $param->min) {
+                        if ($param->fix) {
+                            $input = str_pad($input, $param->min, $input);
                         } else {
-                            $char = $info->min > 1 ? 'characters' : 'character';
-                            $error .= ". Minimum $info->min $char required.";
+                            $char = $param->min > 1 ? 'characters' : 'character';
+                            $error .= ". Minimum $param->min $char required.";
                             break;
                         }
                     }
-                    if (isset ($info->max) && $r > $info->max) {
-                        if ($info->fix) {
-                            $input = substr($input, 0, $info->max);
+                    if (isset ($param->max) && $r > $param->max) {
+                        if ($param->fix) {
+                            $input = substr($input, 0, $param->max);
                         } else {
-                            $char = $info->max > 1 ? 'characters' : 'character';
-                            $error .= ". Maximum $info->max $char allowed.";
+                            $char = $param->max > 1 ? 'characters' : 'character';
+                            $error .= ". Maximum $param->max $char allowed.";
                             break;
                         }
                     }
@@ -209,22 +209,22 @@ class Validator implements ValidationInterface
                                 return false;
                         }
                     }
-                    if ($info->fix) {
+                    if ($param->fix) {
                         return $input ? true : false;
                     }
                     $error .= '. Expecting boolean value';
                     break;
                 case 'array':
-                    if ($info->fix && is_string($input)) {
+                    if ($param->fix && is_string($input)) {
                         $input = explode(CommentParser::$arrayDelimiter, $input);
                     }
                     if (is_array($input)) {
-                        $contentType = $info->contentType;
-                        if ($info->fix) {
+                        $contentType = $param->contentType;
+                        if ($param->fix) {
                             if ($contentType == 'indexed') {
-                                $input = $info->filterArray($input, true);
+                                $input = $param->filterArray($input, true);
                             } elseif ($contentType == 'associative') {
-                                $input = $info->filterArray($input, true);
+                                $input = $param->filterArray($input, true);
                             }
                         } elseif (
                             $contentType == 'indexed' &&
@@ -241,17 +241,17 @@ class Validator implements ValidationInterface
                             break;
                         }
                         $r = count($input);
-                        if (isset ($info->min) && $r < $info->min) {
-                            $item = $info->max > 1 ? 'items' : 'item';
-                            $error .= ". Minimum $info->min $item required.";
+                        if (isset ($param->min) && $r < $param->min) {
+                            $item = $param->max > 1 ? 'items' : 'item';
+                            $error .= ". Minimum $param->min $item required.";
                             break;
                         }
-                        if (isset ($info->max) && $r > $info->max) {
-                            if ($info->fix) {
-                                $input = array_slice($input, 0, $info->max);
+                        if (isset ($param->max) && $r > $param->max) {
+                            if ($param->fix) {
+                                $input = array_slice($input, 0, $param->max);
                             } else {
-                                $item = $info->max > 1 ? 'items' : 'item';
-                                $error .= ". Maximum $info->max $item allowed.";
+                                $item = $param->max > 1 ? 'items' : 'item';
+                                $error .= ". Maximum $param->max $item allowed.";
                                 break;
                             }
                         }
@@ -260,14 +260,14 @@ class Validator implements ValidationInterface
                             $contentType != 'associative' &&
                             $contentType != 'indexed'
                         ) {
-                            $name = $info->name;
-                            $info->type = $contentType;
-                            unset($info->contentType);
-                            unset($info->min);
-                            unset($info->max);
+                            $name = $param->name;
+                            $param->type = $contentType;
+                            unset($param->contentType);
+                            unset($param->min);
+                            unset($param->max);
                             foreach ($input as $key => $chinput) {
-                                $info->name = "{$name}[$key]";
-                                $input[$key] = static::validate($chinput, $info);
+                                $param->name = "{$name}[$key]";
+                                $input[$key] = static::validate($chinput, $param);
                             }
                         }
                         return $input;
@@ -286,31 +286,31 @@ class Validator implements ValidationInterface
                         break;
                     }
                     //do type conversion
-                    if (class_exists($info->type)) {
-                        $input = $info->filterArray($input, false);
-                        $implements = class_implements($info->type);
+                    if (class_exists($param->type)) {
+                        $input = $param->filterArray($input, false);
+                        $implements = class_implements($param->type);
                         if (
                             is_array($implements) &&
                             in_array('Luracast\\Restler\\Contracts\\ValueObjectInterface', $implements)
                         ) {
                             return call_user_func(
-                                "{$info->type}::__set_state", $input
+                                "{$param->type}::__set_state", $input
                             );
                         }
-                        $class = $info->type;
+                        $class = $param->type;
                         $instance = new $class();
-                        if (is_array($info->children)) {
+                        if (is_array($param->children)) {
                             if (
                                 empty($input) ||
                                 !is_array($input) ||
                                 $input === array_values($input)
                             ) {
-                                $error .= ". Expecting an item of type `$info->type`";
+                                $error .= ". Expecting an item of type `$param->type`";
                                 break;
                             }
-                            foreach ($info->children as $key => $value) {
+                            foreach ($param->children as $key => $value) {
                                 $cv = new Param($value);
-                                $cv->name = "{$info->name}[$key]";
+                                $cv->name = "{$param->name}[$key]";
                                 if (array_key_exists($key, $input) || $cv->required) {
                                     $instance->{$key} = static::validate(($input[$key] ?? null), $cv);
                                 }
@@ -321,7 +321,7 @@ class Validator implements ValidationInterface
             }
             throw new HttpException(400, $error);
         } catch (\Exception $e) {
-            self::$exceptions[$info->name] = $e;
+            self::$exceptions[$param->name] = $e;
             if (self::$holdException) {
                 return null;
             }
@@ -335,18 +335,18 @@ class Validator implements ValidationInterface
      * Check that given value contains only alphabetic characters.
      *
      * @param                $input
-     * @param Param $info
+     * @param Param $param
      *
      * @return string
      *
      * @throws Invalid
      */
-    public static function alpha($input, Param $info = null)
+    public static function alpha($input, Param $param = null)
     {
         if (ctype_alpha($input)) {
             return $input;
         }
-        if ($info && $info->fix) {
+        if ($param && $param->fix) {
             //remove non alpha characters
             return preg_replace("/[^a-z]/i", "", $input);
         }
@@ -359,18 +359,18 @@ class Validator implements ValidationInterface
      * Check that given value contains only digits.
      *
      * @param                $input
-     * @param Param $info
+     * @param Param $param
      *
      * @return string
      *
      * @throws Invalid
      */
-    public static function numeric($input, Param $info = null)
+    public static function numeric($input, Param $param = null)
     {
         if (ctype_digit($input)) {
             return $input;
         }
-        if ($info && $info->fix) {
+        if ($param && $param->fix) {
             //remove non numeric characters
             return preg_replace("/[^0-9]/i", "", $input);
         }
@@ -383,13 +383,13 @@ class Validator implements ValidationInterface
      * Check that given value contains only alpha numeric characters and the length is 36 chars.
      *
      * @param                $input
-     * @param Param $info
+     * @param Param $param
      *
      * @return string
      *
      * @throws Invalid
      */
-    public static function uuid($input, Param $info = null)
+    public static function uuid($input, Param $param = null)
     {
         if (is_string($input) && preg_match(
                 '/^\{?[0-9a-f]{8}\-?[0-9a-f]{4}\-?[0-9a-f]{4}\-?[0-9a-f]{4}\-?[0-9a-f]{12}\}?$/i',
@@ -406,18 +406,18 @@ class Validator implements ValidationInterface
      * Check that given value contains only alpha numeric characters.
      *
      * @param                $input
-     * @param Param $info
+     * @param Param $param
      *
      * @return string
      *
      * @throws Invalid
      */
-    public static function alphanumeric($input, Param $info = null)
+    public static function alphanumeric($input, Param $param = null)
     {
         if (ctype_alnum($input)) {
             return $input;
         }
-        if ($info && $info->fix) {
+        if ($param && $param->fix) {
             //remove non alpha numeric and space characters
             return preg_replace("/[^a-z0-9 ]/i", "", $input);
         }
@@ -430,18 +430,18 @@ class Validator implements ValidationInterface
      * Check that given value contains only printable characters.
      *
      * @param                $input
-     * @param Param $info
+     * @param Param $param
      *
      * @return string
      *
      * @throws Invalid
      */
-    public static function printable($input, Param $info = null)
+    public static function printable($input, Param $param = null)
     {
         if (ctype_print($input)) {
             return $input;
         }
-        if ($info && $info->fix) {
+        if ($param && $param->fix) {
             //remove non printable characters
             return preg_replace('/[\x00-\x1F\x80-\xFF]/', '', $input);
         }
@@ -454,13 +454,13 @@ class Validator implements ValidationInterface
      * Check that given value contains only hexadecimal digits.
      *
      * @param                $input
-     * @param Param $info
+     * @param Param $param
      *
      * @return string
      *
      * @throws Invalid
      */
-    public static function hex($input, Param $info = null)
+    public static function hex($input, Param $param = null)
     {
         if (ctype_xdigit($input)) {
             return $input;
@@ -474,12 +474,12 @@ class Validator implements ValidationInterface
      * Check that given value contains only color.
      *
      * @param                     $input
-     * @param Param|null $info
+     * @param Param|null $param
      *
      * @return string
      * @throws Invalid
      */
-    public static function color($input, Param $info = null)
+    public static function color($input, Param $param = null)
     {
         if (preg_match('/^#[a-f0-9]{6}$/i', $input)) {
             return $input;
@@ -493,13 +493,13 @@ class Validator implements ValidationInterface
      * Check if the given value is numeric with or without a `+` prefix
      *
      * @param                $input
-     * @param Param $info
+     * @param Param $param
      *
      * @return string
      *
      * @throws Invalid
      */
-    public static function tel($input, Param $info = null)
+    public static function tel($input, Param $param = null)
     {
         if (is_numeric($input) && '-' != substr($input, 0, 1)) {
             return $input;
@@ -514,17 +514,17 @@ class Validator implements ValidationInterface
      * Check if the given string is a valid email
      *
      * @param String $input
-     * @param Param $info
+     * @param Param $param
      *
      * @return string
      * @throws Invalid
      */
-    public static function email($input, Param $info = null)
+    public static function email($input, Param $param = null)
     {
         $r = filter_var($input, FILTER_VALIDATE_EMAIL);
         if ($r) {
             return $r;
-        } elseif ($info && $info->fix) {
+        } elseif ($param && $param->fix) {
             $r = filter_var($input, FILTER_SANITIZE_EMAIL);
             return static::email($r);
         }
@@ -537,12 +537,12 @@ class Validator implements ValidationInterface
      * Check if the given string is a valid ip address
      *
      * @param String $input
-     * @param Param $info
+     * @param Param $param
      *
      * @return string
      * @throws Invalid
      */
-    public static function ip($input, Param $info = null)
+    public static function ip($input, Param $param = null)
     {
         $r = filter_var($input, FILTER_VALIDATE_IP);
         if ($r) {
@@ -558,17 +558,17 @@ class Validator implements ValidationInterface
      * Check if the given string is a valid url
      *
      * @param String $input
-     * @param Param $info
+     * @param Param $param
      *
      * @return string
      * @throws Invalid
      */
-    public static function url($input, Param $info = null)
+    public static function url($input, Param $param = null)
     {
         $r = filter_var($input, FILTER_VALIDATE_URL);
         if ($r) {
             return $r;
-        } elseif ($info && $info->fix) {
+        } elseif ($param && $param->fix) {
             $r = filter_var($input, FILTER_SANITIZE_URL);
             return static::url($r);
         }
@@ -581,12 +581,12 @@ class Validator implements ValidationInterface
      * Check if the given string is a valid date in YYYY-MM-DD format
      *
      * @param String $input
-     * @param Param $info
+     * @param Param $param
      *
      * @return string
      * @throws Invalid
      */
-    public static function date($input, Param $info = null)
+    public static function date($input, Param $param = null)
     {
         if (
             preg_match(
@@ -610,12 +610,12 @@ class Validator implements ValidationInterface
      * Check if the given string is a valid date and time in YYY-MM-DD HH:MM:SS format
      *
      * @param String $input
-     * @param Param $info
+     * @param Param $param
      *
      * @return string
      * @throws Invalid
      */
-    public static function datetime($input, Param $info = null)
+    public static function datetime($input, Param $param = null)
     {
         if (
             preg_match('/^(?P<year>19\d\d|20\d\d)\-(?P<month>0[1-9]|1[0-2])\-' .
@@ -638,14 +638,14 @@ class Validator implements ValidationInterface
      * Check if the given string is a valid time in HH:MM:SS format
      *
      * @param String $input
-     * @param Param $info
+     * @param Param $param
      *
      * @return string
      * @throws Invalid
      */
-    public static function time24($input, Param $info = null)
+    public static function time24($input, Param $param = null)
     {
-        return static::time($input, $info);
+        return static::time($input, $param);
     }
 
     /**
@@ -654,12 +654,12 @@ class Validator implements ValidationInterface
      * Check if the given string is a valid time in HH:MM:SS format
      *
      * @param String $input
-     * @param Param $info
+     * @param Param $param
      *
      * @return string
      * @throws Invalid
      */
-    public static function time($input, Param $info = null)
+    public static function time($input, Param $param = null)
     {
         if (preg_match('/^([01]?[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$/', $input)) {
             return $input;
@@ -676,12 +676,12 @@ class Validator implements ValidationInterface
      * Check if the given string is a valid time 12 hour format
      *
      * @param String $input
-     * @param Param $info
+     * @param Param $param
      *
      * @return string
      * @throws Invalid
      */
-    public static function time12($input, Param $info = null)
+    public static function time12($input, Param $param = null)
     {
         if (preg_match(
             '/^([1-9]|1[0-2]|0[1-9]){1}(:[0-5][0-9])?\s?([aApP][mM]{1})?$/',
@@ -700,12 +700,12 @@ class Validator implements ValidationInterface
      * Check if the given value is a valid timestamp
      *
      * @param String $input
-     * @param Param $info
+     * @param Param $param
      *
      * @return int
      * @throws Invalid
      */
-    public static function timestamp($input, Param $info = null)
+    public static function timestamp($input, Param $param = null)
     {
         if ((string)(int)$input == $input
             && ($input <= PHP_INT_MAX)
