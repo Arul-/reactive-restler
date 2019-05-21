@@ -4,15 +4,11 @@
 namespace Luracast\Restler\Data;
 
 
-use Exception;
-use Luracast\Restler\Contracts\RequestMediaTypeInterface;
-use Luracast\Restler\Contracts\ResponseMediaTypeInterface;
+use Luracast\Restler\Contracts\{RequestMediaTypeInterface, ResponseMediaTypeInterface, ValidationInterface};
 use Luracast\Restler\Exceptions\HttpException;
-use Luracast\Restler\MediaTypes\Json;
 use Luracast\Restler\Router;
-use Luracast\Restler\Utils\ClassName;
-use Luracast\Restler\Utils\CommentParser;
-use Luracast\Restler\Utils\Validator;
+use Luracast\Restler\Utils\{ClassName, CommentParser, Validator};
+use ReflectionMethod;
 
 class Route extends ValueObject
 {
@@ -242,6 +238,26 @@ class Route extends ValueObject
         return $p;
     }
 
+    public function validate(ValidationInterface $validator, callable $maker)
+    {
+        foreach ($this->parameters as $param) {
+            $i = $param->index;
+            $info = &$param->rules;
+            if (!isset ($info['validate']) || $info['validate'] != false) {
+                if (isset($info['method'])) {
+                    $param->apiClassInstance = $maker($this->action[0]);
+                }
+                $value = $this->arguments[$i];
+                $this->arguments[$i] = null;
+                if (empty(Validator::$exceptions)) {
+                    $info['autofocus'] = true;
+                }
+                $this->arguments[$i] = $validator::validate($value, $param);
+                unset($info['autofocus']);
+            }
+        }
+    }
+
     public function body()
     {
         return array_filter($this->parameters, function ($v) {
@@ -249,21 +265,26 @@ class Route extends ValueObject
         });
     }
 
-    public function call(array $arguments = null)
+    public function call(int $access, callable $maker)
     {
-        if (is_array($arguments)) {
-            $this->apply($arguments);
+        switch ($access) {
+            case self::PROTECTED_METHOD:
+                $object = $maker[$this->action[0]];
+                $reflectionMethod = new ReflectionMethod(
+                    $object,
+                    $this->action[1]
+                );
+                $reflectionMethod->setAccessible(true);
+                return $reflectionMethod->invokeArgs(
+                    $object,
+                    $this->arguments
+                );
+            default:
+                if (is_array($this->action) && count($this->action) && class_exists($this->action[0])) {
+                    $this->action[0] = new $this->action[0];
+                }
+                return call_user_func_array($this->action, $this->arguments);
         }
-        foreach ($this->parameters as $parameter) {
-            $i = $parameter->index;
-            $this->arguments[$i] = Validator::validate($this->arguments[$i], $parameter);
-        }
-        //if (!is_callable($this->action)) {
-        if (is_array($this->action) && count($this->action) && class_exists($this->action[0])) {
-            $this->action[0] = new $this->action[0];
-        }
-        //}
-        return call_user_func_array($this->action, $this->arguments);
     }
 
 }
