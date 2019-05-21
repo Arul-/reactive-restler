@@ -604,8 +604,7 @@ abstract class Core
         }
         $cacheControl = $headerCacheControl[0];
         if ($expires > 0) {
-            $cacheControl = !isset($this->_route->accessLevel) || $this->_route->accessLevel
-                ? 'private, ' : 'public, ';
+            $cacheControl = $this->_route->access ? 'private, ' : 'public, ';
             $cacheControl .= end($headerCacheControl);
             $cacheControl = str_replace('{expires}', $expires, $cacheControl);
             $expires = gmdate('D, d M Y H:i:s \G\M\T', time() + $expires);
