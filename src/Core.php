@@ -576,14 +576,14 @@ abstract class Core
     }
 
     /**
-     * @param ApiMethodInfo $route
+     * @param Route $route
      * @return mixed
      * @throws ReflectionException
      */
     public function call(Route $route)
     {
         $access = max($this->defaults->apiAccessLevel, $route->access);
-        $route->validate($access, [$this, 'make']);
+        return $route->call($access, [$this, 'make']);
     }
 
     abstract protected function compose($response = null);
