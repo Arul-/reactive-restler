@@ -687,9 +687,7 @@ class Router
                     $path = substr($path, strlen($key) + 1);
                     /** @var Route $route */
                     $route = $value[$httpMethod];
-                    if (!empty($path)) {
-                        $route->apply(explode('/', $path));
-                    }
+                    $route->apply(explode('/', $path));
                     return $route;
                 }
             }
