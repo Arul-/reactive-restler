@@ -260,12 +260,13 @@ class Route extends ValueObject
 
     public function call(int $access, callable $maker)
     {
+        $action = $this->action;
         switch ($access) {
             case self::PROTECTED_METHOD:
-                $object = $maker($this->action[0]);
+                $object = $maker($action[0]);
                 $reflectionMethod = new ReflectionMethod(
                     $object,
-                    $this->action[1]
+                    $action[1]
                 );
                 $reflectionMethod->setAccessible(true);
                 return $reflectionMethod->invokeArgs(
@@ -273,10 +274,10 @@ class Route extends ValueObject
                     $this->arguments
                 );
             default:
-                if (is_array($this->action) && count($this->action) && class_exists($this->action[0])) {
-                    $this->action[0] = new $this->action[0];
+                if (is_array($action) && count($action) && is_string($action[0]) && class_exists($action[0])) {
+                    $action[0] = $maker($action[0]);
                 }
-                return call_user_func_array($this->action, $this->arguments);
+                return call_user_func_array($action, $this->arguments);
         }
     }
 
