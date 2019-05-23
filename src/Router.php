@@ -783,6 +783,7 @@ class Router
             $path
         );
         $route = Route::parse($call);
+        $route->httpMethod = $httpMethod;
         //check for wildcard routes
         if (substr($path, -1, 1) == '*') {
             $path = rtrim($path, '/*');

@@ -21,6 +21,8 @@ class Route extends ValueObject
      */
     public $url;
 
+    public $httpMethod = 'GET';
+
     /**
      * @var callable
      */
@@ -61,7 +63,7 @@ class Route extends ValueObject
     public $description;
 
     /**
-     * @var Param
+     * @var Returns
      */
     public $return;
 
