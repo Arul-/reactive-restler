@@ -221,6 +221,21 @@ class Route extends ValueObject
         $this->parameters[$parameter->name] = $parameter;
     }
 
+    public function call(array $arguments, bool $validate = true, callable $maker = null)
+    {
+        if (!$maker) {
+            $maker = function ($class) {
+                return new $class;
+            };
+        }
+        $this->apply($arguments);
+        if ($validate) {
+            $this->validate($maker(Validator::class), $maker);
+        }
+        return $this->handle(1, $maker);
+
+    }
+
     public function apply(array $arguments): array
     {
         $p = [];

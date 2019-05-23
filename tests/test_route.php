@@ -14,12 +14,12 @@ $action = function (int $a, int $b) {
 
 $route->action = $action;
 
-$a = new Param([]);
+$a = new Param();
 $a->type = 'int';
 $a->name = 'a';
 $route->addParameter($a);
 
-$b = new Param([]);
+$b = new Param();
 $b->type = 'int';
 $b->name = 'b';
 $route->addParameter($b);
@@ -32,3 +32,11 @@ echo PHP_EOL;
 
 print_r($route->call([4, 'b' => 2]));
 echo PHP_EOL;
+
+try {
+    print_r($route->call([4, 'b' => 'asas']));
+    echo PHP_EOL;
+} catch (Throwable $t) {
+    echo $t->getMessage();
+    echo PHP_EOL;
+}
