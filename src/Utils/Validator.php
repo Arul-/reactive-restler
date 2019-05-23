@@ -222,7 +222,7 @@ class Validator implements ValidationInterface
                             if ($contentType == 'indexed') {
                                 $input = $param->filterArray($input, true);
                             } elseif ($contentType == 'associative') {
-                                $input = $param->filterArray($input, true);
+                                $input = $param->filterArray($input, false);
                             }
                         } elseif (
                             $contentType == 'indexed' &&
