@@ -258,7 +258,7 @@ class Route extends ValueObject
         }
     }
 
-    public function call(int $access, callable $maker)
+    public function handle(int $access, callable $maker)
     {
         $action = $this->action;
         switch ($access) {

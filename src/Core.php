@@ -583,7 +583,7 @@ abstract class Core
     public function call(Route $route)
     {
         $access = max($this->defaults->apiAccessLevel, $route->access);
-        return $route->call($access, [$this, 'make']);
+        return $route->handle($access, [$this, 'make']);
     }
 
     abstract protected function compose($response = null);
