@@ -1,6 +1,5 @@
 <?php namespace Luracast\Restler\Data;
 
-use Luracast\Restler\Contracts\ValueObjectInterface;
 use Luracast\Restler\Utils\CommentParser;
 
 /**
@@ -163,44 +162,6 @@ class Param extends ValueObject
      */
     public $apiClassInstance = null;
 
-    public function content( $index = 0): self
-    {
-        return Param::parse([
-            'name' => $this->name . '[' . $index . ']',
-            'type' => $this->contentType,
-            'children' => $this->children,
-            'required' => true,
-        ]);
-    }
-
-    public static function numericValue($value)
-    {
-        return ( int )$value == $value
-            ? ( int )$value
-            : floatval($value);
-    }
-
-    public static function arrayValue($value)
-    {
-        return is_array($value) ? $value : array(
-            $value
-        );
-    }
-
-    public static function stringValue($value, $glue = ',')
-    {
-        return is_array($value)
-            ? implode($glue, $value)
-            : ( string )$value;
-    }
-
-    public static function booleanValue($value)
-    {
-        return is_bool($value)
-            ? $value
-            : $value !== 'false';
-    }
-
     public static function filterArray(array $data, bool $onlyNumericKeys)
     {
         $r = array();
@@ -214,6 +175,33 @@ class Param extends ValueObject
             }
         }
         return $r;
+    }
+
+    public function content( $index = 0): self
+    {
+        return Param::parse([
+            'name' => $this->name . '[' . $index . ']',
+            'type' => $this->contentType,
+            'children' => $this->children,
+            'required' => true,
+        ]);
+    }
+
+    public static function parse(array $metadata): self
+    {
+        $instance = new self();
+        $properties = get_object_vars($instance);
+        unset($properties['contentType']);
+        foreach ($properties as $property => $value) {
+            $instance->{$property} = $instance->getProperty($metadata, $property);
+        }
+        $inner = $metadata['properties'] ?? null;
+        $instance->rules = !empty($inner) ? $inner + $metadata : $metadata;
+        unset($instance->rules['properties']);
+        if (is_string($instance->type) && $instance->type == 'integer') {
+            $instance->type = 'int';
+        }
+        return $instance;
     }
 
     private function getProperty(array &$from, $property)
@@ -242,21 +230,32 @@ class Param extends ValueObject
         return $r;
     }
 
-    public static function parse(array $metadata): self
+    public static function numericValue($value)
     {
-        $instance = new self();
-        $properties = get_object_vars($instance);
-        unset($properties['contentType']);
-        foreach ($properties as $property => $value) {
-            $instance->{$property} = $instance->getProperty($metadata, $property);
-        }
-        $inner = $metadata['properties'] ?? null;
-        $instance->rules = !empty($inner) ? $inner + $metadata : $metadata;
-        unset($instance->rules['properties']);
-        if (is_string($instance->type) && $instance->type == 'integer') {
-            $instance->type = 'int';
-        }
-        return $instance;
+        return ( int )$value == $value
+            ? ( int )$value
+            : floatval($value);
+    }
+
+    public static function booleanValue($value)
+    {
+        return is_bool($value)
+            ? $value
+            : $value !== 'false';
+    }
+
+    public static function arrayValue($value)
+    {
+        return is_array($value) ? $value : array(
+            $value
+        );
+    }
+
+    public static function stringValue($value, $glue = ',')
+    {
+        return is_array($value)
+            ? implode($glue, $value)
+            : ( string )$value;
     }
 }
 
