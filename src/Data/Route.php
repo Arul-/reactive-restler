@@ -296,11 +296,10 @@ class Route extends ValueObject
         }
     }
 
-    public function body()
+    public function filterParams(bool $body): array
     {
-        return array_filter($this->parameters, function ($v) {
-            return $v->from === 'body';
+        return array_filter($this->parameters, function ($v) use ($body) {
+            return $body ? $v->from === 'body' : $v->from !== 'body';
         });
     }
-
 }

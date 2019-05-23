@@ -839,7 +839,7 @@ class Router
                     $hash = "$httpMethod " . $route->url;
                     if (!isset($filter[$hash])) {
                         $route->httpMethod = $httpMethod;
-                        $map[$route['metadata']['resourcePath']][] = [
+                        $map[$route->rules['resourcePath']][] = [
                             'access' => static::verifyAccess($route, $authenticated),
                             'route' => $route,
                             'hash' => $hash
@@ -902,7 +902,7 @@ class Router
                 ) {
                     $data[$param->name] = $d;
                 } else {
-                    $bodyParams = $route->body();
+                    $bodyParams = $route->filterParams(true);
                     if (1 == count($bodyParams)) {
                         /** @var \Luracast\Restler\Data\Param $param */
                         $param = array_values($bodyParams)[0];
