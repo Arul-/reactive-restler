@@ -324,8 +324,8 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
     private function responses(Route $route)
     {
         $code = '200';
-        if (isset($route->rules['status'])) {
-            $code = $route->rules['status'];
+        if (isset($route->status)) {
+            $code = $route->status;
         }
         $schema = new stdClass();
         $r = array(
@@ -339,7 +339,7 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
             $this->setType($schema, Param::parse($return->jsonSerialize()));
         }
 
-        if (is_array($throws = $route->rules['throws'] ?? null)) {
+        if (is_array($throws = $route->throws ?? null)) {
             foreach ($throws as $message) {
                 $r[$message['code']] = array('description' => $message['message']);
             }
@@ -358,7 +358,7 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
         $r->properties = array();
         $required = array();
         foreach ($children as $child) {
-            $info = new Param($child);
+            $info = Param::parse($child);
             $p = new stdClass();
             $this->setType($p, $info);
             if (isset($child['description'])) {
