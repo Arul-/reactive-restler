@@ -10,14 +10,12 @@ use Luracast\Restler\Utils\CommentParser;
  */
 class Param extends ValueObject
 {
+    const KEEP_NON_NUMERIC = false;
+    const KEEP_NUMERIC = true;
     /**
      * @var int
      */
     public $index;
-    /**
-     * @var mixed given value for the parameter
-     */
-    public $value;
     /**
      * @var string proper name for given parameter
      */
@@ -193,15 +191,15 @@ class Param extends ValueObject
             : $value !== 'false';
     }
 
-    public static function filterArray(array $data, $keepNumericKeys)
+    public static function filterArray(array $data, bool $onlyNumericKeys)
     {
         $r = array();
         foreach ($data as $key => $value) {
             if (is_numeric($key)) {
-                if ($keepNumericKeys) {
+                if ($onlyNumericKeys) {
                     $r[$key] = $value;
                 }
-            } elseif (!$keepNumericKeys) {
+            } elseif (!$onlyNumericKeys) {
                 $r[$key] = $value;
             }
         }

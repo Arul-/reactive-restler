@@ -104,7 +104,8 @@ class Validator implements ValidationInterface
                 }
             }
 
-            if ('string' == $param->type && method_exists($class = get_called_class(), $param->contentType) && $param->contentType != 'validate') {
+            if ('string' == $param->type && method_exists($class = get_called_class(),
+                    $param->contentType) && $param->contentType != 'validate') {
                 if (!$param->required && empty($input)) {
                     //optional parameter with a empty value assume null
                     return null;
@@ -220,9 +221,9 @@ class Validator implements ValidationInterface
                         $contentType = $param->contentType;
                         if ($param->fix) {
                             if ($contentType == 'indexed') {
-                                $input = $param->filterArray($input, true);
+                                $input = Param::filterArray($input, Param::KEEP_NUMERIC);
                             } elseif ($contentType == 'associative') {
-                                $input = $param->filterArray($input, false);
+                                $input = Param::filterArray($input, Param::KEEP_NON_NUMERIC);
                             }
                         } elseif (
                             $contentType == 'indexed' &&
