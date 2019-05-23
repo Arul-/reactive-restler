@@ -163,6 +163,16 @@ class Param extends ValueObject
      */
     public $apiClassInstance = null;
 
+    public function content( $index = 0): self
+    {
+        return Param::parse([
+            'name' => $this->name . '[' . $index . ']',
+            'type' => $this->contentType,
+            'children' => $this->children,
+            'required' => true,
+        ]);
+    }
+
     public static function numericValue($value)
     {
         return ( int )$value == $value

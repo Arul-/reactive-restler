@@ -259,14 +259,8 @@ class Validator implements ValidationInterface
                             $contentType != 'associative' &&
                             $contentType != 'indexed'
                         ) {
-                            $name = $param->name;
-                            $param->type = $contentType;
-                            unset($param->contentType);
-                            unset($param->min);
-                            unset($param->max);
                             foreach ($input as $key => $chinput) {
-                                $param->name = "{$name}[$key]";
-                                $input[$key] = static::validate($chinput, $param);
+                                $input[$key] = static::validate($chinput, $param->content($key));
                             }
                         }
                         return $input;
