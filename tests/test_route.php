@@ -12,8 +12,10 @@ $action = function (int $a, int $b) {
     return $a / $b;
 };
 
+
 $route->action = $action;
 
+/*
 $a = new Param();
 $a->type = 'int';
 $a->name = 'a';
@@ -23,6 +25,15 @@ $b = new Param();
 $b->type = 'int';
 $b->name = 'b';
 $route->addParameter($b);
+*/
+$f = new ReflectionFunction($action);
+$ps = $f->getParameters();
+foreach ($ps as $p) {
+    $route->addParameter(Param::parse([
+        'name' => $p->name,
+        'type' => $p->hasType() ? $p->getType()->getName() : null
+    ]));
+}
 
 print_r($route->call([4, 2]));
 echo PHP_EOL;
