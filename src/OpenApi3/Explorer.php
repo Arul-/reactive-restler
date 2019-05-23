@@ -3,6 +3,7 @@
 use Luracast\Restler\Contracts\ProvidesMultiVersionApiInterface;
 use Luracast\Restler\Contracts\UsesAuthenticationInterface;
 use Luracast\Restler\Core;
+use Luracast\Restler\Data\Route;
 use Luracast\Restler\Exceptions\Redirect;
 use Luracast\Restler\Data\ApiMethodInfo;
 use Luracast\Restler\Utils\Text;
@@ -161,19 +162,18 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
                 if (static::$hideProtected && !$access) {
                     continue;
                 }
-                $url = $route['url'];
-                $paths["/$url"][strtolower($route['httpMethod'])] = $this->operation($route);
+                $url = $route->url;
+                $paths["/$url"][strtolower($route->httpMethod)] = $this->operation($route);
             }
         }
         return $paths;
     }
 
-    private function operation($route)
+    private function operation(Route $route)
     {
         $r = new stdClass();
-        $m = $route['metadata'];
         $r->operationId = $this->operationId($route);
-        $base = strtok($route['url'], '/');
+        $base = strtok($route->url, '/');
         if (empty($base)) {
             $base = 'root';
         }
@@ -192,7 +192,7 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
             : '';
         $r->responses = $this->responses($route);
         //TODO: avoid hard coding. Properly detect security
-        if ($route['accessLevel']) {
+        if ($route->access) {
             $r->security = array(array('api_key' => array()));
         }
         /*
@@ -233,66 +233,38 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
         return $c;
     }
 
-    private function parameters(array $route)
+    private function parameters(Route $route)
     {
+        $parameters = $route->filterParams(false);
+        $body = $route->filterParams(true);
         $r = array();
         $requestBody = null;
-        $body = array();
-        $required = false;
-        foreach ($route['metadata']['param'] as $param) {
-            $info = new Param($param);
-            $description = $param['description'] ?? '';
-            if ('body' == $info->from) {
-                if ($info->required) {
-                    $required = true;
-                }
-                $param['description'] = $description;
-                $body[] = $param;
-            } else {
-                $r[] = $this->parameter($info, $description);
-            }
+        foreach ($parameters as $param) {
+            $r[] = $this->parameter($param);
         }
         if (!empty($body)) {
             if (
                 1 == count($body) &&
                 (static::$allowScalarValueOnRequestBody || !empty($body[0]['children']))
             ) {
-                $firstChild = $body[0];
-                if (empty($firstChild['children'])) {
-                    $description = $firstChild['description'];
-                } else {
-                    $description = '';
-                    foreach ($firstChild['children'] as $child) {
-                        $description .= isset($child['required']) && $child['required']
-                            ? '**' . $child['name'] . '** (required)  ' . PHP_EOL
-                            : $child['name'] . '  ' . PHP_EOL;
-                    }
-                }
-                $requestBody = $this->requestBody(new Param($firstChild), $description);
-
+                $requestBody = $this->requestBody($body[0]);
             } else {
-                $description = '';
-                foreach ($body as $child) {
-                    $description .= isset($child['required']) && $child['required']
-                        ? '**' . $child['name'] . '** (required)  ' . PHP_EOL
-                        : $child['name'] . '  ' . PHP_EOL;
-                }
-
                 //lets group all body parameters under a generated model name
                 $name = $this->modelName($route);
                 $r[] = $this->parameter(
-                    new Param(array(
+                    Param::__set_state([
                         'name' => $name,
                         'type' => $name,
                         'from' => 'body',
-                        'required' => $required,
-                        'children' => $body
-                    )),
-                    $description
+                        'required' => true,
+                        'children' => array_map(function (Param $v) {
+                            return $v->jsonSerialize();
+                        }, $body)
+                    ]),
+                    ''
                 );
             }
         }
-
         return [$r, $requestBody];
     }
 
@@ -349,11 +321,11 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
         return $p;
     }
 
-    private function responses(array $route)
+    private function responses(Route $route)
     {
         $code = '200';
-        if (isset($route['metadata']['status'])) {
-            $code = $route['metadata']['status'];
+        if (isset($route->rules['status'])) {
+            $code = $route->rules['status'];
         }
         $schema = new stdClass();
         $r = array(
@@ -362,12 +334,12 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
                 'content' => ["application/json" => ['schema' => $schema]]
             )
         );
-        $return = $route['metadata']['return'];
+        $return = $route->return;
         if (!empty($return)) {
-            $this->setType($schema, new Param($return));
+            $this->setType($schema, Param::parse($return->jsonSerialize()));
         }
 
-        if (is_array($throws = $route['metadata']['throws'] ?? null)) {
+        if (is_array($throws = $route->rules['throws'] ?? null)) {
             foreach ($throws as $message) {
                 $r[$message['code']] = array('description' => $message['message']);
             }
@@ -494,32 +466,34 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
         }
     }
 
-    private function operationId(array $route)
+    private function operationId(Route $route)
     {
         static $hash = array();
-        $id = $route['httpMethod'] . ' ' . $route['url'];
+        $id = $route->httpMethod . ' ' . $route->url;
         if (isset($hash[$id])) {
             return $hash[$id];
         }
-        $class = ClassName::short($route['className']);
-        $method = $route['methodName'];
-
-        if (isset(static::$prefixes[$method])) {
-            $method = static::$prefixes[$method] . $class;
-        } else {
-            $method = str_replace(
-                array_keys(static::$prefixes),
-                array_values(static::$prefixes),
-                $method
-            );
-            $method = lcfirst($class) . ucfirst($method);
+        if (is_array($route->action) && 2 == count($route->action) && is_string($route->action[0])) {
+            $class = ClassName::short($route->action[0]);
+            $method = $route->action[1];
+            if (isset(static::$prefixes[$method])) {
+                $method = static::$prefixes[$method] . $class;
+            } else {
+                $method = str_replace(
+                    array_keys(static::$prefixes),
+                    array_values(static::$prefixes),
+                    $method
+                );
+                $method = lcfirst($class) . ucfirst($method);
+            }
+            $hash[$id] = $method;
+            return $method;
         }
-        $hash[$id] = $method;
-
-        return $method;
+        $hash[$id] = $id;
+        return $id;
     }
 
-    private function modelName(array $route)
+    private function modelName(Route $route)
     {
         return ucfirst($this->operationId($route)) . 'Model';
     }
