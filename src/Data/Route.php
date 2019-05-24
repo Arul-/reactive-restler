@@ -105,7 +105,10 @@ class Route extends ValueObject
             'access' => true,
 
         ];
-        $args = [];
+        $args = [
+            'summary' => $call['metadata']['description'] ?? '',
+            'description' => $call['metadata']['longDescription'] ?? '',
+        ];
         foreach ($call as $key => $value) {
             if ($k = $transform[$key] ?? false) {
                 if (is_array($k)) {
