@@ -1,7 +1,7 @@
-<?php namespace Luracast\Restler;
+<?php namespace Luracast\Restler\OpenApi3;
 
 
-class ExplorerInfo
+class Info
 {
     public static $title = 'Restler API Explorer';
     public static $description = 'Example api documentation brought to you by **restler team**';

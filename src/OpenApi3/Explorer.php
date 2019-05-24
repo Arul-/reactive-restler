@@ -9,7 +9,7 @@ use Luracast\Restler\Exceptions\Redirect;
 use Luracast\Restler\Data\ApiMethodInfo;
 use Luracast\Restler\Utils\Text;
 use Luracast\Restler\Data\Param;
-use Luracast\Restler\ExplorerInfo;
+use Luracast\Restler\OpenApi3\Info;
 use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\Router;
 use Luracast\Restler\Utils\ClassName;
@@ -20,7 +20,7 @@ use stdClass;
 class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationInterface
 {
     const SWAGGER = '3.0.0';
-    public static $infoClass = ExplorerInfo::class;
+    public static $infoClass = Info::class;
     public static $excludedPaths = ['explorer', '_'];
     public static $excludedHttpMethods = ['OPTIONS'];
     public static $hideProtected = true;
