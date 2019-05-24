@@ -1,11 +1,14 @@
 <?php
 
 use Luracast\Restler\Contracts\AuthenticationInterface;
+use Luracast\Restler\Contracts\ExplorableAuthenticationInterface;
 use Luracast\Restler\Contracts\SelectivePathsInterface;
 use Luracast\Restler\Contracts\SelectivePathsTrait;
+use Luracast\Restler\OpenApi3\Security\ApiKeyAuth;
+use Luracast\Restler\OpenApi3\Security\Scheme;
 use Psr\Http\Message\ServerRequestInterface;
 
-class SimpleAuth implements AuthenticationInterface, SelectivePathsInterface
+class SimpleAuth implements ExplorableAuthenticationInterface, SelectivePathsInterface
 {
     use SelectivePathsTrait;
 
@@ -33,4 +36,8 @@ class SimpleAuth implements AuthenticationInterface, SelectivePathsInterface
         return 'Query name="key"';
     }
 
+    public static function scheme(): Scheme
+    {
+        return new ApiKeyAuth('key', ApiKeyAuth::IN_QUERY);
+    }
 }

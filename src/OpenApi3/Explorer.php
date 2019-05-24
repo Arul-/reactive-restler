@@ -1,5 +1,6 @@
 <?php namespace Luracast\Restler\OpenApi3;
 
+use Luracast\Restler\Contracts\ExplorableAuthenticationInterface;
 use Luracast\Restler\Contracts\ProvidesMultiVersionApiInterface;
 use Luracast\Restler\Contracts\UsesAuthenticationInterface;
 use Luracast\Restler\Core;
@@ -500,13 +501,13 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
 
     private function securitySchemes()
     {
-        return (object)[
-            'apiKey' => (object)[
-                'type' => 'apiKey',
-                'in' => 'query',
-                'name' => 'key',
-            ]
-        ];
+        $schemes = [];
+        foreach (Router::$authClasses as $class) {
+            if (class_implements($class)[ExplorableAuthenticationInterface::class]) {
+                $schemes[ClassName::short($class)] = (object)$class::scheme()->toArray();
+            }
+        }
+        return (object)$schemes;
     }
 
     public static function getMaximumSupportedVersion(): int
