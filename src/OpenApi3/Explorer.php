@@ -4,6 +4,7 @@ use Luracast\Restler\Contracts\ProvidesMultiVersionApiInterface;
 use Luracast\Restler\Contracts\UsesAuthenticationInterface;
 use Luracast\Restler\Core;
 use Luracast\Restler\Data\Route;
+use Luracast\Restler\Data\Type;
 use Luracast\Restler\Exceptions\Redirect;
 use Luracast\Restler\Data\ApiMethodInfo;
 use Luracast\Restler\Utils\Text;
@@ -335,7 +336,7 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
         );
         $return = $route->return;
         if (!empty($return)) {
-            $this->setType($schema, Param::parse($return->jsonSerialize()));
+            $this->setType($schema, $return);
         }
 
         if (is_array($throws = $route->throws ?? null)) {
@@ -391,21 +392,21 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
         return $r;
     }
 
-    private function setType(&$object, Param $info)
+    private function setType(&$object, Type $param)
     {
         //TODO: proper type management
-        $type = ClassName::short($info->type);
-        if ($info->type == 'array') {
+        $type = ClassName::short($param->type);
+        if ($param->type == 'array') {
             $object->type = 'array';
-            if ($info->children) {
-                $contentType = ClassName::short($info->contentType);
-                $model = $this->model($contentType, $info->children);
+            if ($param->children) {
+                $contentType = ClassName::short($param->contentType);
+                $model = $this->model($contentType, $param->children);
                 $object->items = (object)array(
                     '$ref' => "#/components/schemas/$contentType"
                 );
-            } elseif ($info->contentType && $info->contentType == 'associative') {
-                unset($info->contentType);
-                $this->model($info->type = 'Object', array(
+            } elseif ($param->contentType && $param->contentType == 'associative') {
+                unset($param->contentType);
+                $this->model($param->type = 'Object', array(
                     array(
                         'name' => 'property',
                         'type' => 'string',
@@ -414,9 +415,9 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
                         'description' => ''
                     )
                 ));
-            } elseif ($info->contentType && $info->contentType != 'indexed') {
-                if (is_string($info->contentType) &&
-                    $t = static::$dataTypeAlias[strtolower($info->contentType)] ?? null) {
+            } elseif ($param->contentType && $param->contentType != 'indexed') {
+                if (is_string($param->contentType) &&
+                    $t = static::$dataTypeAlias[strtolower($param->contentType)] ?? null) {
                     if (is_array($t)) {
                         $object->items = (object)array(
                             'type' => $t[0],
@@ -428,7 +429,7 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
                         );
                     }
                 } else {
-                    $contentType = ClassName::short($info->contentType);
+                    $contentType = ClassName::short($param->contentType);
                     $object->items = (object)array(
                         '$ref' => "#/components/schemas/$contentType"
                     );
@@ -438,10 +439,10 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
                     'type' => 'string'
                 );
             }
-        } elseif ($info->children) {
-            $this->model($type, $info->children);
+        } elseif ($param->children) {
+            $this->model($type, $param->children);
             $object->{'$ref'} = "#/components/schemas/$type";
-        } elseif (is_string($info->type) && $t = static::$dataTypeAlias[strtolower($info->type)] ?? null) {
+        } elseif (is_string($param->type) && $t = static::$dataTypeAlias[strtolower($param->type)] ?? null) {
             if (is_array($t)) {
                 $object->type = $t[0];
                 $object->format = $t[1];
