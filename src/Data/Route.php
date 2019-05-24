@@ -105,9 +105,18 @@ class Route extends ValueObject
             'access' => true,
 
         ];
+        $extract = function (array &$from, string $key, $default = null) {
+            if ($value = $from[$key] ?? false) {
+                unset($from[$key]);
+                return $value;
+            }
+            return $default;
+        };
+        $meta = $extract($call, 'metadata', []);
         $args = [
-            'summary' => $call['metadata']['description'] ?? '',
-            'description' => $call['metadata']['longDescription'] ?? '',
+            'summary' => $extract($meta, 'description', ''),
+            'description' => $extract($meta, 'longDescription', ''),
+            'return' => Returns::parse($extract($meta, 'return', ['type' => 'array'])),
         ];
         foreach ($call as $key => $value) {
             if ($k = $transform[$key] ?? false) {
@@ -120,16 +129,9 @@ class Route extends ValueObject
                 $args[$key] = $value;
             }
         }
-        $meta = $call['metadata'] ?? [];
-        $return = $meta['return'] ?? ['type' => 'array'];
-        unset($meta['return']);
-        $args['return'] = Returns::parse($return);
-        $params = $meta['param'];
-        unset($meta['param']);
-        $classes = $meta['class'] ?? [];
-        unset($meta['class']);
-        $scope = $meta['scope'] ?? [];
-        unset($meta['scope']);
+        $params = $extract($meta, 'param', []);
+        $classes = $extract($meta, 'class', []);
+        $scope = $extract($meta, 'scope', []);
         foreach ($transform as $key => $value) {
             unset($meta[$key]);
         }
