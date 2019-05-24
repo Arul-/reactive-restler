@@ -501,10 +501,10 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
     private function securitySchemes()
     {
         return (object)[
-            'APIKey' => (object)[
-                'type' => 'http',
-                'schema' => 'bearer',
-                'bearerFormat' => 'TOKEN',
+            'apiKey' => (object)[
+                'type' => 'apiKey',
+                'in' => 'query',
+                'name' => 'key',
             ]
         ];
     }
