@@ -233,7 +233,7 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
     private function parameters(Route $route)
     {
         $parameters = $route->filterParams(false);
-        $body = $route->filterParams(true);
+        $body = array_values($route->filterParams(true));
         $r = array();
         $requestBody = null;
         foreach ($parameters as $param) {
@@ -242,7 +242,7 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
         if (!empty($body)) {
             if (
                 1 == count($body) &&
-                (static::$allowScalarValueOnRequestBody || !empty($body[0]['children']))
+                (static::$allowScalarValueOnRequestBody || !empty($body[0]->children))
             ) {
                 $requestBody = $this->requestBody($body[0]);
             } else {
