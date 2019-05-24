@@ -184,12 +184,8 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
             unset($r->requestBody);
         }
 
-        $r->summary = isset($m['description'])
-            ? $m['description']
-            : '';
-        $r->description = isset($m['longDescription'])
-            ? $m['longDescription']
-            : '';
+        $r->summary = $route->summary ?? '';
+        $r->description = $route->description ?? '';
         $r->responses = $this->responses($route);
         //TODO: avoid hard coding. Properly detect security
         if ($route->access) {
@@ -251,33 +247,36 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
             } else {
                 //lets group all body parameters under a generated model name
                 $name = $this->modelName($route);
-                $r[] = $this->parameter(
-                    Param::__set_state([
-                        'name' => $name,
-                        'type' => $name,
-                        'from' => 'body',
-                        'required' => true,
-                        'children' => array_map(function (Param $v) {
-                            return $v->jsonSerialize();
-                        }, $body)
-                    ]),
-                    ''
-                );
+                $children = [];
+                /**
+                 * @var string $name
+                 * @var Param $child
+                 */
+                foreach ($body as $name => $child) {
+                    $children[$name] = $child->jsonSerialize();
+                }
+                $requestBody = $this->requestBody(Param::__set_state([
+                    'name' => $name,
+                    'type' => $name,
+                    'from' => 'body',
+                    'required' => true,
+                    'children' => $children
+                ]));
             }
         }
         return [$r, $requestBody];
     }
 
-    private function requestBody(Param $info, $description = '')
+    private function requestBody(Param $param, $description = '')
     {
-        $p = $this->parameter($info, $description);
-        $this->requestBodies[$info->type] = [
+        $p = $this->parameter($param, $description);
+        $this->requestBodies[$param->type] = [
             'content' => ['application/json' => ['schema' => $p->schema]]
         ];
-        return (object)['$ref' => "#/components/requestBodies/{$info->type}"];
+        return (object)['$ref' => "#/components/requestBodies/{$param->type}"];
     }
 
-    private function parameter(Param $info, $description = '')
+    private function parameter(Param $param, $description = '')
     {
         $p = (object)[
             'name' => '',
@@ -289,27 +288,27 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
         //if (isset($info->rules['model'])) {
         //$info->type = $info->rules['model'];
         //}
-        $p->name = $info->name;
-        $this->setType($p->schema, $info);
-        if (empty($info->children) || $info->type != 'array') {
+        $p->name = $param->name;
+        $this->setType($p->schema, $param);
+        if (empty($param->children) || $param->type != 'array') {
             //primitives
-            if ($info->default) {
-                $p->defaultValue = $info->default;
+            if ($param->default) {
+                $p->defaultValue = $param->default;
             }
-            if ($info->choice) {
-                $p->enum = $info->choice;
+            if ($param->choice) {
+                $p->enum = $param->choice;
             }
-            if ($info->min) {
-                $p->minimum = $info->min;
+            if ($param->min) {
+                $p->minimum = $param->min;
             }
-            if ($info->max) {
-                $p->maximum = $info->max;
+            if ($param->max) {
+                $p->maximum = $param->max;
             }
             //TODO: $p->items and $p->uniqueItems boolean
         }
         $p->description = $description;
-        $p->in = $info->from; //$info->from == 'body' ? 'form' : $info->from;
-        $p->required = $info->required;
+        $p->in = $param->from; //$info->from == 'body' ? 'form' : $info->from;
+        $p->required = $param->required;
 
         //$p->allowMultiple = false;
 
