@@ -103,7 +103,7 @@ class Router
     public static $writableMediaTypeOverrides = [];
 
     protected static $routes = [];
-    protected static $models = [];
+    public static $models = [];
 
     public static function setApiVersion(int $maximum = 1, int $minimum = 1)
     {
@@ -392,8 +392,16 @@ class Router
             if (!isset($metadata['param'])) {
                 $metadata['param'] = [];
             }
-            if (isset($metadata['return']['type'])) {
-                if ($qualified = ClassName::resolve($metadata['return']['type'], $scope)) {
+            if ($rtype = $metadata['return']['type'] ?? false) {
+                if ($rtype == 'array') {
+                    if (
+                        ($rctype = $metadata['return'][$dataName]['type'] ?? false) &&
+                        ($qualified = ClassName::resolve($rctype, $scope))
+                    ) {
+                        list($metadata['return'][$dataName]['type'], $metadata['return']['children']) =
+                            static::getTypeAndModel(new ReflectionClass($qualified), $scope);
+                    }
+                } elseif ($qualified = ClassName::resolve($rtype, $scope)) {
                     list($metadata['return']['type'], $metadata['return']['children']) =
                         static::getTypeAndModel(new ReflectionClass($qualified), $scope);
                 }
