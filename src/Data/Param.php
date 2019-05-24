@@ -7,7 +7,7 @@ use Luracast\Restler\Utils\CommentParser;
  * populated by Restler to pass it to iValidate implementing classes for
  * validation
  */
-class Param extends ValueObject
+class Param extends Type
 {
     const KEEP_NON_NUMERIC = false;
     const KEEP_NUMERIC = true;
@@ -47,24 +47,6 @@ class Param extends ValueObject
     public $from;
 
     /**
-     * Data type of the variable being validated.
-     * It will be mostly string
-     *
-     * @var string|array multiple types are specified it will be of
-     *      type array otherwise it will be a string
-     */
-    public $type;
-
-    /**
-     * When the type is array, this field is used to define the type of the
-     * contents of the array
-     *
-     * @var string|null when all the items in an array are of certain type, we
-     *      can set this property. It will be null if the items can be of any type
-     */
-    public $contentType;
-
-    /**
      * Should we attempt to fix the value?
      * When set to false validation class should throw
      * an exception or return false for the validate call.
@@ -74,11 +56,6 @@ class Param extends ValueObject
      * @var boolean true or false
      */
     public $fix = false;
-
-    /**
-     * @var array of children to be validated
-     */
-    public $children = null;
 
     // ==================================================================
     //
