@@ -10,14 +10,14 @@ Feature: Testing Protected Api
     Then the response status code should be 401
 
   Scenario: Calling restricted api with valid key
-    When I request "examples/_005_protected_api/restricted?key=rEsTlEr2"
+    When I request "examples/_005_protected_api/restricted?key=rEsTlEr4"
     Then the response status code should be 200
     And the response is JSON
     And the type is "string"
     And the value equals "protected method"
 
   Scenario: Calling restricted api class with valid key
-    When I request "examples/_005_protected_api/secured?key=rEsTlEr2"
+    When I request "examples/_005_protected_api/secured?key=rEsTlEr4"
     Then the response status code should be 200
     And the response is JSON
     And the type is "string"

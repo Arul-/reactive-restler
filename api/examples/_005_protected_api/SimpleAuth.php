@@ -12,7 +12,7 @@ class SimpleAuth implements ExplorableAuthenticationInterface, SelectivePathsInt
 {
     use SelectivePathsTrait;
 
-    const KEY = 'rEsTlEr2';
+    const KEY = 'rEsTlEr4';
 
     function key()
     {
