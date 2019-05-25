@@ -9,6 +9,7 @@ use Luracast\Restler\Core;
 use Luracast\Restler\Data\{ApiMethodInfo, Param, Route, Type};
 use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\Exceptions\Redirect;
+use Luracast\Restler\MediaTypes\Xml;
 use Luracast\Restler\Router;
 use Luracast\Restler\Utils\{ClassName, PassThrough, Text};
 use Psr\Http\Message\ServerRequestInterface;
@@ -241,7 +242,7 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
                 1 == count($body) &&
                 (static::$allowScalarValueOnRequestBody || !empty($body[0]->children))
             ) {
-                $requestBody = $this->requestBody($body[0]);
+                $requestBody = $this->requestBody($route, $body[0]);
             } else {
                 //lets group all body parameters under a generated model name
                 $name = $this->modelName($route);
@@ -253,7 +254,7 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
                 foreach ($body as $name => $child) {
                     $children[$name] = $child->jsonSerialize();
                 }
-                $requestBody = $this->requestBody(Param::__set_state([
+                $requestBody = $this->requestBody($route, Param::__set_state([
                     'name' => $name,
                     'type' => $name,
                     'from' => 'body',
@@ -265,12 +266,17 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
         return [$r, $requestBody];
     }
 
-    private function requestBody(Param $param, $description = '')
+    private function requestBody(Route $route, Param $param, $description = '')
     {
         $p = $this->parameter($param, $description);
-        $this->requestBodies[$param->type] = [
-            'content' => ['application/json' => ['schema' => $p->schema]]
-        ];
+        $content = [];
+        foreach ($route->requestMediaTypes as $mime) {
+            $content[$mime] = ['schema' => $p->schema];
+            if (Xml::MIME === $mime) {
+                $content[$mime] += ['xml' => ['name' => Xml::$defaultTagName]];
+            }
+        }
+        $this->requestBodies[$param->type] = compact('content');
         return (object)['$ref' => "#/components/requestBodies/{$param->type}"];
     }
 
@@ -325,10 +331,17 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
             $code = $route->status;
         }
         $schema = new stdClass();
+        $content = [];
+        foreach ($route->responseMediaTypes as $mime) {
+            $content[$mime] = ['schema' => $schema];
+            if (Xml::MIME === $mime) {
+                $content[$mime] += ['xml' => ['name' => Xml::$defaultTagName]];
+            }
+        }
         $r = array(
             $code => array(
                 'description' => HttpException::$codes[$code] ?? 'Success',
-                'content' => ["application/json" => ['schema' => $schema]]
+                'content' => $content
             )
         );
         $return = $route->return;
