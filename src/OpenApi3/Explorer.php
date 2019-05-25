@@ -1,20 +1,16 @@
 <?php namespace Luracast\Restler\OpenApi3;
 
-use Luracast\Restler\Contracts\ExplorableAuthenticationInterface;
-use Luracast\Restler\Contracts\ProvidesMultiVersionApiInterface;
-use Luracast\Restler\Contracts\UsesAuthenticationInterface;
+use Luracast\Restler\Contracts\{
+    ExplorableAuthenticationInterface,
+    ProvidesMultiVersionApiInterface,
+    UsesAuthenticationInterface
+};
 use Luracast\Restler\Core;
-use Luracast\Restler\Data\Route;
-use Luracast\Restler\Data\Type;
-use Luracast\Restler\Exceptions\Redirect;
-use Luracast\Restler\Data\ApiMethodInfo;
-use Luracast\Restler\Utils\Text;
-use Luracast\Restler\Data\Param;
-use Luracast\Restler\OpenApi3\Info;
+use Luracast\Restler\Data\{ApiMethodInfo, Param, Route, Type};
 use Luracast\Restler\Exceptions\HttpException;
+use Luracast\Restler\Exceptions\Redirect;
 use Luracast\Restler\Router;
-use Luracast\Restler\Utils\ClassName;
-use Luracast\Restler\Utils\PassThrough;
+use Luracast\Restler\Utils\{ClassName, PassThrough, Text};
 use Psr\Http\Message\ServerRequestInterface;
 use stdClass;
 
