@@ -67,7 +67,7 @@ class Router
      */
     public static $requestFormatMap = [
         'default' => Json::class,
-        'application/json' => Json::class,
+        Json::MIME => Json::class,
     ];
     /**
      * @var array
@@ -75,8 +75,8 @@ class Router
      */
     public static $responseFormatMap = [
         'default' => Json::class,
-        'json' => Json::class,
-        'application/json' => Json::class,
+        Json::EXTENSION => Json::class,
+        Json::MIME => Json::class,
         'extensions' => ['.json'],
     ];
     /**
@@ -96,8 +96,8 @@ class Router
      */
     public static $maximumVersion = 1;
 
-    public static $readableMediaTypes = [Json::class];
-    public static $writableMediaTypes = [Json::class];
+    public static $readableMediaTypes = [Json::MIME];
+    public static $writableMediaTypes = [Json::MIME];
 
     public static $readableMediaTypeOverrides = [];
     public static $writableMediaTypeOverrides = [];
