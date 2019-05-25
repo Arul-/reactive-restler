@@ -1,14 +1,34 @@
 <?php
 
+class BMIUnit
+{
+    public $height = 0.0;
+    public $weight = 0.0;
+}
+
+class BMIResult
+{
+    public $bmi = 0.0;
+    public $message = '';
+    /**
+     * @var BMIUnit
+     */
+    public $metric;
+    /**
+     * @var BMIUnit
+     */
+    public $imperial;
+}
+
 /**
  * Class BMI
  * @response-format Json,Xml
  */
 class BMI
 {
-    function index($height = 162.6, $weight = 84)
+    function index($height = 162.6, $weight = 84): BMIResult
     {
-        $result = new stdClass();
+        $result = new BMIResult();
 
         //	1 pound = 0.45359237 kilograms
         //	1 meter = 3.2808399  feet
@@ -37,14 +57,14 @@ class BMI
         } else {
             $result->message = 'Obesity';
         }
-        $result->metric = array(
-            'height' => "$cm centimeter",
-            'weight' => "$weight kilograms"
-        );
-        $result->imperial = array(
-            'height' => "$feet feet $inches inches",
-            'weight' => "$lb pounds"
-        );
+
+        $result->metric = new BMIUnit();
+        $result->metric->height = "$cm centimeter";
+        $result->metric->weight = "$weight kilograms";
+
+        $result->imperial = new BMIUnit();
+        $result->metric->height = "$feet feet $inches inches";
+        $result->metric->weight = "$lb pounds";
         return $result;
     }
 }
