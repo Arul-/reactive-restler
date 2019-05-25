@@ -392,7 +392,9 @@ class Router
             if (!isset($metadata['param'])) {
                 $metadata['param'] = [];
             }
-            if ($rtype = $metadata['return']['type'] ?? false) {
+            if ($rtype = $method->hasReturnType()
+                ? $method->getReturnType()->getName()
+                : ($metadata['return']['type'] ?? false)) {
                 if ($rtype == 'array') {
                     if (
                         ($rctype = $metadata['return'][$dataName]['type'] ?? false) &&
