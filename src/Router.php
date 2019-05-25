@@ -96,11 +96,11 @@ class Router
      */
     public static $maximumVersion = 1;
 
-    public static $readableMediaTypes = [Json::MIME];
-    public static $writableMediaTypes = [Json::MIME];
+    public static $requestMediaTypes = [Json::MIME];
+    public static $responseMediaTypes = [Json::MIME];
 
-    public static $readableMediaTypeOverrides = [];
-    public static $writableMediaTypeOverrides = [];
+    public static $requestMediaTypeOverrides = [];
+    public static $responseMediaTypeOverrides = [];
 
     protected static $routes = [];
     public static $models = [];
@@ -118,10 +118,10 @@ class Router
     public static function setMediaTypes(string ...$types): void
     {
         static::_setMediaTypes(RequestMediaTypeInterface::class, $types,
-            static::$requestFormatMap, static::$readableMediaTypes);
+            static::$requestFormatMap, static::$requestMediaTypes);
 
         static::_setMediaTypes(ResponseMediaTypeInterface::class, $types,
-            static::$responseFormatMap, static::$writableMediaTypes);
+            static::$responseFormatMap, static::$responseMediaTypes);
     }
 
     /**
@@ -131,7 +131,7 @@ class Router
     public static function setRequestMediaTypes(string ...$types): void
     {
         static::_setMediaTypes(RequestMediaTypeInterface::class, $types,
-            static::$requestFormatMap, static::$readableMediaTypes);
+            static::$requestFormatMap, static::$requestMediaTypes);
     }
 
     /**
@@ -141,12 +141,12 @@ class Router
     public static function setResponseMediaTypes(string ...$types): void
     {
         static::_setMediaTypes(ResponseMediaTypeInterface::class, $types,
-            static::$responseFormatMap, static::$writableMediaTypes);
+            static::$responseFormatMap, static::$responseMediaTypes);
     }
 
     public static function setOverridingRequestMediaTypes(string ...$types): void
     {
-        static::$readableMediaTypeOverrides = $types;
+        static::$requestMediaTypeOverrides = $types;
         $ignore = [];
         static::_setMediaTypes(RequestMediaTypeInterface::class, $types,
             static::$requestFormatOverridesMap, $ignore);
@@ -158,7 +158,7 @@ class Router
      */
     public static function setOverridingResponseMediaTypes(string ...$types): void
     {
-        static::$writableMediaTypeOverrides = $types;
+        static::$responseMediaTypeOverrides = $types;
         $ignore = [];
         static::_setMediaTypes(ResponseMediaTypeInterface::class, $types,
             static::$responseFormatOverridesMap, $ignore);

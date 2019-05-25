@@ -38,8 +38,8 @@ class Route extends ValueObject
      */
     public $access = self::ACCESS_PUBLIC;
 
-    public $readableMediaTypes = [];
-    public $writableMediaTypes = [];
+    public $requestMediaTypes = [];
+    public $responseMediaTypes = [];
 
     /**
      * @var array
@@ -155,8 +155,8 @@ class Route extends ValueObject
         if ($formats = $meta['format'] ?? false) {
             unset($meta['format']);
             $overrides = [
-                'Request' => Router::$readableMediaTypeOverrides,
-                'Response' => Router::$writableMediaTypeOverrides,
+                'Request' => Router::$requestMediaTypeOverrides,
+                'Response' => Router::$responseMediaTypeOverrides,
             ];
             $formats = explode(',', $formats);
             $formats = array_map($resolver, $formats);
@@ -166,7 +166,7 @@ class Route extends ValueObject
         if ($formats = $meta['response-format'] ?? false) {
             unset($meta['response-format']);
             $overrides = [
-                'Response' => Router::$writableMediaTypeOverrides,
+                'Response' => Router::$responseMediaTypeOverrides,
             ];
             $formats = explode(',', $formats);
             $formats = array_map($resolver, $formats);
@@ -175,22 +175,22 @@ class Route extends ValueObject
         if ($formats = $meta['request-format'] ?? false) {
             unset($meta['request-format']);
             $overrides = [
-                'Request' => Router::$readableMediaTypeOverrides,
+                'Request' => Router::$requestMediaTypeOverrides,
             ];
             $formats = explode(',', $formats);
             $formats = array_map($resolver, $formats);
             $route->setRequestMediaTypes(...$formats);
         }
-        if (empty($route->writableMediaTypes)) {
-            $route->writableMediaTypes = Router::$writableMediaTypes;
+        if (empty($route->responseMediaTypes)) {
+            $route->responseMediaTypes = Router::$responseMediaTypes;
         }
         if (empty($route->requestFormatMap)) {
             $route->requestFormatMap = Router::$requestFormatMap;
         } elseif (empty($route->requestFormatMap['default'])) {
             $route->requestFormatMap['default'] = array_values($route->requestFormatMap)[0];
         }
-        if (empty($route->readableMediaTypes)) {
-            $route->readableMediaTypes = Router::$readableMediaTypes;
+        if (empty($route->requestMediaTypes)) {
+            $route->requestMediaTypes = Router::$requestMediaTypes;
         }
         if (empty($route->responseFormatMap)) {
             $route->responseFormatMap = Router::$responseFormatMap;
@@ -213,13 +213,13 @@ class Route extends ValueObject
     public function setRequestMediaTypes(string ...$types): void
     {
         Router::_setMediaTypes(RequestMediaTypeInterface::class, $types,
-            $this->requestFormatMap, $this->readableMediaTypes);
+            $this->requestFormatMap, $this->requestMediaTypes);
     }
 
     public function setResponseMediaTypes(string ...$types): void
     {
         Router::_setMediaTypes(ResponseMediaTypeInterface::class, $types,
-            $this->responseFormatMap, $this->writableMediaTypes);
+            $this->responseFormatMap, $this->responseMediaTypes);
     }
 
     public function addParameter(Param $parameter)
