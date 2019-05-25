@@ -96,8 +96,8 @@ class Route extends ValueObject
             'className' => ['action', 0],
             'methodName' => ['action', 1],
             'accessLevel' => 'access',
-            'summary' => 'description',
-            'description' => 'longDescription',
+            'description' => 'summary',
+            'longDescription' => 'description',
             //----- REMOVE -----------
             'metadata' => true,
             'arguments' => true,
@@ -132,12 +132,8 @@ class Route extends ValueObject
         $params = $extract($meta, 'param', []);
         $classes = $extract($meta, 'class', []);
         $scope = $extract($meta, 'scope', []);
-        foreach ($transform as $key => $value) {
-            unset($meta[$key]);
-        }
         $route = new static();
         $route->applyProperties($args);
-        $route->applyProperties($meta);
         $overrides = [];
         $resolver = function ($value) use ($scope, &$overrides) {
             $value = ClassName::resolve(trim($value), $scope);
@@ -181,6 +177,10 @@ class Route extends ValueObject
             $formats = array_map($resolver, $formats);
             $route->setRequestMediaTypes(...$formats);
         }
+        foreach ($transform as $key => $value) {
+            unset($meta[$key]);
+        }
+        $route->applyProperties($meta);
         if (empty($route->responseMediaTypes)) {
             $route->responseMediaTypes = Router::$responseMediaTypes;
         }
