@@ -12,10 +12,10 @@ use ReflectionMethod;
 
 class Route extends ValueObject
 {
-    const PUBLIC = 0;
-    const HYBRID = 1;
-    const PROTECTED_BY_COMMENT = 2;
-    const PROTECTED_METHOD = 3;
+    const ACCESS_PUBLIC = 0;
+    const ACCESS_HYBRID = 1;
+    const ACCESS_PROTECTED_BY_COMMENT = 2;
+    const ACCESS_PROTECTED_METHOD = 3;
     /**
      * @var string target uri
      */
@@ -36,7 +36,7 @@ class Route extends ValueObject
     /**
      * @var int access level
      */
-    public $access = self::PUBLIC;
+    public $access = self::ACCESS_PUBLIC;
 
     public $readableMediaTypes = [];
     public $writableMediaTypes = [];
@@ -284,7 +284,7 @@ class Route extends ValueObject
     {
         $action = $this->action;
         switch ($access) {
-            case self::PROTECTED_METHOD:
+            case self::ACCESS_PROTECTED_METHOD:
                 $object = $maker($action[0]);
                 $reflectionMethod = new ReflectionMethod(
                     $object,

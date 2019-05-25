@@ -869,10 +869,10 @@ class Router
      */
     public static function verifyAccess(Route $route, $authenticated)
     {
-        if ($route->access <= Route::HYBRID) {
+        if ($route->access <= Route::ACCESS_HYBRID) {
             return true;
         }
-        if (!$authenticated && $route->access > Route::HYBRID) {
+        if (!$authenticated && $route->access > Route::ACCESS_HYBRID) {
             return false;
         }
         /** @var AccessControlInterface $class */
