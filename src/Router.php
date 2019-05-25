@@ -1040,18 +1040,20 @@ class Router
                                     $child['contentType'] = get_class($pc);
                                 }
                             }
+                        } elseif (is_numeric($p)) {
+                            $child['type'] = is_float($p) ? 'float' : 'int';
                         }
                     }
-                    $child += [
-                        'type' => isset(static::$fieldTypesByName[$child['name']])
+                    if (!isset($child['type'])) {
+                        $child['type'] = isset(static::$fieldTypesByName[$child['name']])
                             ? static::$fieldTypesByName[$child['name']]
-                            : 'string',
-                        'label' => Text::title($child['name'])
-                    ];
-                    isset($child[$dataName])
-                        ? $child[$dataName] += ['required' => true]
-                        : $child[$dataName]['required'] = true;
-                    if ($prop->class != $className && $qualified = ClassName::resolve($child['type'], $scope)) {
+                            : 'string';
+                    }
+                    if (!isset($child['label'])) {
+                        $child['label'] = Text::title($child['name']);
+                    }
+                    $child[$dataName]['required'] = $child[$dataName]['required'] ?? true;
+                    if ($child['type'] != $className && $qualified = ClassName::resolve($child['type'], $scope)) {
                         list($child['type'], $child['children'])
                             = static::getTypeAndModel(new ReflectionClass($qualified), $scope);
                     } elseif (($contentType = $child[$dataName]['type'] ?? false) &&
