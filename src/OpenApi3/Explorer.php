@@ -231,7 +231,8 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
     private function parameters(Route $route)
     {
         $parameters = $route->filterParams(false);
-        $body = array_values($route->filterParams(true));
+        $body = $route->filterParams(true);
+        $bodyValues = array_values($body);
         $r = array();
         $requestBody = null;
         foreach ($parameters as $param) {
@@ -239,10 +240,10 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
         }
         if (!empty($body)) {
             if (
-                1 == count($body) &&
-                (static::$allowScalarValueOnRequestBody || !empty($body[0]->children))
+                1 == count($bodyValues) &&
+                (static::$allowScalarValueOnRequestBody || !empty($bodyValues[0]->children))
             ) {
-                $requestBody = $this->requestBody($route, $body[0]);
+                $requestBody = $this->requestBody($route, $bodyValues[0]);
             } else {
                 //lets group all body parameters under a generated model name
                 $name = $this->modelName($route);
@@ -251,8 +252,8 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
                  * @var string $name
                  * @var Param $child
                  */
-                foreach ($body as $name => $child) {
-                    $children[$name] = $child->jsonSerialize();
+                foreach ($body as $cname => $child) {
+                    $children[$cname] = $child->jsonSerialize();
                 }
                 $requestBody = $this->requestBody($route, Param::__set_state([
                     'name' => $name,
