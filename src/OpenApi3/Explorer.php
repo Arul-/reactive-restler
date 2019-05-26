@@ -512,7 +512,7 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
     {
         $schemes = [];
         foreach (Router::$authClasses as $class) {
-            if (class_implements($class)[ExplorableAuthenticationInterface::class]) {
+            if (class_implements($class)[ExplorableAuthenticationInterface::class] ?? false) {
                 $schemes[ClassName::short($class)] = (object)$class::scheme()->toArray();
             }
         }
