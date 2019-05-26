@@ -33,4 +33,27 @@ trait SelectivePathsTrait
     {
         static::$includedPaths = $excluded;
     }
+
+    static function isPathSelected(string $path): bool
+    {
+        $notInPath = true;
+        /** @var SelectivePathsInterface $class */
+        foreach (static::getIncludedPaths() as $include) {
+            if (empty($include) || 0 === strpos($path, $include)) {
+                $notInPath = false;
+                break;
+            }
+        }
+        if ($notInPath) {
+            return false;
+        }
+        foreach (static::getExcludedPaths() as $exclude) {
+            if (empty($exclude) && empty($path)) {
+                return false;
+            } elseif (0 === strpos($path, $exclude)) {
+                return false;
+            }
+        }
+        return true;
+    }
 }

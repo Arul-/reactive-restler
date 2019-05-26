@@ -30,4 +30,6 @@ interface SelectivePathsInterface
      * @private
      */
     static function getExcludedPaths(): array;
+
+    static function isPathSelected(string $path): bool;
 }

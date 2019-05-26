@@ -20,7 +20,7 @@ class AccessControl implements AccessControlInterface, SelectivePathsInterface
      * @param ServerRequestInterface $request
      * @param array $responseHeaders
      * @return bool
-     * @throws HttpException
+     * @throws HttpException 401
      */
     public function _isAllowed(ServerRequestInterface $request, array &$responseHeaders = []): bool
     {
