@@ -850,7 +850,7 @@ class Router
                     $hash = "$httpMethod " . $route->url;
                     if (!isset($filter[$hash])) {
                         $route->httpMethod = $httpMethod;
-                        $map[$route->rules['resourcePath']][] = [
+                        $map[$route->resourcePath][] = [
                             'access' => static::verifyAccess($route, $authenticated),
                             'route' => $route,
                             'hash' => $hash
