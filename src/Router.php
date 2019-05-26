@@ -2,20 +2,21 @@
 
 
 use Exception;
-use Luracast\Restler\Contracts\{
-    AccessControlInterface,
+use Luracast\Restler\Contracts\{AccessControlInterface,
     AuthenticationInterface,
     FilterInterface,
     ProvidesMultiVersionApiInterface,
     RequestMediaTypeInterface,
     ResponseMediaTypeInterface,
-    UsesAuthenticationInterface
-};
+    SelectivePathsInterface,
+    UsesAuthenticationInterface};
 use Luracast\Restler\Data\Param;
 use Luracast\Restler\Data\Route;
 use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\MediaTypes\Json;
 use Luracast\Restler\Utils\{ClassName, CommentParser, Text, Type};
+use Psr\Container\ContainerInterface;
+use Psr\Http\Message\ServerRequestInterface;
 use ReflectionClass;
 use ReflectionMethod;
 use ReflectionProperty;
@@ -794,6 +795,14 @@ class Router
         );
         $route = Route::parse($call);
         $route->httpMethod = $httpMethod;
+        foreach (static::$authClasses as $authClass) {
+            if (class_implements($authClass, SelectivePathsInterface::class) ?? false) {
+                if (!$authClass::isPathSelected($route->path)) {
+                    continue;
+                }
+            }
+            $route->authClasses[] = $authClass;
+        }
         //check for wildcard routes
         if (substr($path, -1, 1) == '*') {
             $path = rtrim($path, '/*');
@@ -808,18 +817,20 @@ class Router
     }
 
     /**
+     * @param ServerRequestInterface|null $request
+     * @param callable $maker
      * @param array $excludedPaths
      * @param array $excludedHttpMethods
      * @param int $version
-     * @param bool $authenticated
      * @return array
      * @throws HttpException
      */
     public static function findAll(
+        ServerRequestInterface $request,
+        callable $maker,
         array $excludedPaths = [],
         array $excludedHttpMethods = [],
-        $version = 1,
-        $authenticated = false
+        $version = 1
     ) {
         $map = [];
         $all = self::$routes["v$version"];
@@ -828,6 +839,7 @@ class Router
             $all = $all['*'] + $all;
             unset($all['*']);
         }
+        $verifiedAuthClasses = [];
         if (is_array($all)) {
             foreach ($all as $fullPath => $routes) {
                 /**
@@ -851,7 +863,9 @@ class Router
                     if (!isset($filter[$hash])) {
                         $route->httpMethod = $httpMethod;
                         $map[$route->resourcePath][] = [
-                            'access' => static::verifyAccess($route, $authenticated),
+                            'access' => static::verifyAccess(
+                                $route, $request, $maker, $verifiedAuthClasses
+                            ),
                             'route' => $route,
                             'hash' => $hash
                         ];
@@ -864,25 +878,53 @@ class Router
     }
 
     /**
-     * @param array $route
-     * @param $authenticated
+     * @param Route $route
+     * @param ServerRequestInterface $request
+     * @param callable $maker
      * @return bool
      * @throws HttpException
      */
-    public static function verifyAccess(Route $route, $authenticated)
-    {
+    public static function verifyAccess(
+        Route $route,
+        ServerRequestInterface $request,
+        callable $maker,
+        array &$verifiedClasses
+    ) {
         if ($route->access <= Route::ACCESS_HYBRID) {
             return true;
         }
-        if (!$authenticated && $route->access > Route::ACCESS_HYBRID) {
-            return false;
+        $ignore = [];
+        $authenticated = false;
+        foreach ($route->authClasses as $class) {
+            if (
+            $accessControl = class_implements($class)[AccessControlInterface::class] ?? false
+                || !array_key_exists($class, $verifiedClasses)
+            ) {
+                try {
+                    $req = $request->withMethod($route->httpMethod)
+                        ->withUri($request->getUri()->withPath($route->path));
+                    /** @var AuthenticationInterface $instance */
+                    $instance = $maker($class);
+                    $allowed = $instance->_isAllowed($req, $ignore);
+                    if ($accessControl) {
+                        return $allowed;
+                    }
+                    $verifiedClasses[$class] = $allowed;
+                } catch (HttpException $httpException) {
+                    if ($accessControl) {
+                        return 401 !== $httpException->getCode();
+                    }
+                    if (!array_key_exists($class, $verifiedClasses) || false == $verifiedClasses[$class]) {
+                        $verifiedClasses[$class] = 401 !== $httpException->getCode();
+                    }
+                }
+            }
+            if (true === $verifiedClasses[$class]) {
+                $authenticated = true;
+            }
         }
-        /** @var AccessControlInterface $class */
-        if (
-            $authenticated &&
-            $class = ClassName::get(AccessControlInterface::class) &&
-                $class::verifyAccess($route)
-        ) {
+        if (!($authenticated)
+            && $route->access > Route::ACCESS_HYBRID) {
             return false;
         }
         return true;

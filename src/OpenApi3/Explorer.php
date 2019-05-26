@@ -146,8 +146,8 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
     private function paths(string $basePath, int $version = 1)
     {
         $map = Router::findAll(
-            static::$excludedPaths + [$basePath],
-            static::$excludedHttpMethods, $version, $this->authenticated
+            $this->request, [$this->restler, 'make'], static::$excludedPaths + [$basePath],
+            static::$excludedHttpMethods, $version
         );
         $paths = array();
         foreach ($map as $path => $data) {

@@ -83,6 +83,9 @@ class Route extends ValueObject
         //],
     ];
 
+    public $authClasses = [];
+    public $path;
+
     /**
      * @var array
      */
