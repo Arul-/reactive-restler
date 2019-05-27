@@ -143,16 +143,16 @@ class Html extends MediaType implements ResponseMediaTypeInterface
             $data->baseUrl = $this->restler->baseUrl;
             $data->basePath = $data->baseUrl->getPath();
             $data->currentPath = $this->restler->path;
-            $api = $data->api = $this->restler->apiMethodInfo;
-            $metadata = $api->metadata;
+            $api = $data->api = $this->restler->route;
+            $metadata = $api;
             $view = $success ? 'view' : 'errorView';
             $value = false;
-            if ($this->parseViewMetadata && isset($metadata[$view])) {
-                if (is_array($metadata[$view])) {
-                    $this->html['view'] = $metadata[$view]['description'];
-                    $value = $metadata[$view]['properties']['value'];
+            if ($this->parseViewMetadata && isset($metadata->{$view})) {
+                if (is_array($metadata->{$view})) {
+                    $this->html['view'] = $metadata->{$view}['description'];
+                    $value = $metadata->{$view}['properties']['value'];
                 } else {
-                    $this->html['view'] = $metadata[$view];
+                    $this->html['view'] = $metadata->{$view};
                 }
             } elseif (!$this->html['view']) {
                 $file = explode('/', $this->restler->path);
