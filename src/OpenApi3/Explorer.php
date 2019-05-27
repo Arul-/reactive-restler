@@ -15,13 +15,13 @@ use Luracast\Restler\Utils\{ClassName, PassThrough, Text};
 use Psr\Http\Message\ServerRequestInterface;
 use stdClass;
 
-class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationInterface
+class Explorer implements ProvidesMultiVersionApiInterface
 {
     const SWAGGER = '3.0.0';
     public static $infoClass = Info::class;
     public static $excludedPaths = ['explorer', '_'];
     public static $excludedHttpMethods = ['OPTIONS'];
-    public static $hideProtected = true;
+    public static $hideProtected = false;
     public static $allowScalarValueOnRequestBody = false;
 
     protected static $prefixes = [
@@ -32,7 +32,6 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
         'patch' => 'modify',
         'delete' => 'remove',
     ];
-    protected $authenticated = false;
 
     protected $models = [];
     protected $requestBodies = [];
@@ -525,10 +524,5 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
     public static function getMaximumSupportedVersion(): int
     {
         return Router::$maximumVersion;
-    }
-
-    public function _setAuthenticationStatus(bool $isAuthenticated = false, bool $isAuthFinished = false)
-    {
-        $this->authenticated = $isAuthenticated;
     }
 }
