@@ -189,28 +189,9 @@ class Explorer implements ProvidesMultiVersionApiInterface
         $r->summary = $route->summary ?? '';
         $r->description = $route->description ?? '';
         $r->responses = $this->responses($route);
-        /*
-        $this->setType(
-            $r,
-            new Param($m['return'] ?? [])
-        );
-        if (is_null($r->type) || 'mixed' == $r->type) {
-            $r->type = 'array';
-        } elseif ($r->type == 'null') {
-            $r->type = 'void';
-        } elseif (Text::contains($r->type, '|')) {
-            $r->type = 'array';
+        if (property_exists($route, 'deprecated')) {
+            $r->deprecated = true;
         }
-        */
-        //TODO: add $r->authorizations
-        //A list of authorizations required to execute this operation. While not mandatory, if used, it overrides
-        //the value given at the API Declaration's authorizations. In order to completely remove API Declaration's
-        //authorizations completely, an empty object ({}) may be applied.
-        //TODO: add $r->produces
-        //TODO: add $r->consumes
-        //A list of MIME types this operation can produce/consume. This is overrides the global produces definition at the root of the API Declaration. Each string value SHOULD represent a MIME type.
-        //TODO: add $r->deprecated
-        //Declares this operation to be deprecated. Usage of the declared operation should be refrained. Valid value MUST be either "true" or "false". Note: This field will change to type boolean in the future.
         return $r;
     }
 
