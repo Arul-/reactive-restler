@@ -796,7 +796,7 @@ class Router
         $route = Route::parse($call);
         $route->httpMethod = $httpMethod;
         foreach (static::$authClasses as $authClass) {
-            if (class_implements($authClass, SelectivePathsInterface::class) ?? false) {
+            if (class_implements($authClass)[SelectivePathsInterface::class] ?? false) {
                 if (!$authClass::isPathSelected($route->path)) {
                     continue;
                 }
