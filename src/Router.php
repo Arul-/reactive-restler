@@ -904,7 +904,7 @@ class Router
                     $req = $request->withMethod($route->httpMethod)
                         ->withUri($request->getUri()->withPath($route->path));
                     /** @var AuthenticationInterface $instance */
-                    $instance = $maker($class);
+                    $instance = $maker($class, $route, true);
                     $allowed = $instance->_isAllowed($req, $ignore);
                     if ($accessControl) {
                         return $allowed;
