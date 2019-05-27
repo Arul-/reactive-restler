@@ -70,6 +70,14 @@ class ResetForTests
 try {
     Router::setOverridingResponseMediaTypes(Json::class, Xml::class, Html::class);
     Router::setOverridingRequestMediaTypes(Json::class, Upload::class);
+    SimpleAuth::setIncludedPaths('examples/_005_protected_api');
+    Router::addAuthenticator(SimpleAuth::class, 'examples/_005_protected_api/simpleauth');
+    KeyAuth::setIncludedPaths('examples/_009_rate_limiting');
+    Router::addAuthenticator(KeyAuth::class, 'examples/_009_rate_limiting/keyauth');
+    AccessControl::setIncludedPaths('examples/_010_access_control');
+    Router::addAuthenticator(AccessControl::class, 'examples/_010_access_control/accesscontrol');
+    RateLimiter::setIncludedPaths('examples/_009_rate_limiting');
+    Router::setFilters(RateLimiter::class);
     Router::mapApiClasses([
         //clean up db for tests
         '__cleanup_db' => ResetForTests::class,
@@ -100,15 +108,9 @@ try {
         //Explorer
         'explorer' => Explorer::class,
     ]);
-    SimpleAuth::setIncludedPaths('examples/_005_protected_api');
-    Router::addAuthenticator(SimpleAuth::class, 'examples/_005_protected_api/simpleauth');
-    KeyAuth::setIncludedPaths('examples/_009_rate_limiting');
-    Router::addAuthenticator(KeyAuth::class, 'examples/_009_rate_limiting/keyauth');
-    AccessControl::setIncludedPaths('examples/_010_access_control');
-    Router::addAuthenticator(AccessControl::class, 'examples/_010_access_control/accesscontrol');
-    Router::setFilters(RateLimiter::class);
-    $cache =  new HumanReadableCache();
+    $cache = new HumanReadableCache();
     $cache->set('route', Router::toArray());
+    $cache->set('models', Router::$models);
 } catch (Throwable $t) {
     die($t->getMessage());
 }
