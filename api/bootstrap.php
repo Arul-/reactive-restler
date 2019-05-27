@@ -76,6 +76,8 @@ try {
     Router::addAuthenticator(KeyAuth::class, 'examples/_009_rate_limiting/keyauth');
     AccessControl::setIncludedPaths('examples/_010_access_control');
     Router::addAuthenticator(AccessControl::class, 'examples/_010_access_control/accesscontrol');
+    Router::addAuthenticator(Server::class, 'examples/_015_oauth2_server/server');
+
     RateLimiter::setIncludedPaths('examples/_009_rate_limiting');
     Router::setFilters(RateLimiter::class);
     Router::mapApiClasses([

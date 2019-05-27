@@ -2,7 +2,10 @@
 
 namespace Auth;
 
-use Luracast\Restler\Contracts\AuthenticationInterface;
+use Luracast\Restler\Contracts\ExplorableAuthenticationInterface;
+use Luracast\Restler\OpenApi3\Security\AuthorizationCode as AuthorizationCodeFlow;
+use Luracast\Restler\OpenApi3\Security\OAuth2;
+use Luracast\Restler\OpenApi3\Security\Scheme;
 use OAuth2\Convert;
 use OAuth2\GrantType\AuthorizationCode;
 use OAuth2\GrantType\UserCredentials;
@@ -20,7 +23,7 @@ use Psr\Http\Message\ServerRequestInterface;
  * @package OAuth2
  *
  */
-class Server implements AuthenticationInterface
+class Server implements ExplorableAuthenticationInterface
 {
     /**
      * @var OAuth2Server
@@ -153,5 +156,17 @@ class Server implements AuthenticationInterface
     {
         $request = Convert::fromPSR7($request);
         return self::$server->verifyResourceRequest($request);
+    }
+
+    public static function scheme(): Scheme
+    {
+        /** @var AuthorizationCode $g1 */
+        $g1 = static::$server->getGrantType('authorization_code');
+        return new OAuth2(new AuthorizationCodeFlow(
+            '/restler4/examples/_015_oauth2_server/authorize',
+            '/restler4/examples/_015_oauth2_server/grant',
+            '/restler4/examples/_015_oauth2_server/grant',
+            []
+        ));
     }
 }
