@@ -97,6 +97,8 @@ class Explorer implements ProvidesMultiVersionApiInterface, UsesAuthenticationIn
         $filename = str_replace(array('../', './', '\\', '..', '.php'), '', $filename);
         if (empty($filename)) {
             $filename = 'index.html';
+        } elseif ('oauth2-redirect' == $filename) {
+            $filename .= '.html';
         }
         $file = __DIR__ . '/client/' . $filename;
         return PassThrough::file($file, $this->request->getHeaderLine('If-Modified-Since'));
