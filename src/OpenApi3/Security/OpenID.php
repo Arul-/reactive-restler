@@ -6,7 +6,7 @@ namespace Luracast\Restler\OpenApi3\Security;
 
 class OpenID extends Scheme
 {
-    protected $type = 'openIdConnect';
+    protected $type = Scheme::TYPE_OPEN_ID_CONNECT;
     /**
      * @var string
      */
