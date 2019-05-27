@@ -183,14 +183,12 @@ class Explorer implements ProvidesMultiVersionApiInterface
         if (is_null($r->requestBody)) {
             unset($r->requestBody);
         }
-
+        foreach ($route->authClasses as $authClass) {
+            $r->security[][$authClass] = [];
+        }
         $r->summary = $route->summary ?? '';
         $r->description = $route->description ?? '';
         $r->responses = $this->responses($route);
-        //TODO: avoid hard coding. Properly detect security
-        if ($route->access) {
-            $r->security = array(array('api_key' => array()));
-        }
         /*
         $this->setType(
             $r,
@@ -220,7 +218,7 @@ class Explorer implements ProvidesMultiVersionApiInterface
     {
         $c = (object)[
             'schemas' => new stdClass(),
-            'requestBodies' => $this->requestBodies,
+            'requestBodies' => (object)$this->requestBodies,
             'securitySchemes' => $this->securitySchemes(),
         ];
         foreach ($this->models as $type => $model) {
