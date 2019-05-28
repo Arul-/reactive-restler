@@ -3,7 +3,6 @@
 namespace Luracast\Restler\Utils;
 
 use Exception;
-use Luracast\Restler\Utils\Text;
 use Luracast\Restler\Exceptions\HttpException;
 
 /**
@@ -47,11 +46,11 @@ class CommentParser
     /**
      * @var array annotations that support array value
      */
-    public static $allowsArrayValue = array(
+    public static $allowsArrayValue = [
         'choice' => true,
         'select' => true,
         'properties' => true,
-    );
+    ];
 
     /**
      * character sequence used to escape \@
@@ -68,7 +67,7 @@ class CommentParser
      *
      * @var array
      */
-    private $_data = array();
+    private $_data = [];
 
     /**
      * Parse the comment and extract the data.
@@ -125,18 +124,20 @@ class CommentParser
     {
         //to use @ as part of comment we need to
         $comment = str_replace(
-            array(self::escapedCommendEnd, self::escapedAtChar),
-            array('*/', '@'),
+            [self::escapedCommendEnd, self::escapedAtChar],
+            ['*/', '@'],
             $comment);
 
-        $description = array();
-        $longDescription = array();
-        $params = array();
+        $description = [];
+        $longDescription = [];
+        $params = [];
 
         $mode = 0; // extract short description;
         $comments = preg_split("/(\r?\n)/", $comment);
         // remove first blank line;
-        array_shift($comments);
+        if (empty($comments[0])) {
+            array_shift($comments);
+        }
         $addNewline = false;
         foreach ($comments as $line) {
             $line = trim($line);
@@ -192,7 +193,7 @@ class CommentParser
         }
         foreach ($params as $key => $line) {
             list(, $param, $value) = preg_split('/\@|\s/', $line, 3)
-            + array('', '', '');
+            + ['', '', ''];
             list($value, $embedded) = $this->parseEmbeddedData($value);
             $value = array_filter(preg_split('/\s+/msu', $value), 'strlen');
             $this->parseParam($param, $value, $embedded);
@@ -255,25 +256,25 @@ class CommentParser
         }
         if (!empty($embedded)) {
             if (is_string($value)) {
-                $value = array('description' => $value);
+                $value = ['description' => $value];
             }
             $value[self::$embeddedDataName] = $embedded;
         }
         if (empty ($data[$param])) {
             if ($allowMultiple) {
-                $data[$param] = array(
-                    $value
-                );
+                $data[$param] = [
+                    $value,
+                ];
             } else {
                 $data[$param] = $value;
             }
         } elseif ($allowMultiple) {
             $data[$param][] = $value;
         } elseif ($param == 'param') {
-            $arr = array(
+            $arr = [
                 $data[$param],
-                $value
-            );
+                $value,
+            ];
             $data[$param] = $arr;
         } else {
             if (!is_string($value) && isset($value[self::$embeddedDataName])
@@ -283,7 +284,7 @@ class CommentParser
                     += $data[$param][self::$embeddedDataName];
             }
             if (!is_array($data[$param])) {
-                $data[$param] = array('description' => (string)$data[$param]);
+                $data[$param] = ['description' => (string)$data[$param]];
             }
             if (is_array($value)) {
                 $data[$param] = $value + $data[$param];
@@ -301,7 +302,7 @@ class CommentParser
      */
     private function parseEmbeddedData($subject)
     {
-        $data = array();
+        $data = [];
 
         //parse {@pattern } tags specially
         while (preg_match('|(?s-m)({@pattern (/.+/[imsxuADSUXJ]*)})|', $subject, $matches)) {
@@ -365,7 +366,7 @@ class CommentParser
             }
 
         }
-        return array($subject, $data);
+        return [$subject, $data];
     }
 
     private function formatThrows(array $value)
@@ -410,15 +411,15 @@ class CommentParser
             $param = 'Unknown';
         }
         $value = implode(' ', $value);
-        return array(
+        return [
             ltrim($param, '\\'),
-            array('description' => $value)
-        );
+            ['description' => $value],
+        ];
     }
 
     private function formatAuthor(array $value)
     {
-        $r = array();
+        $r = [];
         $email = end($value);
         if ($email{0} == '<') {
             $email = substr($email, 1, -1);
@@ -432,16 +433,16 @@ class CommentParser
     private function formatReturn(array $value)
     {
         $data = explode('|', array_shift($value));
-        $r = array(
-            'type' => count($data) == 1 ? $data[0] : $data
-        );
+        $r = [
+            'type' => count($data) == 1 ? $data[0] : $data,
+        ];
         $r['description'] = implode(' ', $value);
         return $r;
     }
 
     private function formatParam(array $value)
     {
-        $r = array();
+        $r = [];
         $data = array_shift($value);
         if (empty($data)) {
             $r['type'] = 'mixed';
@@ -469,7 +470,7 @@ class CommentParser
 
     private function formatVar(array $value)
     {
-        $r = array();
+        $r = [];
         $data = array_shift($value);
         if (empty($data)) {
             $r['type'] = 'mixed';
