@@ -28,7 +28,7 @@ class Convert
      *
      * For example
      *
-     * when Object::$separatorChar = '.';
+     * when Convert::$separatorChar = '.';
      *
      * array('my.object'=>true) will result in
      *
