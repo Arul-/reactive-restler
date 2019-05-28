@@ -674,8 +674,13 @@ class Router
         $version = 1,
         array $data = []
     ) {
-        $p = static::$routes["v$version"];
-        if (!$p) {
+        if (empty(static::$routes)) {
+            throw new HttpException(
+                500,
+                'No routes defined. Please call `Router::mapApiClasses` or `Router::addApi` first.'
+            );
+        }
+        if (!$p = static::$routes["v$version"] ?? false) {
             throw new HttpException(
                 404,
                 $version == 1 ? '' : "Version $version is not supported"
