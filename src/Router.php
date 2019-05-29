@@ -1100,14 +1100,15 @@ class Router
                         $child['label'] = Text::title($child['name']);
                     }
                     $child[$dataName]['required'] = $child[$dataName]['required'] ?? true;
-                    if ($child['type'] != $className && $qualified = ClassName::resolve($child['type'], $scope)) {
+                    $childScope = static::scope($class);
+                    if ($child['type'] != $className && $qualified = ClassName::resolve($child['type'], $childScope)) {
                         list($child['type'], $child['children'])
-                            = static::getTypeAndModel(new ReflectionClass($qualified), $scope);
+                            = static::getTypeAndModel(new ReflectionClass($qualified), $childScope);
                     } elseif (($contentType = $child[$dataName]['type'] ?? false) &&
-                        ($qualified = ClassName::resolve($contentType, $scope))
+                        ($qualified = ClassName::resolve($contentType, $childScope))
                     ) {
                         list($child['contentType'], $child['children'])
-                            = static::getTypeAndModel(new ReflectionClass($qualified), $scope);
+                            = static::getTypeAndModel(new ReflectionClass($qualified), $childScope);
                     }
                     $children[$name] = $child;
                 }
