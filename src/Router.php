@@ -106,6 +106,8 @@ class Router
     protected static $routes = [];
     public static $models = [];
 
+    private static $parsedScopes = [];
+
     public static function setApiVersion(int $maximum = 1, int $minimum = 1)
     {
         static::$maximumVersion = $maximum;
@@ -1187,12 +1189,15 @@ class Router
 
     public static function scope(ReflectionClass $class)
     {
+        $file = $class->getFileName();
+        if ($scope = static::$parsedScopes[$file] ?? false) {
+            return $scope;
+        }
         $namespace = $class->getNamespaceName();
         $imports = [
             '*' => empty($namespace) ? '' : $namespace . '\\'
         ];
-        $file = file_get_contents($class->getFileName());
-        $tokens = token_get_all($file);
+        $tokens = token_get_all(file_get_contents($file));
         $namespace = '';
         $alias = '';
         $reading = false;
@@ -1239,6 +1244,7 @@ class Router
                 $last = $token[0];
             }
         }
+        static::$parsedScopes[$file] = $imports;
         return $imports;
     }
 }
