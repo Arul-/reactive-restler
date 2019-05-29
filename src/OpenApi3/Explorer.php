@@ -184,7 +184,7 @@ class Explorer implements ProvidesMultiVersionApiInterface
             unset($r->requestBody);
         }
         foreach ($route->authClasses as $authClass) {
-            $r->security[][$authClass] = [];
+            $r->security[][ClassName::short($authClass)] = [];
         }
         $r->summary = $route->summary ?? '';
         $r->description = $route->description ?? '';
