@@ -17,30 +17,30 @@ class Info
         $swaggerVersion = (int)$swaggerVersion;
         switch ($swaggerVersion) {
             case 1:
-                return [
+                return array_filter([
                     'title' => static::$title,
                     'description' => static::$description,
                     'termsOfServiceUrl' => static::$termsOfServiceUrl,
                     'contact' => static::$contactEmail,
                     'license' => static::$license,
                     'licenseUrl' => static::$licenseUrl,
-                ];
+                ]);
             case 2:
             case 3:
-                return [
+                return array_filter([
                     'title' => static::$title,
                     'description' => static::$description,
                     'termsOfService' => static::$termsOfServiceUrl,
-                    'contact' => [
+                    'contact' => array_filter([
                         'name' => static::$contactName,
                         'email' => static::$contactEmail,
                         'url' => static::$contactUrl,
-                    ],
-                    'license' => [
+                    ]),
+                    'license' => array_filter([
                         'name' => static::$license,
                         'url' => static::$licenseUrl,
-                    ],
-                ];
+                    ]),
+                ]);
         }
         return [];
     }
