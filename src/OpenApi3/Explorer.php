@@ -23,6 +23,7 @@ class Explorer implements ProvidesMultiVersionApiInterface
     public static $excludedHttpMethods = ['OPTIONS'];
     public static $hideProtected = false;
     public static $allowScalarValueOnRequestBody = false;
+    public static $servers = [];
 
     protected static $prefixes = [
         'get' => 'retrieve',
@@ -135,7 +136,9 @@ class Explorer implements ProvidesMultiVersionApiInterface
      */
     private function servers()
     {
-        return [['url' => (string)$this->restler->baseUrl, 'description' => 'server']];
+        return empty(static::$servers)
+            ? [['url' => (string)$this->restler->baseUrl, 'description' => 'server']]
+            : static::$servers;
     }
 
     /**
