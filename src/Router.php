@@ -691,6 +691,7 @@ class Router
         $status = 404;
         $message = null;
         $methods = [];
+        $later = [];
         if (isset($p[$path][$httpMethod])) {
             //================== static routes ==========================
             return static::populate($p[$path][$httpMethod], $data);
@@ -700,7 +701,11 @@ class Router
                 return strlen($b) - strlen($a);
             });
             foreach ($p['*'] as $key => $value) {
-                if (strpos($path, $key) === 0 && isset($value[$httpMethod])) {
+                if (empty($key)) {
+                    if ($route = $value[$httpMethod] ?? false) {
+                        $later[$httpMethod] = $route;
+                    }
+                } elseif (strpos($path, $key) === 0 && isset($value[$httpMethod])) {
                     //path found, convert rest of the path to parameters
                     $path = substr($path, strlen($key) + 1);
                     /** @var Route $route */
@@ -757,6 +762,10 @@ class Router
             }
         }
         if ($status == 404) {
+            if ($route = $later[$httpMethod] ?? false) {
+                $route->apply(explode('/', $path));
+                return $route;
+            }
             //check if other methods are allowed
             if (isset($p[$path])) {
                 $status = 405;
