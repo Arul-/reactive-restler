@@ -823,6 +823,11 @@ class Router
         }
     }
 
+    public static function addRoute(Route $route, int $version = 1)
+    {
+        static::$routes["v$version"][$route->path][$route->httpMethod] = $route;
+    }
+
     /**
      * @param ServerRequestInterface|null $request
      * @param callable $maker
