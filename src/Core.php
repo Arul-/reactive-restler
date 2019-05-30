@@ -695,27 +695,10 @@ abstract class Core
 
     private static function isPathSelected(string $class, string $path): bool
     {
-        if (isset(class_implements($class)[SelectivePathsInterface::class])) {
-            $notInPath = true;
-            /** @var SelectivePathsInterface $class */
-            foreach ($class::getIncludedPaths() as $include) {
-                if (empty($include) || 0 === strpos($path, $include)) {
-                    $notInPath = false;
-                    break;
-                }
-            }
-            if ($notInPath) {
-                return false;
-            }
-            foreach ($class::getExcludedPaths() as $exclude) {
-                if (empty($exclude) && empty($path)) {
-                    return false;
-                } elseif (0 === strpos($path, $exclude)) {
-                    return false;
-                }
-            }
+        if (!isset(class_implements($class)[SelectivePathsInterface::class])) {
+            return true;
         }
-        return true;
+        return $class::isPathSelected($path);
     }
 
     public function __get($name)
