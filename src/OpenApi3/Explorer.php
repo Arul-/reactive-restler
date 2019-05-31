@@ -17,26 +17,13 @@ use stdClass;
 
 class Explorer implements ProvidesMultiVersionApiInterface
 {
-    const SWAGGER = '3.0.0';
+    const OPEN_API_SPEC_VERSION = '3.0.0';
     public static $infoClass = Info::class;
     public static $excludedPaths = ['_'];
     public static $excludedHttpMethods = ['OPTIONS'];
     public static $hideProtected = false;
     public static $allowScalarValueOnRequestBody = false;
     public static $servers = [];
-
-    protected static $prefixes = [
-        'get' => 'retrieve',
-        'index' => 'list',
-        'post' => 'create',
-        'put' => 'update',
-        'patch' => 'modify',
-        'delete' => 'remove',
-    ];
-
-    protected $models = [];
-    protected $requestBodies = [];
-
     /**
      * @var array mapping PHP types to JS
      */
@@ -57,6 +44,16 @@ class Explorer implements ProvidesMultiVersionApiInterface
         'time' => 'string',
         'timestamp' => 'string',
     ];
+    protected static $prefixes = [
+        'get' => 'retrieve',
+        'index' => 'list',
+        'post' => 'create',
+        'put' => 'update',
+        'patch' => 'modify',
+        'delete' => 'remove',
+    ];
+    protected $models = [];
+    protected $requestBodies = [];
     /**
      * @var ServerRequestInterface
      */
@@ -75,6 +72,11 @@ class Explorer implements ProvidesMultiVersionApiInterface
         $this->request = $request;
         $this->restler = $restler;
         $this->route = $route;
+    }
+
+    public static function getMaximumSupportedVersion(): int
+    {
+        return Router::$maximumVersion;
     }
 
     /**
@@ -115,10 +117,10 @@ class Explorer implements ProvidesMultiVersionApiInterface
      * @return stdClass
      * @throws HttpException
      */
-    public function swagger()
+    public function docs()
     {
         $s = new stdClass();
-        $s->openapi = static::SWAGGER;
+        $s->openapi = static::OPEN_API_SPEC_VERSION;
 
         $r = $this->restler;
         $version = (string)$r->requestedApiVersion;
@@ -131,7 +133,7 @@ class Explorer implements ProvidesMultiVersionApiInterface
 
     private function info(int $version)
     {
-        $info = array_filter(call_user_func(static::$infoClass . '::format', static::SWAGGER));
+        $info = array_filter(call_user_func(static::$infoClass . '::format', static::OPEN_API_SPEC_VERSION));
         $info['version'] = (string)$version;
         return $info;
     }
@@ -153,7 +155,7 @@ class Explorer implements ProvidesMultiVersionApiInterface
      */
     private function paths(int $version = 1)
     {
-        $selfExclude = empty($this->route->path) ? ['', '{s0}', 'swagger'] : [$this->route->path];
+        $selfExclude = empty($this->route->path) ? ['', '{s0}', 'docs'] : [$this->route->path];
         $map = Router::findAll(
             $this->request, [$this->restler, 'make'], static::$excludedPaths + $selfExclude,
             static::$excludedHttpMethods, $version
@@ -203,17 +205,31 @@ class Explorer implements ProvidesMultiVersionApiInterface
         return $r;
     }
 
-    private function components()
+    private function operationId(Route $route)
     {
-        $c = (object)[
-            'schemas' => new stdClass(),
-            'requestBodies' => (object)$this->requestBodies,
-            'securitySchemes' => $this->securitySchemes(),
-        ];
-        foreach ($this->models as $type => $model) {
-            $c->schemas->{$type} = $model;
+        static $hash = array();
+        $id = $route->httpMethod . ' ' . $route->url;
+        if (isset($hash[$id])) {
+            return $hash[$id];
         }
-        return $c;
+        if (is_array($route->action) && 2 == count($route->action) && is_string($route->action[0])) {
+            $class = ClassName::short($route->action[0]);
+            $method = $route->action[1];
+            if (isset(static::$prefixes[$method])) {
+                $method = static::$prefixes[$method] . $class;
+            } else {
+                $method = str_replace(
+                    array_keys(static::$prefixes),
+                    array_values(static::$prefixes),
+                    $method
+                );
+                $method = lcfirst($class) . ucfirst($method);
+            }
+            $hash[$id] = $method;
+            return $method;
+        }
+        $hash[$id] = $id;
+        return $id;
     }
 
     private function parameters(Route $route)
@@ -253,20 +269,6 @@ class Explorer implements ProvidesMultiVersionApiInterface
             }
         }
         return [$r, $requestBody];
-    }
-
-    private function requestBody(Route $route, Param $param, $description = '')
-    {
-        $p = $this->parameter($param, $description);
-        $content = [];
-        foreach ($route->requestMediaTypes as $mime) {
-            $content[$mime] = ['schema' => $p->schema];
-            if (Xml::MIME === $mime) {
-                $content[$mime] += ['xml' => ['name' => Xml::$defaultTagName]];
-            }
-        }
-        $this->requestBodies[$param->type] = compact('content');
-        return (object)['$ref' => "#/components/requestBodies/{$param->type}"];
     }
 
     private function parameter(Param $param, $description = '')
@@ -311,82 +313,6 @@ class Explorer implements ProvidesMultiVersionApiInterface
         }
 
         return $p;
-    }
-
-    private function responses(Route $route)
-    {
-        $code = '200';
-        if (isset($route->status)) {
-            $code = $route->status;
-        }
-        $schema = new stdClass();
-        $content = [];
-        foreach ($route->responseMediaTypes as $mime) {
-            $content[$mime] = ['schema' => $schema];
-            if (Xml::MIME === $mime) {
-                $content[$mime] += ['xml' => ['name' => Xml::$defaultTagName]];
-            }
-        }
-        $r = array(
-            $code => array(
-                'description' => HttpException::$codes[$code] ?? 'Success',
-                'content' => $content
-            )
-        );
-        $return = $route->return;
-        if (!empty($return)) {
-            $this->setType($schema, $return);
-        }
-
-        if (is_array($throws = $route->throws ?? null)) {
-            foreach ($throws as $message) {
-                $r[$message['code']] = array('description' => $message['message']);
-            }
-        }
-
-        return $r;
-    }
-
-    private function model($type, array $children)
-    {
-        if (isset($this->models[$type])) {
-            return $this->models[$type];
-        }
-        $r = new stdClass();
-        $r->type = 'object';
-        $r->properties = array();
-        $required = array();
-        foreach ($children as $child) {
-            $info = Param::parse($child);
-            $p = new stdClass();
-            $this->setType($p, $info);
-            if (isset($child['description'])) {
-                $p->description = $child['description'];
-            }
-            if ($info->default) {
-                $p->defaultValue = $info->default;
-            }
-            if ($info->choice) {
-                $p->enum = $info->choice;
-            }
-            if ($info->min) {
-                $p->minimum = $info->min;
-            }
-            if ($info->max) {
-                $p->maximum = $info->max;
-            }
-            if ($info->required) {
-                $required[] = $info->name;
-            }
-            $r->properties[$info->name] = $p;
-        }
-        if (!empty($required)) {
-            $r->required = $required;
-        }
-        $r->xml = ['name' => $type];
-        $this->models[$type] = $r;
-
-        return $r;
     }
 
     private function setType(&$object, Type $param)
@@ -462,36 +388,112 @@ class Explorer implements ProvidesMultiVersionApiInterface
         }
     }
 
-    private function operationId(Route $route)
+    private function model($type, array $children)
     {
-        static $hash = array();
-        $id = $route->httpMethod . ' ' . $route->url;
-        if (isset($hash[$id])) {
-            return $hash[$id];
+        if (isset($this->models[$type])) {
+            return $this->models[$type];
         }
-        if (is_array($route->action) && 2 == count($route->action) && is_string($route->action[0])) {
-            $class = ClassName::short($route->action[0]);
-            $method = $route->action[1];
-            if (isset(static::$prefixes[$method])) {
-                $method = static::$prefixes[$method] . $class;
-            } else {
-                $method = str_replace(
-                    array_keys(static::$prefixes),
-                    array_values(static::$prefixes),
-                    $method
-                );
-                $method = lcfirst($class) . ucfirst($method);
+        $r = new stdClass();
+        $r->type = 'object';
+        $r->properties = array();
+        $required = array();
+        foreach ($children as $child) {
+            $info = Param::parse($child);
+            $p = new stdClass();
+            $this->setType($p, $info);
+            if (isset($child['description'])) {
+                $p->description = $child['description'];
             }
-            $hash[$id] = $method;
-            return $method;
+            if ($info->default) {
+                $p->defaultValue = $info->default;
+            }
+            if ($info->choice) {
+                $p->enum = $info->choice;
+            }
+            if ($info->min) {
+                $p->minimum = $info->min;
+            }
+            if ($info->max) {
+                $p->maximum = $info->max;
+            }
+            if ($info->required) {
+                $required[] = $info->name;
+            }
+            $r->properties[$info->name] = $p;
         }
-        $hash[$id] = $id;
-        return $id;
+        if (!empty($required)) {
+            $r->required = $required;
+        }
+        $r->xml = ['name' => $type];
+        $this->models[$type] = $r;
+
+        return $r;
+    }
+
+    private function requestBody(Route $route, Param $param, $description = '')
+    {
+        $p = $this->parameter($param, $description);
+        $content = [];
+        foreach ($route->requestMediaTypes as $mime) {
+            $content[$mime] = ['schema' => $p->schema];
+            if (Xml::MIME === $mime) {
+                $content[$mime] += ['xml' => ['name' => Xml::$defaultTagName]];
+            }
+        }
+        $this->requestBodies[$param->type] = compact('content');
+        return (object)['$ref' => "#/components/requestBodies/{$param->type}"];
     }
 
     private function modelName(Route $route)
     {
         return ucfirst($this->operationId($route)) . 'Model';
+    }
+
+    private function responses(Route $route)
+    {
+        $code = '200';
+        if (isset($route->status)) {
+            $code = $route->status;
+        }
+        $schema = new stdClass();
+        $content = [];
+        foreach ($route->responseMediaTypes as $mime) {
+            $content[$mime] = ['schema' => $schema];
+            if (Xml::MIME === $mime) {
+                $content[$mime] += ['xml' => ['name' => Xml::$defaultTagName]];
+            }
+        }
+        $r = array(
+            $code => array(
+                'description' => HttpException::$codes[$code] ?? 'Success',
+                'content' => $content
+            )
+        );
+        $return = $route->return;
+        if (!empty($return)) {
+            $this->setType($schema, $return);
+        }
+
+        if (is_array($throws = $route->throws ?? null)) {
+            foreach ($throws as $message) {
+                $r[$message['code']] = array('description' => $message['message']);
+            }
+        }
+
+        return $r;
+    }
+
+    private function components()
+    {
+        $c = (object)[
+            'schemas' => new stdClass(),
+            'requestBodies' => (object)$this->requestBodies,
+            'securitySchemes' => $this->securitySchemes(),
+        ];
+        foreach ($this->models as $type => $model) {
+            $c->schemas->{$type} = $model;
+        }
+        return $c;
     }
 
     private function securitySchemes()
@@ -503,10 +505,5 @@ class Explorer implements ProvidesMultiVersionApiInterface
             }
         }
         return (object)$schemes;
-    }
-
-    public static function getMaximumSupportedVersion(): int
-    {
-        return Router::$maximumVersion;
     }
 }
