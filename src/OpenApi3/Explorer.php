@@ -157,7 +157,9 @@ class Explorer implements ProvidesMultiVersionApiInterface
     {
         $selfExclude = empty($this->route->path) ? ['', '{s0}', 'docs'] : [$this->route->path];
         $map = Router::findAll(
-            $this->request, [$this->restler, 'make'], static::$excludedPaths + $selfExclude,
+            $this->request,
+            [$this->restler, 'make'],
+            array_merge(static::$excludedPaths, $selfExclude),
             static::$excludedHttpMethods, $version
         );
         $paths = array();
