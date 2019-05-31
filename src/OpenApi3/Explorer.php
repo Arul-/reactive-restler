@@ -19,7 +19,7 @@ class Explorer implements ProvidesMultiVersionApiInterface
 {
     const SWAGGER = '3.0.0';
     public static $infoClass = Info::class;
-    public static $excludedPaths = ['explorer', '_'];
+    public static $excludedPaths = ['_'];
     public static $excludedHttpMethods = ['OPTIONS'];
     public static $hideProtected = false;
     public static $allowScalarValueOnRequestBody = false;
@@ -37,6 +37,9 @@ class Explorer implements ProvidesMultiVersionApiInterface
     protected $models = [];
     protected $requestBodies = [];
 
+    /**
+     * @var array mapping PHP types to JS
+     */
     public static $dataTypeAlias = [
         //'string' => 'string',
         'int' => 'integer',
@@ -51,7 +54,6 @@ class Explorer implements ProvidesMultiVersionApiInterface
         'mixed' => 'string',
         'date' => ['string', 'date'],
         'datetime' => ['string', 'date-time'],
-
         'time' => 'string',
         'timestamp' => 'string',
     ];
@@ -60,40 +62,45 @@ class Explorer implements ProvidesMultiVersionApiInterface
      */
     private $request;
     /**
-     * @var PassThrough
-     */
-    private $passThrough;
-    /**
      * @var Core
      */
     private $restler;
     /**
-     * @var \Luracast\Restler\Data\ApiMethodInfo
+     * @var Route
      */
-    private $info;
+    private $route;
 
-    public function __construct(ServerRequestInterface $request, ApiMethodInfo $info, Core $restler)
+    public function __construct(ServerRequestInterface $request, Route $route, Core $restler)
     {
         $this->request = $request;
         $this->restler = $restler;
-        $this->info = $info;
+        $this->route = $route;
     }
 
     /**
      * Serve static files for explorer
-     * @url GET *
      * @throws HttpException
      */
     public function index()
     {
-        $base = rtrim($this->info->url, '*');
+        $base = $this->route->url;
         $path = $this->request->getUri()->getPath();
         if (!Text::contains($path, $base)) {
             //if not add and redirect
-            throw new Redirect((string)$this->request->getUri() . '/');
+            throw new Redirect((string)$this->request->getUri() . '/index.html');
         }
-        $args = func_get_args();
-        $filename = implode('/', $args);
+        return $this->get('index.html');
+    }
+
+    /**
+     * @param $filename
+     * @return \Psr\Http\Message\ResponseInterface
+     * @throws HttpException
+     *
+     * @url GET /{filename}
+     */
+    public function get($filename)
+    {
         $filename = str_replace(array('../', './', '\\', '..', '.php'), '', $filename);
         if (empty($filename)) {
             $filename = 'index.html';
@@ -117,9 +124,7 @@ class Explorer implements ProvidesMultiVersionApiInterface
         $version = (string)$r->requestedApiVersion;
         $s->info = $this->info($version);
         $s->servers = $this->servers();
-
-        $s->paths = $this->paths($s->servers[0]['url'], $version);
-
+        $s->paths = $this->paths($version);
         $s->components = $this->components();
         return $s;
     }
@@ -142,15 +147,15 @@ class Explorer implements ProvidesMultiVersionApiInterface
     }
 
     /**
-     * @param string $basePath
      * @param int $version
      * @return array
      * @throws HttpException
      */
-    private function paths(string $basePath, int $version = 1)
+    private function paths(int $version = 1)
     {
+        $selfExclude = empty($this->route->path) ? ['', '{s0}', 'swagger'] : [$this->route->path];
         $map = Router::findAll(
-            $this->request, [$this->restler, 'make'], static::$excludedPaths + [$basePath],
+            $this->request, [$this->restler, 'make'], static::$excludedPaths + $selfExclude,
             static::$excludedHttpMethods, $version
         );
         $paths = array();
@@ -379,8 +384,6 @@ class Explorer implements ProvidesMultiVersionApiInterface
             $r->required = $required;
         }
         $r->xml = ['name' => $type];
-        //TODO: add $r->subTypes https://github.com/wordnik/swagger-spec/blob/master/versions/1.2.md#527-model-object
-        //TODO: add $r->discriminator https://github.com/wordnik/swagger-spec/blob/master/versions/1.2.md#527-model-object
         $this->models[$type] = $r;
 
         return $r;
@@ -388,7 +391,6 @@ class Explorer implements ProvidesMultiVersionApiInterface
 
     private function setType(&$object, Type $param)
     {
-        //TODO: proper type management
         $type = ClassName::short($param->type);
         if ($param->type == 'array') {
             $object->type = 'array';
