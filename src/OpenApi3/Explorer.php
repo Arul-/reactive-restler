@@ -103,7 +103,7 @@ class Explorer implements ProvidesMultiVersionApiInterface
      */
     public function get($filename)
     {
-        $filename = str_replace(array('../', './', '\\', '..', '.php'), '', $filename);
+        $filename = str_replace(['../', './', '\\', '..', '.php'], '', $filename);
         if (empty($filename)) {
             $filename = 'index.html';
         } elseif ('oauth2-redirect' == $filename) {
@@ -162,7 +162,7 @@ class Explorer implements ProvidesMultiVersionApiInterface
             array_merge(static::$excludedPaths, $selfExclude),
             static::$excludedHttpMethods, $version
         );
-        $paths = array();
+        $paths = [];
         foreach ($map as $path => $data) {
             $access = $data[0]['access'];
             if (static::$hideProtected && !$access) {
@@ -189,7 +189,7 @@ class Explorer implements ProvidesMultiVersionApiInterface
         if (empty($base)) {
             $base = 'root';
         }
-        $r->tags = array($base);
+        $r->tags = [$base];
         [$r->parameters, $r->requestBody] = $this->parameters($route);
 
         if (is_null($r->requestBody)) {
@@ -209,7 +209,7 @@ class Explorer implements ProvidesMultiVersionApiInterface
 
     private function operationId(Route $route)
     {
-        static $hash = array();
+        static $hash = [];
         $id = $route->httpMethod . ' ' . $route->url;
         if (isset($hash[$id])) {
             return $hash[$id];
@@ -239,10 +239,10 @@ class Explorer implements ProvidesMultiVersionApiInterface
         $parameters = $route->filterParams(false);
         $body = $route->filterParams(true);
         $bodyValues = array_values($body);
-        $r = array();
+        $r = [];
         $requestBody = null;
         foreach ($parameters as $param) {
-            $r[] = $this->parameter($param);
+            $r[] = $this->parameter($param, $param->description ?? '');
         }
         if (!empty($body)) {
             if (
@@ -266,7 +266,7 @@ class Explorer implements ProvidesMultiVersionApiInterface
                     'type' => $name,
                     'from' => 'body',
                     'required' => true,
-                    'children' => $children
+                    'children' => $children,
                 ]));
             }
         }
@@ -280,7 +280,7 @@ class Explorer implements ProvidesMultiVersionApiInterface
             'in' => 'query',
             'description' => '',
             'required' => false,
-            'schema' => new stdClass()
+            'schema' => new stdClass(),
         ];
         //if (isset($info->rules['model'])) {
         //$info->type = $info->rules['model'];
@@ -293,7 +293,7 @@ class Explorer implements ProvidesMultiVersionApiInterface
                 $p->defaultValue = $param->default;
             }
             if ($param->choice) {
-                $p->enum = $param->choice;
+                $p->schema->enum = $param->choice;
             }
             if ($param->min) {
                 $p->minimum = $param->min;
@@ -310,7 +310,7 @@ class Explorer implements ProvidesMultiVersionApiInterface
         //$p->allowMultiple = false;
 
         if (isset($p->{'$ref'})) {
-            $p->schema = (object)array('$ref' => ($p->{'$ref'}));
+            $p->schema = (object)['$ref' => ($p->{'$ref'})];
             unset($p->{'$ref'});
         }
 
@@ -325,43 +325,43 @@ class Explorer implements ProvidesMultiVersionApiInterface
             if ($param->children) {
                 $contentType = ClassName::short($param->contentType);
                 $model = $this->model($contentType, $param->children);
-                $object->items = (object)array(
-                    '$ref' => "#/components/schemas/$contentType"
-                );
+                $object->items = (object)[
+                    '$ref' => "#/components/schemas/$contentType",
+                ];
             } elseif ($param->contentType && $param->contentType == 'associative') {
                 unset($param->contentType);
-                $this->model($param->type = 'Object', array(
-                    array(
+                $this->model($param->type = 'Object', [
+                    [
                         'name' => 'property',
                         'type' => 'string',
                         'default' => '',
                         'required' => false,
-                        'description' => ''
-                    )
-                ));
+                        'description' => '',
+                    ],
+                ]);
             } elseif ($param->contentType && $param->contentType != 'indexed') {
                 if (is_string($param->contentType) &&
                     $t = static::$dataTypeAlias[strtolower($param->contentType)] ?? null) {
                     if (is_array($t)) {
-                        $object->items = (object)array(
+                        $object->items = (object)[
                             'type' => $t[0],
                             'format' => $t[1],
-                        );
+                        ];
                     } else {
-                        $object->items = (object)array(
+                        $object->items = (object)[
                             'type' => $t,
-                        );
+                        ];
                     }
                 } else {
                     $contentType = ClassName::short($param->contentType);
-                    $object->items = (object)array(
-                        '$ref' => "#/components/schemas/$contentType"
-                    );
+                    $object->items = (object)[
+                        '$ref' => "#/components/schemas/$contentType",
+                    ];
                 }
             } else {
-                $object->items = (object)array(
-                    'type' => 'string'
-                );
+                $object->items = (object)[
+                    'type' => 'string',
+                ];
             }
         } elseif ($param->children) {
             $this->model($type, $param->children);
@@ -397,8 +397,8 @@ class Explorer implements ProvidesMultiVersionApiInterface
         }
         $r = new stdClass();
         $r->type = 'object';
-        $r->properties = array();
-        $required = array();
+        $r->properties = [];
+        $required = [];
         foreach ($children as $child) {
             $info = Param::parse($child);
             $p = new stdClass();
@@ -410,7 +410,7 @@ class Explorer implements ProvidesMultiVersionApiInterface
                 $p->defaultValue = $info->default;
             }
             if ($info->choice) {
-                $p->enum = $info->choice;
+                $p->schema->enum = $info->choice;
             }
             if ($info->min) {
                 $p->minimum = $info->min;
@@ -465,12 +465,12 @@ class Explorer implements ProvidesMultiVersionApiInterface
                 $content[$mime] += ['xml' => ['name' => Xml::$defaultTagName]];
             }
         }
-        $r = array(
-            $code => array(
+        $r = [
+            $code => [
                 'description' => HttpException::$codes[$code] ?? 'Success',
-                'content' => $content
-            )
-        );
+                'content' => $content,
+            ],
+        ];
         $return = $route->return;
         if (!empty($return)) {
             $this->setType($schema, $return);
@@ -478,7 +478,7 @@ class Explorer implements ProvidesMultiVersionApiInterface
 
         if (is_array($throws = $route->throws ?? null)) {
             foreach ($throws as $message) {
-                $r[$message['code']] = array('description' => $message['message']);
+                $r[$message['code']] = ['description' => $message['message']];
             }
         }
 
