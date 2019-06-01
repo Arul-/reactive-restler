@@ -398,6 +398,10 @@ class Router
             if ($rtype = $method->hasReturnType()
                 ? $method->getReturnType()->getName()
                 : ($metadata['return']['type'] ?? false)) {
+                if (Text::endsWith($rtype, '[]')) {
+                    $metadata['return'][$dataName]['type'] = substr($rtype, 0, -2);
+                    $rtype = $metadata['return']['type'] = 'array';
+                }
                 if ($rtype == 'array') {
                     if (
                         ($rctype = $metadata['return'][$dataName]['type'] ?? false) &&
@@ -435,6 +439,10 @@ class Router
                 }
                 if (is_null($type) && isset($m['type'])) {
                     $type = $m['type'];
+                }
+                if (Text::endsWith($type, '[]')) {
+                    $p['type'] = substr($type, 0, -2);
+                    $type = $metadata['return']['type'] = 'array';
                 }
                 if (isset(static::$fieldTypesByName[$m['name']]) && empty($p['type']) && $type == 'string') {
                     $p['type'] = static::$fieldTypesByName[$m['name']];
