@@ -237,9 +237,9 @@ class Router
         $versionMap = [];
         $maxVersionMethod = 'getMaximumSupportedVersion';
         try {
-            foreach ($map as $resourcePath => $className) {
-                if (is_numeric($resourcePath)) {
-                    $resourcePath = null;
+            foreach ($map as $path => $className) {
+                if (is_numeric($path)) {
+                    $path = null;
                 }
                 if (isset(Defaults::$aliases[$className])) {
                     $className = Defaults::$aliases[$className];
@@ -247,13 +247,13 @@ class Router
                 $info = ClassName::parse($className);
                 $currentVersion = $info['version'];
                 $found = $info['version_found'];
-                if (is_null($resourcePath)) {
-                    $resourcePath = Defaults::$autoRoutingEnabled ? strtolower($info['name']) : '';
+                if (is_null($path)) {
+                    $path = Defaults::$autoRoutingEnabled ? strtolower($info['name']) : '';
                 } else {
-                    $resourcePath = trim($resourcePath, '/');
+                    $path = trim($path, '/');
                 }
-                if (!empty($resourcePath)) {
-                    $resourcePath .= '/';
+                if (!empty($path)) {
+                    $path .= '/';
                 }
                 if (!class_exists($className)) {
                     $nextClass = ClassName::build($info['name'], $info['namespace'], $currentVersion, !$found);
@@ -265,15 +265,15 @@ class Router
                 if (isset(class_implements($className)[ProvidesMultiVersionApiInterface::class])) {
                     $max = $className::$maxVersionMethod();
                     for ($i = $currentVersion; $i <= $max; $i++) {
-                        $versionMap[$resourcePath][$i] = $className;
+                        $versionMap[$path][$i] = $className;
                     }
                 } else {
-                    $versionMap[$resourcePath][$currentVersion] = $className;
+                    $versionMap[$path][$currentVersion] = $className;
                 }
                 for ($version = $currentVersion + 1;
                      $version <= static::$maximumVersion;
                      $version++) {
-                    if (isset($versionMap[$resourcePath][$version])) {
+                    if (isset($versionMap[$path][$version])) {
                         continue;
                     }
                     $nextClass = ClassName::build($info['name'], $info['namespace'], $version);
@@ -281,17 +281,17 @@ class Router
                         if (isset(class_implements($nextClass)[ProvidesMultiVersionApiInterface::class])) {
                             $max = $className::$maxVersionMethod();
                             for ($i = $version; $i <= $max; $i++) {
-                                $versionMap[$resourcePath][$i] = $nextClass;
+                                $versionMap[$path][$i] = $nextClass;
                             }
                         } else {
-                            $versionMap[$resourcePath][$version] = $nextClass;
+                            $versionMap[$path][$version] = $nextClass;
                         }
                     }
                 }
             }
-            foreach ($versionMap as $resourcePath => $classes) {
+            foreach ($versionMap as $path => $classes) {
                 foreach ($classes as $version => $class) {
-                    static::addAPIForVersion($class, $resourcePath, $version);
+                    static::addAPIForVersion($class, $path, $version);
                 }
             }
         } catch (Throwable $e) {
@@ -384,7 +384,6 @@ class Router
                 = (isset($metadata['smart-auto-routing'])
                     && $metadata['smart-auto-routing'] != 'true')
                 || !Defaults::$smartAutoRouting;
-            $metadata['resourcePath'] = trim($resourcePath, '/');
             if (isset($classMetadata['description'])) {
                 $metadata['classDescription'] = $classMetadata['description'];
             }
@@ -891,7 +890,7 @@ class Router
                     $hash = "$httpMethod " . $route->url;
                     if (!isset($filter[$hash])) {
                         $route->httpMethod = $httpMethod;
-                        $map[$route->resourcePath][] = [
+                        $map[$route->path][] = [
                             'access' => static::verifyAccess(
                                 $route, $request, $maker, $verifiedAuthClasses
                             ),

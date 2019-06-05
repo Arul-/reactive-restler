@@ -20,6 +20,7 @@ class Route extends ValueObject
      * @var string target uri
      */
     public $url;
+    public $path;
 
     public $httpMethod = 'GET';
 
@@ -84,7 +85,6 @@ class Route extends ValueObject
     ];
 
     public $authClasses = [];
-    public $path;
 
     /**
      * @var array
