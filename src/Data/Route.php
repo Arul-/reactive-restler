@@ -98,8 +98,8 @@ class Route extends ValueObject
 
     public static function make(callable $action, string $path, $httpMethod = 'GET', array $data = [])
     {
-        $resourcePath = $path;
-        return static::parse(compact('action', 'path', 'httpMethod', 'resourcePath') + $data);
+        $url = $path;
+        return static::parse(compact('action', 'path', 'httpMethod', 'url') + $data);
     }
 
     public static function parse(array $call): Route
