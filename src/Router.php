@@ -112,7 +112,7 @@ class Router
 
     public static function getBasePath()
     {
-        if (is_null(static::$basePath)) {
+        if (empty(static::$basePath)) {
             static::$basePath = '/';
             if ($scriptName = $_SERVER['SCRIPT_NAME'] ?? false) {
                 $path = $_SERVER['REQUEST_URI'] ?? '';
