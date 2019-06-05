@@ -106,4 +106,23 @@ class Text
         }
         return implode($separator, $fromPath);
     }
+
+    public static function common($fromPath, $usingPath, $separator = '/')
+    {
+        if (empty($fromPath)) {
+            return '';
+        }
+        if (empty($usingPath)) {
+            return $fromPath;
+        }
+        $fromPath = explode($separator, $fromPath);
+        $usingPath = explode($separator, $usingPath);
+        foreach ($fromPath as $i => $value) {
+            if ($usingPath[$i] !== $value) {
+                $fromPath = array_slice($fromPath, 0, $i);
+                break;
+            }
+        }
+        return implode($separator, $fromPath);
+    }
 }

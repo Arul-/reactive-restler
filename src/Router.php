@@ -25,7 +25,7 @@ use Throwable;
 class Router
 {
     public static $prefixingParameterNames = [
-        'id'
+        'id',
     ];
 
     public static $fieldTypesByName = [
@@ -107,6 +107,25 @@ class Router
     public static $models = [];
 
     private static $parsedScopes = [];
+
+    private static $basePath;
+
+    public static function getBasePath()
+    {
+        if (is_null(static::$basePath)) {
+            static::$basePath = '/';
+            if ($scriptName = $_SERVER['SCRIPT_NAME'] ?? false) {
+                $path = $_SERVER['REQUEST_URI'] ?? '';
+                static::$basePath .= Text::common(ltrim($path, '/'), ltrim($scriptName, '/'));
+            }
+        }
+        return static::$basePath;
+    }
+
+    public static function setBasePath(string $path)
+    {
+        static::$basePath = $path;
+    }
 
     public static function setApiVersion(int $maximum = 1, int $minimum = 1)
     {
@@ -895,7 +914,7 @@ class Router
                                 $route, $request, $maker, $verifiedAuthClasses
                             ),
                             'route' => $route,
-                            'hash' => $hash
+                            'hash' => $hash,
                         ];
                         $filter[$hash] = true;
                     }
@@ -1216,7 +1235,7 @@ class Router
         }
         $namespace = $class->getNamespaceName();
         $imports = [
-            '*' => empty($namespace) ? '' : $namespace . '\\'
+            '*' => empty($namespace) ? '' : $namespace . '\\',
         ];
         $tokens = token_get_all(file_get_contents($file));
         $namespace = '';
