@@ -28,7 +28,7 @@ class Explorer implements ProvidesMultiVersionApiInterface
      * @var array mapping PHP types to JS
      */
     public static $dataTypeAlias = [
-        //'string' => 'string',
+        'string' => 'string',
         'int' => 'integer',
         'number' => 'number',
         'float' => ['number', 'float'],
