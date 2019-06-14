@@ -16,42 +16,14 @@ class Route extends ValueObject
     const ACCESS_HYBRID = 1;
     const ACCESS_PROTECTED_BY_COMMENT = 2;
     const ACCESS_PROTECTED_METHOD = 3;
+
+    public $httpMethod = 'GET';
     /**
      * @var string target uri
      */
     public $url;
+
     public $path;
-
-    public $httpMethod = 'GET';
-
-    /**
-     * @var callable
-     */
-    public $action;
-
-    /**
-     * @var array[Param]
-     */
-    public $parameters = [];
-
-    /**
-     * @var int access level
-     */
-    public $access = self::ACCESS_PUBLIC;
-
-    public $requestMediaTypes = [];
-    public $responseMediaTypes = [];
-
-    /**
-     * @var array
-     * @internal
-     */
-    public $requestFormatMap = [];
-    /**
-     * @var array
-     * @internal
-     */
-    public $responseFormatMap = [];
 
     /**
      * @var string
@@ -62,6 +34,16 @@ class Route extends ValueObject
      * @var string
      */
     public $description;
+
+    /**
+     * @var callable
+     */
+    public $action;
+
+    /**
+     * @var array[Param]
+     */
+    public $parameters = [];
 
     /**
      * @var Returns
@@ -83,6 +65,27 @@ class Route extends ValueObject
         //  'description'=> '',
         //],
     ];
+
+    /**
+     * @var int access level
+     */
+    public $access = self::ACCESS_PUBLIC;
+
+    public $requestMediaTypes = [];
+
+    public $responseMediaTypes = [];
+
+    /**
+     * @var array
+     * @internal
+     */
+    public $requestFormatMap = [];
+
+    /**
+     * @var array
+     * @internal
+     */
+    public $responseFormatMap = [];
 
     public $authClasses = [];
 
