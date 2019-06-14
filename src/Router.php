@@ -414,7 +414,7 @@ class Router
                 $metadata['param'] = [];
             }
             if ($rtype = $method->hasReturnType()
-                ? $method->getReturnType()->getName()
+                ? '\\' . $method->getReturnType()->getName()
                 : ($metadata['return']['type'] ?? false)) {
                 if (Text::endsWith($rtype, '[]')) {
                     $metadata['return'][$dataName]['type'] = substr($rtype, 0, -2);
