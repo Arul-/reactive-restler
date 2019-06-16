@@ -1059,18 +1059,27 @@ class Router
         return true;
     }
 
-    protected static function parseMagic(ReflectionClass $class, $forResponse = true)
+    protected static function parseMagic(ReflectionClass $class)
     {
         if (!$c = CommentParser::parse($class->getDocComment())) {
             return false;
         }
         $p = 'property';
         $r = empty($c[$p]) ? [] : $c[$p];
-        $p .= '-' . ($forResponse ? 'read' : 'write');
+        $p = 'property-read';
         if (!empty($c[$p])) {
-            $r = array_merge($r, $c[$p]);
+            $r = array_merge($r, array_map(function ($v) {
+                $v['readOnly'] = true;
+                return $v;
+            }, $c[$p]));
         }
-
+        $p = 'property-write';
+        if (!empty($c[$p])) {
+            $r = array_merge($r, array_map(function ($v) {
+                $v['writeOnly'] = true;
+                return $v;
+            }, $c[$p]));
+        }
         return $r;
     }
 
@@ -1101,7 +1110,7 @@ class Router
         }
         $children = [];
         try {
-            if ($magic_properties = static::parseMagic($class, empty($prefix))) {
+            if ($magic_properties = static::parseMagic($class)) {
                 foreach ($magic_properties as $prop) {
                     if (!isset($prop['name'])) {
                         throw new Exception('@property comment is not properly defined in ' . $className . ' class');
