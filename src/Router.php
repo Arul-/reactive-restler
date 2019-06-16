@@ -106,8 +106,6 @@ class Router
     protected static $routes = [];
     protected static $definitions = [];
 
-    public static $models = [];
-
     private static $parsedScopes = [];
 
     private static $basePath;
@@ -1173,127 +1171,6 @@ class Router
         }
         static::$definitions[$className] = $children;
         return $children;
-    }
-
-    /**
-     * Get the type and associated model
-     *
-     * @param ReflectionClass $class
-     * @param array $scope
-     *
-     * @param string $prefix
-     * @param array $rules
-     * @return array
-     *
-     * @throws Exception
-     * @throws HttpException
-     * @access protected
-     */
-    protected static function getTypeAndModel(
-        ReflectionClass $class,
-        array $scope,
-        $prefix = '',
-        array $rules = []
-    ) {
-        $className = $class->getName();
-        $dataName = CommentParser::$embeddedDataName;
-        if (isset(static::$models[$prefix . $className])) {
-            return static::$models[$prefix . $className];
-        }
-        $children = [];
-        try {
-            if ($magic_properties = static::parseMagic($class)) {
-                foreach ($magic_properties as $prop) {
-                    if (!isset($prop['name'])) {
-                        throw new Exception('@property comment is not properly defined in ' . $className . ' class');
-                    }
-                    if (!isset($prop[$dataName]['label'])) {
-                        $prop[$dataName]['label'] = Text::title($prop['name']);
-                    }
-                    if (isset(static::$fieldTypesByName[$prop['name']]) && $prop['type'] == 'string' && !isset($prop[$dataName]['type'])) {
-                        $prop[$dataName]['type'] = static::$fieldTypesByName[$prop['name']];
-                    }
-                    $children[$prop['name']] = $prop;
-                }
-            } else {
-                $props = $class->getProperties(ReflectionProperty::IS_PUBLIC);
-                foreach ($props as $prop) {
-                    $name = $prop->getName();
-                    $child = ['name' => $name];
-                    if ($c = $prop->getDocComment()) {
-                        $child += CommentParser::parse($c)['var'] ?? [];
-                    } else {
-                        $o = $class->newInstance();
-                        $p = $prop->getValue($o);
-                        if (is_object($p)) {
-                            $child['type'] = get_class($p);
-                        } elseif (is_array($p)) {
-                            $child['type'] = 'array';
-                            if (count($p)) {
-                                $pc = reset($p);
-                                if (is_object($pc)) {
-                                    $child['contentType'] = get_class($pc);
-                                }
-                            }
-                        } elseif (is_numeric($p)) {
-                            $child['type'] = is_float($p) ? 'float' : 'int';
-                        }
-                    }
-                    if (!isset($child['type'])) {
-                        $child['type'] = isset(static::$fieldTypesByName[$child['name']])
-                            ? static::$fieldTypesByName[$child['name']]
-                            : 'string';
-                    }
-                    if (!isset($child['label'])) {
-                        $child['label'] = Text::title($child['name']);
-                    }
-                    $child[$dataName]['required'] = $child[$dataName]['required'] ?? true;
-                    $childScope = static::scope($class);
-                    if ($child['type'] != $className && $qualified = ClassName::resolve($child['type'], $childScope)) {
-                        list($child['type'], $child['children'])
-                            = static::getTypeAndModel(new ReflectionClass($qualified), $childScope);
-                    } elseif (($contentType = $child[$dataName]['type'] ?? false) &&
-                        ($qualified = ClassName::resolve($contentType, $childScope))
-                    ) {
-                        list($child['contentType'], $child['children'])
-                            = static::getTypeAndModel(new ReflectionClass($qualified), $childScope);
-                    }
-                    $children[$name] = $child;
-                }
-            }
-        } catch (Exception $e) {
-            if (Text::endsWith($e->getFile(), 'CommentParser.php')) {
-                throw new HttpException(500, "Error while parsing comments of `$className` class. " . $e->getMessage());
-            }
-            throw $e;
-        }
-        if ($properties = $rules['properties'] ?? false) {
-            if (is_string($properties)) {
-                $properties = [$properties];
-            }
-            $c = [];
-            foreach ($properties as $property) {
-                if (isset($children[$property])) {
-                    $c[$property] = $children[$property];
-                }
-            }
-            $children = $c;
-        }
-        if ($required = $rules['required'] ?? false) {
-            //override required on children
-            if (is_bool($required)) {
-                // true means all are required false means none are required
-                $required = $required ? array_keys($children) : [];
-            } elseif (is_string($required)) {
-                $required = [$required];
-            }
-            $required = array_fill_keys($required, true);
-            foreach ($children as $name => $child) {
-                $children[$name][$dataName]['required'] = isset($required[$name]);
-            }
-        }
-        static::$models[$prefix . $className] = [$className, $children, $prefix . $className];
-        return static::$models[$prefix . $className];
     }
 
     /**

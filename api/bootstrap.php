@@ -111,8 +111,7 @@ try {
         'explorer' => Explorer::class,
     ]);
     $cache = new HumanReadableCache();
-    $cache->set('route', Router::toArray());
-    $cache->set('models', Router::$models);
+    $cache->set('routes', Router::toArray());
 } catch (Throwable $t) {
     die($t->getMessage());
 }
