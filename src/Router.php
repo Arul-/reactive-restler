@@ -78,14 +78,14 @@ class Router
         'default' => Json::class,
         Json::EXTENSION => Json::class,
         Json::MIME => Json::class,
-        'extensions' => [ '.json' ],
+        'extensions' => ['.json'],
     ];
     /**
      * @var array
      * @internal
      */
     public static $requestFormatOverridesMap = [];
-    public static $responseFormatOverridesMap = [ 'extensions' => [] ];
+    public static $responseFormatOverridesMap = ['extensions' => []];
     /**
      * @var array
      * @internal
@@ -97,13 +97,15 @@ class Router
      */
     public static $maximumVersion = 1;
 
-    public static $requestMediaTypes = [ Json::MIME ];
-    public static $responseMediaTypes = [ Json::MIME ];
+    public static $requestMediaTypes = [Json::MIME];
+    public static $responseMediaTypes = [Json::MIME];
 
     public static $requestMediaTypeOverrides = [];
     public static $responseMediaTypeOverrides = [];
 
     protected static $routes = [];
+    protected static $definitions = [];
+
     public static $models = [];
 
     private static $parsedScopes = [];
@@ -329,7 +331,7 @@ class Router
      */
     public static function addAPI(string $className, ?string $resourcePath = null)
     {
-        static::mapApiClasses(is_null($resourcePath) ? [ $className ] : [ $resourcePath => $className ]);
+        static::mapApiClasses(is_null($resourcePath) ? [$className] : [$resourcePath => $className]);
     }
 
     /**
@@ -423,14 +425,18 @@ class Router
                 if ($rtype == 'array') {
                     if (
                         ($rctype = $metadata['return'][$dataName]['type'] ?? false) &&
-                        ($qualified = ClassName::resolve($rctype, $scope))
+                        ($qualified = ClassName::resolve($rctype, $scope)) &&
+                        $definition = static::definition(new ReflectionClass($qualified), $scope)
                     ) {
-                        list($metadata['return'][$dataName]['type'], $metadata['return']['children']) =
-                            static::getTypeAndModel(new ReflectionClass($qualified), $scope);
+                        $metadata['return'][$dataName]['type'] = $qualified;
+                        $metadata['return']['children'] = $definition;
                     }
-                } elseif ($qualified = ClassName::resolve($rtype, $scope)) {
-                    list($metadata['return']['type'], $metadata['return']['children']) =
-                        static::getTypeAndModel(new ReflectionClass($qualified), $scope);
+                } elseif (
+                    ($qualified = ClassName::resolve($rtype, $scope)) &&
+                    $definition = static::definition(new ReflectionClass($qualified), $scope)
+                ) {
+                    $metadata['return'][$dataName]['type'] = $qualified;
+                    $metadata['return']['children'] = $definition;
                 }
             } else {
                 //assume return type is array
@@ -473,28 +479,27 @@ class Router
                 $m ['default'] = $defaults [$position];
                 $m ['required'] = !$param->isOptional();
                 $contentType = $p['type'] ?? false;
-                if ($type == 'array' && $contentType && $qualified = ClassName::resolve($contentType, $scope)) {
-                    list($p['type'], $children, $modelName) = static::getTypeAndModel(
-                        new ReflectionClass($qualified), $scope,
-                        $className . Text::title($methodUrl), $p
-                    );
+                if (
+                    $type == 'array' &&
+                    $contentType &&
+                    ($qualified = ClassName::resolve($contentType, $scope)) &&
+                    ($definition = static::definition(new ReflectionClass($qualified), $scope))
+                ) {
+                    $p['type'] = $qualified;
+                    $children = $definition;
                 }
                 if ($type instanceof ReflectionClass) {
-                    list($type, $children, $modelName) = static::getTypeAndModel($type, $scope,
-                        $className . Text::title($methodUrl), $p);
-                } elseif ($type && is_string($type) && $qualified = ClassName::resolve($type, $scope)) {
-                    list($type, $children, $modelName)
-                        = static::getTypeAndModel(new ReflectionClass($qualified), $scope,
-                        $className . Text::title($methodUrl), $p);
+                    $children = static::definition($type, $scope);
+                    $type = $type->getName();
+                } elseif ($type && is_string($type) && ($qualified = ClassName::resolve($type, $scope))) {
+                    $type = $qualified;
+                    $children = self::definition(new ReflectionClass($qualified), $scope);
                 }
                 if (isset($type)) {
                     $m['type'] = $type;
                 }
 
                 $m['children'] = $children;
-                if (isset($modelName)) {
-                    $m['model'] = $modelName;
-                }
                 if ($m['name'] == Defaults::$fullRequestDataName) {
                     $from = 'body';
                     if (!isset($m['type'])) {
@@ -663,7 +668,7 @@ class Router
             Defaults::$implementations[AccessControlInterface::class][] = $className;
         }
         static::$authClasses[] = $className;
-        static::mapApiClasses([ $resourcePath => $className ]);
+        static::mapApiClasses([$resourcePath => $className]);
     }
 
     /**
@@ -760,8 +765,8 @@ class Router
             }
             /** @var Route $route */
             $route = $value[$httpMethod];
-            $regex = str_replace([ '{', '}' ],
-                [ '(?P<', '>[^/]+)' ], $key);
+            $regex = str_replace(['{', '}'],
+                ['(?P<', '>[^/]+)'], $key);
             if (preg_match_all(":^$regex$:i", $path, $matches, PREG_SET_ORDER)) {
                 $matches = $matches[0];
                 $found = true;
@@ -1083,6 +1088,93 @@ class Router
         return $r;
     }
 
+    protected static function definition(ReflectionClass $class, array $scope)
+    {
+        if (!$class->isUserDefined()) {
+            return false;
+        }
+        $className = $class->getName();
+        $dataName = CommentParser::$embeddedDataName;
+        if ($definition = static::$definitions[$className] ?? false) {
+            return $definition;
+        }
+        $children = [];
+        try {
+            if ($magic_properties = static::parseMagic($class)) {
+                foreach ($magic_properties as $prop) {
+                    if (!isset($prop['name'])) {
+                        throw new Exception('@property comment is not properly defined in ' . $className . ' class');
+                    }
+                    if (!isset($prop[$dataName]['label'])) {
+                        $prop[$dataName]['label'] = Text::title($prop['name']);
+                    }
+                    if (isset(static::$fieldTypesByName[$prop['name']]) && $prop['type'] == 'string' && !isset($prop[$dataName]['type'])) {
+                        $prop[$dataName]['type'] = static::$fieldTypesByName[$prop['name']];
+                    }
+                    $children[$prop['name']] = $prop;
+                }
+            } else {
+                $props = $class->getProperties(ReflectionProperty::IS_PUBLIC);
+                foreach ($props as $prop) {
+                    $name = $prop->getName();
+                    $child = ['name' => $name];
+                    if ($c = $prop->getDocComment()) {
+                        $child += CommentParser::parse($c)['var'] ?? [];
+                    } else {
+                        $o = $class->newInstance();
+                        $p = $prop->getValue($o);
+                        if (is_object($p)) {
+                            $child['type'] = get_class($p);
+                        } elseif (is_array($p)) {
+                            $child['type'] = 'array';
+                            if (count($p)) {
+                                $pc = reset($p);
+                                if (is_object($pc)) {
+                                    $child['contentType'] = get_class($pc);
+                                }
+                            }
+                        } elseif (is_numeric($p)) {
+                            $child['type'] = is_float($p) ? 'float' : 'int';
+                        }
+                    }
+                    if (!isset($child['type'])) {
+                        $child['type'] = isset(static::$fieldTypesByName[$child['name']])
+                            ? static::$fieldTypesByName[$child['name']]
+                            : 'string';
+                    }
+                    if (!isset($child['label'])) {
+                        $child['label'] = Text::title($child['name']);
+                    }
+                    $child[$dataName]['required'] = $child[$dataName]['required'] ?? true;
+                    $childScope = static::scope($class);
+                    if (
+                        $child['type'] != $className &&
+                        ($qualified = ClassName::resolve($child['type'], $childScope)) &&
+                        ($childDefinition = static::definition(new ReflectionClass($qualified), $childScope))
+                    ) {
+                        $child['type'] = $qualified;
+                        $child['children'] = $childDefinition;
+                    } elseif (
+                        ($contentType = $child[$dataName]['type'] ?? false) &&
+                        ($qualified = ClassName::resolve($contentType, $childScope)) &&
+                        ($childDefinition = static::definition(new ReflectionClass($qualified), $childScope))
+                    ) {
+                        $child['type'] = $qualified;
+                        $child['children'] = $childDefinition;
+                    }
+                    $children[$name] = $child;
+                }
+            }
+        } catch (Throwable $e) {
+            if (Text::endsWith($e->getFile(), 'CommentParser.php')) {
+                throw new HttpException(500, "Error while parsing comments of `$className` class. " . $e->getMessage());
+            }
+            throw $e;
+        }
+        static::$definitions[$className] = $children;
+        return $children;
+    }
+
     /**
      * Get the type and associated model
      *
@@ -1127,7 +1219,7 @@ class Router
                 $props = $class->getProperties(ReflectionProperty::IS_PUBLIC);
                 foreach ($props as $prop) {
                     $name = $prop->getName();
-                    $child = [ 'name' => $name ];
+                    $child = ['name' => $name];
                     if ($c = $prop->getDocComment()) {
                         $child += CommentParser::parse($c)['var'] ?? [];
                     } else {
@@ -1177,7 +1269,7 @@ class Router
         }
         if ($properties = $rules['properties'] ?? false) {
             if (is_string($properties)) {
-                $properties = [ $properties ];
+                $properties = [$properties];
             }
             $c = [];
             foreach ($properties as $property) {
@@ -1193,25 +1285,32 @@ class Router
                 // true means all are required false means none are required
                 $required = $required ? array_keys($children) : [];
             } elseif (is_string($required)) {
-                $required = [ $required ];
+                $required = [$required];
             }
             $required = array_fill_keys($required, true);
             foreach ($children as $name => $child) {
                 $children[$name][$dataName]['required'] = isset($required[$name]);
             }
         }
-        static::$models[$prefix . $className] = [ $className, $children, $prefix . $className ];
+        static::$models[$prefix . $className] = [$className, $children, $prefix . $className];
         return static::$models[$prefix . $className];
     }
 
     /**
      * Import previously created routes from cache
      *
-     * @param array $routes
+     * @param array $data
      */
-    public static function fromArray(array $routes)
+    public static function fromArray(array $data)
     {
+        if (!$routes = $data['routes'] ?? false) {
+            throw new \InvalidArgumentException('routes are required');
+        }
+        if (!$definitions = $data['definitions'] ?? false) {
+            throw new \InvalidArgumentException('definitions are required');
+        }
         static::$routes = $routes;
+        static::$definitions = $definitions;
     }
 
     /**
@@ -1221,7 +1320,10 @@ class Router
      */
     public static function toArray()
     {
-        return static::$routes;
+        return [
+            'routes' => static::$routes,
+            'definitions' => static::$definitions,
+        ];
     }
 
     public static function type($var)
