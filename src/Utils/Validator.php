@@ -33,7 +33,7 @@ class Validator implements ValidationInterface
         }
         if (
             isset(static::$preFilters[$param->type]) &&
-            (is_scalar($input) || !empty($param->children)) &&
+            (is_scalar($input) || !empty($param->items)) &&
             is_callable($func = static::$preFilters[$param->type])
         ) {
             $input = $func($input);
@@ -292,7 +292,7 @@ class Validator implements ValidationInterface
                         }
                         $class = $param->type;
                         $instance = new $class();
-                        if (is_array($param->children)) {
+                        if (is_array($param->items)) {
                             if (
                                 empty($input) ||
                                 !is_array($input) ||
@@ -301,7 +301,7 @@ class Validator implements ValidationInterface
                                 $error .= ". Expecting an item of type `$param->type`";
                                 break;
                             }
-                            foreach ($param->children as $key => $value) {
+                            foreach ($param->items as $key => $value) {
                                 $cv = Param::parse($value);
                                 $cv->name = "{$param->name}[$key]";
                                 if (array_key_exists($key, $input) || $cv->required) {

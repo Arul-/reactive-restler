@@ -159,7 +159,7 @@ class Param extends Type
         return Param::parse([
             'name' => $this->name . '[' . $index . ']',
             'type' => $this->contentType,
-            'children' => $this->children,
+            'items' => $this->items,
             'required' => true,
         ]);
     }

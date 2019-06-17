@@ -427,14 +427,14 @@ class Router
                         $definition = static::definition(new ReflectionClass($qualified), $scope)
                     ) {
                         $metadata['return'][$dataName]['type'] = $qualified;
-                        $metadata['return']['children'] = $definition;
+                        $metadata['return']['items'] = $definition;
                     }
                 } elseif (
                     ($qualified = ClassName::resolve($rtype, $scope)) &&
                     $definition = static::definition(new ReflectionClass($qualified), $scope)
                 ) {
                     $metadata['return'][$dataName]['type'] = $qualified;
-                    $metadata['return']['children'] = $definition;
+                    $metadata['return']['items'] = $definition;
                 }
             } else {
                 //assume return type is array
@@ -444,7 +444,7 @@ class Router
             $metadata['param'] = [];
             foreach ($params as $param) {
                 $name = $param->getName();
-                $children = [];
+                $items = [];
                 $type = $param->isArray()
                     ? 'array'
                     : ($param->getClass() ??
@@ -484,20 +484,20 @@ class Router
                     ($definition = static::definition(new ReflectionClass($qualified), $scope))
                 ) {
                     $p['type'] = $qualified;
-                    $children = $definition;
+                    $items = $definition;
                 }
                 if ($type instanceof ReflectionClass) {
-                    $children = static::definition($type, $scope);
+                    $items = static::definition($type, $scope);
                     $type = $type->getName();
                 } elseif ($type && is_string($type) && ($qualified = ClassName::resolve($type, $scope))) {
                     $type = $qualified;
-                    $children = self::definition(new ReflectionClass($qualified), $scope);
+                    $items = self::definition(new ReflectionClass($qualified), $scope);
                 }
                 if (isset($type)) {
                     $m['type'] = $type;
                 }
 
-                $m['children'] = $children;
+                $m['items'] = $items;
                 if ($m['name'] == Defaults::$fullRequestDataName) {
                     $from = 'body';
                     if (!isset($m['type'])) {
@@ -1096,7 +1096,7 @@ class Router
         if ($definition = static::$definitions[$className] ?? false) {
             return $definition;
         }
-        $children = [];
+        $items = [];
         try {
             if ($magic_properties = static::parseMagic($class)) {
                 foreach ($magic_properties as $prop) {
@@ -1109,7 +1109,7 @@ class Router
                     if (isset(static::$fieldTypesByName[$prop['name']]) && $prop['type'] == 'string' && !isset($prop[$dataName]['type'])) {
                         $prop[$dataName]['type'] = static::$fieldTypesByName[$prop['name']];
                     }
-                    $children[$prop['name']] = $prop;
+                    $items[$prop['name']] = $prop;
                 }
             } else {
                 $props = $class->getProperties(ReflectionProperty::IS_PUBLIC);
@@ -1151,16 +1151,16 @@ class Router
                         ($childDefinition = static::definition(new ReflectionClass($qualified), $childScope))
                     ) {
                         $child['type'] = $qualified;
-                        $child['children'] = $childDefinition;
+                        $child['items'] = $childDefinition;
                     } elseif (
                         ($contentType = $child[$dataName]['type'] ?? false) &&
                         ($qualified = ClassName::resolve($contentType, $childScope)) &&
                         ($childDefinition = static::definition(new ReflectionClass($qualified), $childScope))
                     ) {
                         $child['type'] = $qualified;
-                        $child['children'] = $childDefinition;
+                        $child['items'] = $childDefinition;
                     }
-                    $children[$name] = $child;
+                    $items[$name] = $child;
                 }
             }
         } catch (Throwable $e) {
@@ -1169,8 +1169,8 @@ class Router
             }
             throw $e;
         }
-        static::$definitions[$className] = $children;
-        return $children;
+        static::$definitions[$className] = $items;
+        return $items;
     }
 
     /**

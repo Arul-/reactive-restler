@@ -247,26 +247,26 @@ class Explorer implements ProvidesMultiVersionApiInterface
         if (!empty($body)) {
             if (
                 1 == count($bodyValues) &&
-                (static::$allowScalarValueOnRequestBody || !empty($bodyValues[0]->children))
+                (static::$allowScalarValueOnRequestBody || !empty($bodyValues[0]->items))
             ) {
                 $requestBody = $this->requestBody($route, $bodyValues[0]);
             } else {
                 //lets group all body parameters under a generated model name
                 $name = $this->modelName($route);
-                $children = [];
+                $items = [];
                 /**
                  * @var string $name
                  * @var Param $child
                  */
                 foreach ($body as $cname => $child) {
-                    $children[$cname] = $child->jsonSerialize();
+                    $items[$cname] = $child->jsonSerialize();
                 }
                 $requestBody = $this->requestBody($route, Param::__set_state([
                     'name' => $name,
                     'type' => $name,
                     'from' => 'body',
                     'required' => true,
-                    'children' => $children,
+                    'items' => $items,
                 ]));
             }
         }
@@ -287,7 +287,7 @@ class Explorer implements ProvidesMultiVersionApiInterface
         //}
         $p->name = $param->name;
         $this->setType($p->schema, $param);
-        if (empty($param->children) || $param->type != 'array') {
+        if (empty($param->items) || $param->type != 'array') {
             //primitives
             if ($param->default) {
                 $p->defaultValue = $param->default;
@@ -322,9 +322,9 @@ class Explorer implements ProvidesMultiVersionApiInterface
         $type = ClassName::short($param->type);
         if ($param->type == 'array') {
             $object->type = 'array';
-            if ($param->children) {
+            if ($param->items) {
                 $contentType = ClassName::short($param->contentType);
-                $model = $this->model($contentType, $param->children);
+                $model = $this->model($contentType, $param->items);
                 $object->items = (object)[
                     '$ref' => "#/components/schemas/$contentType",
                 ];
@@ -363,8 +363,8 @@ class Explorer implements ProvidesMultiVersionApiInterface
                     'type' => 'string',
                 ];
             }
-        } elseif ($param->children) {
-            $this->model($type, $param->children);
+        } elseif ($param->items) {
+            $this->model($type, $param->items);
             $object->{'$ref'} = "#/components/schemas/$type";
         } elseif (is_string($param->type) && $t = static::$dataTypeAlias[strtolower($param->type)] ?? null) {
             if (is_array($t)) {
@@ -390,7 +390,7 @@ class Explorer implements ProvidesMultiVersionApiInterface
         }
     }
 
-    private function model($type, array $children)
+    private function model($type, array $items)
     {
         if (isset($this->models[$type])) {
             return $this->models[$type];
@@ -399,12 +399,12 @@ class Explorer implements ProvidesMultiVersionApiInterface
         $r->type = 'object';
         $r->properties = [];
         $required = [];
-        foreach ($children as $child) {
-            $info = Param::parse($child);
+        foreach ($items as $item) {
+            $info = Param::parse($item);
             $p = new stdClass();
             $this->setType($p, $info);
-            if (isset($child['description'])) {
-                $p->description = $child['description'];
+            if (isset($item['description'])) {
+                $p->description = $item['description'];
             }
             if ($info->default) {
                 $p->defaultValue = $info->default;

@@ -25,9 +25,9 @@ class Type extends ValueObject
     public $contentType;
 
     /**
-     * @var array of children to be validated
+     * @var array of items to be validated
      */
-    public $children = null;
+    public $items = null;
 
     /**
      * @var string
