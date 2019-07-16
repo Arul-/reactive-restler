@@ -40,7 +40,7 @@ class Js extends MediaType implements ResponseMediaTypeInterface
             $options |= JSON_PRETTY_PRINT;
         }
 
-        $encoded = json_encode(Convert::toArray($r, true), $options);
+        $encoded = json_encode($this->convert->toArray($r, true), $options);
         if (json_last_error() != JSON_ERROR_NONE) {
             throw new HttpException(500, 'JSON Parser: ' . json_last_error_msg());
         }

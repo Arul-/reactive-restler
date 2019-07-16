@@ -3,6 +3,7 @@
 use Luracast\Restler\Contracts\MediaTypeInterface;
 use Luracast\Restler\Contracts\SelectivePathsInterface;
 use Luracast\Restler\Contracts\SelectivePathsTrait;
+use Luracast\Restler\Utils\Convert;
 use Luracast\Restler\Utils\Text;
 use Luracast\Restler\Exceptions\HttpException;
 
@@ -21,6 +22,15 @@ abstract class MediaType implements MediaTypeInterface, SelectivePathsInterface
     protected $mime;
     protected $extension;
     protected $charset = 'utf-8';
+    /**
+     * @var Convert
+     */
+    protected $convert;
+
+    public function __construct(Convert $convert)
+    {
+        $this->convert = $convert;
+    }
 
     /**
      * Get MIME type => Extension mappings as an associative array

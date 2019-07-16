@@ -18,6 +18,7 @@ use Luracast\Restler\Filters\RateLimiter;
 use Luracast\Restler\MediaTypes\{Amf, Csv, Html, Js, Json, Plist, Tsv, Upload, UrlEncoded, Xml, Yaml};
 use Luracast\Restler\UI\Forms;
 use Luracast\Restler\UI\Nav;
+use Luracast\Restler\Utils\Convert;
 use Luracast\Restler\Utils\Text;
 use Luracast\Restler\Utils\Validator;
 use Psr\{
@@ -346,6 +347,7 @@ class Defaults
         'UploadFormat' => Upload::class,
         //Utils
         'Text' => Text::class,
+        'Convert' => Convert::class,
         //UI
         'Forms' => Forms::class,
         'Nav' => Nav::class

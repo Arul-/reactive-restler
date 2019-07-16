@@ -206,7 +206,7 @@ class Restler extends Core
         } catch (Throwable $error) {
             $this->_exception = $error;
             if (!$this->responseFormat) {
-                $this->responseFormat = new Json();
+                $this->responseFormat = $this->container->make(Json::class);
             }
             return new FulfilledPromise($this->respond(
                 $this->message(

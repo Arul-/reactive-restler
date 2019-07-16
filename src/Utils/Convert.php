@@ -2,6 +2,7 @@
 
 
 use JsonSerializable;
+use Luracast\Restler\StaticProperties;
 
 class Convert
 {
@@ -46,9 +47,18 @@ class Convert
      * @var bool set it to true to remove all null values from the result
      */
     public static $removeNull = false;
+    /**
+     * @var StaticProperties
+     */
+    private $convert;
+
+    public function __construct(StaticProperties $convert)
+    {
+        $this->convert = $convert;
+    }
 
 
-    public static function toArray($object, bool $forceObjectTypeWhenEmpty = false)
+    public function toArray($object, bool $forceObjectTypeWhenEmpty = false)
     {
         $nested = false;
         if (is_object($object)) {
@@ -57,14 +67,14 @@ class Convert
                 $object = $object->jsonSerialize();
             } elseif (method_exists($object, '__sleep')) {
                 $properties = $object->__sleep();
-                $array = array();
+                $array = [];
                 foreach ($properties as $key) {
-                    $value = static::toArray($object->{$key},
+                    $value = $this->toArray($object->{$key},
                         $forceObjectTypeWhenEmpty);
-                    if (static::$stringEncoderFunction && is_string($value)) {
-                        $value = static::$stringEncoderFunction($value);
-                    } elseif (static::$numberEncoderFunction && is_numeric($value)) {
-                        $value = static::$numberEncoderFunction($value);
+                    if ($this->convert->stringEncoderFunction && is_string($value)) {
+                        $value = $this->convert->stringEncoderFunction($value);
+                    } elseif ($this->convert->numberEncoderFunction && is_numeric($value)) {
+                        $value = $this->convert->numberEncoderFunction($value);
                     }
                     $array [$key] = $value;
                 }
@@ -75,33 +85,33 @@ class Convert
         }
         if ($nested) {
             $count = 0;
-            $array = array();
+            $array = [];
             foreach ($object as $key => $value) {
                 if (
-                    is_string(static::$separatorChar) &&
-                    false !== strpos($key, static::$separatorChar)
+                    is_string($this->convert->separatorChar) &&
+                    false !== strpos($key, $this->convert->separatorChar)
                 ) {
-                    list($key, $obj) = explode(static::$separatorChar, $key, 2);
+                    list($key, $obj) = explode($this->convert->separatorChar, $key, 2);
                     $object[$key][$obj] = $value;
                     $value = $object[$key];
                 }
-                if (static::$removeEmpty && empty($value) && !is_numeric($value) && !is_bool($value)) {
+                if ($this->convert->removeEmpty && empty($value) && !is_numeric($value) && !is_bool($value)) {
                     continue;
-                } elseif (static::$removeNull && is_null($value)) {
+                } elseif ($this->convert->removeNull && is_null($value)) {
                     continue;
                 }
-                if (array_key_exists($key, static::$fix)) {
-                    if (isset(static::$fix[$key])) {
-                        $value = call_user_func(static::$fix[$key], $value);
+                if (array_key_exists($key, $this->convert->fix)) {
+                    if (isset($this->convert->fix[$key])) {
+                        $value = call_user_func($this->convert->fix[$key], $value);
                     } else {
                         continue;
                     }
                 }
-                $value = static::toArray($value, $forceObjectTypeWhenEmpty);
-                if (static::$stringEncoderFunction && is_string($value)) {
-                    $value = static::$encoderFunctionName ($value);
-                } elseif (static::$numberEncoderFunction && is_numeric($value)) {
-                    $value = static::$numberEncoderFunction ($value);
+                $value = $this->toArray($value, $forceObjectTypeWhenEmpty);
+                if ($this->convert->stringEncoderFunction && is_string($value)) {
+                    $value = $this->convert->encoderFunctionName($value);
+                } elseif ($this->convert->numberEncoderFunction && is_numeric($value)) {
+                    $value = $this->convert->numberEncoderFunction($value);
                 }
                 $array [$key] = $value;
                 $count++;

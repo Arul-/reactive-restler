@@ -31,7 +31,7 @@ class Json extends MediaType implements RequestMediaTypeInterface, ResponseMedia
         if (strlen($data) && $decoded === null || $decoded === $data) {
             throw new HttpException(400, 'Error parsing JSON');
         }
-        return $decoded; //Convert::toArray($decoded);
+        return $decoded; //$this->convert->toArray($decoded);
     }
 
     /**
@@ -46,7 +46,7 @@ class Json extends MediaType implements RequestMediaTypeInterface, ResponseMedia
         if ($humanReadable) {
             $options |= JSON_PRETTY_PRINT;
         }
-        $encoded = json_encode(Convert::toArray($data, true), $options);
+        $encoded = json_encode($this->convert->toArray($data, true), $options);
         if (json_last_error() != JSON_ERROR_NONE) {
             throw new HttpException(500, 'JSON Parser: ' . json_last_error_msg());
         }
