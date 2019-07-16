@@ -79,7 +79,7 @@ class Xml extends MediaType implements RequestMediaTypeInterface, ResponseMediaT
 
     public function encode($data, bool $humanReadable = false): string
     {
-        $data = Convert::toArray($data);
+        $data = $this->convert->toArray($data);
         $xml = new XMLWriter();
         $xml->openMemory();
         $xml->startDocument('1.0', $this->charset);

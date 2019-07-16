@@ -1,6 +1,7 @@
 <?php namespace Luracast\Restler\MediaTypes;
 
 use Luracast\Restler\Exceptions\HttpException;
+use Luracast\Restler\Utils\Convert;
 
 abstract class Dependent extends MediaType
 {
@@ -23,8 +24,9 @@ abstract class Dependent extends MediaType
         }
     }
 
-    public function __construct()
+    public function __construct(Convert $convert)
     {
+        parent::__construct($convert);
         $this->checkDependencies();
     }
 }

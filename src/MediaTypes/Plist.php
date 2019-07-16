@@ -48,7 +48,7 @@ class Plist extends Dependent implements RequestMediaTypeInterface, ResponseMedi
         $plist = new CFPropertyList ();
         $td = new CFTypeDetector ();
         $guessedStructure = $td->toCFType(
-            Convert::toArray($data)
+            $this->convert->toArray($data)
         );
         $plist->add($guessedStructure);
 

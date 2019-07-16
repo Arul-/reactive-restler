@@ -6,7 +6,7 @@ use Luracast\Restler\Contracts\ResponseMediaTypeInterface;
 use Luracast\Restler\Utils\Convert;
 use Symfony\Component\Yaml\Yaml as Y;
 
-class Yaml extends DependentMediaType implements RequestMediaTypeInterface, ResponseMediaTypeInterface
+class Yaml extends Dependent implements RequestMediaTypeInterface, ResponseMediaTypeInterface
 {
     const MIME = 'text/plain';
     const EXTENSION = 'yaml';
@@ -20,13 +20,13 @@ class Yaml extends DependentMediaType implements RequestMediaTypeInterface, Resp
         return ['Symfony\Component\Yaml\Yaml' => 'symfony/yaml:*'];
     }
 
-    public function decode($string)
+    public function decode(string $data)
     {
-        return Y::parse($string);
+        return Y::parse($data);
     }
 
-    public function encode($data, $humanReadable = false)
+    public function encode($data, bool $humanReadable = false): string
     {
-        return @Y::dump(Convert::toArray($data));
+        return @Y::dump($this->convert->toArray($data));
     }
 }
