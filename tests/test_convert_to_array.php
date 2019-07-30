@@ -1,5 +1,6 @@
 <?php declare(strict_types=1);
 
+use Luracast\Restler\StaticProperties;
 use Luracast\Restler\Utils\Convert;
 
 include __DIR__ . "/../vendor/autoload.php";
@@ -115,7 +116,8 @@ User-Agent: Paw/3.1.8 (Macintosh; OS X/10.14.2) GCDHTTPRequest',
         ],
 ];
 
-$result = Convert::toArray($data);
+$convert = new Convert(new StaticProperties(Convert::class));
+$result = $convert->toArray($data);
 //var_export($result);
 
 $json = json_encode($result, 192);

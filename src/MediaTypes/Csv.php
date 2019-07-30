@@ -38,7 +38,7 @@ class Csv extends MediaType implements StreamingRequestMediaTypeInterface, Respo
             $decoded [] = $row;
         }
 
-        $decoded = Convert::toArray($decoded);
+        $decoded = $this->convert->toArray($decoded);
 
         return $decoded;
     }
@@ -65,14 +65,14 @@ class Csv extends MediaType implements StreamingRequestMediaTypeInterface, Respo
             $decoded [] = $row;
         }
 
-        $decoded = Convert::toArray($decoded);
+        $decoded = $this->convert->toArray($decoded);
 
         return $decoded;
     }
 
     public function encode($data, bool $humanReadable = false): string
     {
-        $data = Convert::toArray($data);
+        $data = $this->convert->toArray($data);
         if (is_array($data) && array_values($data) == $data) {
             //if indexed array
             $lines = array();
