@@ -10,6 +10,7 @@ use Luracast\Restler\MediaTypes\Json;
 use Luracast\Restler\Utils\Dump;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Message\StreamInterface;
 use React\Promise\FulfilledPromise;
 use React\Promise\PromiseInterface;
 use Throwable;
@@ -188,18 +189,20 @@ class Restler extends Core
             $this->authenticate($this->request);
             $this->filter($this->request, true);
             $this->validate();
-            $data = $this->call($this->_route);
-            if ($data instanceof ResponseInterface) {
-                $this->composeHeaders(null, $this->request->getHeaderLine('origin'));
-                $headers = $data->getHeaders() + $this->_responseHeaders;
-                $data = $this->container->make(ResponseInterface::class,
-                    [$data->getStatusCode(), $headers, $data->getBody()]);
-                return new FulfilledPromise($data);
-            }
-            if (is_resource($data) && get_resource_type($data) == 'stream') {
-                return new FulfilledPromise($this->stream($data));
-            }
-            return Async::await($data)->then(function ($data) {
+            return Async::await($this->call($this->_route))->then(function ($data) {
+                if ($data instanceof ResponseInterface) {
+                    $this->composeHeaders(null, $this->request->getHeaderLine('origin'));
+                    $headers = $data->getHeaders() + $this->_responseHeaders;
+                    $data = $this->container->make(ResponseInterface::class,
+                        [ $data->getStatusCode(), $headers, $data->getBody() ]);
+                    return $data;
+                }
+                if ($data instanceof StreamInterface) {
+                    return $this->stream($data->detach());
+                }
+                if (is_resource($data) && get_resource_type($data) == 'stream') {
+                    return $this->stream($data);
+                }
                 $data = $this->compose($data);
                 return $this->respond($data);
             });
