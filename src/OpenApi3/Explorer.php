@@ -290,16 +290,16 @@ class Explorer implements ProvidesMultiVersionApiInterface
         if (empty($param->children) || $param->type != 'array') {
             //primitives
             if ($param->default) {
-                $p->default = $param->default;
+                $p->schema->default = $param->default;
             }
             if ($param->choice) {
                 $p->schema->enum = $param->choice;
             }
             if ($param->min) {
-                $p->minimum = $param->min;
+                $p->schema->minimum = $param->min;
             }
             if ($param->max) {
-                $p->maximum = $param->max;
+                $p->schema->maximum = $param->max;
             }
             //TODO: $p->items and $p->uniqueItems boolean
         }
@@ -410,7 +410,7 @@ class Explorer implements ProvidesMultiVersionApiInterface
                 $p->default = $info->default;
             }
             if ($info->choice) {
-                $p->schema->enum = $info->choice;
+                $p->enum = $info->choice;
             }
             if ($info->min) {
                 $p->minimum = $info->min;
