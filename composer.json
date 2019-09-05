@@ -8,7 +8,7 @@
     "psr/container": "^1.0",
     "guzzlehttp/guzzle": "~6.0",
     "ralouphie/getallheaders": "^2.0",
-    "logicalsteps/async": "v2.x-dev",
+    "logicalsteps/async": "feature/exception-handling-dev",
     "hansott/psr7-cookies": "^2.0"
   },
   "require-dev": {
