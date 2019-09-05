@@ -290,7 +290,7 @@ class Explorer implements ProvidesMultiVersionApiInterface
         if (empty($param->children) || $param->type != 'array') {
             //primitives
             if ($param->default) {
-                $p->defaultValue = $param->default;
+                $p->default = $param->default;
             }
             if ($param->choice) {
                 $p->schema->enum = $param->choice;
@@ -407,7 +407,7 @@ class Explorer implements ProvidesMultiVersionApiInterface
                 $p->description = $child['description'];
             }
             if ($info->default) {
-                $p->defaultValue = $info->default;
+                $p->default = $info->default;
             }
             if ($info->choice) {
                 $p->schema->enum = $info->choice;
