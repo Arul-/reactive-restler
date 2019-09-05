@@ -128,7 +128,6 @@ class Explorer implements ProvidesMultiVersionApiInterface
         $s->servers = $this->servers();
         $s->paths = $this->paths($version);
         $s->components = $this->components();
-        unset($s->components->schemas->object);
         return $s;
     }
 
@@ -331,15 +330,7 @@ class Explorer implements ProvidesMultiVersionApiInterface
                 ];
             } elseif ($param->contentType && ($param->contentType == 'associative' || $param->contentType == 'object')) {
                 unset($param->contentType);
-                $this->model($param->type = 'object', [
-                    [
-                        'name' => 'property',
-                        'type' => 'object',
-                        'default' => new stdClass(),
-                        'required' => false,
-                        'description' => '',
-                    ],
-                ]);
+                $object->items = (object)['type' => 'object'];
             } elseif ($param->contentType && $param->contentType != 'indexed') {
                 if (is_string($param->contentType) &&
                     $t = static::$dataTypeAlias[strtolower($param->contentType)] ?? null) {
