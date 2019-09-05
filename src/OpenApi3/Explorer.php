@@ -328,7 +328,10 @@ class Explorer implements ProvidesMultiVersionApiInterface
                 $object->items = (object)[
                     '$ref' => "#/components/schemas/$contentType",
                 ];
-            } elseif ($param->contentType && ($param->contentType == 'associative' || $param->contentType == 'object')) {
+            } elseif ($param->contentType && $param->contentType == 'associative') {
+                unset($param->contentType);
+                $object->type = 'object';
+            } elseif ($param->contentType && $param->contentType == 'object') {
                 unset($param->contentType);
                 $object->items = (object)['type' => 'object'];
             } elseif ($param->contentType && $param->contentType != 'indexed') {
