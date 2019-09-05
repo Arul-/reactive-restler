@@ -128,6 +128,7 @@ class Explorer implements ProvidesMultiVersionApiInterface
         $s->servers = $this->servers();
         $s->paths = $this->paths($version);
         $s->components = $this->components();
+        unset($s->components->schemas->object);
         return $s;
     }
 
@@ -328,13 +329,13 @@ class Explorer implements ProvidesMultiVersionApiInterface
                 $object->items = (object)[
                     '$ref' => "#/components/schemas/$contentType",
                 ];
-            } elseif ($param->contentType && $param->contentType == 'associative') {
+            } elseif ($param->contentType && ($param->contentType == 'associative' || $param->contentType == 'object')) {
                 unset($param->contentType);
-                $this->model($param->type = 'Object', [
+                $this->model($param->type = 'object', [
                     [
                         'name' => 'property',
-                        'type' => 'string',
-                        'default' => '',
+                        'type' => 'object',
+                        'default' => new stdClass(),
                         'required' => false,
                         'description' => '',
                     ],
