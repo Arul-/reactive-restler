@@ -24,8 +24,8 @@ use Luracast\Restler\Utils\Validator;
 use Psr\{
     Http\Message\RequestInterface, Http\Message\ResponseInterface, Http\Message\ServerRequestInterface
 };
-use React\Http\Io\ServerRequest;
-use React\Http\Response;
+use RingCentral\Psr7\Response;
+use RingCentral\Psr7\ServerRequest;
 
 class Defaults
 {
