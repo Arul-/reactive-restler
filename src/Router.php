@@ -78,14 +78,14 @@ class Router
         'default' => Json::class,
         Json::EXTENSION => Json::class,
         Json::MIME => Json::class,
-        'extensions' => [ '.json' ],
+        'extensions' => ['.json'],
     ];
     /**
      * @var array
      * @internal
      */
     public static $requestFormatOverridesMap = [];
-    public static $responseFormatOverridesMap = [ 'extensions' => [] ];
+    public static $responseFormatOverridesMap = ['extensions' => []];
     /**
      * @var array
      * @internal
@@ -97,8 +97,8 @@ class Router
      */
     public static $maximumVersion = 1;
 
-    public static $requestMediaTypes = [ Json::MIME ];
-    public static $responseMediaTypes = [ Json::MIME ];
+    public static $requestMediaTypes = [Json::MIME];
+    public static $responseMediaTypes = [Json::MIME];
 
     public static $requestMediaTypeOverrides = [];
     public static $responseMediaTypeOverrides = [];
@@ -329,7 +329,7 @@ class Router
      */
     public static function addAPI(string $className, ?string $resourcePath = null)
     {
-        static::mapApiClasses(is_null($resourcePath) ? [ $className ] : [ $resourcePath => $className ]);
+        static::mapApiClasses(is_null($resourcePath) ? [$className] : [$resourcePath => $className]);
     }
 
     /**
@@ -436,7 +436,7 @@ class Router
                 //assume return type is array
                 $metadata['return']['type'] = 'array';
             }
-            $paramMetadata = array_combine(array_column($metadata['param'], 'name'), $metadata['param']);
+            $paramMetadata = array_column($metadata['param'], null, 'name');
             $metadata['param'] = [];
             foreach ($params as $param) {
                 $name = $param->getName();
@@ -663,7 +663,7 @@ class Router
             Defaults::$implementations[AccessControlInterface::class][] = $className;
         }
         static::$authClasses[] = $className;
-        static::mapApiClasses([ $resourcePath => $className ]);
+        static::mapApiClasses([$resourcePath => $className]);
     }
 
     /**
@@ -760,12 +760,12 @@ class Router
             }
             /** @var Route $route */
             $route = $value[$httpMethod];
-            $regex = str_replace([ '{', '}' ],
-                [ '(?P<', '>[^/]+)' ], $key);
+            $regex = str_replace(['{', '}'],
+                ['(?P<', '>[^/]+)'], $key);
             if (preg_match_all(":^$regex$:i", $path, $matches, PREG_SET_ORDER)) {
                 $matches = $matches[0];
                 $found = true;
-                $params = array_combine(array_column($route->parameters, 'index'), $route->parameters);
+                $params = array_column($route->parameters, null, 'index');
                 foreach ($matches as $k => $v) {
                     if (is_numeric($k)) {
                         unset($matches[$k]);
@@ -1118,7 +1118,7 @@ class Router
                 $props = $class->getProperties(ReflectionProperty::IS_PUBLIC);
                 foreach ($props as $prop) {
                     $name = $prop->getName();
-                    $child = [ 'name' => $name ];
+                    $child = ['name' => $name];
                     if ($c = $prop->getDocComment()) {
                         $child += CommentParser::parse($c)['var'] ?? [];
                     } else {
@@ -1168,7 +1168,7 @@ class Router
         }
         if ($properties = $rules['properties'] ?? false) {
             if (is_string($properties)) {
-                $properties = [ $properties ];
+                $properties = [$properties];
             }
             $c = [];
             foreach ($properties as $property) {
@@ -1184,14 +1184,14 @@ class Router
                 // true means all are required false means none are required
                 $required = $required ? array_keys($children) : [];
             } elseif (is_string($required)) {
-                $required = [ $required ];
+                $required = [$required];
             }
             $required = array_fill_keys($required, true);
             foreach ($children as $name => $child) {
                 $children[$name][$dataName]['required'] = isset($required[$name]);
             }
         }
-        static::$models[$prefix . $className] = [ $className, $children, $prefix . $className ];
+        static::$models[$prefix . $className] = [$className, $children, $prefix . $className];
         return static::$models[$prefix . $className];
     }
 
