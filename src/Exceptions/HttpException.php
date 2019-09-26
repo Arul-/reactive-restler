@@ -96,9 +96,8 @@ class HttpException extends Exception
     {
         $statusCode = $this->getCode();
         $message = $this->getMessage();
-        if (isset(static::$codes[$statusCode])) {
-            $message = static::$codes[$statusCode] .
-                (empty($message) ? '' : ': ' . $message);
+        if (empty($message) && isset(static::$codes[$statusCode])) {
+            $message = static::$codes[$statusCode];
         }
         return $message;
     }
