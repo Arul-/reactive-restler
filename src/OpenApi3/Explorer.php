@@ -322,21 +322,22 @@ class Explorer implements ProvidesMultiVersionApiInterface
         $type = ClassName::short($param->type);
         if ($param->type == 'array') {
             $object->type = 'array';
+            $contentType = $param->contentType;
             if ($param->children) {
-                $contentType = ClassName::short($param->contentType);
+                $contentType = ClassName::short($contentType);
                 $model = $this->model($contentType, $param->children);
                 $object->items = (object)[
                     '$ref' => "#/components/schemas/$contentType",
                 ];
-            } elseif ($param->contentType && $param->contentType == 'associative') {
-                unset($param->contentType);
+            } elseif ('associative' == $contentType) {
+                $param->contentType = null;
                 $object->type = 'object';
-            } elseif ($param->contentType && $param->contentType == 'object') {
-                unset($param->contentType);
+            } elseif ('object' == $contentType) {
+                $param->contentType = null;
                 $object->items = (object)['type' => 'object'];
-            } elseif ($param->contentType && $param->contentType != 'indexed') {
+            } elseif ('indexed' != $contentType) {
                 if (is_string($param->contentType) &&
-                    $t = static::$dataTypeAlias[strtolower($param->contentType)] ?? null) {
+                    $t = static::$dataTypeAlias[strtolower($contentType)] ?? null) {
                     if (is_array($t)) {
                         $object->items = (object)[
                             'type' => $t[0],
@@ -348,7 +349,7 @@ class Explorer implements ProvidesMultiVersionApiInterface
                         ];
                     }
                 } else {
-                    $contentType = ClassName::short($param->contentType);
+                    $contentType = ClassName::short($contentType);
                     $object->items = (object)[
                         '$ref' => "#/components/schemas/$contentType",
                     ];
