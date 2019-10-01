@@ -144,7 +144,12 @@ class Explorer implements ProvidesMultiVersionApiInterface
     private function servers()
     {
         return empty(static::$servers)
-            ? [['url' => (string)$this->restler->baseUrl, 'description' => 'server']]
+            ? [
+                [
+                    'url' => (string)$this->restler->baseUrl,
+                    //'description' => $this->restler->baseUrl->getHost() ?? 'server'
+                ]
+            ]
             : static::$servers;
     }
 
