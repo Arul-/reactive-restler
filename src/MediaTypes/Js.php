@@ -16,11 +16,12 @@ class Js extends MediaType implements ResponseMediaTypeInterface
 
     /**
      * @param $data
+     * @param array $responseHeaders
      * @param bool $humanReadable
      * @return string
      * @throws HttpException
      */
-    public function encode($data, bool $humanReadable = false)
+    public function encode($data, array &$responseHeaders, bool $humanReadable = false)
     {
         $r = array();
         if (static::$includeHeaders) {

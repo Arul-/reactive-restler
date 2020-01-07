@@ -81,7 +81,11 @@ class Restler extends Core
     protected function respond($response = []): ResponseInterface
     {
         try {
-            $body = is_null($response) ? '' : $this->responseFormat->encode($response, !Defaults::$productionMode);
+            $body = is_null($response)
+                ? ''
+                : $this->responseFormat->encode(
+                    $response, $this->_responseHeaders, !Defaults::$productionMode
+                );
         } catch (Throwable $throwable) {
             $body = json_encode($this->message($throwable, $this->request->getHeaderLine('origin')));
         }
@@ -194,7 +198,7 @@ class Restler extends Core
                     $this->composeHeaders(null, $this->request->getHeaderLine('origin'));
                     $headers = $data->getHeaders() + $this->_responseHeaders;
                     $data = $this->container->make(ResponseInterface::class,
-                        [ $data->getStatusCode(), $headers, $data->getBody() ]);
+                        [$data->getStatusCode(), $headers, $data->getBody()]);
                     return $data;
                 }
                 if ($data instanceof StreamInterface) {
