@@ -132,7 +132,7 @@ class ClassName
 
         $divider = '\\';
         $qualified = false;
-        if ($name{0} == $divider) {
+        if ($name[0] == $divider) {
             $qualified = trim($name, $divider);
         } elseif (array_key_exists($name, $scope)) {
             $qualified = $scope[$name];

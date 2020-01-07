@@ -191,7 +191,7 @@ abstract class Core
             $uriClass = get_class($uri);
             $this->_baseUrl = new $uriClass(rtrim($url, '/'));
         }
-        if (Defaults::$useUrlBasedVersioning && strlen($path) && $path{0} == 'v') {
+        if (Defaults::$useUrlBasedVersioning && strlen($path) && $path[0] == 'v') {
             $version = intval(substr($path, 1));
             if ($version && $version <= $this->router->maximumVersion) {
                 $this->requestedApiVersion = $version;
