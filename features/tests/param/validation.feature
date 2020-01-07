@@ -140,7 +140,7 @@ Feature: Validation
     Then the response status code should be 400
     And the response is JSON
     And the type is "string"
-    And the response contains "Bad Request: Strong password with at least one alpha and one numeric character is required"
+    And the response contains "Strong password with at least one alpha and one numeric character is required"
 
   Examples:
     | password   |

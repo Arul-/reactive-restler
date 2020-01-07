@@ -24,7 +24,7 @@ Feature: Testing Versioning
     Then the response status code should be 400
     And the response is JSON
     And the type is "array"
-    And the "error.message" property equals "Bad Request: invalid height unit"
+    And the "error.message" property equals "invalid height unit"
 
   Scenario: Access version 2 by url
     When I request "v2/examples/_011_versioning/bmi?height=190cm"
@@ -53,7 +53,7 @@ Feature: Testing Versioning
     And the response "Content-Type" header should be "application/vnd.SomeVendor-v2+json; charset=utf-8"
     And the response is JSON
     And the type is "array"
-    And the "error.message" property equals "Bad Request: invalid height unit"
+    And the "error.message" property equals "invalid height unit"
 
   Scenario: Access version 2 by vendor media type
     Given that "Accept" header is set to "application/vnd.SomeVendor-v2+json"
