@@ -40,7 +40,7 @@ class Json extends MediaType implements RequestMediaTypeInterface, ResponseMedia
      * @return string
      * @throws HttpException
      */
-    public function encode($data, bool $humanReadable = false): string
+    public function encode($data, bool $humanReadable = false)
     {
         $options = static::$encodeOptions;
         if ($humanReadable) {

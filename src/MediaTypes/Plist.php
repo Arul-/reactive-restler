@@ -40,7 +40,7 @@ class Plist extends Dependent implements RequestMediaTypeInterface, ResponseMedi
         return parent::mediaType($type);
     }
 
-    public function encode($data, bool $humanReadable = false): string
+    public function encode($data, bool $humanReadable = false)
     {
         if (!isset(self::$compact)) {
             self::$compact = !$humanReadable;

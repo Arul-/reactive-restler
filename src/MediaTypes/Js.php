@@ -20,7 +20,7 @@ class Js extends MediaType implements ResponseMediaTypeInterface
      * @return string
      * @throws HttpException
      */
-    public function encode($data, bool $humanReadable = false): string
+    public function encode($data, bool $humanReadable = false)
     {
         $r = array();
         if (static::$includeHeaders) {

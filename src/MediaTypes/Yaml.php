@@ -25,7 +25,7 @@ class Yaml extends Dependent implements RequestMediaTypeInterface, ResponseMedia
         return Y::parse($data);
     }
 
-    public function encode($data, bool $humanReadable = false): string
+    public function encode($data, bool $humanReadable = false)
     {
         return @Y::dump($this->convert->toArray($data));
     }

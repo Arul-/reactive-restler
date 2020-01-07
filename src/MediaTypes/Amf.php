@@ -21,7 +21,7 @@ class Amf extends Dependent implements RequestMediaTypeInterface, ResponseMediaT
         ];
     }
 
-    public function encode($data, bool $humanReadable = false): string
+    public function encode($data, bool $humanReadable = false)
     {
 
         $stream = new OutputStream();

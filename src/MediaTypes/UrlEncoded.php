@@ -10,7 +10,7 @@ class UrlEncoded extends MediaType implements RequestMediaTypeInterface, Respons
     const MIME = 'application/x-www-form-urlencoded';
     const EXTENSION = 'post';
 
-    public function encode($data, bool $humanReadable = false): string
+    public function encode($data, bool $humanReadable = false)
     {
         return http_build_query(static::encoderTypeFix($data));
     }

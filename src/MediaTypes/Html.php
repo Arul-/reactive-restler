@@ -120,7 +120,7 @@ class Html extends MediaType implements ResponseMediaTypeInterface
         return $v;
     }
 
-    public function encode($data, bool $humanReadable = false): string
+    public function encode($data, bool $humanReadable = false)
     {
         try {
             if (!is_readable($this->html->viewPath)) {

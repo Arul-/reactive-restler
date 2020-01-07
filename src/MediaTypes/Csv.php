@@ -70,7 +70,7 @@ class Csv extends MediaType implements StreamingRequestMediaTypeInterface, Respo
         return $decoded;
     }
 
-    public function encode($data, bool $humanReadable = false): string
+    public function encode($data, bool $humanReadable = false)
     {
         $data = $this->convert->toArray($data);
         if (is_array($data) && array_values($data) == $data) {
