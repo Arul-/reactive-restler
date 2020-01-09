@@ -17,8 +17,8 @@ class Currency
             throw new HttpException(400, 'not a valid number');
         }
 
-        // let's print the international format for the en_US locale
-        setlocale(LC_MONETARY, 'en_US.UTF-8');
-        return money_format('%i', $number);
+        // let's format it as US currency
+        $m = new NumberFormatter("en-US", NumberFormatter::CURRENCY);
+        return $m->format($number);
     }
 }

@@ -14,4 +14,4 @@ Feature: Testing Error Response
     Then the response status code should be 200
     And the response is JSON
     And the type is "string"
-    And the value equals "USD55.00" or "USD 55.00"
+    And the value equals "$55.00"
