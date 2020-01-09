@@ -1,5 +1,7 @@
 <?php namespace Luracast\Restler\Contracts;
 
+use Psr\Http\Message\StreamInterface;
+
 interface ResponseMediaTypeInterface extends MediaTypeInterface
 {
     /**
@@ -7,7 +9,7 @@ interface ResponseMediaTypeInterface extends MediaTypeInterface
      * @param array|object $data
      * @param array $responseHeaders
      * @param bool $humanReadable
-     * @return string|resource
+     * @return string|resource|StreamInterface
      */
     public function encode($data, array &$responseHeaders, bool $humanReadable = false);
 }

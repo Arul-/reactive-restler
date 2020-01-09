@@ -86,6 +86,12 @@ class Restler extends Core
                 : $this->responseFormat->encode(
                     $response, $this->_responseHeaders, !Defaults::$productionMode
                 );
+            if ($body instanceof StreamInterface) {
+                return $this->stream($body->detach());
+            }
+            if (is_resource($body) && get_resource_type($body) == 'stream') {
+                return $this->stream($body);
+            }
         } catch (Throwable $throwable) {
             $body = json_encode($this->message($throwable, $this->request->getHeaderLine('origin')));
         }
