@@ -79,11 +79,12 @@ class Text
      * Convert given string to be used as a slug or css class
      *
      * @param string $name
+     * @param $replacement
      * @return string
      */
-    public static function slug($name)
+    public static function slug($name, $replacement = '-')
     {
-        return preg_replace('/[^a-zA-Z]+/', '-', strtolower(strip_tags($name)));
+        return preg_replace('/[^a-zA-Z]+/', $replacement, strtolower(strip_tags($name)));
     }
 
     public static function removeCommon($fromPath, $usingPath, $separator = '/')
