@@ -3,6 +3,7 @@
 use Luracast\Restler\Contracts\ResponseMediaTypeInterface;
 use Luracast\Restler\Contracts\StreamingRequestMediaTypeInterface;
 use Luracast\Restler\Exceptions\HttpException;
+use Luracast\Restler\ResponseHeaders;
 use Luracast\Restler\Utils\Convert;
 
 class Csv extends MediaType implements StreamingRequestMediaTypeInterface, ResponseMediaTypeInterface
@@ -70,7 +71,7 @@ class Csv extends MediaType implements StreamingRequestMediaTypeInterface, Respo
         return $decoded;
     }
 
-    public function encode($data, array &$responseHeaders, bool $humanReadable = false)
+    public function encode($data, ResponseHeaders $responseHeaders, bool $humanReadable = false)
     {
         $data = $this->convert->toArray($data);
         if (is_array($data) && array_values($data) == $data) {

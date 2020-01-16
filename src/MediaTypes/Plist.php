@@ -3,6 +3,7 @@
 
 use Luracast\Restler\Contracts\RequestMediaTypeInterface;
 use Luracast\Restler\Contracts\ResponseMediaTypeInterface;
+use Luracast\Restler\ResponseHeaders;
 use Luracast\Restler\Utils\Convert;
 
 use CFPropertyList\CFTypeDetector;
@@ -40,7 +41,7 @@ class Plist extends Dependent implements RequestMediaTypeInterface, ResponseMedi
         return parent::mediaType($type);
     }
 
-    public function encode($data, array &$responseHeaders, bool $humanReadable = false)
+    public function encode($data, ResponseHeaders $responseHeaders, bool $humanReadable = false)
     {
         if (!isset(self::$compact)) {
             self::$compact = !$humanReadable;

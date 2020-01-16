@@ -8,6 +8,7 @@ use Luracast\Restler\Contracts\UsesAuthenticationInterface;
 use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\Contracts\CacheInterface;
 use Luracast\Restler\Contracts\UserIdentificationInterface;
+use Luracast\Restler\ResponseHeaders;
 use Luracast\Restler\StaticProperties;
 use Luracast\Restler\Utils\ClassName;
 use Psr\Http\Message\ServerRequestInterface;
@@ -78,11 +79,11 @@ class RateLimiter implements FilterInterface, SelectivePathsInterface, UsesAuthe
 
     /**
      * @param ServerRequestInterface $request
-     * @param array $responseHeaders
+     * @param ResponseHeaders $responseHeaders
      * @return bool
      * @throws HttpException
      */
-    public function _isAllowed(ServerRequestInterface $request, array &$responseHeaders): bool
+    public function _isAllowed(ServerRequestInterface $request, ResponseHeaders $responseHeaders): bool
     {
         $authenticated = $this->authenticated;
         $responseHeaders['X-Auth-Status'] = ($authenticated ? 'true' : 'false');

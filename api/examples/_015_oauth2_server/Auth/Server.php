@@ -148,11 +148,10 @@ class Server implements ExplorableAuthenticationInterface
      *
      * @param ServerRequestInterface $request
      *
-     * @param array $responseHeaders
+     * @param \Luracast\Restler\ResponseHeaders $responseHeaders
      * @return boolean true when api access is allowed false otherwise
-     *
      */
-    public function _isAllowed(ServerRequestInterface $request, array &$responseHeaders): bool
+    public function _isAllowed(ServerRequestInterface $request, \Luracast\Restler\ResponseHeaders $responseHeaders): bool
     {
         $request = Convert::fromPSR7($request);
         return self::$server->verifyResourceRequest($request);

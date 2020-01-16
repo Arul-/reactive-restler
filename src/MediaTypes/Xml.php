@@ -3,6 +3,7 @@
 
 use Luracast\Restler\Contracts\RequestMediaTypeInterface;
 use Luracast\Restler\Contracts\ResponseMediaTypeInterface;
+use Luracast\Restler\ResponseHeaders;
 use Luracast\Restler\Utils\Convert;
 use Luracast\Restler\Http\Exception;
 use SimpleXMLElement;
@@ -77,7 +78,7 @@ class Xml extends MediaType implements RequestMediaTypeInterface, ResponseMediaT
         return $s;
     }
 
-    public function encode($data, array &$responseHeaders, bool $humanReadable = false)
+    public function encode($data, ResponseHeaders $responseHeaders, bool $humanReadable = false)
     {
         $data = $this->convert->toArray($data);
         $xml = new XMLWriter();

@@ -8,6 +8,7 @@ use Luracast\Restler\Contracts\UserIdentificationInterface;
 use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\OpenApi3\Security\ApiKeyAuth;
 use Luracast\Restler\OpenApi3\Security\Scheme;
+use Luracast\Restler\ResponseHeaders;
 use Luracast\Restler\StaticProperties;
 use Luracast\Restler\Utils\ClassName;
 use Psr\Http\Message\ServerRequestInterface;
@@ -30,11 +31,11 @@ class AccessControl implements AccessControlInterface, SelectivePathsInterface, 
 
     /**
      * @param ServerRequestInterface $request
-     * @param array $responseHeaders
+     * @param ResponseHeaders $responseHeaders
      * @return bool
      * @throws HttpException 401
      */
-    public function _isAllowed(ServerRequestInterface $request, array &$responseHeaders = []): bool
+    public function _isAllowed(ServerRequestInterface $request, ResponseHeaders $responseHeaders): bool
     {
         //hardcoded api_key=>role for brevity
         $roles = array('12345' => 'user', '67890' => 'admin');

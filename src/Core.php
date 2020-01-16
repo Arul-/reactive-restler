@@ -33,7 +33,7 @@ use TypeError;
  * @property string requestMethod
  * @property Route route
  * @property HttpException exception
- * @property array responseHeaders
+ * @property ResponseHeaders responseHeaders
  * @property int responseCode
  */
 abstract class Core
@@ -68,7 +68,10 @@ abstract class Core
     protected $body = [];
     protected $query = [];
 
-    protected $_responseHeaders = [];
+    /**
+     * @var ResponseHeaders
+     */
+    protected $_responseHeaders = null;
     protected $_responseCode = null;
     /**
      * @var ContainerInterface
@@ -109,6 +112,7 @@ abstract class Core
         }
 
         $this->startTime = time();
+        $this->_responseHeaders = new ResponseHeaders();
 
         $config = &$config ?? new ArrayObject();
         $this->config = &$config;
@@ -125,6 +129,7 @@ abstract class Core
         $container->instance(static::class, $this);
         $container->instance(ContainerInterface::class, $container);
         $container->instance(get_class($container), $container);
+        $container->instance(ResponseHeaders::class, $this->_responseHeaders);
         $this->container = $container;
     }
 
@@ -415,7 +420,8 @@ abstract class Core
         string $accessControlRequestMethod = '',
         string $accessControlRequestHeaders = '',
         string $origin = ''
-    ): void {
+    ): void
+    {
         if (!$this->defaults->crossOriginResourceSharing || $requestMethod != 'OPTIONS') {
             return;
         }
@@ -661,7 +667,9 @@ abstract class Core
         $this->_responseHeaders['Content-Type'] =
             $this->responseFormat->mediaType() . "; charset=$charset";
         if ($e && $e instanceof HttpException) {
-            $this->_responseHeaders = $e->getHeaders() + $this->_responseHeaders;
+            foreach ($e->getHeaders() as $key => $value) {
+                $this->_responseHeaders[$key] = $value;
+            }
         }
     }
 

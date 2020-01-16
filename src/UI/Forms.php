@@ -7,6 +7,7 @@ use Luracast\Restler\Defaults;
 use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\MediaTypes\Upload;
 use Luracast\Restler\MediaTypes\UrlEncoded;
+use Luracast\Restler\ResponseHeaders;
 use Luracast\Restler\Restler;
 use Luracast\Restler\Router;
 use Luracast\Restler\StaticProperties;
@@ -40,7 +41,7 @@ class Forms implements FilterInterface
      */
     public static $preFill = true;
     /**
-     * @var \Luracast\Restler\Data\Param
+     * @var Param
      */
     public static $validationInfo = null;
     protected $inputTypes = array(
@@ -73,7 +74,7 @@ class Forms implements FilterInterface
     protected $fileUpload = false;
     private $key = array();
     /**
-     * @var \Luracast\Restler\Data\ApiMethodInfo;
+     * @var ApiMethodInfo;
      */
     private $apiMethodInfo;
     /**
@@ -272,7 +273,7 @@ class Forms implements FilterInterface
     }
 
     /**
-     * @param \Luracast\Restler\Data\Param $p
+     * @param Param $p
      *
      * @param bool $dataOnly
      *
@@ -438,13 +439,13 @@ class Forms implements FilterInterface
      * API access will be denied when this method returns false
      *
      * @param ServerRequestInterface $request
-     * @param array $responseHeaders
+     * @param ResponseHeaders $responseHeaders
      *
      * @return boolean true when api access is allowed false otherwise
      *
      * @throws HttpException 403 security violation
      */
-    public function _isAllowed(ServerRequestInterface $request, array &$responseHeaders): bool
+    public function _isAllowed(ServerRequestInterface $request, ResponseHeaders $responseHeaders): bool
     {
         if (session_id() == '') {
             session_start();

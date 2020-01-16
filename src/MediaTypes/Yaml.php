@@ -3,6 +3,7 @@
 
 use Luracast\Restler\Contracts\RequestMediaTypeInterface;
 use Luracast\Restler\Contracts\ResponseMediaTypeInterface;
+use Luracast\Restler\ResponseHeaders;
 use Luracast\Restler\Utils\Convert;
 use Symfony\Component\Yaml\Yaml as Y;
 
@@ -25,7 +26,7 @@ class Yaml extends Dependent implements RequestMediaTypeInterface, ResponseMedia
         return Y::parse($data);
     }
 
-    public function encode($data, array &$responseHeaders, bool $humanReadable = false)
+    public function encode($data, ResponseHeaders $responseHeaders, bool $humanReadable = false)
     {
         return @Y::dump($this->convert->toArray($data));
     }

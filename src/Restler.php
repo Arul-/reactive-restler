@@ -109,13 +109,13 @@ class Restler extends Core
             $this->_responseHeaders['WWW-Authenticate'] = $authString;
         }
         return $this->container->make(ResponseInterface::class,
-            [$this->_responseCode, $this->_responseHeaders, (string)$body]);
+            [$this->_responseCode, $this->_responseHeaders->getArrayCopy(), (string)$body]);
     }
 
     protected function stream($data): ResponseInterface
     {
         return $this->container->make(ResponseInterface::class,
-            [$this->_responseCode, $this->_responseHeaders, $data ?? '']);
+            [$this->_responseCode, $this->_responseHeaders->getArrayCopy(), $data ?? '']);
     }
 
     public function handle(ServerRequestInterface $request = null): PromiseInterface
@@ -202,7 +202,7 @@ class Restler extends Core
             return Async::await($this->call($this->_route))->then(function ($data) {
                 if ($data instanceof ResponseInterface) {
                     $this->composeHeaders(null, $this->request->getHeaderLine('origin'));
-                    $headers = $data->getHeaders() + $this->_responseHeaders;
+                    $headers = $data->getHeaders() + $this->_responseHeaders->getArrayCopy();
                     $data = $this->container->make(ResponseInterface::class,
                         [$data->getStatusCode(), $headers, $data->getBody()]);
                     return $data;
@@ -235,7 +235,8 @@ class Restler extends Core
         array $middleware,
         ServerRequestInterface $request,
         $position = 0
-    ): PromiseInterface {
+    ): PromiseInterface
+    {
         // final request handler will be invoked without a next handler
         if (!isset($middleware[$position + 1])) {
             $handler = $middleware[$position];

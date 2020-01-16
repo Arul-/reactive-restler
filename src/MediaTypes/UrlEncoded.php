@@ -3,6 +3,7 @@
 
 use Luracast\Restler\Contracts\RequestMediaTypeInterface;
 use Luracast\Restler\Contracts\ResponseMediaTypeInterface;
+use Luracast\Restler\ResponseHeaders;
 
 class UrlEncoded extends MediaType implements RequestMediaTypeInterface, ResponseMediaTypeInterface
 {
@@ -10,7 +11,7 @@ class UrlEncoded extends MediaType implements RequestMediaTypeInterface, Respons
     const MIME = 'application/x-www-form-urlencoded';
     const EXTENSION = 'post';
 
-    public function encode($data, array &$responseHeaders, bool $humanReadable = false)
+    public function encode($data, ResponseHeaders $responseHeaders, bool $humanReadable = false)
     {
         return http_build_query(static::encoderTypeFix($data));
     }

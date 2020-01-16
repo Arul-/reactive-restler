@@ -19,6 +19,7 @@ use Luracast\Restler\Contracts\ContainerInterface;
 use Luracast\Restler\Contracts\ResponseMediaTypeInterface;
 use Luracast\Restler\Defaults;
 use Luracast\Restler\Exceptions\HttpException;
+use Luracast\Restler\ResponseHeaders;
 use Luracast\Restler\Restler;
 use Luracast\Restler\StaticProperties;
 use Luracast\Restler\UI\Forms;
@@ -120,7 +121,7 @@ class Html extends MediaType implements ResponseMediaTypeInterface
         return $v;
     }
 
-    public function encode($data, array &$responseHeaders, bool $humanReadable = false)
+    public function encode($data, ResponseHeaders $responseHeaders, bool $humanReadable = false)
     {
         try {
             if (!is_readable($this->html->viewPath)) {

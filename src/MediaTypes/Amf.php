@@ -2,6 +2,7 @@
 
 use Luracast\Restler\Contracts\RequestMediaTypeInterface;
 use Luracast\Restler\Contracts\ResponseMediaTypeInterface;
+use Luracast\Restler\ResponseHeaders;
 use ZendAmf\Parser\Amf3\Deserializer;
 use ZendAmf\Parser\Amf3\Serializer;
 use ZendAmf\Parser\InputStream;
@@ -21,7 +22,7 @@ class Amf extends Dependent implements RequestMediaTypeInterface, ResponseMediaT
         ];
     }
 
-    public function encode($data, array &$responseHeaders, bool $humanReadable = false)
+    public function encode($data, ResponseHeaders $responseHeaders, bool $humanReadable = false)
     {
 
         $stream = new OutputStream();

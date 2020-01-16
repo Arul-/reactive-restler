@@ -6,6 +6,7 @@ use Luracast\Restler\Contracts\SelectivePathsInterface;
 use Luracast\Restler\Contracts\SelectivePathsTrait;
 use Luracast\Restler\OpenApi3\Security\ApiKeyAuth;
 use Luracast\Restler\OpenApi3\Security\Scheme;
+use Luracast\Restler\ResponseHeaders;
 use Psr\Http\Message\ServerRequestInterface;
 
 class SimpleAuth implements ExplorableAuthenticationInterface, SelectivePathsInterface
@@ -19,7 +20,7 @@ class SimpleAuth implements ExplorableAuthenticationInterface, SelectivePathsInt
         return SimpleAuth::KEY;
     }
 
-    public function _isAllowed(ServerRequestInterface $request, array &$responseHeaders = []): bool
+    public function _isAllowed(ServerRequestInterface $request, ResponseHeaders $responseHeaders): bool
     {
         $query = $request->getQueryParams();
         return isset($query['key']) && $query['key'] == SimpleAuth::KEY ? true : false;

@@ -3,13 +3,14 @@
 use Luracast\Restler\Contracts\AuthenticationInterface;
 use Luracast\Restler\Contracts\SelectivePathsInterface;
 use Luracast\Restler\Contracts\SelectivePathsTrait;
+use Luracast\Restler\ResponseHeaders;
 use Psr\Http\Message\ServerRequestInterface;
 
 class KeyAuth implements AuthenticationInterface, SelectivePathsInterface
 {
     use SelectivePathsTrait;
 
-    public function _isAllowed(ServerRequestInterface $request, array &$responseHeaders = []): bool
+    public function _isAllowed(ServerRequestInterface $request, ResponseHeaders $responseHeaders): bool
     {
         $query = $request->getQueryParams();
         return isset($query['api_key']) && $query['api_key'] == 'r3rocks';

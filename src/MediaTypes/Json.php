@@ -4,6 +4,7 @@
 use Luracast\Restler\Contracts\RequestMediaTypeInterface;
 use Luracast\Restler\Contracts\ResponseMediaTypeInterface;
 use Luracast\Restler\Exceptions\HttpException;
+use Luracast\Restler\ResponseHeaders;
 use Luracast\Restler\Utils\Convert;
 
 class Json extends MediaType implements RequestMediaTypeInterface, ResponseMediaTypeInterface
@@ -36,12 +37,12 @@ class Json extends MediaType implements RequestMediaTypeInterface, ResponseMedia
 
     /**
      * @param $data
-     * @param array $responseHeaders
+     * @param ResponseHeaders $responseHeaders
      * @param bool $humanReadable
      * @return string
      * @throws HttpException
      */
-    public function encode($data, array &$responseHeaders, bool $humanReadable = false)
+    public function encode($data, ResponseHeaders $responseHeaders, bool $humanReadable = false)
     {
         $options = static::$encodeOptions;
         if ($humanReadable) {
