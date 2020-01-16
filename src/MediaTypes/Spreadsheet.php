@@ -10,6 +10,7 @@ use Box\Spout\Writer\Common\Creator\WriterEntityFactory;
 use Luracast\Restler\Contracts\ResponseMediaTypeInterface;
 use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\ResponseHeaders;
+use Luracast\Restler\Utils\Convert;
 
 
 class Spreadsheet extends Dependent implements ResponseMediaTypeInterface

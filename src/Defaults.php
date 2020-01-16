@@ -12,10 +12,11 @@ use Luracast\Restler\Contracts\{
     ResponseMediaTypeInterface,
     SessionInterface,
     UserIdentificationInterface,
-    ValidationInterface};
+    ValidationInterface
+};
 use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\Filters\RateLimiter;
-use Luracast\Restler\MediaTypes\{Amf, Csv, Html, Js, Json, Plist, Tsv, Upload, UrlEncoded, Xml, Yaml};
+use Luracast\Restler\MediaTypes\{Amf, Csv, Html, Js, Json, Plist, Spreadsheet, Tsv, Upload, UrlEncoded, Xml, Yaml};
 use Luracast\Restler\UI\Forms;
 use Luracast\Restler\UI\Nav;
 use Luracast\Restler\Utils\Convert;
@@ -333,6 +334,7 @@ class Defaults
         'Xml' => Xml::class,
         'Yaml' => Yaml::class,
         'Html' => Html::class,
+        'Spreadsheet' => Spreadsheet::class,
         //Filters,
         'RateLimiter' => RateLimiter::class,
         // Exception
