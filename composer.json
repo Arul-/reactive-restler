@@ -25,7 +25,8 @@
     "illuminate/view": "^5.7",
     "bshaffer/oauth2-server-php": "^1.11",
     "react/http-client": "^0.5.9",
-    "swoole/ide-helper": "^4.3"
+    "swoole/ide-helper": "^4.3",
+    "box/spout": "^3.1"
   },
   "license": "MIT",
   "authors": [
