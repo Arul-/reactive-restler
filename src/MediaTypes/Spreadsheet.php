@@ -41,12 +41,12 @@ class Spreadsheet extends Dependent implements ResponseMediaTypeInterface
     public function encode($data, ResponseHeaders $responseHeaders, bool $humanReadable = false)
     {
         $data = $this->convert->toArray($data);
+        if (!is_writable(Defaults::$cacheDirectory)) {
+            throw new HttpException(500, 'Spreadsheet needs Defaults::$cacheDirectory to be writable.');
+        }
         if (is_array($data) && array_values($data) == $data) {
             //if indexed array
             $file = Defaults::$cacheDirectory . '/spreadsheet' . microtime() . '.' . $this->extension();
-            if (!is_writable($file)) {
-                throw new HttpException(500, 'Spreadsheet needs Defaults::$cacheDirectory to be writable.');
-            }
             $writer = WriterEntityFactory::createWriter($this->extension());
             $writer->openToFile($file);
             $row = array_shift($data);
