@@ -7,6 +7,7 @@ namespace Luracast\Restler\MediaTypes;
 use Box\Spout\Common\Entity\Style\Color;
 use Box\Spout\Writer\Common\Creator\Style\StyleBuilder;
 use Box\Spout\Writer\Common\Creator\WriterEntityFactory;
+use Luracast\Restler\Contracts\DownloadableFileMediaTypeInterface;
 use Luracast\Restler\Contracts\ResponseMediaTypeInterface;
 use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\ResponseHeaders;
@@ -14,7 +15,7 @@ use Luracast\Restler\Utils\Convert;
 use Luracast\Restler\Defaults;
 
 
-class Spreadsheet extends Dependent implements ResponseMediaTypeInterface
+class Spreadsheet extends Dependent implements DownloadableFileMediaTypeInterface
 {
     const MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
     const EXTENSION = 'xlsx';

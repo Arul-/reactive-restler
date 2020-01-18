@@ -1,6 +1,7 @@
 <?php namespace Luracast\Restler\OpenApi3;
 
 use Luracast\Restler\Contracts\{
+    DownloadableFileMediaTypeInterface,
     ExplorableAuthenticationInterface,
     ProvidesMultiVersionApiInterface,
     UsesAuthenticationInterface
@@ -463,6 +464,11 @@ class Explorer implements ProvidesMultiVersionApiInterface
         $schema = new stdClass();
         $content = [];
         foreach ($route->responseMediaTypes as $mime) {
+            $mediaType = $route->responseFormatMap[$mime];
+            if (isset(class_implements($mediaType)[DownloadableFileMediaTypeInterface::class])) {
+                $content[$mime] = ['schema' => (object)['type' => 'string', 'format' => 'binary']];
+                continue;
+            }
             $content[$mime] = ['schema' => $schema];
             if (Xml::MIME === $mime) {
                 $content[$mime] += ['xml' => ['name' => Xml::$defaultTagName]];
