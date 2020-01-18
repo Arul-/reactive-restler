@@ -356,11 +356,14 @@ class Explorer implements ProvidesMultiVersionApiInterface
                             'type' => $t,
                         ];
                     }
-                } else {
+                } elseif (is_string($contentType)) {
                     $contentType = ClassName::short($contentType);
                     $object->items = (object)[
                         '$ref' => "#/components/schemas/$contentType",
                     ];
+                } else { //assume as array of objects
+                    $param->contentType = null;
+                    $object->items = (object)['type' => 'object'];
                 }
             } else {
                 $object->items = (object)[
