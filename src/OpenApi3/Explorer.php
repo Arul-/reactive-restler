@@ -485,7 +485,11 @@ class Explorer implements ProvidesMultiVersionApiInterface
         ];
         $return = $route->return;
         if (!empty($return)) {
-            $this->setType($schema, $return);
+            if ('null' == $return->type) {
+                unset($r[$code]['content']);
+            } else {
+                $this->setType($schema, $return);
+            }
         }
 
         if (is_array($throws = $route->throws ?? null)) {
