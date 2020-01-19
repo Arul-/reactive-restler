@@ -1,16 +1,12 @@
 <?php namespace Luracast\Restler\OpenApi3;
 
-use Luracast\Restler\Contracts\{
-    DownloadableFileMediaTypeInterface,
+use Luracast\Restler\Contracts\{DownloadableFileMediaTypeInterface,
     ExplorableAuthenticationInterface,
-    ProvidesMultiVersionApiInterface,
-    UsesAuthenticationInterface
-};
+    ProvidesMultiVersionApiInterface};
 use Luracast\Restler\Core;
-use Luracast\Restler\Data\{ApiMethodInfo, Param, Route, Type};
+use Luracast\Restler\Data\{Param, Route, Type};
 use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\Exceptions\Redirect;
-use Luracast\Restler\MediaTypes\Xml;
 use Luracast\Restler\Router;
 use Luracast\Restler\Utils\{ClassName, PassThrough, Text};
 use Psr\Http\Message\ServerRequestInterface;
@@ -433,7 +429,6 @@ class Explorer implements ProvidesMultiVersionApiInterface
         if (!empty($required)) {
             $r->required = $required;
         }
-        $r->xml = ['name' => $type];
         $this->models[$type] = $r;
 
         return $r;
@@ -445,9 +440,6 @@ class Explorer implements ProvidesMultiVersionApiInterface
         $content = [];
         foreach ($route->requestMediaTypes as $mime) {
             $content[$mime] = ['schema' => $p->schema];
-            if (Xml::MIME === $mime) {
-                $content[$mime] += ['xml' => ['name' => Xml::$defaultTagName]];
-            }
         }
         $this->requestBodies[$param->type] = compact('content');
         return (object)['$ref' => "#/components/requestBodies/{$param->type}"];
@@ -473,9 +465,6 @@ class Explorer implements ProvidesMultiVersionApiInterface
                 continue;
             }
             $content[$mime] = ['schema' => $schema];
-            if (Xml::MIME === $mime) {
-                $content[$mime] += ['xml' => ['name' => Xml::$defaultTagName]];
-            }
         }
         $r = [
             $code => [
