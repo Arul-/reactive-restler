@@ -416,7 +416,9 @@ class Router
             if ($rtype = $method->hasReturnType()
                 ? '\\' . $method->getReturnType()->getName()
                 : ($metadata['return']['type'] ?? false)) {
-                if (Text::endsWith($rtype, '[]')) {
+                if ('\\void' == $rtype || 'void' == $rtype) {
+                    $rtype = $metadata['return']['type'] = 'null';
+                } elseif (Text::endsWith($rtype, '[]')) {
                     $metadata['return'][$dataName]['type'] = substr($rtype, 0, -2);
                     $rtype = $metadata['return']['type'] = 'array';
                 }
