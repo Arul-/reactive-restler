@@ -2,7 +2,8 @@
 
 use Luracast\Restler\Contracts\{DownloadableFileMediaTypeInterface,
     ExplorableAuthenticationInterface,
-    ProvidesMultiVersionApiInterface};
+    ProvidesMultiVersionApiInterface
+};
 use Luracast\Restler\Core;
 use Luracast\Restler\Data\{Param, Route, Type};
 use Luracast\Restler\Exceptions\HttpException;
@@ -211,13 +212,14 @@ class Explorer implements ProvidesMultiVersionApiInterface
         return $r;
     }
 
-    private function operationId(Route $route)
+    private function operationId(Route $route, bool $asClassName = false)
     {
         static $hash = [];
         $id = $route->httpMethod . ' ' . $route->url;
         if (isset($hash[$id])) {
-            return $hash[$id];
+            return $hash[$id][$asClassName];
         }
+
         if (is_array($route->action) && 2 == count($route->action) && is_string($route->action[0])) {
             $class = ClassName::short($route->action[0]);
             $method = $route->action[1];
@@ -231,11 +233,12 @@ class Explorer implements ProvidesMultiVersionApiInterface
                 );
                 $method = lcfirst($class) . ucfirst($method);
             }
-            $hash[$id] = $method;
-            return $method;
+            $hash[$id] = [$id, $method];
+            return $hash[$id][$asClassName];
         }
-        $hash[$id] = $id;
-        return $id;
+
+        $hash[$id] = [$id, Text::slug($id, '')];
+        return $hash[$id][$asClassName];
     }
 
     private function parameters(Route $route)
@@ -447,7 +450,7 @@ class Explorer implements ProvidesMultiVersionApiInterface
 
     private function modelName(Route $route)
     {
-        return ucfirst($this->operationId($route)) . 'Model';
+        return ucfirst($this->operationId($route, true)) . 'Model';
     }
 
     private function responses(Route $route)
