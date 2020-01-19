@@ -6,6 +6,7 @@ use Luracast\Restler\Contracts\ExplorableAuthenticationInterface;
 use Luracast\Restler\OpenApi3\Security\AuthorizationCode as AuthorizationCodeFlow;
 use Luracast\Restler\OpenApi3\Security\OAuth2;
 use Luracast\Restler\OpenApi3\Security\Scheme;
+use Luracast\Restler\ResponseHeaders;
 use OAuth2\Convert;
 use OAuth2\GrantType\AuthorizationCode;
 use OAuth2\GrantType\UserCredentials;
@@ -148,10 +149,10 @@ class Server implements ExplorableAuthenticationInterface
      *
      * @param ServerRequestInterface $request
      *
-     * @param \Luracast\Restler\ResponseHeaders $responseHeaders
+     * @param ResponseHeaders $responseHeaders
      * @return boolean true when api access is allowed false otherwise
      */
-    public function _isAllowed(ServerRequestInterface $request, \Luracast\Restler\ResponseHeaders $responseHeaders): bool
+    public function _isAllowed(ServerRequestInterface $request, ResponseHeaders $responseHeaders): bool
     {
         $request = Convert::fromPSR7($request);
         return self::$server->verifyResourceRequest($request);
