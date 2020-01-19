@@ -947,7 +947,7 @@ class Router
         if ($route->access <= Route::ACCESS_HYBRID) {
             return true;
         }
-        $ignore = [];
+        $ignore = new ResponseHeaders();
         $authenticated = false;
         foreach ($route->authClasses as $class) {
             if (
