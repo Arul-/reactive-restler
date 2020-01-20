@@ -9,7 +9,8 @@ use Luracast\Restler\Contracts\{AccessControlInterface,
     RequestMediaTypeInterface,
     ResponseMediaTypeInterface,
     SelectivePathsInterface,
-    UsesAuthenticationInterface};
+    UsesAuthenticationInterface
+};
 use Luracast\Restler\Data\Param;
 use Luracast\Restler\Data\Route;
 use Luracast\Restler\Exceptions\HttpException;
@@ -199,7 +200,8 @@ class Router
         array $types,
         &$formatMap,
         &$mediaTypes
-    ): void {
+    ): void
+    {
         if (!count($types)) {
             return;
         }
@@ -356,9 +358,12 @@ class Router
          *      - Else If request method is POST/PUT/PATCH
          *              - Map it to body
          *      - Else If request method is GET/DELETE
-         *              - Map it to body
+         *              - Map it to query string
          * - If a required parameter is not primitive type
-         *      - Do not include it in URL
+         *      If request method is POST/PUT/PATCH
+         *              - Map it to body
+         *     - Else If request method is GET/DELETE
+         *              - Map it to query string with name[property]=value syntax
          */
         $class = new ReflectionClass($className);
         $dataName = CommentParser::$embeddedDataName;
@@ -619,6 +624,7 @@ class Router
                             = 'query';
                     }
                 }
+                $copy = unserialize(serialize($call));
                 if (empty($pathParams) || $allowAmbiguity) {
                     static::addPath($url, $call, $httpMethod, $version);
                 }
@@ -632,8 +638,11 @@ class Router
                             ? $call['metadata']['param'][$position]['type']
                             : null)
                         . $position . '}';
+                    $copy['metadata']['param'][$position][$dataName]['from'] = 'path';
+                    $copy['metadata']['param'][$position][$dataName]['required'] = true;
                     if ($allowAmbiguity || $position == $lastPathParam) {
-                        static::addPath($url, $call, $httpMethod, $version);
+                        static::addPath($url, $copy, $httpMethod, $version);
+                        $copy = unserialize(serialize($copy));
                     }
                 }
             }
@@ -708,7 +717,8 @@ class Router
         $httpMethod,
         $version = 1,
         array $data = []
-    ) {
+    )
+    {
         if (empty(static::$routes)) {
             throw new HttpException(
                 500,
@@ -833,7 +843,8 @@ class Router
         array $call,
         $httpMethod = 'GET',
         $version = 1
-    ) {
+    )
+    {
         $call['url'] = preg_replace_callback(
             "/\{\S(\d+)\}/",
             function ($matches) use ($call) {
@@ -885,7 +896,8 @@ class Router
         array $excludedPaths = [],
         array $excludedHttpMethods = [],
         $version = 1
-    ) {
+    )
+    {
         $map = [];
         $all = self::$routes["v$version"];
         $filter = [];
@@ -943,7 +955,8 @@ class Router
         ServerRequestInterface $request,
         callable $maker,
         array &$verifiedClasses
-    ) {
+    )
+    {
         if ($route->access <= Route::ACCESS_HYBRID) {
             return true;
         }
@@ -1095,7 +1108,8 @@ class Router
         array $scope,
         $prefix = '',
         array $rules = []
-    ) {
+    )
+    {
         $className = $class->getName();
         $dataName = CommentParser::$embeddedDataName;
         if (isset(static::$models[$prefix . $className])) {
