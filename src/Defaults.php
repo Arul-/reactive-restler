@@ -1,10 +1,9 @@
 <?php namespace Luracast\Restler;
 
-use Luracast\Restler\Cache\HumanReadableCache;
+use Luracast\Restler\Cache\HumanReadable;
 use Luracast\Restler\Contracts\{
     AccessControlInterface,
     AuthenticationInterface,
-    CacheInterface,
     ComposerInterface,
     ContainerInterface,
     FilterInterface,
@@ -23,7 +22,10 @@ use Luracast\Restler\Utils\Convert;
 use Luracast\Restler\Utils\Text;
 use Luracast\Restler\Utils\Validator;
 use Psr\{
-    Http\Message\RequestInterface, Http\Message\ResponseInterface, Http\Message\ServerRequestInterface
+    SimpleCache\CacheInterface,
+    Http\Message\RequestInterface,
+    Http\Message\ResponseInterface,
+    Http\Message\ServerRequestInterface
 };
 use RingCentral\Psr7\Response;
 use RingCentral\Psr7\ServerRequest;
@@ -296,7 +298,7 @@ class Defaults
      * @var array {@type associative}
      */
     public static $implementations = [
-        CacheInterface::class => [HumanReadableCache::class],
+        CacheInterface::class => [HumanReadable::class],
         ValidationInterface::class => [Validator::class],
         UserIdentificationInterface::class => [UserIdentifier::class],
         AccessControlInterface::class => [ /* YOUR_CLASS_NAME_HERE */],

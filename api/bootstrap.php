@@ -3,7 +3,7 @@
 use Auth\Client;
 use Auth\Server;
 use improved\Authors as ImprovedAuthors;
-use Luracast\Restler\Cache\HumanReadableCache;
+use Luracast\Restler\Cache\HumanReadable;
 use Luracast\Restler\Defaults;
 use Luracast\Restler\Filters\RateLimiter;
 use Luracast\Restler\MediaTypes\Html;
@@ -24,7 +24,7 @@ use v1\BMI as BMI1;
 define('BASE', dirname(__DIR__));
 include BASE . "/vendor/autoload.php";
 
-Defaults::$cacheDirectory = HumanReadableCache::$cacheDir = BASE . '/api/common/store';
+Defaults::$cacheDirectory = HumanReadable::$cacheDirectory = BASE . '/api/common/store';
 Defaults::$implementations[DataProviderInterface::class] = [SerializedFileDataProvider::class];
 Defaults::$useUrlBasedVersioning = true;
 Defaults::$apiVendor = "SomeVendor";
@@ -110,7 +110,7 @@ try {
         //Explorer
         'explorer' => Explorer::class,
     ]);
-    $cache = new HumanReadableCache();
+    $cache = new HumanReadable();
     $cache->set('route', Router::toArray());
     $cache->set('models', Router::$models);
 } catch (Throwable $t) {

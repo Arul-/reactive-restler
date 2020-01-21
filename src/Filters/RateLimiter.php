@@ -6,7 +6,7 @@ use Luracast\Restler\Contracts\SelectivePathsInterface;
 use Luracast\Restler\Contracts\SelectivePathsTrait;
 use Luracast\Restler\Contracts\UsesAuthenticationInterface;
 use Luracast\Restler\Exceptions\HttpException;
-use Luracast\Restler\Contracts\CacheInterface;
+use Psr\SimpleCache\CacheInterface;
 use Luracast\Restler\Contracts\UserIdentificationInterface;
 use Luracast\Restler\ResponseHeaders;
 use Luracast\Restler\StaticProperties;
@@ -82,6 +82,7 @@ class RateLimiter implements FilterInterface, SelectivePathsInterface, UsesAuthe
      * @param ResponseHeaders $responseHeaders
      * @return bool
      * @throws HttpException
+     * @throws \Psr\SimpleCache\InvalidArgumentException
      */
     public function _isAllowed(ServerRequestInterface $request, ResponseHeaders $responseHeaders): bool
     {
