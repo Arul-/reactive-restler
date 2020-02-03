@@ -16,6 +16,16 @@ class Type extends ValueObject
     public $type = 'array';
 
     /**
+     * @var bool can it hold null value?
+     */
+    public $nullable = true;
+
+    /**
+     * @var bool does it hold scalar data or object data
+     */
+    public $scalar = false;
+
+    /**
      * When the type is array, this field is used to define the type of the
      * contents of the array
      *

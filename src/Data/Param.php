@@ -154,7 +154,7 @@ class Param extends Type
         return $r;
     }
 
-    public function content( $index = 0): self
+    public function content($index = 0): self
     {
         return Param::parse([
             'name' => $this->name . '[' . $index . ']',
@@ -223,9 +223,7 @@ class Param extends Type
 
     public static function arrayValue($value)
     {
-        return is_array($value) ? $value : array(
-            $value
-        );
+        return is_array($value) ? $value : [$value];
     }
 
     public static function stringValue($value, $glue = ',')
