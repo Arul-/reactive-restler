@@ -243,9 +243,9 @@ class Forms implements FilterInterface
             if ($v->from == 'path') {
                 continue;
             }
-            if (!empty($v->children)) {
+            if (!empty($v->properties)) {
                 $t = Emmet::make($this->style('fieldset', $m), array('label' => $v->label));
-                foreach ($v->children as $n => $c) {
+                foreach ($v->properties as $n => $c) {
                     $value = $v->value->{$n} ?? null;
                     if (
                         is_scalar($value) ||

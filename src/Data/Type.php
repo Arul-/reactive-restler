@@ -39,7 +39,7 @@ class Type extends ValueObject
     /**
      * @var array|null of children to be validated. used only for non scalar type
      */
-    public ?array $children = null;
+    public ?array $properties = null;
 
     /**
      * @var string

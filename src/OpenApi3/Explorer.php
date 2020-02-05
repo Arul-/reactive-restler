@@ -294,7 +294,7 @@ class Explorer implements ProvidesMultiVersionApiInterface
         //}
         $p->name = $param->name;
         $this->setType($p->schema, $param);
-        if (empty($param->children) || $param->type != 'array') {
+        if (empty($param->properties) || $param->type != 'array') {
             //primitives
             if ($param->default) {
                 $p->schema->default = $param->default;
@@ -330,9 +330,9 @@ class Explorer implements ProvidesMultiVersionApiInterface
         if ($param->type == 'array') {
             $object->type = 'array';
             $contentType = $param->contentType;
-            if ($param->children) {
+            if ($param->properties) {
                 $contentType = ClassName::short($contentType);
-                $model = $this->model($contentType, $param->children);
+                $model = $this->model($contentType, $param->properties);
                 $object->items = (object)[
                     '$ref' => "#/components/schemas/$contentType",
                 ];
@@ -369,8 +369,8 @@ class Explorer implements ProvidesMultiVersionApiInterface
                     'type' => 'string',
                 ];
             }
-        } elseif ($param->children) {
-            $this->model($type, $param->children);
+        } elseif ($param->properties) {
+            $this->model($type, $param->properties);
             $object->{'$ref'} = "#/components/schemas/$type";
         } elseif (is_string($param->type) && $t = static::$dataTypeAlias[strtolower($param->type)] ?? null) {
             if (is_array($t)) {

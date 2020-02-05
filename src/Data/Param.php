@@ -159,7 +159,7 @@ class Param extends Type
         return Param::parse([
             'name' => $this->name . '[' . $index . ']',
             'type' => $this->contentType,
-            'children' => $this->children,
+            'children' => $this->properties,
             'required' => true,
         ]);
     }
@@ -178,6 +178,7 @@ class Param extends Type
         if (is_string($instance->type) && $instance->type == 'integer') {
             $instance->type = 'int';
         }
+        $instance->scalar = \Luracast\Restler\Utils\Type::isPrimitive($instance->type);
         return $instance;
     }
 
