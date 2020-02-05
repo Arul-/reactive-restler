@@ -14,35 +14,35 @@ class Type extends ValueObject
      * Restler will pick the first. if null is one of the values, it will be simple set the nullable flag
      * if multiple is true, type denotes the content type here
      */
-    public $type = 'string';
+    public string $type = 'string';
 
     /**
      * @var bool is it a list?
      */
-    public $multiple = false;
+    public bool $multiple = false;
 
     /**
      * @var bool can it hold null value?
      */
-    public $nullable = true;
+    public bool $nullable = true;
 
     /**
      * @var bool does it hold scalar data or object data
      */
-    public $scalar = false;
+    public bool $scalar = false;
 
     /**
      * @var string|null if the given data can be classified to sub types it will be specified here
      */
-    public $format;
+    public ?string $format;
 
     /**
      * @var array|null of children to be validated. used only for non scalar type
      */
-    public $children = null;
+    public ?array $children = null;
 
     /**
      * @var string
      */
-    public $description = '';
+    public string $description = '';
 }
