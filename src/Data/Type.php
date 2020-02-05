@@ -10,10 +10,16 @@ class Type extends ValueObject
      * Data type of the variable being validated.
      * It will be mostly string
      *
-     * @var string|array multiple types are specified it will be of
-     *      type array otherwise it will be a string
+     * @var string only single type is allowed. if multiple types are specified,
+     * Restler will pick the first. if null is one of the values, it will be simple set the nullable flag
+     * if multiple is true, type denotes the content type here
      */
-    public $type = 'array';
+    public $type = 'string';
+
+    /**
+     * @var bool is it a list?
+     */
+    public $multiple = false;
 
     /**
      * @var bool can it hold null value?
@@ -26,16 +32,12 @@ class Type extends ValueObject
     public $scalar = false;
 
     /**
-     * When the type is array, this field is used to define the type of the
-     * contents of the array
-     *
-     * @var string|null when all the items in an array are of certain type, we
-     *      can set this property. It will be null if the items can be of any type
+     * @var string|null if the given data can be classified to sub types it will be specified here
      */
-    public $contentType;
+    public $format;
 
     /**
-     * @var array of children to be validated
+     * @var array|null of children to be validated. used only for non scalar type
      */
     public $children = null;
 
