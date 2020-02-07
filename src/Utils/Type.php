@@ -33,6 +33,15 @@ class Type
      * @param string $type
      * @return boolean
      */
+    public static function isScalar(string $type): bool
+    {
+        return (boolean)strpos(static::SCALAR, $type);
+    }
+
+    /**
+     * @param string $type
+     * @return boolean
+     */
     public static function isPrimitive(string $type): bool
     {
         return (boolean)strpos(static::PRIMITIVE, $type);
