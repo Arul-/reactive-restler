@@ -5,6 +5,8 @@ namespace Luracast\Restler\Data;
 
 
 use Luracast\Restler\Contracts\ValueObjectInterface;
+use Luracast\Restler\Utils\CommentParser;
+use Luracast\Restler\Utils\Type as TypeUtil;
 use ReflectionProperty;
 
 class Type implements ValueObjectInterface
@@ -85,12 +87,30 @@ class Type implements ValueObjectInterface
     public static function fromProp(ReflectionProperty $prop)
     {
         $instance = new static();
+        $var = CommentParser::parse($prop->getDocComment() ?? '')['var'] ?? [];
+        print_r($var);
+        $dtype = $var[CommentParser::$embeddedDataName]['type'] ?? ['string'];
+        if ('null' == $dtype[0]) {
+            if (1 == count($dtype)) {
+                array_unshift($dtype, 'string');
+            } else {
+                array_unshift($dtype, $dtype[1]);
+            }
+        }
         if ($prop->hasType()) {
             $t = $prop->getType();
-            $instance->type = $ts = $t->getName();
-            $instance->scalar = $t->isBuiltin() && 'array' !== $ts;
-            $instance->nullable = $t->allowsNull();
-
+            $ts = $t->getName();
+            if ('array' == $ts) {
+                $instance->multiple = true;
+                $instance->type = $dtype[0];
+                $instance->scalar = TypeUtil::isScalar($dtype[0]);
+                $instance->nullable = in_array('null', $dtype);
+            } else {
+                $instance->multiple = false;
+                $instance->type = $ts;
+                $instance->nullable = $t->allowsNull();
+                $instance->scalar = $t->isBuiltin();
+            }
         } else { //try doc comment
 
         }

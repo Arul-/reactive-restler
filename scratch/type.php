@@ -10,7 +10,8 @@ echo $type . PHP_EOL;
 
 class Test
 {
-    public ?int $obj;
+    /** @var array {@type int|null} an array of integers */
+    public array $obj;
 }
 
 echo (Type::fromProp(new ReflectionProperty(Test::class, 'obj'))).PHP_EOL;
