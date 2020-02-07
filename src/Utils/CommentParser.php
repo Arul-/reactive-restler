@@ -53,14 +53,19 @@ class CommentParser
     ];
 
     /**
+     * separator for type definitions
+     */
+    const TYPE_SEPARATOR = '|';
+
+    /**
      * character sequence used to escape \@
      */
-    const escapedAtChar = '\\@';
+    const ESCAPE_SEQUENCE_START = '\\@';
 
     /**
      * character sequence used to escape end of comment
      */
-    const escapedCommendEnd = '{@*}';
+    const ESCAPE_SEQUENCE_END = '{@*}';
 
     /**
      * Comment information is parsed and stored in to this array.
@@ -124,7 +129,7 @@ class CommentParser
     {
         //to use @ as part of comment we need to
         $comment = str_replace(
-            [self::escapedCommendEnd, self::escapedAtChar],
+            [self::ESCAPE_SEQUENCE_END, self::ESCAPE_SEQUENCE_START],
             ['*/', '@'],
             $comment);
 
@@ -321,6 +326,8 @@ class CommentParser
                 $matches[2] = true;
             } elseif ($matches[1] == 'required') {
                 $matches[2] = explode(static::$arrayDelimiter, $matches[2]);
+            } elseif ($matches[1] == 'type') {
+                $matches[2] = explode(self::TYPE_SEPARATOR, $matches[2]);;
             }
             $data[$matches[1]] = $matches[2];
         }
@@ -432,9 +439,9 @@ class CommentParser
 
     private function formatReturn(array $value)
     {
-        $data = explode('|', array_shift($value));
+        $data = explode(self::TYPE_SEPARATOR, array_shift($value));
         $r = [
-            'type' => count($data) == 1 ? $data[0] : $data,
+            'type' => $data,
         ];
         $r['description'] = implode(' ', $value);
         return $r;
@@ -445,13 +452,13 @@ class CommentParser
         $r = [];
         $data = array_shift($value);
         if (empty($data)) {
-            $r['type'] = 'mixed';
+            $r['type'] = ['mixed'];
         } elseif ($data[0] == '$') {
             $r['name'] = substr($data, 1);
-            $r['type'] = 'mixed';
+            $r['type'] = ['mixed'];
         } else {
-            $data = explode('|', $data);
-            $r['type'] = count($data) == 1 ? $data[0] : $data;
+            $data = explode(self::TYPE_SEPARATOR, $data);
+            $r['type'] = $data;
 
             $data = array_shift($value);
             if (!empty($data) && $data[0] == '$') {
@@ -459,8 +466,8 @@ class CommentParser
             }
         }
         if (isset($r['type']) && is_string($r['type']) && Text::endsWith($r['type'], '[]')) {
-            $r[static::$embeddedDataName]['type'] = substr($r['type'], 0, -2);
-            $r['type'] = 'array';
+            $r[static::$embeddedDataName]['type'] = [substr($r['type'], 0, -2)];
+            $r['type'] = ['array'];
         }
         if ($value) {
             $r['description'] = implode(' ', $value);
@@ -473,17 +480,17 @@ class CommentParser
         $r = [];
         $data = array_shift($value);
         if (empty($data)) {
-            $r['type'] = 'mixed';
+            $r['type'] = ['mixed'];
         } elseif ($data[0] == '$') {
             $r['name'] = substr($data, 1);
-            $r['type'] = 'mixed';
+            $r['type'] = ['mixed'];
         } else {
-            $data = explode('|', $data);
-            $r['type'] = count($data) == 1 ? $data[0] : $data;
+            $data = explode(self::TYPE_SEPARATOR, $data);
+            $r['type'] = $data;
         }
         if (isset($r['type']) && is_string($r['type']) && Text::endsWith($r['type'], '[]')) {
-            $r[static::$embeddedDataName]['type'] = substr($r['type'], 0, -2);
-            $r['type'] = 'array';
+            $r[static::$embeddedDataName]['type'] = [substr($r['type'], 0, -2)];
+            $r['type'] = ['array'];
         }
         if ($value) {
             $r['description'] = implode(' ', $value);
