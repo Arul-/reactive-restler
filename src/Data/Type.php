@@ -89,14 +89,7 @@ class Type implements ValueObjectInterface
         $instance = new static();
         $var = CommentParser::parse($prop->getDocComment() ?? '')['var'] ?? [];
         print_r($var);
-        $dtype = $var[CommentParser::$embeddedDataName]['type'] ?? ['string'];
-        if ('null' == $dtype[0]) {
-            if (1 == count($dtype)) {
-                array_unshift($dtype, 'string');
-            } else {
-                array_unshift($dtype, $dtype[1]);
-            }
-        }
+        $dtype = self::typeFix($var[CommentParser::$embeddedDataName]['type'] ?? ['string']);
         if ($prop->hasType()) {
             $t = $prop->getType();
             $ts = $t->getName();
@@ -112,9 +105,29 @@ class Type implements ValueObjectInterface
                 $instance->scalar = $t->isBuiltin();
             }
         } else { //try doc comment
-
+            $types = self::typeFix($var['type']);
+            if ('array' == $types[0]) {
+                $instance->multiple = true;
+                $instance->type = $dtype[0];
+                $instance->scalar = TypeUtil::isScalar($dtype[0]);
+                $instance->nullable = in_array('null', $dtype);
+            } else {
+                $instance->multiple = false;
+                $instance->type = $types[0];
+                $instance->nullable = in_array('null', $types);
+                $instance->scalar = TypeUtil::isScalar($types[0]);;
+            }
         }
         return $instance;
+    }
+
+    private static function typeFix(array $arr, $default = 'string'): array
+    {
+        if (empty($arr)) return [$default];
+        if ('null' === $arr[0]) {
+            return [count($arr) > 1 ? $arr[1] : $default, ...$arr];
+        }
+        return $arr;
     }
 
     protected function applyProperties(array $properties, bool $filter = true)
