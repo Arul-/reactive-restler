@@ -85,7 +85,7 @@ class CommentParser
      * @return array associative array with the extracted values
      * @throws Exception
      */
-    public static function parse($comment, $isPhpDoc = true)
+    public static function parse(string $comment, bool $isPhpDoc = true): array
     {
         $p = new self();
         if (empty($comment)) {
@@ -110,7 +110,7 @@ class CommentParser
      *
      * @return string comments with out the tags
      */
-    public static function removeCommentTags($comment)
+    public static function removeCommentTags(string $comment): string
     {
         $pattern = '/(^\/\*\*)|(^\s*\**[ \/]?)|\s(?=@)|\s\*\//m';
         return preg_replace($pattern, '', $comment);
@@ -125,7 +125,7 @@ class CommentParser
      * @return array
      * @throws Exception
      */
-    private function extractData($comment)
+    private function extractData(string $comment): array
     {
         //to use @ as part of comment we need to
         $comment = str_replace(
@@ -213,7 +213,7 @@ class CommentParser
      * @param array $value
      * @param array $embedded
      */
-    private function parseParam($param, array $value, array $embedded)
+    private function parseParam($param, array $value, array $embedded): void
     {
         $data = &$this->_data;
         $allowMultiple = false;
@@ -300,12 +300,12 @@ class CommentParser
     /**
      * Parses the inline php doc comments and embedded data.
      *
-     * @param $subject
+     * @param string $subject
      *
      * @return array
      * @throws Exception
      */
-    private function parseEmbeddedData($subject)
+    private function parseEmbeddedData(string $subject): array
     {
         $data = [];
 
@@ -376,7 +376,7 @@ class CommentParser
         return [$subject, $data];
     }
 
-    private function formatThrows(array $value)
+    private function formatThrows(array $value): array
     {
         $code = 500;
         $exception = 'Exception';
@@ -410,7 +410,7 @@ class CommentParser
         return compact('code', 'message', 'exception');
     }
 
-    private function formatClass(array $value)
+    private function formatClass(array $value): array
     {
         $param = array_shift($value);
 
@@ -424,7 +424,7 @@ class CommentParser
         ];
     }
 
-    private function formatAuthor(array $value)
+    private function formatAuthor(array $value): array
     {
         $r = [];
         $email = end($value);
@@ -437,7 +437,7 @@ class CommentParser
         return $r;
     }
 
-    private function formatReturn(array $value)
+    private function formatReturn(array $value): array
     {
         $data = explode(self::TYPE_SEPARATOR, array_shift($value));
         $r = [
@@ -447,7 +447,7 @@ class CommentParser
         return $r;
     }
 
-    private function formatParam(array $value)
+    private function formatParam(array $value): array
     {
         $r = [];
         $data = array_shift($value);
@@ -475,7 +475,7 @@ class CommentParser
         return $r;
     }
 
-    private function formatVar(array $value)
+    private function formatVar(array $value): array
     {
         $r = [];
         $data = array_shift($value);
