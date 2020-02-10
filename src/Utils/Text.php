@@ -14,7 +14,7 @@ class Text
      *
      * @return bool
      */
-    public static function contains($haystack, $needle, $caseSensitive = true)
+    public static function contains(string $haystack, string $needle, bool $caseSensitive = true): bool
     {
         if (empty($needle)) {
             return true;
@@ -32,7 +32,7 @@ class Text
      *
      * @return bool
      */
-    public static function beginsWith($haystack, $needle)
+    public static function beginsWith(string $haystack, string $needle): bool
     {
         $length = strlen($needle);
         return (substr($haystack, 0, $length) === $needle);
@@ -46,7 +46,7 @@ class Text
      *
      * @return bool
      */
-    public static function endsWith($haystack, $needle)
+    public static function endsWith(string $haystack, string $needle): bool
     {
         $length = strlen($needle);
         if ($length == 0) {
@@ -63,7 +63,7 @@ class Text
      *
      * @return string
      */
-    public static function title($name)
+    public static function title(string $name): string
     {
         return
             ucwords(
@@ -82,12 +82,12 @@ class Text
      * @param $replacement
      * @return string
      */
-    public static function slug($name, $replacement = '-')
+    public static function slug(string $name, string $replacement = '-'): string
     {
         return preg_replace('/[^a-zA-Z]+/', $replacement, strtolower(strip_tags($name)));
     }
 
-    public static function removeCommon($fromPath, $usingPath, $separator = '/')
+    public static function removeCommon(string $fromPath, string $usingPath, string $separator = '/'): string
     {
         if (empty($fromPath)) {
             return '';
@@ -108,7 +108,7 @@ class Text
         return implode($separator, $fromPath);
     }
 
-    public static function common($fromPath, $usingPath, $separator = '/')
+    public static function common(string $fromPath, string $usingPath, string $separator = '/'): string
     {
         if (empty($fromPath)) {
             return '';
