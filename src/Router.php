@@ -423,9 +423,6 @@ class Router
                 : ($metadata['return']['type'] ?? false)) {
                 if ('\\void' == $rtype || 'void' == $rtype) {
                     $rtype = $metadata['return']['type'] = 'null';
-                } elseif (Text::endsWith($rtype, '[]')) {
-                    $metadata['return'][$dataName]['type'] = substr($rtype, 0, -2);
-                    $rtype = $metadata['return']['type'] = 'array';
                 }
                 if ($rtype == 'array') {
                     if (
