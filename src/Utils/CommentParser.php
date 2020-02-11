@@ -15,14 +15,14 @@ class CommentParser
      *
      * @var string
      */
-    public static $embeddedDataName = 'properties';
+    public static string $embeddedDataName = 'properties';
     /**
      * Regular Expression pattern for finding the embedded data and extract
      * the inner information. It is used with preg_match.
      *
      * @var string
      */
-    public static $embeddedDataPattern
+    public static string $embeddedDataPattern
         = '/```(\w*)[\s]*(([^`]*`{0,2}[^`]+)*)```/ms';
     /**
      * Pattern will have groups for the inner details of embedded data
@@ -30,7 +30,7 @@ class CommentParser
      *
      * @var int
      */
-    public static $embeddedDataIndex = 2;
+    public static int $embeddedDataIndex = 2;
     /**
      * Delimiter used to split the array data.
      *
@@ -41,12 +41,12 @@ class CommentParser
      *
      * @var string
      */
-    public static $arrayDelimiter = ',';
+    public static string $arrayDelimiter = ',';
 
     /**
      * @var array annotations that support array value
      */
-    public static $allowsArrayValue = [
+    public static array $allowsArrayValue = [
         'choice' => true,
         'select' => true,
         'properties' => true,
@@ -72,7 +72,7 @@ class CommentParser
      *
      * @var array
      */
-    private $_data = [];
+    private array $_data = [];
 
     /**
      * Parse the comment and extract the data.
@@ -197,7 +197,7 @@ class CommentParser
             $this->_data[self::$embeddedDataName] = $d2;
         }
         foreach ($params as $key => $line) {
-            list(, $param, $value) = preg_split('/\@|\s/', $line, 3)
+            list(, $param, $value) = preg_split('/@|\s/', $line, 3)
             + ['', '', ''];
             list($value, $embedded) = $this->parseEmbeddedData($value);
             $value = array_filter(preg_split('/\s+/msu', $value), 'strlen');
@@ -253,6 +253,7 @@ class CommentParser
             case 'header' :
             case 'link':
             case 'example':
+            /** @noinspection PhpMissingBreakStatementInspection */
             case 'todo':
                 $allowMultiple = true;
             //don't break, continue with code for default:
@@ -327,7 +328,7 @@ class CommentParser
             } elseif ($matches[1] == 'required') {
                 $matches[2] = explode(static::$arrayDelimiter, $matches[2]);
             } elseif ($matches[1] == 'type') {
-                $matches[2] = explode(self::TYPE_SEPARATOR, $matches[2]);;
+                $matches[2] = explode(self::TYPE_SEPARATOR, $matches[2]);
             }
             $data[$matches[1]] = $matches[2];
         }
