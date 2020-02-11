@@ -253,7 +253,7 @@ class CommentParser
             case 'header' :
             case 'link':
             case 'example':
-            /** @noinspection PhpMissingBreakStatementInspection */
+                /** @noinspection PhpMissingBreakStatementInspection */
             case 'todo':
                 $allowMultiple = true;
             //don't break, continue with code for default:
@@ -466,10 +466,7 @@ class CommentParser
                 $r['name'] = substr($data, 1);
             }
         }
-        if (isset($r['type']) && is_string($r['type']) && Text::endsWith($r['type'], '[]')) {
-            $r[static::$embeddedDataName]['type'] = [substr($r['type'], 0, -2)];
-            $r['type'] = ['array'];
-        }
+        $this->typeAndDescription($r, []);
         if ($value) {
             $r['description'] = implode(' ', $value);
         }
@@ -489,6 +486,12 @@ class CommentParser
             $data = explode(self::TYPE_SEPARATOR, $data);
             $r['type'] = $data;
         }
+        $this->typeAndDescription($r, []);
+        return $r;
+    }
+
+    private function typeAndDescription(&$r, array $value): void
+    {
         if (isset($r['type']) && is_string($r['type']) && Text::endsWith($r['type'], '[]')) {
             $r[static::$embeddedDataName]['type'] = [substr($r['type'], 0, -2)];
             $r['type'] = ['array'];
@@ -496,6 +499,5 @@ class CommentParser
         if ($value) {
             $r['description'] = implode(' ', $value);
         }
-        return $r;
     }
 }
