@@ -90,6 +90,7 @@ class Type implements ValueObjectInterface
         $var = CommentParser::parse($prop->getDocComment() ?? '')['var'] ?? [];
         print_r($var);
         $dtype = self::typeFix($var[CommentParser::$embeddedDataName]['type'] ?? ['string']);
+        $instance->description = $var['description'] ?? '';
         if ($prop->hasType()) {
             $t = $prop->getType();
             $ts = $t->getName();
