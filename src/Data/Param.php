@@ -14,16 +14,16 @@ class Param extends Type
     /**
      * @var int
      */
-    public $index;
+    public int $index;
     /**
      * @var string proper name for given parameter
      */
-    public $label;
+    public string $label;
     /**
      * @var string html element that can be used to represent the parameter for
      *      input
      */
-    public $field;
+    public string $field;
     /**
      * @var mixed default value for the parameter
      */
@@ -33,18 +33,18 @@ class Param extends Type
      *
      * @var string variable name
      */
-    public $name;
+    public string $name;
 
     /**
      * @var bool is it required or not
      */
-    public $required;
+    public bool $required;
 
     /**
      * @var string body or header or query where this parameter is coming from
      *      in the http request
      */
-    public $from;
+    public string $from;
 
     /**
      * Should we attempt to fix the value?
@@ -55,7 +55,7 @@ class Param extends Type
      *
      * @var boolean true or false
      */
-    public $fix = false;
+    public bool $fix = false;
 
     // ==================================================================
     //
@@ -65,23 +65,23 @@ class Param extends Type
     /**
      * Given value should match one of the values in the array
      *
-     * @var array of choices to match to
+     * @var string[] of choices to match to
      */
-    public $choice;
+    public array $choice;
     /**
      * If the type is string it will set the lower limit for length
      * else will specify the lower limit for the value
      *
      * @var number minimum value
      */
-    public $min;
+    public int $min;
     /**
      * If the type is string it will set the upper limit limit for length
      * else will specify the upper limit for the value
      *
      * @var number maximum value
      */
-    public $max;
+    public int  $max;
 
     // ==================================================================
     //
@@ -93,7 +93,7 @@ class Param extends Type
      *
      * @var string regular expression
      */
-    public $pattern;
+    public string $pattern;
 
     // ==================================================================
     //
@@ -106,7 +106,7 @@ class Param extends Type
      *
      * @var array custom rule set
      */
-    public $rules;
+    public array $rules;
 
     /**
      * Specifying a custom error message will override the standard error
@@ -114,7 +114,7 @@ class Param extends Type
      *
      * @var string custom error response
      */
-    public $message;
+    public string $message;
 
     // ==================================================================
     //
@@ -128,7 +128,7 @@ class Param extends Type
      *
      * @var string validation method name
      */
-    public $method;
+    public string $method;
 
     /**
      * Instance of the API class currently being called. It will be null most of
@@ -137,11 +137,11 @@ class Param extends Type
      *
      * @var null|object will be null or api class instance
      */
-    public $apiClassInstance = null;
+    public ?object $apiClassInstance = null;
 
-    public static function filterArray(array $data, bool $onlyNumericKeys)
+    public static function filterArray(array $data, bool $onlyNumericKeys): array
     {
-        $r = array();
+        $r = [];
         foreach ($data as $key => $value) {
             if (is_numeric($key)) {
                 if ($onlyNumericKeys) {
