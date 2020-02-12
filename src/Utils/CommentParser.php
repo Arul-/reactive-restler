@@ -85,7 +85,7 @@ class CommentParser
      * @return array associative array with the extracted values
      * @throws Exception
      */
-    public static function parse(string $comment, bool $isPhpDoc = true): array
+    public static function parse($comment, bool $isPhpDoc = true): array
     {
         $p = new self();
         if (empty($comment)) {
