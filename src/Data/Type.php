@@ -89,7 +89,7 @@ class Type implements ValueObjectInterface
         $instance = new static();
         $var = CommentParser::parse($prop->getDocComment() ?? '')['var'] ?? [];
         print_r($var);
-        $dtype = self::typeFix($var[CommentParser::$embeddedDataName]['type'] ?? ['string']);
+        $dtype = $var[CommentParser::$embeddedDataName]['type'] ?? ['string'];
         $instance->description = $var['description'] ?? '';
         if ($prop->hasType()) {
             $t = $prop->getType();
@@ -106,7 +106,7 @@ class Type implements ValueObjectInterface
                 $instance->scalar = $t->isBuiltin();
             }
         } else { //try doc comment
-            $types = self::typeFix($var['type']);
+            $types = $var['type'];
             if ('array' == $types[0]) {
                 $instance->multiple = true;
                 $instance->type = $dtype[0];
@@ -120,15 +120,6 @@ class Type implements ValueObjectInterface
             }
         }
         return $instance;
-    }
-
-    private static function typeFix(array $arr, $default = 'string'): array
-    {
-        if (empty($arr)) return [$default];
-        if ('null' === $arr[0]) {
-            return [count($arr) > 1 ? $arr[1] : $default, ...$arr];
-        }
-        return $arr;
     }
 
     protected function applyProperties(array $properties, bool $filter = true)

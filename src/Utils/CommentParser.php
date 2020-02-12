@@ -296,6 +296,9 @@ class CommentParser
                 $data[$param] = $value + $data[$param];
             }
         }
+        if ('array' === $value['type'][0] && !empty($value[self::$embeddedDataName]['type'])) {
+            $this->typeFix($data[$param][self::$embeddedDataName]['type']);
+        }
     }
 
     /**
@@ -467,9 +470,6 @@ class CommentParser
             }
         }
         $this->typeAndDescription($r, []);
-        if ($value) {
-            $r['description'] = implode(' ', $value);
-        }
         return $r;
     }
 
@@ -490,11 +490,30 @@ class CommentParser
         return $r;
     }
 
-    private function typeAndDescription(&$r, array $value): void
+    private function typeFix(array &$type, string $default = 'string')
     {
-        if (isset($r['type']) && is_string($r['type']) && Text::endsWith($r['type'], '[]')) {
-            $r[static::$embeddedDataName]['type'] = [substr($r['type'], 0, -2)];
-            $r['type'] = ['array'];
+        $length = count($type);
+        if ($length) {
+            if ('null' === $type[0]) {
+                if (1 == $length) {
+                    array_unshift($type, $default);
+                } else {
+                    array_shift($type);
+                    array_push($type, 'null');
+                }
+            }
+        }
+    }
+
+    private function typeAndDescription(&$r, array $value, string $default = 'array'): void
+    {
+        if (count($r['type'])) {
+            if (Text::endsWith($r['type'][0], '[]')) {
+                $r[static::$embeddedDataName]['type'] = [substr($r['type'][0], 0, -2)];
+                $r['type'] = ['array', ...$r['type']];
+            } else {
+                $this->typeFix($r['type'], $default);
+            }
         }
         if ($value) {
             $r['description'] = implode(' ', $value);
