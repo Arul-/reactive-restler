@@ -52,6 +52,11 @@ class CommentParser
         'properties' => true,
     ];
 
+    public static array $typeFixes = [
+        'integer' => 'int',
+        'boolean' => 'bool',
+    ];
+
     /**
      * separator for type definitions
      */
@@ -493,6 +498,7 @@ class CommentParser
     private function typeFix(array &$type, string $default = 'string')
     {
         $length = count($type);
+        $type = str_ireplace(array_keys(static::$typeFixes), array_values(static::$typeFixes), $type);
         if ($length) {
             if ('null' === $type[0]) {
                 if (1 == $length) {
