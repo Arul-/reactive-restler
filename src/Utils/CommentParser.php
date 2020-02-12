@@ -516,7 +516,7 @@ class CommentParser
         if (count($r['type'])) {
             if (Text::endsWith($r['type'][0], '[]')) {
                 $r[static::$embeddedDataName]['type'] = [substr($r['type'][0], 0, -2)];
-                $r['type'] = ['array', ...$r['type']];
+                $r['type'][0] = 'array';
             } else {
                 $this->typeFix($r['type'], $default);
             }
