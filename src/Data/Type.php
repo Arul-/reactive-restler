@@ -16,7 +16,7 @@ class Type implements ValueObjectInterface
      * It will be mostly string
      *
      * @var string only single type is allowed. if multiple types are specified,
-     * Restler will pick the first. if null is one of the values, it will be simple set the nullable flag
+     * Restler will pick the first. if null is one of the values, it will be simply set the nullable flag
      * if multiple is true, type denotes the content type here
      */
     public string $type = 'string';
