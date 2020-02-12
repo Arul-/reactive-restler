@@ -7,10 +7,14 @@ namespace Luracast\Restler\Data;
 use Luracast\Restler\Contracts\ValueObjectInterface;
 use Luracast\Restler\Utils\CommentParser;
 use Luracast\Restler\Utils\Type as TypeUtil;
+use ReflectionParameter;
 use ReflectionProperty;
+use Reflector;
 
 class Type implements ValueObjectInterface
 {
+
+    private const DIRECT_PROPERTIES = ['type', 'multiple', 'nullable', 'scalar'];
     /**
      * Data type of the variable being validated.
      * It will be mostly string
@@ -84,21 +88,24 @@ class Type implements ValueObjectInterface
         return $instance;
     }
 
-    public static function fromProp(ReflectionProperty $prop)
+    /**
+     * @param ReflectionProperty|ReflectionParameter $reflector
+     * @param array $metadata
+     * @return static
+     */
+    public static function from(Reflector $reflector, array $metadata = [])
     {
         $instance = new static();
-        $var = CommentParser::parse($prop->getDocComment() ?? '')['var'] ?? [];
-        print_r($var);
-        $dtype = $var[CommentParser::$embeddedDataName]['type'] ?? ['string'];
-        $instance->description = $var['description'] ?? '';
-        if ($prop->hasType()) {
-            $t = $prop->getType();
+        $dataType = $metadata[CommentParser::$embeddedDataName]['type'] ?? ['string'];
+        $instance->description = $metadata['description'] ?? '';
+        if ($reflector->hasType()) {
+            $t = $reflector->getType();
             $ts = $t->getName();
             if ('array' == $ts) {
                 $instance->multiple = true;
-                $instance->type = $dtype[0];
-                $instance->scalar = TypeUtil::isScalar($dtype[0]);
-                $instance->nullable = in_array('null', $dtype);
+                $instance->type = $dataType[0];
+                $instance->scalar = TypeUtil::isScalar($dataType[0]);
+                $instance->nullable = in_array('null', $dataType);
             } else {
                 $instance->multiple = false;
                 $instance->type = $ts;
@@ -106,12 +113,12 @@ class Type implements ValueObjectInterface
                 $instance->scalar = $t->isBuiltin();
             }
         } else { //try doc comment
-            $types = $var['type'];
+            $types = $metadata['type'];
             if ('array' == $types[0]) {
                 $instance->multiple = true;
-                $instance->type = $dtype[0];
-                $instance->scalar = TypeUtil::isScalar($dtype[0]);
-                $instance->nullable = in_array('null', $dtype);
+                $instance->type = $dataType[0];
+                $instance->scalar = TypeUtil::isScalar($dataType[0]);
+                $instance->nullable = in_array('null', $dataType);
             } else {
                 $instance->multiple = false;
                 $instance->type = $types[0];
@@ -119,7 +126,26 @@ class Type implements ValueObjectInterface
                 $instance->scalar = TypeUtil::isScalar($types[0]);;
             }
         }
+        $metadata = array_filter(
+            $metadata,
+            fn($key) => !in_array($key, static::DIRECT_PROPERTIES),
+            ARRAY_FILTER_USE_KEY
+        );
+        $instance->applyProperties($metadata, true);
         return $instance;
+    }
+
+    public static function fromProperty(ReflectionProperty $prop)
+    {
+        $instance = new static();
+        $var = ['type' => ['string']];
+        try {
+            $var = CommentParser::parse($prop->getDocComment() ?? '')['var'] ?? $var;
+        } catch (\Exception $e) {
+            //ignore
+        }
+        return static::from($prop, $var);
+
     }
 
     protected function applyProperties(array $properties, bool $filter = true)
