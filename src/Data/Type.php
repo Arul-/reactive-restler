@@ -9,11 +9,11 @@ use Luracast\Restler\Utils\CommentParser;
 use Luracast\Restler\Utils\Type as TypeUtil;
 use ReflectionParameter;
 use ReflectionProperty;
+use ReflectionType;
 use Reflector;
 
 class Type implements ValueObjectInterface
 {
-
     private const DIRECT_PROPERTIES = ['type', 'multiple', 'nullable', 'scalar'];
     /**
      * Data type of the variable being validated.
@@ -88,6 +88,30 @@ class Type implements ValueObjectInterface
         return $instance;
     }
 
+    public function apply(?ReflectionType $reflectionType, array $types = ['string'], array $subTypes = ['string'])
+    {
+        $name = $types[0];
+        $n = false;
+        if ($reflectionType && $n = $reflectionType->getName() && $n !== 'Generator') {
+            $name = $n;
+        }
+        $this->nullable = in_array('null', $types);
+        if ('array' == $name) {
+            $this->multiple = true;
+            $this->type = $subTypes[0];
+            $this->scalar = TypeUtil::isScalar($subTypes[0]);
+        } else {
+            $this->multiple = false;
+            $this->type = $name;
+            if ($reflectionType) {
+                $this->nullable = $reflectionType->allowsNull();
+                $this->scalar = $reflectionType->isBuiltin();
+            } else {
+                $this->scalar = TypeUtil::isScalar($types[0]);
+            }
+        }
+    }
+
     /**
      * @param ReflectionProperty|ReflectionParameter $reflector
      * @param array $metadata
@@ -96,36 +120,14 @@ class Type implements ValueObjectInterface
     public static function from(Reflector $reflector, array $metadata = [])
     {
         $instance = new static();
-        $dataType = $metadata[CommentParser::$embeddedDataName]['type'] ?? ['string'];
+        $types = $metadata['type'] ?? ['array'];
+        $itemTypes = $metadata[CommentParser::$embeddedDataName]['type'] ?? ['string'];
         $instance->description = $metadata['description'] ?? '';
-        if ($reflector->hasType()) {
-            $t = $reflector->getType();
-            $ts = $t->getName();
-            if ('array' == $ts) {
-                $instance->multiple = true;
-                $instance->type = $dataType[0];
-                $instance->scalar = TypeUtil::isScalar($dataType[0]);
-                $instance->nullable = in_array('null', $dataType);
-            } else {
-                $instance->multiple = false;
-                $instance->type = $ts;
-                $instance->nullable = $t->allowsNull();
-                $instance->scalar = $t->isBuiltin();
-            }
-        } else { //try doc comment
-            $types = $metadata['type'];
-            if ('array' == $types[0]) {
-                $instance->multiple = true;
-                $instance->type = $dataType[0];
-                $instance->scalar = TypeUtil::isScalar($dataType[0]);
-                $instance->nullable = in_array('null', $dataType);
-            } else {
-                $instance->multiple = false;
-                $instance->type = $types[0];
-                $instance->nullable = in_array('null', $types);
-                $instance->scalar = TypeUtil::isScalar($types[0]);;
-            }
-        }
+        $instance->apply(
+            $reflector->hasType() ? $reflector->getType() : null,
+            $types,
+            $itemTypes
+        );
         $metadata = array_filter(
             $metadata,
             fn($key) => !in_array($key, static::DIRECT_PROPERTIES),
