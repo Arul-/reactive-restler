@@ -92,7 +92,7 @@ class Type implements ValueObjectInterface
     {
         $name = $types[0];
         $n = false;
-        if ($reflectionType && $n = $reflectionType->getName() && $n !== 'Generator') {
+        if ($reflectionType && ($n = $reflectionType->getName()) && $n !== 'Generator') {
             $name = $n;
         }
         $this->nullable = in_array('null', $types);
@@ -128,12 +128,6 @@ class Type implements ValueObjectInterface
             $types,
             $itemTypes
         );
-        $metadata = array_filter(
-            $metadata,
-            fn($key) => !in_array($key, static::DIRECT_PROPERTIES),
-            ARRAY_FILTER_USE_KEY
-        );
-        $instance->applyProperties($metadata, true);
         return $instance;
     }
 
