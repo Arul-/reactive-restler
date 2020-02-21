@@ -24,6 +24,7 @@ use Luracast\Restler\Restler;
 use Luracast\Restler\StaticProperties;
 use Luracast\Restler\UI\Forms;
 use Luracast\Restler\UI\Nav;
+use Luracast\Restler\Utils\Convert;
 use Throwable;
 
 class Html extends MediaType implements ResponseMediaTypeInterface
@@ -81,8 +82,11 @@ class Html extends MediaType implements ResponseMediaTypeInterface
         Restler $restler,
         ContainerInterface $container,
         StaticProperties $html,
-        StaticProperties $defaults
-    ) {
+        StaticProperties $defaults,
+        Convert $convert
+    )
+    {
+        parent::__construct($convert);
         $this->restler = $restler;
         if (!$html->viewPath) {
             $html->viewPath = dirname(dirname(__DIR__)) . DIRECTORY_SEPARATOR . 'views';
