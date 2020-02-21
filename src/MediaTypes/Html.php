@@ -25,6 +25,7 @@ use Luracast\Restler\Restler;
 use Luracast\Restler\StaticProperties;
 use Luracast\Restler\UI\Forms;
 use Luracast\Restler\UI\Nav;
+use Luracast\Restler\Utils\Convert;
 use Throwable;
 use Twig\Environment;
 use Twig\Extension\DebugExtension;
@@ -97,8 +98,10 @@ class Html extends MediaType implements ResponseMediaTypeInterface
         SessionInterface $session,
         ContainerInterface $container,
         StaticProperties $html,
-        StaticProperties $defaults
+        StaticProperties $defaults,
+        Convert $convert
     ) {
+        parent::__construct($convert);
         if (!static::$cacheDirectory) {
             static::$cacheDirectory = Defaults::$cacheDirectory;
         }
