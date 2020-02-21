@@ -269,30 +269,26 @@ class CommentParser
             if (is_string($value)) {
                 $value = ['description' => $value];
             }
+            if (!empty($embedded['type'])) {
+                if ('array' === $value['type'][0]) {
+                    $this->typeFix($embedded['type']);
+                } else {
+                    $embedded['format'] = $embedded['type'][0];
+                    unset($embedded['type']);
+                }
+            }
             $value[self::$embeddedDataName] = $embedded;
         }
         if (empty ($data[$param])) {
-            if ($allowMultiple) {
-                $data[$param] = [
-                    $value,
-                ];
-            } else {
-                $data[$param] = $value;
-            }
+            $data[$param] = $allowMultiple ? [$value] : $value;
         } elseif ($allowMultiple) {
             $data[$param][] = $value;
-        } elseif ($param == 'param') {
-            $arr = [
-                $data[$param],
-                $value,
-            ];
-            $data[$param] = $arr;
         } else {
             if (!is_string($value) && isset($value[self::$embeddedDataName])
                 && isset($data[$param][self::$embeddedDataName])
             ) {
-                $value[self::$embeddedDataName]
-                    += $data[$param][self::$embeddedDataName];
+                $data[$param][self::$embeddedDataName] =
+                    $value[self::$embeddedDataName] + $data[$param][self::$embeddedDataName];
             }
             if (!is_array($data[$param])) {
                 $data[$param] = ['description' => (string)$data[$param]];
@@ -300,9 +296,6 @@ class CommentParser
             if (is_array($value)) {
                 $data[$param] = $value + $data[$param];
             }
-        }
-        if ('array' === $value['type'][0] && !empty($value[self::$embeddedDataName]['type'])) {
-            $this->typeFix($data[$param][self::$embeddedDataName]['type']);
         }
     }
 
