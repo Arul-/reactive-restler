@@ -1,6 +1,11 @@
 <?php namespace Luracast\Restler\Data;
 
+use Luracast\Restler\Router;
 use Luracast\Restler\Utils\CommentParser;
+use Luracast\Restler\Utils\Text;
+use ReflectionFunctionAbstract;
+use ReflectionParameter;
+use Reflector;
 
 /**
  * ValueObject for validation information. An instance is created and
@@ -11,6 +16,13 @@ class Param extends Type
 {
     const KEEP_NON_NUMERIC = false;
     const KEEP_NUMERIC = true;
+
+    /**
+     * Name of the variable being validated
+     *
+     * @var string variable name
+     */
+    public string $name;
     /**
      * @var int
      */
@@ -20,20 +32,14 @@ class Param extends Type
      */
     public string $label;
     /**
-     * @var string html element that can be used to represent the parameter for
+     * @var string|null html element that can be used to represent the parameter for
      *      input
      */
-    public string $field;
+    public ?string $field;
     /**
      * @var mixed default value for the parameter
      */
     public $default;
-    /**
-     * Name of the variable being validated
-     *
-     * @var string variable name
-     */
-    public string $name;
 
     /**
      * @var bool is it required or not
@@ -138,6 +144,39 @@ class Param extends Type
      * @var null|object will be null or api class instance
      */
     public ?object $apiClassInstance = null;
+
+    public static function from(Reflector $reflector, array $metadata = [])
+    {
+        $instance = parent::from($reflector, $metadata);
+        return $instance;
+    }
+
+    public static function fromFunction(ReflectionFunctionAbstract $function, ?array $doc = null): array
+    {
+        if (is_null($doc)) {
+            $doc = CommentParser::parse($function->getDocComment());
+        }
+        $params = [];
+        $position = 0;
+        foreach ($function->getParameters() as $reflectionParameter) {
+            $comment = $doc['param'][$position] ?? [];
+            /** @var static $param */
+            $param = static::from($reflectionParameter, $comment);
+            $param->name = $reflectionParameter->getName();
+            $param->index = $position;
+            $param->label = $comment[CommentParser::$embeddedDataName]['label']
+                ?? Text::title($param->name);
+            $param->default = $reflectionParameter->isDefaultValueAvailable()
+                ? $reflectionParameter->getDefaultValue()
+                : null;
+            $param->format = $comment[CommentParser::$embeddedDataName]['format']
+                ?? Router::$formatTypesByName[$param->name]
+                ?? null;
+            $params[] = $param;
+            $position++;
+        }
+        return $params;
+    }
 
     public static function filterArray(array $data, bool $onlyNumericKeys): array
     {
