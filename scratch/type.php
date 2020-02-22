@@ -33,6 +33,9 @@ $method = new ReflectionMethod(Test::class, 'welcome');
 //var_dump(CommentParser::parse($method->getDocComment()));
 print_r(Param::fromFunction($method));
 
+echo ($type = Type::fromClass(new ReflectionClass(Test::class))) . PHP_EOL;
+print_r($type);
+
 /*
 
 $p = new ReflectionProperty(Type::class, 'format');

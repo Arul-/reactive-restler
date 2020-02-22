@@ -508,8 +508,7 @@ class Router
                 } elseif (isset($p['from'])) {
                     $from = $p['from'];
                 } else {
-                    if ((isset($type) && Type::isObjectOrArray($type))
-                    ) {
+                    if ((isset($type) && Type::isObjectOrArray($type))) {
                         $from = 'body';
                         if (!isset($type)) {
                             $type = $m['type'] = 'array';
@@ -1100,7 +1099,7 @@ class Router
      * @throws HttpException
      * @access protected
      */
-    protected static function getTypeAndModel(
+    public static function getTypeAndModel(
         ReflectionClass $class,
         array $scope,
         $prefix = '',
@@ -1161,10 +1160,10 @@ class Router
                     }
                     $child[$dataName]['required'] = $child[$dataName]['required'] ?? true;
                     $childScope = static::scope($class);
-                    if ($child['type'] != $className && $qualified = ClassName::resolve($child['type'], $childScope)) {
+                    if ($child['type'] != $className && $qualified = ClassName::resolve($child['type'][0], $childScope)) {
                         list($child['type'], $child['children'])
                             = static::getTypeAndModel(new ReflectionClass($qualified), $childScope);
-                    } elseif (($contentType = $child[$dataName]['type'] ?? false) &&
+                    } elseif (($contentType = $child[$dataName]['type'][0] ?? false) &&
                         ($qualified = ClassName::resolve($contentType, $childScope))
                     ) {
                         list($child['contentType'], $child['children'])
@@ -1289,6 +1288,7 @@ class Router
                 switch ($token[0]) {
                     case T_WHITESPACE:
                         continue 2;
+                    /** @noinspection PhpMissingBreakStatementInspection */
                     case T_STRING:
                         $alias = $token[1];
                         if (T_AS == $last) {

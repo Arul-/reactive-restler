@@ -5,8 +5,10 @@ namespace Luracast\Restler\Data;
 
 
 use Luracast\Restler\Contracts\ValueObjectInterface;
+use Luracast\Restler\Router;
 use Luracast\Restler\Utils\CommentParser;
 use Luracast\Restler\Utils\Type as TypeUtil;
+use ReflectionClass;
 use ReflectionParameter;
 use ReflectionProperty;
 use ReflectionType;
@@ -55,6 +57,16 @@ class Type implements ValueObjectInterface
      */
     public string $description = '';
 
+    /**
+     * @var string|null
+     */
+    public ?string $reference = null;
+
+    /**
+     * @var array|null
+     */
+    public ?array $children = null;
+
 
     /**
      * @inheritDoc
@@ -88,7 +100,7 @@ class Type implements ValueObjectInterface
         return $instance;
     }
 
-    public function apply(?ReflectionType $reflectionType, array $types = ['string'], array $subTypes = ['string'])
+    protected function apply(?ReflectionType $reflectionType, array $types, array $subTypes)
     {
         $name = $types[0];
         $n = false;
@@ -124,7 +136,8 @@ class Type implements ValueObjectInterface
         $itemTypes = $metadata[CommentParser::$embeddedDataName]['type'] ?? ['string'];
         $instance->description = $metadata['description'] ?? '';
         $instance->apply(
-            $reflector->hasType() ? $reflector->getType() : null,
+            method_exists($reflector, 'hasType') && $reflector->hasType()
+                ? $reflector->getType() : null,
             $types,
             $itemTypes
         );
@@ -142,6 +155,26 @@ class Type implements ValueObjectInterface
         }
         return static::from($prop, $var);
 
+    }
+
+    public static function fromClass(
+        ReflectionClass $reflectionClass,
+        string $prefix = '',
+        ?array $doc = null,
+        array $scope = []
+    )
+    {
+        if (is_null($doc)) {
+            $doc = CommentParser::parse($reflectionClass->getDocComment());
+        }
+        if (empty($scope)) {
+            $scope = Router::scope($reflectionClass);
+        }
+        $instance = static::from($reflectionClass, $doc);
+        [$name, $children, $reference] = Router::getTypeAndModel($reflectionClass, $scope, $prefix, $doc);
+        $instance->children = $children;
+        $instance->reference = $reference;
+        return $instance;
     }
 
     protected function applyProperties(array $properties, bool $filter = true)
