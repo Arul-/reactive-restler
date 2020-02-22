@@ -29,7 +29,7 @@ class Router
         'id',
     ];
 
-    public static $fieldTypesByName = [
+    public static $formatTypesByName = [
         'email' => 'email',
         'password' => 'password',
         'phone' => 'tel',
@@ -471,8 +471,8 @@ class Router
                     $p['type'] = substr($type, 0, -2);
                     $type = $metadata['return']['type'] = 'array';
                 }
-                if (isset(static::$fieldTypesByName[$m['name']]) && empty($p['type']) && $type == 'string') {
-                    $p['type'] = static::$fieldTypesByName[$m['name']];
+                if (isset(static::$formatTypesByName[$m['name']]) && empty($p['type']) && $type == 'string') {
+                    $p['type'] = static::$formatTypesByName[$m['name']];
                 }
                 $m ['default'] = $defaults [$position];
                 $m ['required'] = !$param->isOptional();
@@ -1122,8 +1122,8 @@ class Router
                     if (!isset($prop[$dataName]['label'])) {
                         $prop[$dataName]['label'] = Text::title($prop['name']);
                     }
-                    if (isset(static::$fieldTypesByName[$prop['name']]) && $prop['type'] == 'string' && !isset($prop[$dataName]['type'])) {
-                        $prop[$dataName]['type'] = static::$fieldTypesByName[$prop['name']];
+                    if (isset(static::$formatTypesByName[$prop['name']]) && $prop['type'] == 'string' && !isset($prop[$dataName]['type'])) {
+                        $prop[$dataName]['type'] = static::$formatTypesByName[$prop['name']];
                     }
                     $children[$prop['name']] = $prop;
                 }
@@ -1152,8 +1152,8 @@ class Router
                         }
                     }
                     if (!isset($child['type'])) {
-                        $child['type'] = isset(static::$fieldTypesByName[$child['name']])
-                            ? static::$fieldTypesByName[$child['name']]
+                        $child['type'] = isset(static::$formatTypesByName[$child['name']])
+                            ? static::$formatTypesByName[$child['name']]
                             : 'string';
                     }
                     if (!isset($child['label'])) {
