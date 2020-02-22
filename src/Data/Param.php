@@ -3,7 +3,9 @@
 use Luracast\Restler\Router;
 use Luracast\Restler\Utils\CommentParser;
 use Luracast\Restler\Utils\Text;
+use ReflectionFunction;
 use ReflectionFunctionAbstract;
+use ReflectionMethod;
 use ReflectionParameter;
 use Reflector;
 
@@ -151,25 +153,36 @@ class Param extends Type
         return $instance;
     }
 
-    public static function fromFunction(ReflectionFunctionAbstract $function, ?array $doc = null): array
+    public static function fromFunction(ReflectionFunctionAbstract $function, ?array $doc = null, array $scope = []): array
     {
         if (is_null($doc)) {
             $doc = CommentParser::parse($function->getDocComment());
         }
+        if (empty($scope)) {
+            if ($function instanceof ReflectionMethod) {
+                /** @var ReflectionMethod $method */
+                $method = $function;
+                $scope = Router::scope($method->getDeclaringClass());
+            } elseif ($function instanceof ReflectionFunction) {
+                /** @var ReflectionFunction $fn */
+                $fn = $function;
+                $scope = Router::scope($fn->getClosureScopeClass());
+            }
+        }
         $params = [];
         $position = 0;
         foreach ($function->getParameters() as $reflectionParameter) {
-            $comment = $doc['param'][$position] ?? [];
+            $metadata = $doc['param'][$position] ?? [];
             /** @var static $param */
-            $param = static::from($reflectionParameter, $comment);
+            $param = static::from($reflectionParameter, $metadata);
             $param->name = $reflectionParameter->getName();
             $param->index = $position;
-            $param->label = $comment[CommentParser::$embeddedDataName]['label']
+            $param->label = $metadata[CommentParser::$embeddedDataName]['label']
                 ?? Text::title($param->name);
             $param->default = $reflectionParameter->isDefaultValueAvailable()
                 ? $reflectionParameter->getDefaultValue()
                 : null;
-            $param->format = $comment[CommentParser::$embeddedDataName]['format']
+            $param->format = $metadata[CommentParser::$embeddedDataName]['format']
                 ?? Router::$formatTypesByName[$param->name]
                 ?? null;
             $params[] = $param;
