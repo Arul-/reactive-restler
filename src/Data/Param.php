@@ -153,21 +153,29 @@ class Param extends Type
         return $instance;
     }
 
-    public static function fromFunction(ReflectionFunctionAbstract $function, ?array $doc = null, array $scope = []): array
+    public static function fromMethod(ReflectionMethod $method, ?array $doc = null, array $scope = []): array
     {
+        if (empty($scope)) {
+            $scope = Router::scope($method->getDeclaringClass());
+        }
+        return static::fromAbstract($method, $doc, $scope);
+    }
+
+    public static function fromFunction(ReflectionFunction $function, ?array $doc = null, array $scope = []): array
+    {
+        if (empty($scope)) {
+            $scope = Router::scope($function->getClosureScopeClass());
+        }
+        return static::fromAbstract($function, $doc, $scope);
+    }
+
+    private static function fromAbstract(
+        ReflectionFunctionAbstract $function,
+        ?array $doc = null,
+        array $scope = []
+    ): array {
         if (is_null($doc)) {
             $doc = CommentParser::parse($function->getDocComment());
-        }
-        if (empty($scope)) {
-            if ($function instanceof ReflectionMethod) {
-                /** @var ReflectionMethod $method */
-                $method = $function;
-                $scope = Router::scope($method->getDeclaringClass());
-            } elseif ($function instanceof ReflectionFunction) {
-                /** @var ReflectionFunction $fn */
-                $fn = $function;
-                $scope = Router::scope($fn->getClosureScopeClass());
-            }
         }
         $params = [];
         $position = 0;

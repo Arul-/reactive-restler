@@ -31,7 +31,7 @@ echo ($type = Type::__set_state($type->jsonSerialize())) . PHP_EOL;
 
 $method = new ReflectionMethod(Test::class, 'welcome');
 //var_dump(CommentParser::parse($method->getDocComment()));
-print_r(Param::fromFunction($method));
+print_r(Param::fromMethod($method));
 
 echo ($type = Type::fromClass(new ReflectionClass(Test::class))) . PHP_EOL;
 print_r($type);
