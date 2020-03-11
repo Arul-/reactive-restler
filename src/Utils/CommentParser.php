@@ -467,7 +467,7 @@ class CommentParser
                 $r['name'] = substr($data, 1);
             }
         }
-        $this->typeAndDescription($r, []);
+        $this->typeAndDescription($r, $value);
         return $r;
     }
 
@@ -484,7 +484,7 @@ class CommentParser
             $data = explode(self::TYPE_SEPARATOR, $data);
             $r['type'] = $data;
         }
-        $this->typeAndDescription($r, []);
+        $this->typeAndDescription($r, $value);
         return $r;
     }
 
