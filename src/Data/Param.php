@@ -147,12 +147,6 @@ class Param extends Type
      */
     public ?object $apiClassInstance = null;
 
-    public static function from(Reflector $reflector, array $metadata = [])
-    {
-        $instance = parent::from($reflector, $metadata);
-        return $instance;
-    }
-
     public static function fromMethod(ReflectionMethod $method, ?array $doc = null, array $scope = []): array
     {
         if (empty($scope)) {

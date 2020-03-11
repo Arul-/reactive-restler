@@ -14,6 +14,8 @@ class Test
 {
     /** @var null|array {@type integer|null} an array of integers */
     public array $obj;
+    /** @var null|array {@type float} an array of integers */
+    public $arr;
 
     /**
      * @param null|string $name {@type password}
@@ -25,8 +27,10 @@ class Test
     }
 }
 
-echo ($type = Type::fromProperty(new ReflectionProperty(Test::class, 'obj'))) . PHP_EOL;
+echo ($type = Type::fromProperty($obj = new ReflectionProperty(Test::class, 'obj'))) . PHP_EOL;
 echo ($type = Type::__set_state($type->jsonSerialize())) . PHP_EOL;
+$arr = new ReflectionProperty(Test::class, 'arr');
+echo ($type = Type::fromProperty(null, CommentParser::parse($arr->getDocComment())['var'])) . PHP_EOL;
 
 
 $method = new ReflectionMethod(Test::class, 'welcome');

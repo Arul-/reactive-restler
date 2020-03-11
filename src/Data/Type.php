@@ -129,7 +129,7 @@ class Type implements ValueObjectInterface
      * @param array $metadata
      * @return static
      */
-    public static function from(Reflector $reflector, array $metadata = [])
+    public static function from(?Reflector $reflector, array $metadata = [])
     {
         $instance = new static();
         $types = $metadata['type'] ?? ['array'];
@@ -144,17 +144,20 @@ class Type implements ValueObjectInterface
         return $instance;
     }
 
-    public static function fromProperty(ReflectionProperty $prop)
+    public static function fromProperty(?ReflectionProperty $property, ?array $doc = null)
     {
         $instance = new static();
-        $var = ['type' => ['string']];
-        try {
-            $var = CommentParser::parse($prop->getDocComment() ?? '')['var'] ?? $var;
-        } catch (\Exception $e) {
-            //ignore
+        if ($doc) {
+            $var = $doc;
+        } else {
+            try {
+                $var = ['type' => ['string']];
+                $var = CommentParser::parse($property->getDocComment() ?? '')['var'] ?? $var;
+            } catch (\Exception $e) {
+                //ignore
+            }
         }
-        return static::from($prop, $var);
-
+        return static::from($property, $var);
     }
 
     public static function fromClass(
