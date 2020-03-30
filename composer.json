@@ -26,7 +26,8 @@
     "bshaffer/oauth2-server-php": "^1.11",
     "react/http-client": "^0.5.9",
     "swoole/ide-helper": "^4.3",
-    "box/spout": "^3.1"
+    "box/spout": "^3.1",
+    "bref/bref": "^0.5.20"
   },
   "license": "MIT",
   "authors": [
@@ -40,7 +41,8 @@
       "Luracast\\Restler\\": "src",
       "Workerman\\Protocols\\": "interop/Workerman",
       "Swoole\\Http\\": "interop/Swoole",
-      "OAuth2\\": "interop/OAuth2"
+      "OAuth2\\": "interop/OAuth2",
+      "Lambda\\": "interop/Lambda"
     }
   },
   "autoload-dev": {
