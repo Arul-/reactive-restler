@@ -1,0 +1,66 @@
+#!/opt/bin/php
+<?php
+
+use Lambda\Convert;
+use Luracast\Restler\Restler;
+use Swoole\Coroutine\Http\Client;
+
+require __DIR__ . '/api/bootstrap.php';
+
+function loop()
+{
+    try {
+        do {
+            $data = request();
+            $psrRequest = Convert::toPSR7($data['requestBody'], $data['headers']);
+            (new Restler)->handle($psrRequest)->then(function (ResponseInterface $psrResponse) use ($data) {
+                response($data['invocationId'], json_encode(Convert::fromPSR7($psrResponse)));
+            });
+        } while (true);
+    } catch (Exception $exception) {
+        echo 'Failed! ' . $exception->getMessage() . PHP_EOL;
+    }
+}
+
+go('loop');
+go('loop');
+go('loop');
+go('loop');
+
+function client()
+{
+    static $host = null;
+    static $port = null;
+    if (!$host) {
+        $host = $_ENV['AWS_LAMBDA_RUNTIME_API'] ?? '127.0.0.1:8080';
+        [$host, $port] = explode(':', $host);
+    }
+    return new Client($host, $port);
+}
+
+function request()
+{
+    $client = client();
+    $client->get($path = '/2018-06-01/runtime/invocation/next');
+    $statusCode = $client->getStatusCode();
+    if ($statusCode < 0)
+        throw new Exception(
+            $statusCode . ' Lambda server is not running at http://' .
+            $client->host . ':' . $client->port . $path
+        );
+    $headers = $client->getHeaders() ?? [];
+    $requestBody = json_decode((string)$client->body, true) ?? [];
+    $invocationId = $headers['lambda-runtime-aws-request-id'] ?? 'id';
+    $result = compact('invocationId', 'headers', 'statusCode', 'requestBody');
+    $client->close();
+    return $result;
+}
+
+function response($invocationId, $response)
+{
+    $client = client();
+    $client->post("/2018-06-01/runtime/invocation/{$invocationId}/response", $response);
+    $result = $client->getStatusCode();
+    $client->close();
+    return $result;
+}
