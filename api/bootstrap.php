@@ -65,6 +65,24 @@ class ResetForTests
         }
         return 'success';
     }
+
+    function package()
+    {
+        $files = get_included_files();
+        $targets = [];
+        foreach ($files as $file) {
+            if (Defaults::$cacheDirectory == dirname($file))
+                continue;
+            $base = str_replace(BASE . DIRECTORY_SEPARATOR, '', $file);
+            $target = Defaults::$cacheDirectory . '/package/' . $base;
+            $dir = dirname($target);
+            if (!is_dir($dir))
+                mkdir($dir, 0777, true);
+            copy($file, $target);
+            $targets[] = $base;
+        }
+        return $targets;
+    }
 }
 
 try {
