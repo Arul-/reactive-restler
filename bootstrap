@@ -32,7 +32,7 @@ function client()
     static $host = null;
     static $port = null;
     if (!$host) {
-        $host = $_ENV['AWS_LAMBDA_RUNTIME_API'] ?? '127.0.0.1:8080';
+        $host = $_ENV['AWS_LAMBDA_RUNTIME_API'] ?? '127.0.0.1:9001';
         [$host, $port] = explode(':', $host);
     }
     return new Client($host, $port);
