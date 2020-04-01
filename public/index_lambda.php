@@ -111,7 +111,7 @@ $lambda->on('request', function (Request $request, Response $response) {
             $response->end(json_encode($task['body']));
         } else {
             $data = json_decode($request->rawContent(), true) ?? [];
-            $status = $data['body']['statusCode'] ?? '500';
+            $status = $data['statusCode'] ?? '500';
             echo 'completing - ' . $uri
                 . '  ' . $status . ' ' . HttpException::$codes[$status]
                 . PHP_EOL;
