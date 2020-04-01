@@ -3,11 +3,15 @@
 
 use Lambda\Convert;
 use LogicalSteps\Async\Async;
+use Luracast\Restler\Defaults;
 use Luracast\Restler\Restler;
 use Luracast\Restler\Utils\Dump;
 use Swoole\Coroutine\Http\Client;
 
 require __DIR__ . '/api/bootstrap.php';
+
+Defaults::$cacheDirectory = '/tmp/store';
+Defaults::$implementations[HttpClientInterface::class] = [SwooleHttpClient::class];
 
 function loop()
 {
@@ -31,11 +35,6 @@ function loop()
 }
 
 Async::await(loop());
-/*
-go('loop');
-go('loop');
-go('loop');
-*/
 
 function client()
 {

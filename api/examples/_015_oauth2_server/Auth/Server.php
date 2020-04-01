@@ -3,6 +3,7 @@
 namespace Auth;
 
 use Luracast\Restler\Contracts\ExplorableAuthenticationInterface;
+use Luracast\Restler\Defaults;
 use Luracast\Restler\OpenApi3\Security\AuthorizationCode as AuthorizationCodeFlow;
 use Luracast\Restler\OpenApi3\Security\OAuth2;
 use Luracast\Restler\OpenApi3\Security\Scheme;
@@ -39,15 +40,19 @@ class Server implements ExplorableAuthenticationInterface
      */
     protected $request;
 
-    public static $databaseFile = BASE . '/api/common/store/oauth2_server.sqlite';
+    public static $fileName = 'oauth2_server.sqlite';
+    public static $targetFile = null;
 
     public function __construct(ServerRequestInterface $psrRequest)
     {
-        if (!file_exists(static::$databaseFile)) {
+        if (is_null(static::$targetFile)) {
+            static::$targetFile = Defaults::$cacheDirectory . DIRECTORY_SEPARATOR . static::$fileName;
+        }
+        if (!file_exists(static::$targetFile)) {
             include_once __DIR__ . '/db/rebuild_db.php';
         }
         static::$storage = new Pdo(
-            array('dsn' => 'sqlite:' . static::$databaseFile)
+            array('dsn' => 'sqlite:' . static::$targetFile)
         );
         // create array of supported grant types
         $grantTypes = array(

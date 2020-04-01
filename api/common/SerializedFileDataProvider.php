@@ -1,5 +1,7 @@
 <?php
 
+use Luracast\Restler\Defaults;
+
 /**
  * Flat File DB. All data is serialized and stored in store folder
  * This file will be automatically created when missing
@@ -16,7 +18,7 @@ class SerializedFileDataProvider implements DataProviderInterface
     function __construct(string $name)
     {
         if (empty(static::$folder)) {
-            static::$folder = __DIR__ . DIRECTORY_SEPARATOR . 'store' . DIRECTORY_SEPARATOR;
+            static::$folder = Defaults::$cacheDirectory . DIRECTORY_SEPARATOR;
         }
         $this->file = $file = static::$folder . $name . '.serialized.php';
         /** load data from file **/
