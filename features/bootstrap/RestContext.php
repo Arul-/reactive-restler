@@ -3,6 +3,7 @@
 use Behat\Behat\Context\Context;
 use Behat\Behat\Tester\Exception\PendingException;
 use Behat\Gherkin\Node\PyStringNode;
+use Behat\Testwork\Hook\Scope\AfterSuiteScope;
 use Behat\Testwork\Hook\Scope\BeforeSuiteScope;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
@@ -48,6 +49,8 @@ class RestContext implements Context
 
     /**
      * @BeforeSuite
+     *
+     * @param BeforeSuiteScope $scope
      */
     public static function prepare(BeforeSuiteScope $scope)
     {
@@ -58,6 +61,24 @@ class RestContext implements Context
         // before it runs
         $client = new Client(['base_uri' => $baseUrl]);
         $result = $client->put('__cleanup_db');
+    }
+
+    /**
+     * @AfterSuite
+     *
+     * @param AfterSuiteScope $scope
+     */
+    public static function package(AfterSuiteScope $scope)
+    {
+        $environment = $scope->getEnvironment();
+        $contexts = $environment->getContextClassesWithArguments();
+        $baseUrl = $contexts[static::class][0];
+        // package all loaded files in cache folder
+        // after all tests completed
+        $client = new Client(['base_uri' => $baseUrl]);
+        //load explorer dependencies
+        $client->get('/explorer/docs.json');
+        $result = $client->get('__cleanup_db/package');
     }
 
     /**
