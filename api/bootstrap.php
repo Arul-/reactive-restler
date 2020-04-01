@@ -24,7 +24,7 @@ use v1\BMI as BMI1;
 define('BASE', dirname(__DIR__));
 include BASE . "/vendor/autoload.php";
 
-Defaults::$cacheDirectory = HumanReadable::$cacheDirectory = BASE . '/api/common/store';
+Defaults::$cacheDirectory = BASE . '/api/common/store';
 Defaults::$implementations[DataProviderInterface::class] = [SerializedFileDataProvider::class];
 Defaults::$useUrlBasedVersioning = true;
 Defaults::$apiVendor = "SomeVendor";
@@ -71,7 +71,7 @@ class ResetForTests
         $files = get_included_files();
         $targets = [];
         foreach ($files as $file) {
-            if (Defaults::$cacheDirectory == dirname($file))
+            if (Text::beginsWith($file, Defaults::$cacheDirectory))
                 continue;
             $base = str_replace(BASE . DIRECTORY_SEPARATOR, '', $file);
             $target = Defaults::$cacheDirectory . '/package/' . $base;
@@ -128,9 +128,9 @@ try {
         //Explorer
         'explorer' => Explorer::class,
     ]);
-    $cache = new HumanReadable();
-    $cache->set('route', Router::toArray());
-    $cache->set('models', Router::$models);
+    //$cache = new HumanReadable();
+    //$cache->set('route', Router::toArray());
+    //$cache->set('models', Router::$models);
 } catch (Throwable $t) {
     die($t->getMessage());
 }

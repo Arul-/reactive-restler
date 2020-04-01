@@ -10,9 +10,13 @@ if (file_exists(Server::$targetFile)) {
 $dir = dirname(Server::$targetFile);
 
 if (!is_writable($dir)) {
-    // try to set permissions.
-    if (!@chmod($dir, 0777)) {
-        throw new Exception("Unable to write to " . Server::$targetFile);
+    if (is_dir($dir)) {
+        // try to set permissions.
+        if (!@chmod($dir, 0777)) {
+            throw new Exception("Unable to write to " . Server::$targetFile);
+        }
+    } else {
+        mkdir($dir, 0777, true);
     }
 }
 
