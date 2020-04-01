@@ -28,7 +28,7 @@ class LambdaTasks
                 $eventData['headers'][] = end($header);
             }
         }
-        $response->headers = $eventData['headers'];
+        $response->header = $eventData['headers'];
         $response->end($eventData['isBase64Encoded'] ? base64_encode($eventData['body']) : $eventData['body']);
     }
 
@@ -47,7 +47,7 @@ class LambdaTasks
             'lambda-runtime-invoked-function-arn' => 'arn:aws:lambda:ap-southeast-1:787614641643:function:restler',
             'lambda-runtime-trace-id' => "Root=1-$id;Parent=36f75ba8033a9eb7;Sampled=0",
             'date' => gmdate('D, d M Y H:i:s \G\M\T', time()), //"Sat, 28 Mar 2020 08:08:22 GMT",
-            'transfer-encoding' => "chunked"
+            //'transfer-encoding' => "chunked"
         ];
         $body = [
             'resource' => $request->server['request_uri'],
@@ -96,16 +96,16 @@ $lambda->on('request', function (Request $request, Response $response) {
         $uri = $uri[0];
         if ('next' == $uri) {
             $task = LambdaTasks::fetch();
-            echo 'fetching   - ' . $task['id']
-                . '  ' . ($task['body']['httpMethod'] ?? 'ANY')
-                . ' ' . ($task['body']['path'] ?? '/*')
-                . PHP_EOL;
             if (empty($task)) {
                 $response->status(500);
                 $response->header = ['Content-Type' => 'application/json'];
                 $response->end('{"error":"no pending tasks"}');
                 return;
             }
+            echo 'fetching   - ' . $task['id']
+                . '  ' . ($task['body']['httpMethod'] ?? 'ANY')
+                . ' ' . ($task['body']['path'] ?? '/*')
+                . PHP_EOL;
             $response->header = $task['headers'];
             $response->status(200);
             $response->end(json_encode($task['body']));
@@ -113,7 +113,7 @@ $lambda->on('request', function (Request $request, Response $response) {
             $data = json_decode($request->rawContent(), true) ?? [];
             $status = $data['body']['statusCode'] ?? '500';
             echo 'completing - ' . $uri
-                . '  ' . $status. ' '. HttpException::$codes[$status]
+                . '  ' . $status . ' ' . HttpException::$codes[$status]
                 . PHP_EOL;
             LambdaTasks::complete($uri, $data);
             $response->status(200);
