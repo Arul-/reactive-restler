@@ -168,7 +168,7 @@ class Restler extends Core
     {
         $this->container->instance(ServerRequestInterface::class, $request);
         $body = $request->getBody();
-        $this->rawRequestBody = $body->getContents();
+        $this->rawRequestBody = (string)$body; //$body->getContents();
         if ($body->isSeekable()) {
             $body->rewind();
         } elseif ($body->isWritable()) {
