@@ -2,30 +2,40 @@
 <?php
 
 use Lambda\Convert;
+use LogicalSteps\Async\Async;
 use Luracast\Restler\Restler;
+use Luracast\Restler\Utils\Dump;
 use Swoole\Coroutine\Http\Client;
 
 require __DIR__ . '/api/bootstrap.php';
 
 function loop()
 {
-    try {
-        do {
-            $data = request();
+    do {
+        try {
+            $data = yield 'request';
+            if ('id' === $data['invocationId']) continue;
+            //echo 'request: ' . json_encode($data, JSON_PRETTY_PRINT) . PHP_EOL;
             $psrRequest = Convert::toPSR7($data['requestBody'], $data['headers']);
-            (new Restler)->handle($psrRequest)->then(function (ResponseInterface $psrResponse) use ($data) {
-                response($data['invocationId'], json_encode(Convert::fromPSR7($psrResponse)));
-            });
-        } while (true);
-    } catch (Exception $exception) {
-        echo 'Failed! ' . $exception->getMessage() . PHP_EOL;
-    }
+            echo Dump::request($psrRequest);
+            $psrResponse = yield (new Restler)->handle($psrRequest);
+            echo Dump::response($psrResponse) . PHP_EOL . PHP_EOL;
+            //echo json_encode(Convert::fromPSR7($psrResponse), JSON_PRETTY_PRINT) . PHP_EOL;
+            echo '-----------------------------------------' . PHP_EOL;
+            yield ['response', $data['invocationId'], json_encode(Convert::fromPSR7($psrResponse))];
+        } catch (Exception $exception) {
+            //echo 'Failed! ' . $exception->getMessage() . PHP_EOL;
+            Co::sleep(1);
+        }
+    } while (true);
 }
 
+Async::await(loop());
+/*
 go('loop');
 go('loop');
 go('loop');
-go('loop');
+*/
 
 function client()
 {
@@ -38,29 +48,36 @@ function client()
     return new Client($host, $port);
 }
 
-function request()
+function request($callback)
 {
-    $client = client();
-    $client->get($path = '/2018-06-01/runtime/invocation/next');
-    $statusCode = $client->getStatusCode();
-    if ($statusCode < 0)
-        throw new Exception(
-            $statusCode . ' Lambda server is not running at http://' .
-            $client->host . ':' . $client->port . $path
-        );
-    $headers = $client->getHeaders() ?? [];
-    $requestBody = json_decode((string)$client->body, true) ?? [];
-    $invocationId = $headers['lambda-runtime-aws-request-id'] ?? 'id';
-    $result = compact('invocationId', 'headers', 'statusCode', 'requestBody');
-    $client->close();
-    return $result;
+    go(function () use ($callback) {
+        $client = client();
+        $client->get($path = '/2018-06-01/runtime/invocation/next');
+        $statusCode = $client->getStatusCode();
+        if ($statusCode < 0) {
+            $client->close();
+            $callback(new Exception(
+                $statusCode . ' Lambda server is not running at http://' .
+                $client->host . ':' . $client->port . $path
+            ), null);
+            return;
+        }
+        $headers = $client->getHeaders() ?? [];
+        $requestBody = json_decode((string)$client->body, true) ?? [];
+        $invocationId = $headers['lambda-runtime-aws-request-id'] ?? 'id';
+        $result = compact('invocationId', 'headers', 'statusCode', 'requestBody');
+        $client->close();
+        $callback(null, $result);
+    });
 }
 
-function response($invocationId, $response)
+function response($invocationId, $response, $callback)
 {
-    $client = client();
-    $client->post("/2018-06-01/runtime/invocation/{$invocationId}/response", $response);
-    $result = $client->getStatusCode();
-    $client->close();
-    return $result;
+    go(function () use ($invocationId, $response, $callback) {
+        $client = client();
+        $client->post("/2018-06-01/runtime/invocation/{$invocationId}/response", $response);
+        $result = $client->getStatusCode();
+        $client->close();
+        $callback(null, $result);
+    });
 }
