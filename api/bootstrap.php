@@ -76,7 +76,7 @@ class ResetForTests
         $files = get_included_files();
         $targets = [];
         foreach ($files as $file) {
-            if (Text::beginsWith($file, Defaults::$cacheDirectory))
+            if (Text::beginsWith($file, '/private/') || Text::beginsWith($file, Defaults::$cacheDirectory))
                 continue;
             $base = str_replace(BASE . DIRECTORY_SEPARATOR, '', $file);
             $target = Defaults::$cacheDirectory . '/package/' . $base;
