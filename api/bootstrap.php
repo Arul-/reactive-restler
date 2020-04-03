@@ -59,7 +59,7 @@ class ResetForTests
         $class = ClassName::get(DataProviderInterface::class);
         $class::reset();
         //reset cache
-        $folder = BASE . '/api/common/store/';
+        $folder = Defaults::$cacheDirectory . DIRECTORY_SEPARATOR;
         foreach (glob($folder . "*.php") as $filename) {
             unlink($filename);
         }
@@ -68,6 +68,11 @@ class ResetForTests
 
     function package()
     {
+        //make sure the following classes are added
+        class_exists(React\Promise\RejectedPromise::class);
+        class_exists(Symfony\Polyfill\Php73\Php73::class);
+        class_exists(\Luracast\Restler\ArrayObject::class);
+
         $files = get_included_files();
         $targets = [];
         foreach ($files as $file) {
