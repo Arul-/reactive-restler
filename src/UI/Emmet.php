@@ -370,7 +370,7 @@ class Emmet
             $pos = strpos($string, $f, $start);
             $tokens = array();
             for ($i = $start; $i < $pos; $i++) {
-                $token = $string{$i};
+                $token = $string[$i];
                 if (('#' == $token || '.' == $token) &&
                     (!empty($tokens) || $i == 0)
                 ) {
@@ -382,7 +382,7 @@ class Emmet
             $r[] = $f;
         } while (false != ($f = strtok(static::DELIMITERS)));
         for ($i = $pos; $i < strlen($string); $i++) {
-            $token = $string{$i};
+            $token = $string[$i];
             $r[] = $tokens[] = $token;
         }
         return $r;
