@@ -419,6 +419,9 @@ class RestContext implements Context
                     throw new Exception ('Error parsing XML, ' . $message);
                 }
                 break;
+            case 'text/html':
+                $this->_type = 'html';
+                break;
         }
     }
 
@@ -628,6 +631,17 @@ class RestContext implements Context
         throw new Exception("Response was JSON\n but not of type '$type'\n\n" .
             $this->echoLastResponse());
     }
+
+    /**
+     * @Then the response is HTML
+     */
+    public function theResponseIsHtml()
+    {
+        if ($this->_type != 'html') {
+            throw new Exception("Response was not HTML\n\n" . $this->echoLastResponse());
+        }
+    }
+
 
 
     /**
