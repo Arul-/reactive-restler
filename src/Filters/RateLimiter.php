@@ -101,8 +101,7 @@ class RateLimiter implements FilterInterface, SelectivePathsInterface, UsesAuthe
             $id = "RateLimit_" . $maxPerUnit . '_per_' . $unit
                 . '_for_' . $group
                 . '_' . $user::getUniqueIdentifier();
-            $lastRequest = $this->cache->get($id, true)
-                ?: array('time' => 0, 'used' => 0);
+            $lastRequest = $this->cache->get($id, ['time' => 0, 'used' => 0]);
             $time = $lastRequest['time'];
             $diff = time() - $time; # in seconds
             $used = $lastRequest['used'];
