@@ -6,41 +6,44 @@ use Luracast\Restler\Utils\Dump;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
-function exceptions(Restler $r, $path)
-{
-    if ($source = $r->exception) {
-        $traces = array();
-        do {
-            $traces += $source->getTrace();
-        } while ($source = $source->getPrevious());
-        $traces += debug_backtrace();
-        return parse_backtrace($traces, $path, 0);
-    } else {
-        return parse_backtrace(debug_backtrace(), $path);
+if (!function_exists('exceptions')) {
+
+    function exceptions(Restler $r, $path)
+    {
+        if ($source = $r->exception) {
+            $traces = array();
+            do {
+                $traces += $source->getTrace();
+            } while ($source = $source->getPrevious());
+            $traces += debug_backtrace();
+            return parse_backtrace($traces, $path, 0);
+        } else {
+            return parse_backtrace(debug_backtrace(), $path);
+        }
+
     }
 
-}
-
-function parse_backtrace($raw, $path, $skip = 1)
-{
-    $base = strlen($path) + 1;
-    $output = [];
-    $index = 0;
-    foreach ($raw as $entry) {
-        if ($skip-- > 0) {
-            continue;
+    function parse_backtrace($raw, $path, $skip = 1)
+    {
+        $base = strlen($path) + 1;
+        $output = [];
+        $index = 0;
+        foreach ($raw as $entry) {
+            if ($skip-- > 0) {
+                continue;
+            }
+            $key = '';
+            if (isset($entry['line'])) {
+                $file = substr($entry['file'], $base);
+                $key = "$file:" . $entry['line'] . ' ';
+            }
+            if (isset($entry['class'])) {
+                $output[++$index][$key] = ' ' . $entry['class'] . "::" . $entry['function']
+                    . '(' . ')'; //substr(json_encode($entry['args']), 1, -1)
+            }
         }
-        $key = '';
-        if (isset($entry['line'])) {
-            $file = substr($entry['file'], $base);
-            $key = "$file:" . $entry['line'] . ' ';
-        }
-        if (isset($entry['class'])) {
-            $output[++$index][$key] = ' ' . $entry['class'] . "::" . $entry['function']
-                . '(' . ')'; //substr(json_encode($entry['args']), 1, -1)
-        }
+        return $output;
     }
-    return $output;
 }
 
 $trace = exceptions($restler, dirname($path, 2));
