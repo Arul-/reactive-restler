@@ -2,6 +2,7 @@
 
 namespace DB;
 
+use Luracast\Restler\Defaults;
 use Luracast\Restler\Exceptions\HttpException;
 
 /**
@@ -17,7 +18,7 @@ class TasksStore implements TasksInterface
     function __construct(string $name = 'tasks')
     {
         if (empty(static::$folder)) {
-            static::$folder = BASE . DIRECTORY_SEPARATOR . 'api/common/store' . DIRECTORY_SEPARATOR;
+            static::$folder = Defaults::$cacheDirectory . DIRECTORY_SEPARATOR;
         }
         $this->file = $file = static::$folder . $name . '.serialized.php';
         /** load data from file **/
