@@ -9,6 +9,7 @@ use Luracast\Restler\Session;
 use Luracast\Restler\StaticProperties;
 use Luracast\Restler\Utils\ClassName;
 use Psr\Http\Message\ResponseInterface;
+use SimpleHttpResponse;
 
 class Client
 {
@@ -113,7 +114,8 @@ class Client
         $code = null,
         $error_description = null,
         $error_uri = null
-    ) {
+    )
+    {
         // the user denied the authorization request
         if (!$code) {
             $this->html->view = 'oauth2/client/denied.twig';
@@ -130,7 +132,8 @@ class Client
         /** @var HttpClientInterface $clientClass */
         $clientClass = ClassName::get(HttpClientInterface::class);
         try {
-            $response = yield [
+            /** @var SimpleHttpResponse $httpResponse */
+            $httpResponse = yield [
                 $clientClass,
                 'request',
                 'POST',
@@ -138,7 +141,7 @@ class Client
                 ['Content-Type' => 'application/x-www-form-urlencoded'],
                 http_build_query($query)
             ];
-            $response = json_decode($response, true);
+            $response = json_decode($httpResponse->body, true);
             if (($token = $response['access_token'] ?? null)) {
                 $data = static::$resourceParams + ['access_token' => $token];
                 $response = yield [

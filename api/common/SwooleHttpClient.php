@@ -12,6 +12,7 @@ class SwooleHttpClient implements HttpClientInterface
         callable $callback = null
     )
     {
+        echo "$method $uri\n\n";
         go(function () use ($method, $uri, $headers, $body, $callback) {
             $parts = parse_url($uri);
             $client = new Client($parts['host'], $parts['port']);
@@ -21,7 +22,11 @@ class SwooleHttpClient implements HttpClientInterface
                 $client->setData($body);
             }
             $client->execute($uri);
-            $callback(null, $client->body);
+            $response = new SimpleHttpResponse($client->body, $client->getHeaders() ?? []);
+            $client->close();
+            $client = null;
+            if (is_callable($callback))
+                $callback(null, $response);
         });
     }
 }
