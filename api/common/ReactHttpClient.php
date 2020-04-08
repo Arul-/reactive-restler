@@ -20,7 +20,8 @@ class ReactHttpClient implements HttpClientInterface
         array $headers = [],
         string $body = '',
         callable $callback = null
-    ) {
+    )
+    {
         if (!static::$loop) {
             throw new Error('Please call ReactHttpClient::setLoop before calling ReactHttpClient::request');
         }
@@ -29,11 +30,12 @@ class ReactHttpClient implements HttpClientInterface
         $req = $client->request($method, $uri, $headers, '1.1');
         $req->on('response', function (Response $response) use ($callback) {
             $body = '';
+            $headers = $response->getHeaders();
             $response->on('data', function (string $chunk) use (&$body) {
                 $body .= $chunk;
             });
-            $response->on('end', function () use (&$body, $callback) {
-                $callback(null, $body);
+            $response->on('end', function () use (&$body, $headers, $callback) {
+                $callback(null, new SimpleHttpResponse($body, $headers));
             });
         });
         $req->end($body);

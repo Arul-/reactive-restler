@@ -22,9 +22,17 @@ class CurlHttpClient implements HttpClientInterface
         array $headers = [],
         string $body = '',
         callable $callback = null
-    ) {
+    )
+    {
         $headers['Content-Length'] = strlen($body);
         static::$options['http_port'] = parse_url($uri, PHP_URL_PORT) ?? 80;
+        $responseHeaders = [];
+        $catchHeaders = function ($curl, $headerLine) use (&$responseHeaders) {
+            $parts = explode(': ', rtrim($headerLine));
+            if (count($parts) > 1)
+                $responseHeaders[$parts[0]] = $parts[1];
+            return strlen($headerLine);
+        };
         $curlOptions = [CURLOPT_POST => true, CURLOPT_POSTFIELDS => $body];
         switch ($method) {
             case 'POST':
@@ -43,6 +51,7 @@ class CurlHttpClient implements HttpClientInterface
             $h[] = is_string($k) ? "$k:$v" : $v;
         }
         $curlOptions += [
+            CURLOPT_HEADERFUNCTION => $catchHeaders,
             CURLOPT_URL => $uri,
             CURLOPT_PORT => static::$options['http_port'],
             CURLOPT_USERAGENT => static::$options['user_agent'],
@@ -64,8 +73,7 @@ class CurlHttpClient implements HttpClientInterface
 
         curl_setopt_array($curl, $curlOptions);
 
-        $response = curl_exec($curl);
-        $headers = curl_getinfo($curl);
+        $body = curl_exec($curl);
         $errorNumber = curl_errno($curl);
         $errorMessage = curl_error($curl);
 
@@ -74,7 +82,8 @@ class CurlHttpClient implements HttpClientInterface
             if ($errorNumber) {
                 $callback(new Error($errorMessage ?? "Curl error $errorNumber"), null);
             } else {
-                $callback(null, $response);
+                print_r(compact('body', 'responseHeaders'));
+                $callback(null, new SimpleHttpResponse($body, $responseHeaders));
             }
         }
     }
