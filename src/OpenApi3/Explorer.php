@@ -83,9 +83,9 @@ class Explorer implements ProvidesMultiVersionApiInterface
      */
     public function index()
     {
-        $base = $this->route->url;
+        $base = '/' . $this->route->url;
         $path = $this->request->getUri()->getPath();
-        if (!Text::contains($path, $base)) {
+        if ($path != '/' && $base == $path) {
             //if not add and redirect
             throw new Redirect((string)$this->request->getUri() . '/index.html');
         }
