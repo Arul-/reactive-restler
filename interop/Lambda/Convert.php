@@ -22,7 +22,12 @@ class Convert
             $headers['lambda-runtime-invoked-function-arn'],
             $headers['lambda-runtime-trace-id']
         );
-        return Psr7Bridge::convertRequest($httpEvent, $context);
+        $request = Psr7Bridge::convertRequest($httpEvent, $context);
+        if (isset($payload['requestContext']['path'])) {
+            //$request = $request->withUri($request->getUri()->withPath($payload['requestContext']['path']));
+            //$request->withHeader('Script-Name','/'.$payload['requestContext']['stage'] );
+        }
+        return $request->withoutAttribute('lambda-event')->withoutAttribute('lambda-context');
     }
 
     public final static function fromPSR7(ResponseInterface $psr7Response): array
