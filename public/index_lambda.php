@@ -60,7 +60,9 @@ class LambdaTasks
             'pathParameters' => null,
             'stageVariables' => null,
             'requestContext' => [ //TODO: fill this properly
-                'identify' => []
+                'identify' => [],
+                'path' => '/dev' . $request->server['request_uri'],
+                'stage' => 'dev'
             ]
         ];
         $f = function ($item) {

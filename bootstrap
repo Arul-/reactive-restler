@@ -5,13 +5,83 @@ use Lambda\Convert;
 use LogicalSteps\Async\Async;
 use Luracast\Restler\Defaults;
 use Luracast\Restler\Restler;
+use Luracast\Restler\Utils\ClassName;
 use Luracast\Restler\Utils\Dump;
+use Psr\Http\Message\ServerRequestInterface;
+use React\Promise\Promise;
+use React\Promise\PromiseInterface;
 use Swoole\Coroutine\Http\Client;
+
+//set_time_limit(0);
+//ignore_user_abort(true);
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
 
 require __DIR__ . '/api/bootstrap.php';
 
 Defaults::$cacheDirectory = '/tmp/store';
-Defaults::$implementations[HttpClientInterface::class] = [SwooleHttpClient::class];
+//Defaults::$implementations[HttpClientInterface::class] = [SwooleHttpClient::class];
+Defaults::$implementations[HttpClientInterface::class] = [ReactHttpClient::class];
+$loop = React\EventLoop\Factory::create();
+
+ReactHttpClient::setLoop($loop);
+
+
+function process()
+{
+    do {
+        try {
+            echo 'LOOPING ' . PHP_EOL;
+
+            /** @var SimpleHttpResponse $httpResponse */
+            $httpResponse = yield request(
+                'GET',
+                '/2018-06-01/runtime/invocation/next'
+            );
+            $invocationId = $httpResponse->header('lambda-runtime-aws-request-id', 'id');
+            if ('id' === $invocationId) continue;
+            $requestBody = json_decode((string)$httpResponse->body, true) ?? [];
+            $psrRequest = Convert::toPSR7($requestBody, $httpResponse->headers);
+            echo Dump::request($psrRequest);
+            $psrResponse = yield handle($psrRequest);
+            echo Dump::response($psrResponse) . PHP_EOL . PHP_EOL;
+            echo '-----------------------------------------' . PHP_EOL;
+            $message = json_encode(Convert::fromPSR7($psrResponse));
+            //echo $message . PHP_EOL . PHP_EOL;
+            yield request(
+                'POST',
+                "/2018-06-01/runtime/invocation/{$invocationId}/response",
+                [],
+                $message
+            );
+        } catch (Exception $exception) {
+            echo 'Failed! ' . $exception->getMessage() . PHP_EOL;
+        }
+    } while (true);
+}
+
+function request(string $method = 'GET', string $path = '/', array $headers = [], string $body = '')
+{
+    static $className;
+    static $host;
+    if (!$className) {
+        $className = ClassName::get(HttpClientInterface::class);
+        $host = $_ENV['AWS_LAMBDA_RUNTIME_API'] ?? '127.0.0.1:9001';
+    }
+    return yield [$className, 'request', $method, "http://$host{$path}", $headers, $body];
+}
+
+function handle(ServerRequestInterface $psrRequest): PromiseInterface
+{
+    return (new Restler)->handle($psrRequest);
+}
+
+Async::await(process());
+
+$loop->run();
+
+/*
 
 function loop()
 {
@@ -22,7 +92,9 @@ function loop()
             //echo 'request: ' . json_encode($data, JSON_PRETTY_PRINT) . PHP_EOL;
             $psrRequest = Convert::toPSR7($data['requestBody'], $data['headers']);
             echo Dump::request($psrRequest);
-            $psrResponse = yield (new Restler)->handle($psrRequest);
+            $r = new Restler;
+            $psrResponse = yield $r->handle($psrRequest);
+            echo 'BASE: ' . $r->baseUrl . PHP_EOL;
             echo Dump::response($psrResponse) . PHP_EOL . PHP_EOL;
             //echo json_encode(Convert::fromPSR7($psrResponse), JSON_PRETTY_PRINT) . PHP_EOL;
             echo '-----------------------------------------' . PHP_EOL;
@@ -80,3 +152,5 @@ function response($invocationId, $response, $callback)
         $callback(null, $result);
     });
 }
+
+*/
