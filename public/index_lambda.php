@@ -8,6 +8,10 @@ use function RingCentral\Psr7\parse_query;
 
 require __DIR__ . '/../vendor/autoload.php';
 
+define('IP_ADDRESS', '127.0.0.1');
+define('HOST', 'localhost');
+define('PORT', 8080);
+
 class LambdaTasks
 {
     private static $tasks = [];
@@ -53,7 +57,12 @@ class LambdaTasks
             'resource' => $request->server['request_uri'],
             'path' => $request->server['path_info'],
             'httpMethod' => $request->server['request_method'],
-            'headers' => $request->header,
+            'headers' => $request->header + [
+                    'Host' => HOST,
+                    'X-Forwarded-For' => IP_ADDRESS,
+                    'X-Forwarded-Port' => PORT,
+                    'X-Forwarded-Proto' => 'http',
+                ],
             'queryStringParameters' => parse_query($request->server['query_string'] ?? ''),
             'body' => (string)$request->rawContent(),
             'isBase64Encoded' => false,
@@ -62,7 +71,9 @@ class LambdaTasks
             'requestContext' => [ //TODO: fill this properly
                 'identify' => [],
                 'path' => '/dev' . $request->server['request_uri'],
-                'stage' => 'dev'
+                'stage' => 'dev',
+                'protocol' => 'HTTP/1.1',
+                'domainName' => HOST,
             ]
         ];
         $f = function ($item) {
@@ -77,8 +88,7 @@ class LambdaTasks
 
 }
 
-$host = '127.0.0.1';
-$http = new swoole_http_server($host, 8080);
+$http = new swoole_http_server(IP_ADDRESS, PORT);
 $http->set([
     'worker_num' => 1, // The number of worker processes
     'daemonize' => false, // Whether start as a daemon process
@@ -89,7 +99,7 @@ $http->on('request', function (Request $request, Response $response) {
     echo 'adding - ' . $id . PHP_EOL;
 });
 
-$lambda = $http->listen($host, 9001, SWOOLE_SOCK_TCP);
+$lambda = $http->listen(IP_ADDRESS, 9001, SWOOLE_SOCK_TCP);
 $lambda->on('request', function (Request $request, Response $response) {
     $base = '/2018-06-01/runtime/invocation/';
     $uri = $request->server['request_uri'];
@@ -130,7 +140,7 @@ $lambda->on('request', function (Request $request, Response $response) {
 
 });
 $http->on('start', function ($server) {
-    echo "API Gateway Server started at http://127.0.0.1:8080\n";
+    echo sprintf('API Gateway Server started at http://%s:%d' . PHP_EOL, IP_ADDRESS, PORT);
     echo "Lambda Function Server is started at http://127.0.0.1:9001\n";
 });
 $http->start();
