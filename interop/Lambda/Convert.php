@@ -23,6 +23,12 @@ class Convert
             $headers['lambda-runtime-trace-id']
         );
         $request = Psr7Bridge::convertRequest($httpEvent, $context);
+        $request = $request->withUri($request->getUri()
+            ->withHost($httpEvent->getServerName())
+            ->withPort($httpEvent->getServerPort())
+            ->withScheme($request->getHeaderLine('X-Forwarded-Proto'))
+        );
+
         if (isset($payload['requestContext']['path'])) {
             //$request = $request->withUri($request->getUri()->withPath($payload['requestContext']['path']));
             //$request->withHeader('Script-Name','/'.$payload['requestContext']['stage'] );
