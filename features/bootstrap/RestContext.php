@@ -9,6 +9,7 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
+use GuzzleHttp\RedirectMiddleware;
 use GuzzleHttp\UriTemplate;
 use Luracast\Restler\Utils\Text;
 use Psr\Http\Message\RequestInterface;
@@ -34,8 +35,11 @@ class RestContext implements Context
     private $_headers = array();
     private $_restObjectType = null;
     private $_restObjectMethod = 'get';
+    /** @var Client */
     private $_client = null;
+    /** @var \GuzzleHttp\Psr7\Response */
     private $_response = null;
+    /** @var \GuzzleHttp\Psr7\Request */
     private $_request = null;
     private $_requestBody = null;
     private $_requestUrl = null;
@@ -97,7 +101,11 @@ class RestContext implements Context
             $this->_request = $request;
             return $request;
         }));
-        $this->_client = new Client(['base_uri' => $baseUrl, 'handler' => $handler]);
+        $this->_client = new Client([
+            'base_uri' => $baseUrl,
+            'handler' => $handler,
+            'allow_redirects' => ['track_redirects' => true]
+        ]);
         /*
         //suppress few errors
         $this->_client
@@ -448,6 +456,17 @@ class RestContext implements Context
     }
 
     /**
+     * @Then /^the response is HTML$/
+     * @Then /^the response should be HTML$/
+     */
+    public function theResponseIsHtml()
+    {
+        if ($this->_type != 'html') {
+            throw new Exception("Response was not Html\n\n" . $this->echoLastResponse());
+        }
+    }
+
+    /**
      * @Then /^the response charset is "([^"]*)"$/
      */
     public function theResponseCharsetIs($charset)
@@ -633,18 +652,6 @@ class RestContext implements Context
     }
 
     /**
-     * @Then the response is HTML
-     */
-    public function theResponseIsHtml()
-    {
-        if ($this->_type != 'html') {
-            throw new Exception("Response was not HTML\n\n" . $this->echoLastResponse());
-        }
-    }
-
-
-
-    /**
      * @Given /^the response has a "([^"]*)" property$/
      * @Given /^the response has an "([^"]*)" property$/
      * @Given /^the response has a property called "([^"]*)"$/
@@ -797,17 +804,31 @@ class RestContext implements Context
     /**
      * @Given /^the value equals "([^"]*)" or "([^"]*)"$/
      */
-    public function theValueEqualsOr($arg1, $arg2)
+    public function theValueEqualsOr($value1, $value2)
     {
         try {
-            $this->theValueEquals($arg1);
+            $this->theValueEquals($value1);
         } catch (Exception $exception) {
             try {
-                $this->theValueEquals($arg2);
+                $this->theValueEquals($value2);
             } catch (Exception $exception2) {
-                throw new Exception("Response value does not match both '$arg1' and '$arg2'\n\n"
+                throw new Exception("Response value does not match both '$value1' and '$value2'\n\n"
                     . $this->echoLastResponse());
             }
         }
     }
+
+    /**
+     * @Then the response redirects to :arg1
+     */
+    public function theResponseRedirectsTo($expectedPath)
+    {
+        $redirects = $this->_response->getHeader(RedirectMiddleware::HISTORY_HEADER);
+        if (empty($redirects))
+            throw new Exception("Response was not Redirected\n");
+        $actual = str_replace($this->baseUrl, '', $redirects[0]);
+        if ($expectedPath !== $actual)
+            throw new Exception("Redirect did not go to '$expectedPath'\n(actual: '$actual')\n");
+    }
+
 }

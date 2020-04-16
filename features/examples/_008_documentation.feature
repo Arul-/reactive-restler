@@ -55,3 +55,8 @@ Feature: Testing Documentation Example
     When I request "examples/_008_documentation/authors/{id}"
     Then the response status code should be 404
     And the response should be JSON
+
+  Scenario: Checking Redirect of Explorer
+    When I request "explorer"
+    Then the response redirects to "explorer/index.html"
+    And the response should be HTML
