@@ -3,6 +3,7 @@
 
 use Lambda\Convert;
 use Luracast\Restler\Defaults;
+use Luracast\Restler\Middleware\StaticFiles;
 use Luracast\Restler\Restler;
 use Luracast\Restler\Utils\Dump;
 use React\Promise\PromiseInterface;
@@ -11,6 +12,7 @@ use React\Promise\PromiseInterface;
 require __DIR__ . '/api/bootstrap.php';
 
 Defaults::$cacheDirectory = '/tmp/store';
+StaticFiles::setBasePath('/dev');
 
 function url(string $path = ''): string
 {

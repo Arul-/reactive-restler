@@ -18,9 +18,19 @@ class StaticFiles implements MiddlewareInterface
      */
     private $webRoot;
 
+    /**
+     * @var string
+     */
+    private static $basePath = '';
+
     public function __construct(string $webRoot)
     {
         $this->webRoot = rtrim($webRoot, DIRECTORY_SEPARATOR);
+    }
+
+    public static function setBasePath(string $path)
+    {
+        static::$basePath = $path;
     }
 
     public function __invoke(
@@ -30,6 +40,10 @@ class StaticFiles implements MiddlewareInterface
     )
     {
         $path = $request->getUri()->getPath();
+        if (!empty(static::$basePath)) {
+            $array = explode(static::$basePath, $path, 2);
+            $path = end($array);
+        }
         $extension = pathinfo($path, PATHINFO_EXTENSION);
         if (isset(PassThrough::$mimeTypes[$extension])) {
             $path = $this->webRoot . DIRECTORY_SEPARATOR . $path;
