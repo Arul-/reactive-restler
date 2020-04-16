@@ -2,21 +2,11 @@
 <?php
 
 use Lambda\Convert;
-use LogicalSteps\Async\Async;
 use Luracast\Restler\Defaults;
 use Luracast\Restler\Restler;
-use Luracast\Restler\Utils\ClassName;
 use Luracast\Restler\Utils\Dump;
-use Psr\Http\Message\ServerRequestInterface;
-use React\Promise\Promise;
 use React\Promise\PromiseInterface;
-use Swoole\Coroutine\Http\Client;
 
-//set_time_limit(0);
-//ignore_user_abort(true);
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
 
 require __DIR__ . '/api/bootstrap.php';
 
@@ -25,6 +15,74 @@ Defaults::$cacheDirectory = '/tmp/store';
 function url(string $path = ''): string
 {
     return sprintf("http://%s/%s", $_ENV['AWS_LAMBDA_RUNTIME_API'] ?? '127.0.0.1:9001', ltrim($path, '/'));
+}
+
+function fetchCurl(string $uri, string $method = 'GET', array $headers = [], string $body = ''): array
+{
+    $headers['Content-Length'] = strlen($body);
+    $options = [
+        'debug' => false,
+        'http_port' => '80',
+        'user_agent' => 'CurlHttpClient',
+        'timeout' => 20,
+        'curlopts' => null,
+        'verifyssl' => true,
+    ];
+    $options['http_port'] = parse_url($uri, PHP_URL_PORT) ?? 80;
+    $responseHeaders = [];
+    $catchHeaders = function ($curl, $headerLine) use (&$responseHeaders) {
+        $parts = explode(': ', rtrim($headerLine));
+        if (count($parts) > 1)
+            $responseHeaders[$parts[0]] = $parts[1];
+        return strlen($headerLine);
+    };
+    $curlOptions = [CURLOPT_POST => true, CURLOPT_POSTFIELDS => $body];
+    switch ($method) {
+        case 'POST':
+            break;
+        case 'PUT':
+        case 'DELETE':
+        case 'PATCH':
+            $curlOptions[CURLOPT_CUSTOMREQUEST] = strtoupper($method);
+            break;
+        default:
+            unset($curlOptions[CURLOPT_POST]);
+            unset($curlOptions[CURLOPT_POSTFIELDS]);
+    }
+    $h = [];
+    foreach ($headers as $k => $v) {
+        $h[] = is_string($k) ? "$k:$v" : $v;
+    }
+    $curlOptions += [
+        CURLOPT_HEADERFUNCTION => $catchHeaders,
+        CURLOPT_URL => $uri,
+        CURLOPT_PORT => $options['http_port'],
+        CURLOPT_USERAGENT => $options['user_agent'],
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT => $options['timeout'],
+        CURLOPT_HTTPHEADER => $h,
+        CURLOPT_SSL_VERIFYPEER => $options['verifyssl'],
+    ];
+    if (ini_get('open_basedir') == '' && ini_get('safe_mode') != 'On') {
+        $curlOptions[CURLOPT_FOLLOWLOCATION] = true;
+    }
+    if (is_array($options['curlopts'])) {
+        $curlOptions += $options['curlopts'];
+    }
+    if (isset($options['proxy'])) {
+        $curlOptions[CURLOPT_PROXY] = $options['proxy'];
+    }
+    $curl = curl_init();
+
+    curl_setopt_array($curl, $curlOptions);
+
+    $body = curl_exec($curl);
+    $errorNumber = curl_errno($curl);
+    $errorMessage = curl_error($curl);
+    $status = curl_getinfo($curl, CURLINFO_RESPONSE_CODE);
+
+    curl_close($curl);
+    return [$status, $body, array_change_key_case($responseHeaders, CASE_LOWER)];
 }
 
 function fetch(string $url, string $method = 'GET', array $headers = [], string $body = ''): array
@@ -54,7 +112,7 @@ function fetch(string $url, string $method = 'GET', array $headers = [], string 
         $value = explode(': ', $value, 2);
         $responseHeaders[$value[0]] = $value[1];
     }
-    return [$status, $response, $responseHeaders];
+    return [$status, $response, array_change_key_case($responseHeaders, CASE_LOWER)];
 }
 
 function lambda_request()
@@ -115,7 +173,7 @@ function loop()
     do {
         $data = lambda_request();
         if ('id' === $data['invocationId']) continue;
-        //echo 'request: ' . json_encode($data, JSON_PRETTY_PRINT) . PHP_EOL;
+        echo 'request: ' . json_encode($data, JSON_PRETTY_PRINT) . PHP_EOL;
         $psrRequest = Convert::toPSR7($data['requestBody'], $data['headers']);
         echo Dump::request($psrRequest);
         $r = new Restler;
