@@ -68,11 +68,17 @@ class ResetForTests
 
     function package()
     {
+        if(Text::contains(BASE, 'private'))
+            return [];
         //make sure the following classes are added
         class_exists(React\Promise\RejectedPromise::class);
-        class_exists(Symfony\Polyfill\Php73\Php73::class);
+        //class_exists(Symfony\Polyfill\Php73\Php73::class);
         class_exists(\Luracast\Restler\ArrayObject::class);
-
+        class_exists(\Illuminate\Support\Collection::class);
+        $assets = [
+            'src/OpenApi3/client/index.html',
+            'src/OpenApi3/client/oauth2-redirect.html',
+        ];
         $files = get_included_files();
         $targets = [];
         foreach ($files as $file) {
@@ -86,6 +92,16 @@ class ResetForTests
             copy($file, $target);
             $targets[] = $base;
         }
+        foreach ($assets as $base) {
+            $file = BASE . DIRECTORY_SEPARATOR . $base;
+            $target = Defaults::$cacheDirectory . '/package/' . $base;
+            $dir = dirname($target);
+            if (!is_dir($dir))
+                mkdir($dir, 0777, true);
+            copy($file, $target);
+            $targets[] = $base;
+        }
+        exec(sprintf('cp -R "%s/views" "%s/package/views"', BASE, Defaults::$cacheDirectory));
         return $targets;
     }
 }
