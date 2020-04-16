@@ -85,7 +85,8 @@ class Explorer implements ProvidesMultiVersionApiInterface
     {
         $base = '/' . $this->route->url;
         $path = $this->request->getUri()->getPath();
-        if ($path != '/' && $base == $path) {
+        //return compact('base','path')+['redirect'=>Text::endsWith($path, $base)];
+        if ($path != '/' && Text::endsWith($path, $base)) {
             //if not add and redirect
             throw new Redirect((string)$this->request->getUri() . '/index.html');
         }
