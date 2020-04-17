@@ -58,5 +58,5 @@ Feature: Testing Documentation Example
 
   Scenario: Checking Redirect of Explorer
     When I request "explorer"
-    Then the response redirects to "explorer/index.html"
+    Then the response redirects to "explorer/"
     And the response should be HTML
