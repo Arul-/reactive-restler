@@ -12,7 +12,7 @@
           type="text/css" media="all"/>
 
     <!-- Our own stylesheet -->
-    <link rel="stylesheet" type="text/css" href="styles.css"/>
+    <link rel="stylesheet" type="text/css" href="//cdn.jsdelivr.net/gh/Arul-/reactive-restler@5.8.0/public/examples/_013_html/styles.css"/>
 
 </head>
 
@@ -47,7 +47,7 @@
 
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
-<script type="text/javascript" src="script.js"></script>
+<script type="text/javascript" src="//cdn.jsdelivr.net/gh/Arul-/reactive-restler@5.8.0/public/examples/_013_html/script.js"></script>
 
 </body>
 </html>
