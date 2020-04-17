@@ -16,11 +16,10 @@ use Luracast\Restler\Contracts\{
 use Luracast\Restler\Data\{Param, Route};
 use Luracast\Restler\Exceptions\{HttpException, InvalidAuthCredentials};
 use Luracast\Restler\MediaTypes\{Json, UrlEncoded, Xml};
-use Luracast\Restler\Utils\{ClassName, CommentParser, Header, Text, Validator};
+use Luracast\Restler\Utils\{ClassName, Header, Text, Validator};
 use Psr\Http\Message\{ResponseInterface, ServerRequestInterface, UriInterface};
 use React\Promise\PromiseInterface;
 use ReflectionException;
-use ReflectionMethod;
 use Throwable;
 use TypeError;
 
@@ -188,14 +187,14 @@ abstract class Core
             '',
             trim($path, $slash)
         );
+        $fullPath = $path;
         if (empty($scriptName)) {
             $this->_baseUrl = $uri->withPath('')->withQuery('');
         } else {
             $path = Text::removeCommon($path, ltrim($scriptName, $slash));
-            $url = rtrim(strtok((string)$uri, '.?'), $slash);
-            $url = substr($url, 0, -strlen($path));
-            $uriClass = get_class($uri);
-            $this->_baseUrl = new $uriClass(rtrim($url, $slash));
+            $this->_baseUrl = $uri
+                ->withPath(rtrim(substr($fullPath, 0, -strlen($path)), $slash))
+                ->withQuery('');
         }
         if (Defaults::$useUrlBasedVersioning && strlen($path) && $path[0] == 'v') {
             $version = intval(substr($path, 1));
