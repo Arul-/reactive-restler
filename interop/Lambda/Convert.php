@@ -9,6 +9,7 @@ use Bref\Event\Http\HttpRequestEvent;
 use Bref\Event\Http\HttpResponse;
 use GuzzleHttp\Psr7\UploadedFile;
 use GuzzleHttp\Psr7\ServerRequest;
+use Luracast\Restler\Utils\Text;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Riverline\MultiPartParser\Part;
@@ -49,7 +50,9 @@ class Convert
             $headers['x-forwarded-proto'][0] ?? 'https',
             $event->getServerName(),
             $event->getServerPort(),
-            $event->getUri()
+            Text::beginsWith($event->getUri(), '/' . $reqContect['stage'])
+                ? $event->getUri()
+                : $reqContect['path']
         );
 
 
