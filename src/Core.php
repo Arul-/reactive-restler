@@ -113,7 +113,9 @@ abstract class Core
         $this->startTime = time();
         $this->_responseHeaders = new ResponseHeaders();
 
-        $config = &$config ?? new ArrayObject();
+        if (is_null($config)) {
+            $config = new ArrayObject();
+        }
         $this->config = &$config;
 
         $this->config['defaults'] = $this->defaults = new StaticProperties(Defaults::class);
