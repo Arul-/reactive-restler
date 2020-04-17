@@ -16,6 +16,12 @@ use Riverline\MultiPartParser\Part;
 
 class Convert
 {
+    public static $binaryTypes = [
+        'image/png',
+        'image/jpeg',
+        'image/gif',
+    ];
+
     public final static function toPSR7(array $payload, array $headers): ServerRequestInterface
     {
         $event = new HttpRequestEvent($payload);
@@ -73,14 +79,46 @@ class Convert
             ->withAttribute('lambda-context', $context);
     }
 
-    public final static function fromPSR7(ResponseInterface $psr7Response): array
+    public final static function fromPSR7(ResponseInterface $psr7Response, bool $multiHeaders = false): array
     {
-        $response = new HttpResponse(
-            (string)$psr7Response->getBody(),
-            $psr7Response->getHeaders(),
-            $psr7Response->getStatusCode()
+        $base64Encoding = in_array(
+            $psr7Response->getHeaderLine('Content-Type'),
+            static::$binaryTypes
         );
-        return $response->toApiGatewayFormat();
+        $body = (string)$psr7Response->getBody();
+
+        $headers = [];
+        foreach ($psr7Response->getHeaders() as $name => $values) {
+            // Capitalize header keys
+            // See https://github.com/zendframework/zend-diactoros/blob/754a2ceb7ab753aafe6e3a70a1fb0370bde8995c/src/Response/SapiEmitterTrait.php#L96
+            $name = str_replace('-', ' ', $name);
+            $name = ucwords($name);
+            $name = str_replace(' ', '-', $name);
+
+            if ($multiHeaders) {
+                // Make sure the values are always arrays
+                $headers[$name] = is_array($values) ? $values : [$values];
+            } else {
+                // Make sure the values are never arrays
+                $headers[$name] = is_array($values) ? end($values) : $values;
+            }
+        }
+
+        // The headers must be a JSON object. If the PHP array is empty it is
+        // serialized to `[]` (we want `{}`) so we force it to an empty object.
+        $headers = empty($headers) ? new \stdClass : $headers;
+
+        // Support for multi-value headers
+        $headersKey = $multiHeaders ? 'multiValueHeaders' : 'headers';
+
+        // This is the format required by the AWS_PROXY lambda integration
+        // See https://stackoverflow.com/questions/43708017/aws-lambda-api-gateway-error-malformed-lambda-proxy-response
+        return [
+            'isBase64Encoded' => $base64Encoding,
+            'statusCode' => $psr7Response->getStatusCode(),
+            $headersKey => $headers,
+            'body' => $base64Encoding ? base64_encode($body) : $body,
+        ];
     }
 
     private static function parseBodyAndUploadedFiles(HttpRequestEvent $event): array

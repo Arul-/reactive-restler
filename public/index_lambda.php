@@ -33,7 +33,7 @@ class LambdaTasks
             }
         }
         $response->header = $eventData['headers'];
-        $response->end($eventData['isBase64Encoded'] ? base64_encode($eventData['body']) : $eventData['body']);
+        $response->end($eventData['isBase64Encoded'] ? base64_decode($eventData['body']) : $eventData['body']);
     }
 
     public static function fetch(): array
