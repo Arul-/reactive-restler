@@ -32,7 +32,9 @@ class RestContext implements Context
     private $_request_debug_stream = null;
     private $_startTime = null;
     private $_restObject = null;
-    private $_headers = array();
+    private $_headers = [
+        'Accept-Language' => 'en'
+    ];
     private $_restObjectType = null;
     private $_restObjectMethod = 'get';
     /** @var Client */
@@ -332,6 +334,7 @@ class RestContext implements Context
 
     /**
      * @When /^I request "([^"]*)"$/
+     * @When /^request "([^"]*)"$/
      */
     public function iRequest($pageUrl)
     {
@@ -432,6 +435,25 @@ class RestContext implements Context
                 break;
         }
     }
+
+    /**
+     * @When I accept :header
+     * @param $header
+     */
+    public function accept($header)
+    {
+        $this->_headers['Accept'] = $header;
+    }
+
+    /**
+     * @When accept language :language
+     * @param $language
+     */
+    public function acceptLanguage($language)
+    {
+        $this->_headers['Accept-Language'] = $language;
+    }
+
 
     /**
      * @Then /^the response is JSON$/
