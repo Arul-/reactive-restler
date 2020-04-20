@@ -144,7 +144,8 @@ class Client
             $response = json_decode($httpResponse->body, true);
             if (($token = $response['access_token'] ?? null)) {
                 $data = static::$resourceParams + ['access_token' => $token];
-                $response = yield [
+                /** @var SimpleHttpResponse $httpResponse */
+                $httpResponse = yield [
                     $clientClass,
                     'request',
                     static::$resourceMethod,
@@ -152,11 +153,12 @@ class Client
                     ['Content-Type' => 'application/x-www-form-urlencoded'],
                     http_build_query($data)
                 ];
+                $response = json_decode($httpResponse->body, true);
                 $this->html->view = 'oauth2/client/granted.twig';
                 return [
                         'token' => $token,
                         'endpoint' => static::$resourceRoute . '?' . http_build_query($data)
-                    ] + json_decode($response, true);
+                    ] + $response;
             }
         } catch (\Throwable $exception) {
             $this->html->view = 'oauth2/client/error.twig';
