@@ -107,7 +107,12 @@ $lambda->on('request', function (Request $request, Response $response) {
         $uri = explode('/', str_replace($base, '', $uri));
         $uri = $uri[0];
         if ('next' == $uri) {
-            $task = LambdaTasks::fetch();
+            $tries = 100;
+            while (empty($task = LambdaTasks::fetch()) && $tries--) {
+                co::sleep(0.001);
+                //echo '.';
+            }
+            //echo PHP_EOL;
             if (empty($task)) {
                 $response->status(500);
                 $response->header = ['Content-Type' => 'application/json'];
