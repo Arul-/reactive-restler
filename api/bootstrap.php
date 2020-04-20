@@ -4,6 +4,7 @@ use Auth\Client;
 use Auth\Server;
 use improved\Authors as ImprovedAuthors;
 use Luracast\Restler\Cache\HumanReadable;
+use Luracast\Restler\Data\Route;
 use Luracast\Restler\Defaults;
 use Luracast\Restler\Filters\RateLimiter;
 use Luracast\Restler\MediaTypes\Html;
@@ -17,6 +18,7 @@ use Luracast\Restler\Restler;
 use Luracast\Restler\Router;
 use Luracast\Restler\Utils\ClassName;
 use Luracast\Restler\Utils\Text;
+use Psr\Http\Message\ServerRequestInterface;
 use ratelimited\Authors as RateLimitedAuthors;
 use SomeVendor\v1\BMI as VendorBMI1;
 use v1\BMI as BMI1;
@@ -60,21 +62,59 @@ class ResetForTests
         $class::reset();
         //reset cache
         $folder = Defaults::$cacheDirectory . DIRECTORY_SEPARATOR;
-        foreach (glob($folder . "*.php") as $filename) {
+
+        $pattern = Text::contains(BASE, 'private')
+            ? "$folder*.php"
+            : "$folder{,*/,*/*/,*/*/*/}*.php";
+        $files = glob($pattern, GLOB_BRACE);
+        foreach ($files as $filename) {
             unlink($filename);
         }
-        return 'success';
+        return $files;
     }
 
     function package()
     {
-        if(Text::contains(BASE, 'private'))
+        if (Text::contains(BASE, 'private'))
             return [];
         //make sure the following classes are added
+        class_exists(Symfony\Polyfill\Mbstring\Mbstring::class);
         class_exists(React\Promise\RejectedPromise::class);
+        class_exists(ClassName::get('HttpClientInterface'));
+        /*
+
         //class_exists(Symfony\Polyfill\Php73\Php73::class);
         class_exists(\Luracast\Restler\ArrayObject::class);
         class_exists(\Illuminate\Support\Collection::class);
+        class_exists(Twig\Node\Expression\Test\DefinedTest::class);
+        class_exists(Twig\Node\IfNode::class);
+        class_exists(Twig\Lexer::class);
+        class_exists(Twig\TwigFilter::class);
+        class_exists(Twig\TwigTest::class);
+        class_exists(Twig\TokenParser\ApplyTokenParser::class);
+        class_exists(Twig\TokenParser\ForTokenParser::class);
+        class_exists(Twig\TokenParser\IfTokenParser::class);
+        class_exists(Twig\TokenParser\ExtendsTokenParser::class);
+        class_exists(Twig\TokenParser\IncludeTokenParser::class);
+        class_exists(Twig\TokenParser\BlockTokenParser::class);
+        class_exists(Twig\TokenParser\UseTokenParser::class);
+        class_exists(Twig\TokenParser\FilterTokenParser::class);
+        class_exists(Twig\TokenParser\MacroTokenParser::class);
+        class_exists(Twig\TokenParser\ImportTokenParser::class);
+        class_exists(Twig\TokenParser\FromTokenParser::class);
+        class_exists(Twig\TokenParser\SetTokenParser::class);
+        class_exists(Twig\TokenParser\SpacelessTokenParser::class);
+        class_exists(Twig\TokenParser\FlushTokenParser::class);
+        class_exists(Twig\TokenParser\DoTokenParser::class);
+        class_exists(Twig\TokenParser\EmbedTokenParser::class);
+        class_exists(Twig\TokenParser\WithTokenParser::class);
+        class_exists(Twig\TokenParser\DeprecatedTokenParser::class);
+        class_exists(Twig\NodeVisitor\MacroAutoImportNodeVisitor::class);
+
+        class_exists(OAuth2\ResponseType\AccessToken::class);
+        class_exists(OAuth2\ResponseType\AuthorizationCode::class);
+        class_exists(OAuth2\Controller\AuthorizeController::class);
+        */
         $assets = [
             'src/OpenApi3/client/index.html',
             'src/OpenApi3/client/oauth2-redirect.html',
@@ -101,8 +141,51 @@ class ResetForTests
             copy($file, $target);
             $targets[] = $base;
         }
-        exec(sprintf('cp -R "%s/views" "%s/package/views"', BASE, Defaults::$cacheDirectory));
+        $pack = function ($dir) {
+            $parent = dirname($dir);
+            $parent = '.' == $parent ? '' : $parent . '/';
+            $command = sprintf(
+                'cp -R "%s/%s" "%s/package/%s"',
+                BASE, $dir, Defaults::$cacheDirectory, $parent
+            );
+            return exec($command);
+        };
+        $pack('views');
+        $pack('src/views');
+        $pack('public');
+        exec('chmod +x "' . Defaults::$cacheDirectory . '/package/bootstrap"');
         return $targets;
+    }
+}
+
+class baseUrl
+{
+    /**
+     * @var Restler
+     */
+    private $r;
+    /**
+     * @var ServerRequestInterface
+     */
+    private $s;
+
+    public function __construct(Restler $r, ServerRequestInterface $s)
+    {
+        $this->r = $r;
+        $this->s = $s;
+    }
+
+    function get()
+    {
+        return [
+            'BASE_URL' => (string)$this->r->baseUrl,
+            'BASE_PATH' => (string)$this->r->baseUrl->getPath(),
+            'SCRIPT_NAME' => $this->s->getServerParams()['SCRIPT_NAME'],
+            'REQUEST_URI' => $this->s->getServerParams()['REQUEST_URI'],
+            'PATH' => $this->r->path,
+            'FULL_URL' => (string)$this->s->getUri(),
+            'FULL_PATH' => (string)$this->s->getUri()->getPath(),
+        ];
     }
 }
 
@@ -148,6 +231,7 @@ try {
         'tests/request_data' => Data::class,
         //Explorer
         'explorer' => Explorer::class,
+        'baseurl' => BaseUrl::class,
     ]);
     //$cache = new HumanReadable();
     //$cache->set('route', Router::toArray());
