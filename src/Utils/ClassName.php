@@ -94,7 +94,12 @@ class ClassName
             }
             throw new HttpException(
                 501,
-                'Defaults::$implementations should contain at least one valid implementation for ' . $interface
+                'Defaults::$implementations should contain at least one valid implementation for ' . $interface .
+                '. Class ' . $class .
+                (class_exists($class)
+                    ? ' does not implement the interface'
+                    : ' is not available'
+                )
             );
         }
         if (class_exists($interface)) {
