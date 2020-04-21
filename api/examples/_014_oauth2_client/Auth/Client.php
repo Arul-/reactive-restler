@@ -21,8 +21,8 @@ class Client
     public static $tokenRoute = 'grant';
     public static $resourceMethod = 'GET';
     public static $resourceRoute = 'access';
-    public static $resourceParams = array();
-    public static $resourceOptions = array();
+    public static $resourceParams = [];
+    public static $resourceOptions = [];
     public static $clientId = 'demoapp';
     public static $clientSecret = 'demopass';
     /**
@@ -149,9 +149,7 @@ class Client
                     $clientClass,
                     'request',
                     static::$resourceMethod,
-                    static::$resourceRoute,
-                    ['Content-Type' => 'application/x-www-form-urlencoded'],
-                    http_build_query($data)
+                    static::$resourceRoute . '?' . http_build_query($data)
                 ];
                 $response = json_decode($httpResponse->body, true);
                 $this->html->view = 'oauth2/client/granted.twig';

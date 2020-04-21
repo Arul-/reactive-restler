@@ -52,7 +52,7 @@ class Server implements ExplorableAuthenticationInterface
             include_once __DIR__ . '/db/rebuild_db.php';
         }
         static::$storage = new Pdo(
-            array('dsn' => 'sqlite:' . static::$targetFile)
+            ['dsn' => 'sqlite:' . static::$targetFile]
         );
         // create array of supported grant types
         $grantTypes = array(
@@ -82,7 +82,7 @@ class Server implements ExplorableAuthenticationInterface
         if (!static::$server->validateAuthorizeRequest($this->request)) {
             return Convert::toPSR7(static::$server->getResponse());
         }
-        return array('queryString' => http_build_query($this->request->getAllQueryParameters()));
+        return ['queryString' => http_build_query($this->request->getAllQueryParameters())];
     }
 
     /**
@@ -134,9 +134,7 @@ class Server implements ExplorableAuthenticationInterface
      */
     public function access()
     {
-        return array(
-            'friends' => array('john', 'matt', 'jane')
-        );
+        return ['friends' => ['john', 'matt', 'jane']];
     }
 
 
@@ -159,8 +157,8 @@ class Server implements ExplorableAuthenticationInterface
      */
     public function _isAllowed(ServerRequestInterface $request, ResponseHeaders $responseHeaders): bool
     {
-        $request = Convert::fromPSR7($request);
-        return self::$server->verifyResourceRequest($request);
+        $authRequest = Convert::fromPSR7($request);
+        return self::$server->verifyResourceRequest($authRequest);
     }
 
     public static function scheme(): Scheme

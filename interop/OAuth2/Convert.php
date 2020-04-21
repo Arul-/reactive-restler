@@ -25,9 +25,7 @@ class Convert
         $type = $psrRequest->getHeaderLine('Content-Type');
         $data = [];
         switch ($psrRequest->getMethod()) {
-            case'GET':
-                $data = $psrRequest->getQueryParams();
-                break;
+            case'PUT':
             case 'POST':
                 $data = (array)$psrRequest->getParsedBody();
                 if (empty($data)) {
