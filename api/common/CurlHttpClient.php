@@ -73,7 +73,7 @@ class CurlHttpClient implements HttpClientInterface
 
         curl_setopt_array($curl, $curlOptions);
 
-        $body = curl_exec($curl);
+        $responseBody = curl_exec($curl);
         $errorNumber = curl_errno($curl);
         $errorMessage = curl_error($curl);
 
@@ -82,8 +82,7 @@ class CurlHttpClient implements HttpClientInterface
             if ($errorNumber) {
                 $callback(new Error($errorMessage ?? "Curl error $errorNumber"), null);
             } else {
-                print_r(compact('body', 'responseHeaders'));
-                $callback(null, new SimpleHttpResponse($body, $responseHeaders));
+                $callback(null, new SimpleHttpResponse($responseBody, $responseHeaders));
             }
         }
     }
