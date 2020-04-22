@@ -131,6 +131,8 @@ class Server implements ExplorableAuthenticationInterface
      * For testing the oAuth token
      *
      * @access protected
+     * @url GET access
+     * @url POST access
      */
     public function access()
     {

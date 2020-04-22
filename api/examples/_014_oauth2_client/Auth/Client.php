@@ -144,13 +144,16 @@ class Client
             $response = json_decode($httpResponse->body, true);
             if (($token = $response['access_token'] ?? null)) {
                 $data = static::$resourceParams + ['access_token' => $token];
+                $call = [$clientClass, 'request', static::$resourceMethod];
+                if ('GET' == static::$resourceMethod || 'DELETE' == static::$resourceMethod) {
+                    $call[] = static::$resourceRoute . '?' . http_build_query($data);
+                } else {
+                    $call[] = static::$resourceRoute;
+                    $call[] = ['Content-Type' => 'application/x-www-form-urlencoded'];
+                    $call[] = http_build_query($query);
+                }
                 /** @var SimpleHttpResponse $httpResponse */
-                $httpResponse = yield [
-                    $clientClass,
-                    'request',
-                    static::$resourceMethod,
-                    static::$resourceRoute . '?' . http_build_query($data)
-                ];
+                $httpResponse = yield $call;
                 $response = json_decode($httpResponse->body, true);
                 $this->html->view = 'oauth2/client/granted.twig';
                 return [
