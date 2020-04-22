@@ -30,7 +30,7 @@ class Convert
                 $data = (array)$psrRequest->getParsedBody();
                 if (empty($data)) {
                     if (Text::beginsWith($type, 'application/json')) {
-                        $data = json_decode($contents);
+                        $data = json_decode($contents,true);
                     } elseif (Text::beginsWith($type, 'multipart/form-data')) {
                         $data = static::multipartFormData($contents, $type);
                     } else {
