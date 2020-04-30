@@ -29,6 +29,18 @@ class AccessControl implements AccessControlInterface, SelectivePathsInterface, 
     ];
 
     /**
+     * @param string $owner
+     * @return bool
+     * @throws HttpException
+     */
+    public function _verifyPermissionForDocumentOwnedBy(string $owner)
+    {
+        if ('admin' == $this->role) return true;
+        if ($owner == $this->id) return true;
+        throw new HttpException(403, 'permission denied.');
+    }
+
+    /**
      * @param ServerRequestInterface $request
      * @param ResponseHeaders $responseHeaders
      * @return bool

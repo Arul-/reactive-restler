@@ -40,14 +40,12 @@ class Access
      */
     public function documents(int $id)
     {
+        //$id => $owner
         $documents = [1 => 'a', 2 => 'b', 3 => 'a'];
-        if ($owner = $documents[$id] ?? false) {
-            if ($owner != $this->accessControl->id && 'admin' != $this->accessControl->role)
-                throw new HttpException(403, 'permission denied.');
-            return 'protected document, only user who owns it and admin can access';
-
-        }
-        throw new HttpException(404, 'document does not exist.');
+        if (!$owner = $documents[$id] ?? false)
+            throw new HttpException(404, 'document does not exist.');
+        $this->accessControl->_verifyPermissionForDocumentOwnedBy($owner);
+        return 'protected document, only user who owns it and admin can access';
     }
 
     /**
