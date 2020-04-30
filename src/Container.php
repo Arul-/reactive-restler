@@ -201,7 +201,8 @@ class Container implements ContainerInterface
             return $value;
         }
         if ($parameter->isDefaultValueAvailable()) {
-            return $parameter->getDefaultValue();
+            $defaultValue = $parameter->getDefaultValue();
+            return $defaultValue;
         }
 
         $this->unresolvablePrimitive($parameter);
