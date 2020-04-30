@@ -17,9 +17,16 @@ class AccessControl implements AccessControlInterface, SelectivePathsInterface, 
 {
     use SelectivePathsTrait;
 
-    public static $super = true;
     public $requires = 'user';
     public $role = 'user';
+    public $id = null;
+
+    /** @var string[][] hardcoded to string[password]=>[id,role] */
+    private static $users = [
+        '123' => ['a', 'user'],
+        '456' => ['b', 'user'],
+        '789' => ['c', 'admin']
+    ];
 
     /**
      * @param ServerRequestInterface $request
@@ -29,20 +36,24 @@ class AccessControl implements AccessControlInterface, SelectivePathsInterface, 
      */
     public function _isAllowed(ServerRequestInterface $request, ResponseHeaders $responseHeaders): bool
     {
-        //hardcoded api_key=>role for brevity
-        $roles = array('12345' => 'user', '67890' => 'admin');
-
         if (!$api_key = $request->getQueryParams()['api_key'] ?? false) {
             return false;
         }
+        /** @var UserIdentificationInterface $userClass */
         $userClass = ClassName::get(UserIdentificationInterface::class);
-        if (!$role = $roles[$api_key] ?? false) {
+        if (!list($id, $role) = self::$users[$api_key] ?? false) {
             $userClass::setCacheIdentifier($api_key);
             return false;
         }
-        $userClass::setCacheIdentifier($role);
+        $userClass::setCacheIdentifier($id);
         $this->role = $role;
-        return $this->requires == $role || $role == 'admin';
+        $this->id = $id;
+        //Role-based access control (RBAC)
+        if (!$this->requires == $role || $role == 'admin') {
+            return false;
+        }
+
+        return true;
     }
 
     public static function getWWWAuthenticateString(): string
