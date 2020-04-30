@@ -374,9 +374,9 @@ class RestContext implements Context
         //detect type, extract data
         $this->_language = $this->_response->getHeaderLine('Content-Language');
 
-        $cType = explode('; ', $this->_response->getHeaderLine('Content-type'));
+        $cType = explode(';', $this->_response->getHeaderLine('Content-type'));
         if (count($cType) > 1) {
-            $charset = $cType[1];
+            $charset = trim($cType[1]);
             $this->_charset = substr($charset, strpos($charset, '=') + 1);
         }
         $cType = $cType[0];
