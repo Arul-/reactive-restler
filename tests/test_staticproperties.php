@@ -10,7 +10,18 @@ use Psr\SimpleCache\CacheInterface;
 
 include __DIR__ . "/../vendor/autoload.php";
 
-$p = new StaticProperties(Defaults::class);
+$s = get_class_vars(AccessControl::class);
+$v = get_object_vars(new AccessControl());
+$statics = array_diff_key($s, $v);
+$props = array_intersect_key($s, $v);
+
+
+$p = new StaticProperties(AccessControl::class);
+
+$p->requires = 'user';
+
+
+//$p = new StaticProperties(Defaults::class);
 
 var_dump($p->supportedCharsets);
 
@@ -23,7 +34,7 @@ var_dump(Defaults::$supportedCharsets);
 array_shift($p->supportedCharsets);
 var_dump($p->supportedCharsets);
 
-Defaults::$supportedCharsets[]='EF121';
+Defaults::$supportedCharsets[] = 'EF121';
 var_dump($p->supportedCharsets);
 
 $p->implementations[CacheInterface::class][] = HumanReadable::class;

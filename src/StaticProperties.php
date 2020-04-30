@@ -3,24 +3,39 @@
 namespace Luracast\Restler;
 
 use ArrayAccess;
+use ReflectionClass;
+use ReflectionException;
 
 class StaticProperties implements ArrayAccess
 {
+    private $allowed = [];
     private $properties = [];
     /**
      * @var string
      */
     private $className;
 
-    public function __construct(string $className)
+    /**
+     * StaticProperties constructor.
+     * @param string $className class name for capturing static properties
+     * @param array|null $allowed {@type string} names of the static properties
+     */
+    public function __construct(string $className, ?array $allowed = null)
     {
-
         $this->className = $className;
+        try {
+            $this->allowed = array_fill_keys(
+                $allowed ?? array_keys((new ReflectionClass($className))->getStaticProperties()),
+                true
+            );
+        } catch (ReflectionException $e) {
+            $this->allowed = [];
+        }
     }
 
     public function &__get($name)
     {
-        if (property_exists($this->className, $name)) {
+        if (static::__isset($name)) {
             $value = $this->className::$$name;
             if (!array_key_exists($name, $this->properties)) {
                 $this->properties[$name] = [$value, $value];
@@ -32,17 +47,16 @@ class StaticProperties implements ArrayAccess
             }
             return $value;
         }
-        return null;
     }
 
     public function __isset($name)
     {
-        return property_exists($this->className, $name);
+        return isset($this->allowed[$name]);
     }
 
     public function __set($name, $value)
     {
-        if (property_exists($this->className, $name)) {
+        if (static::__isset($name)) {
             $this->properties[$name] = [$value, $this->className::$$name];
         }
     }
