@@ -848,7 +848,7 @@ class RestContext implements Context
         $redirects = $this->_response->getHeader(RedirectMiddleware::HISTORY_HEADER);
         if (empty($redirects))
             throw new Exception("Response was not Redirected\n");
-        $actual = str_replace($this->baseUrl, '', $redirects[0]);
+        $actual = ltrim(str_replace($this->baseUrl, '', $redirects[0]), '/');
         if ($expectedPath !== $actual)
             throw new Exception("Redirect did not go to '$expectedPath'\n(actual: '$actual')\n");
     }
