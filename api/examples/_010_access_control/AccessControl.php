@@ -33,10 +33,10 @@ class AccessControl implements AccessControlInterface, SelectivePathsInterface, 
      * @return bool
      * @throws HttpException
      */
-    public function _verifyPermissionForDocumentOwnedBy(string $owner)
+    public function _verifyPermissionForDocumentOwnedBy(string $owner): bool
     {
-        if ('admin' == $this->role) return true;
-        if ($owner == $this->id) return true;
+        if ('admin' === $this->role) return true;
+        if ($owner === $this->id) return true;
         throw new HttpException(403, 'permission denied.');
     }
 
@@ -53,19 +53,16 @@ class AccessControl implements AccessControlInterface, SelectivePathsInterface, 
         }
         /** @var UserIdentificationInterface $userClass */
         $userClass = ClassName::get(UserIdentificationInterface::class);
-        if (!list($id, $role) = self::$users[$api_key] ?? false) {
+        if (!$user = self::$users[$api_key] ?? null) {
             $userClass::setCacheIdentifier($api_key);
             return false;
         }
+        [$id, $role] = $user;
         $userClass::setCacheIdentifier($id);
         $this->role = $role;
         $this->id = $id;
         //Role-based access control (RBAC)
-        if (!$this->requires == $role || $role == 'admin') {
-            return false;
-        }
-
-        return true;
+        return $role === 'admin' || $role === $this->requires;
     }
 
     public static function getWWWAuthenticateString(): string
