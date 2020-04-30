@@ -137,23 +137,9 @@ abstract class Core
 
     public function make($className, Route $route = null, bool $recreate = false)
     {
-        $properties = [];
         $fullName = $className;
         if (!$route) {
             $route = $this->_route;
-        }
-        if ($route && property_exists($route, 'set')) {
-            $shortName = ClassName::short($fullName);
-            $properties = $route->set[$fullName] ?? $route->set[$shortName] ?? [];
-            $name = lcfirst($shortName);
-            if (!isset($this->config[$name])) {
-                $this->config[$name] = new StaticProperties($fullName);;
-            }
-            foreach ($properties as $property => $value) {
-                if (isset($this->config[$name][$property])) {
-                    $this->config[$name][$property] = $value;
-                }
-            }
         }
         if ($recreate) {
             //delete existing instance if any
@@ -161,11 +147,23 @@ abstract class Core
         }
 
         $instance = $this->container->make($className);
-        $objectVars = get_object_vars($instance);
-        foreach ($properties as $property => $value) {
-            if (property_exists($fullName, $property) && array_key_exists($property, $objectVars)) {
-                //if not a static property
-                $instance->{$property} = $value;
+        if ($route && property_exists($route, 'set')) {
+            $objectVars = get_object_vars($instance);
+            $classVars = get_class_vars($className);
+            $staticVars = array_diff_key($classVars, $objectVars);
+            $instanceVars = array_intersect_key($classVars, $objectVars);
+            $shortName = ClassName::short($fullName);
+            $properties = $route->set[$fullName] ?? $route->set[$shortName] ?? [];
+            $name = lcfirst($shortName);
+            if (!isset($this->config[$name])) {
+                $this->config[$name] = new StaticProperties($fullName, array_keys($staticVars));
+            }
+            foreach ($properties as $property => $value) {
+                if (array_key_exists($property, $staticVars)) {
+                    $this->config[$name][$property] = $value;
+                } elseif (array_key_exists($property, $instanceVars)) {
+                    $instance->{$property} = $value;
+                }
             }
         }
         if ($instance instanceof UsesAuthenticationInterface) {
