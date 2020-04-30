@@ -17,17 +17,9 @@ class AccessControl implements AccessControlInterface, SelectivePathsInterface, 
 {
     use SelectivePathsTrait;
 
-    public static $requires = 'user';
-    public static $role = 'user';
-    /**
-     * @var StaticProperties
-     */
-    private $accessControl;
-
-    public function __construct(StaticProperties $accessControl)
-    {
-        $this->accessControl = $accessControl;
-    }
+    public static $super = true;
+    public $requires = 'user';
+    public $role = 'user';
 
     /**
      * @param ServerRequestInterface $request
@@ -49,8 +41,8 @@ class AccessControl implements AccessControlInterface, SelectivePathsInterface, 
             return false;
         }
         $userClass::setCacheIdentifier($role);
-        $this->accessControl->role = $role;
-        return $this->accessControl->requires == $role || $role == 'admin';
+        $this->role = $role;
+        return $this->requires == $role || $role == 'admin';
     }
 
     public static function getWWWAuthenticateString(): string
