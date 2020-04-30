@@ -711,9 +711,9 @@ class RestContext implements Context
                 $p = $p->$property;
             }
             if ($p != $propertyValue) {
-                throw new \Exception('Property value mismatch! (given: '
-                    . $propertyValue . ', match: '
-                    . $data->$propertyName . ")\n\n"
+                throw new \Exception('Property value mismatch! (given: "'
+                    . $propertyValue . '", match: "'
+                    . $p . "\")\n\n"
                     . $this->echoLastResponse());
             }
         } else {
