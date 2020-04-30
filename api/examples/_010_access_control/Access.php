@@ -15,7 +15,7 @@ class Access
         $this->accessControl = $accessControl;
     }
 
-    public function all()
+    public function all(): string
     {
         return "public api, all are welcome";
     }
@@ -24,7 +24,7 @@ class Access
      * @access protected
      * @class  AccessControl {@requires user}
      */
-    public function user()
+    public function user(): string
     {
         return "protected api, only user and admin can access";
     }
@@ -38,7 +38,7 @@ class Access
      * @throws HttpException 403 permission denied
      * @throws HttpException 404 document not found
      */
-    public function documents(int $id)
+    public function documents(int $id): string
     {
         //$id => $owner
         $documents = [1 => 'a', 2 => 'b', 3 => 'a'];
@@ -52,7 +52,7 @@ class Access
      * @access protected
      * @class  AccessControl {@requires admin}
      */
-    public function admin()
+    public function admin(): string
     {
         return "protected api, only admin can access";
     }
