@@ -83,7 +83,7 @@ class RestContext implements Context
         // after all tests completed
         $client = new Client(['base_uri' => $baseUrl]);
         //load explorer dependencies
-        $client->get('/explorer/docs.json');
+        $client->get('explorer/docs.json');
         $result = $client->get('__cleanup_db/package');
     }
 
