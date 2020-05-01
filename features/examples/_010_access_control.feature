@@ -95,7 +95,21 @@ Feature: Testing Access Control
     And the "error.message" property equals "Unauthorized"
 
   Scenario: Access non existent document
-    When I request "examples/_010_access_control/documents/4?api_key=456"
+    When I request "examples/_010_access_control/documents/5?api_key=456"
     Then the response status code should be 404
     And the response is JSON
     And the "error.message" property equals "document does not exist."
+
+  Scenario Outline: Access documents with different keys
+    When I request "examples/_010_access_control/documents?api_key=<key>"
+    Then the response status code should be 200
+    And the response is JSON
+    And the response equals <expected>
+
+    Examples:
+      | key | expected  |
+      | 123 | [1,3]     |
+      | 456 | [2]       |
+      | 789 | [1,2,3,4] |
+
+

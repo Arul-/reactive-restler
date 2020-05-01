@@ -21,7 +21,7 @@ class AccessControl implements AccessControlInterface, SelectivePathsInterface, 
     public $role = 'user';
     public $id = null;
 
-    /** @var string[][] hardcoded to string[password]=>[id,role] */
+    /** @var string[][] hardcoded to string[password]=>[id,role] for brevity */
     private static $users = [
         '123' => ['a', 'user'],
         '456' => ['b', 'user'],
@@ -30,13 +30,15 @@ class AccessControl implements AccessControlInterface, SelectivePathsInterface, 
 
     /**
      * @param string $owner
+     * @param bool $throwException
      * @return bool
      * @throws HttpException
      */
-    public function _verifyPermissionForDocumentOwnedBy(string $owner): bool
+    public function _verifyPermissionForDocumentOwnedBy(string $owner, bool $throwException = false): bool
     {
-        if ('admin' === $this->role) return true;
+        if ('admin' === $this->role) return true; //comment this line to make it owner only
         if ($owner === $this->id) return true;
+        if (!$throwException) return false;
         throw new HttpException(403, 'permission denied.');
     }
 

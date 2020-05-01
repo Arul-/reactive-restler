@@ -10,6 +10,9 @@ class Access
      */
     private $accessControl;
 
+    //$id => $owner hardcoded for brevity
+    private static $documents = [1 => 'a', 2 => 'b', 3 => 'a', 4 => 'c'];
+
     public function __construct(AccessControl $accessControl)
     {
         $this->accessControl = $accessControl;
@@ -32,19 +35,30 @@ class Access
     /**
      * @access protected
      * @class  AccessControl {@requires user}
+     * @return array document ids owned by or accessible to current user
+     */
+    public function documents(): array
+    {
+        return array_keys(array_filter(
+            self::$documents,
+            [$this->accessControl, '_verifyPermissionForDocumentOwnedBy']
+        ));
+    }
+
+    /**
+     * @access protected
+     * @class  AccessControl {@requires user}
      * @param int $id id of the document
      *
      * @return string
      * @throws HttpException 403 permission denied
      * @throws HttpException 404 document not found
      */
-    public function documents(int $id): string
+    public function getDocuments(int $id): string
     {
-        //$id => $owner
-        $documents = [1 => 'a', 2 => 'b', 3 => 'a'];
-        if (!$owner = $documents[$id] ?? false)
+        if (!$owner = self::$documents[$id] ?? false)
             throw new HttpException(404, 'document does not exist.');
-        $this->accessControl->_verifyPermissionForDocumentOwnedBy($owner);
+        $this->accessControl->_verifyPermissionForDocumentOwnedBy($owner, true);
         return 'protected document, only user who owns it and admin can access';
     }
 
