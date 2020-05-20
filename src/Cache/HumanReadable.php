@@ -6,9 +6,8 @@ namespace Luracast\Restler\Cache;
 
 use DateInterval;
 use Luracast\Restler\Defaults;
-use Psr\SimpleCache\CacheInterface;
 
-class HumanReadable implements CacheInterface
+class HumanReadable extends Base
 {
     /**
      * @var string path of the folder to hold cache files
@@ -57,8 +56,11 @@ class HumanReadable implements CacheInterface
                         $s .= PHP_EOL . PHP_EOL . "//==== $k $ke ===="
                             . PHP_EOL . PHP_EOL;
                         $s .= '$o[\'' . $k . '\'][\'' . $ke . '\'] = ' .
-                            str_replace('  ', '    ',
-                                var_export($va, true)) . ';';
+                            str_replace(
+                                '  ',
+                                '    ',
+                                var_export($va, true)
+                            ) . ';';
                     }
                 } else {
                     $s .= '$o[\'' . $k . '\'] = '
@@ -92,34 +94,6 @@ class HumanReadable implements CacheInterface
     public function clear()
     {
         array_map('unlink', array_filter((array)glob(static::$cacheDirectory . '/*.php')));
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function getMultiple($keys, $default = null)
-    {
-        return array_map(function ($key) use ($default) {
-            return $this->get($key, $default);
-        }, $keys);
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function setMultiple($values, $ttl = null)
-    {
-        return array_map(function ($key, $value) use ($ttl) {
-            return $this->set($key, $value, $ttl);
-        }, array_keys($values), $values);
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function deleteMultiple($keys)
-    {
-        return array_map([$this, 'delete'], $keys);
     }
 
     /**
