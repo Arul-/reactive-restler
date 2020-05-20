@@ -17,6 +17,9 @@ class RateLimiter implements FilterInterface, SelectivePathsInterface, UsesAuthe
 {
     use SelectivePathsTrait;
 
+    /** @var string class that implements CacheInterface*/
+    public static $cacheClass = null;
+
     /**
      * @var int
      */
@@ -56,7 +59,7 @@ class RateLimiter implements FilterInterface, SelectivePathsInterface, UsesAuthe
     public function __construct(StaticProperties $rateLimiter)
     {
         $this->runtimeValues = $rateLimiter;
-        $class = ClassName::get(CacheInterface::class);
+        $class = ClassName::get($rateLimiter->cacheClass ?? CacheInterface::class);
         /** @var CacheInterface cache */
         $this->cache = new $class;
     }
