@@ -1,4 +1,5 @@
-<?php namespace Luracast\Restler\OpenApi3;
+<?php
+namespace Luracast\Restler\OpenApi3;
 
 use Luracast\Restler\Contracts\{DownloadableFileMediaTypeInterface,
     ExplorableAuthenticationInterface,
@@ -164,7 +165,8 @@ class Explorer implements ProvidesMultiVersionApiInterface
             $this->request,
             [$this->restler, 'make'],
             array_merge(static::$excludedPaths, $selfExclude),
-            static::$excludedHttpMethods, $version
+            static::$excludedHttpMethods,
+            $version
         );
         $paths = [];
         foreach ($map as $path => $data) {
@@ -227,7 +229,7 @@ class Explorer implements ProvidesMultiVersionApiInterface
             if (isset(static::$prefixes[$method])) {
                 $method = static::$prefixes[$method] . $class;
             } else {
-                $method = str_replace(
+                $method = str_ireplace(
                     array_keys(static::$prefixes),
                     array_values(static::$prefixes),
                     $method
@@ -269,13 +271,18 @@ class Explorer implements ProvidesMultiVersionApiInterface
                 foreach ($body as $cname => $child) {
                     $children[$cname] = $child->jsonSerialize();
                 }
-                $requestBody = $this->requestBody($route, Param::__set_state([
-                    'name' => $name,
-                    'type' => $name,
-                    'from' => 'body',
-                    'required' => true,
-                    'children' => $children,
-                ]));
+                $requestBody = $this->requestBody(
+                    $route,
+                    Param::__set_state(
+                        [
+                            'name' => $name,
+                            'type' => $name,
+                            'from' => 'body',
+                            'required' => true,
+                            'children' => $children,
+                        ]
+                    )
+                );
             }
         }
         return [$r, $requestBody];
