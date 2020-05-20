@@ -9,14 +9,12 @@ use Luracast\Restler\Contracts\{AccessControlInterface,
     RequestMediaTypeInterface,
     ResponseMediaTypeInterface,
     SelectivePathsInterface,
-    UsesAuthenticationInterface
-};
+    UsesAuthenticationInterface};
 use Luracast\Restler\Data\Param;
 use Luracast\Restler\Data\Route;
 use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\MediaTypes\Json;
 use Luracast\Restler\Utils\{ClassName, CommentParser, Text, Type};
-use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use ReflectionClass;
 use ReflectionMethod;
@@ -372,6 +370,8 @@ class Router
         } catch (Exception $e) {
             throw new HttpException(500, "Error while parsing comments of `$className` class. " . $e->getMessage());
         }
+        unset($classMetadata['description']);
+        unset($classMetadata['longDescription']);
         $classMetadata['scope'] = $scope = static::scope($class);
         $methods = $class->getMethods(ReflectionMethod::IS_PUBLIC +
             ReflectionMethod::IS_PROTECTED);
