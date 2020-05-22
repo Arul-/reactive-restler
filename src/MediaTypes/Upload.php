@@ -1,8 +1,12 @@
-<?php namespace Luracast\Restler\MediaTypes;
+<?php
+
+namespace Luracast\Restler\MediaTypes;
 
 
 use Luracast\Restler\Contracts\RequestMediaTypeInterface;
 use Luracast\Restler\Exceptions\HttpException;
+use Luracast\Restler\Proxies\UploadedFile;
+use Luracast\Restler\Utils\Convert;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\UploadedFileInterface;
 
@@ -10,16 +14,16 @@ class Upload extends MediaType implements RequestMediaTypeInterface
 {
     const MIME = 'multipart/form-data';
     const EXTENSION = 'post';
-    public static $errors = array(
+    public static $errors = [
         UPLOAD_ERR_OK => false,
-        UPLOAD_ERR_INI_SIZE => "The uploaded file exceeds the maximum allowed size",
-        UPLOAD_ERR_FORM_SIZE => "The uploaded file exceeds the maximum allowed size",
-        UPLOAD_ERR_PARTIAL => "The uploaded file was only partially uploaded",
-        UPLOAD_ERR_NO_FILE => "No file was uploaded",
-        UPLOAD_ERR_NO_TMP_DIR => "Missing a temporary folder",
-        UPLOAD_ERR_CANT_WRITE => "Failed to write file to disk",
-        UPLOAD_ERR_EXTENSION => "A PHP extension stopped the file upload"
-    );
+        UPLOAD_ERR_INI_SIZE => 'The uploaded file exceeds the maximum allowed size',
+        UPLOAD_ERR_FORM_SIZE => 'The uploaded file exceeds the maximum allowed size',
+        UPLOAD_ERR_PARTIAL => 'The uploaded file was only partially uploaded',
+        UPLOAD_ERR_NO_FILE => 'No file was uploaded',
+        UPLOAD_ERR_NO_TMP_DIR => 'Missing a temporary folder',
+        UPLOAD_ERR_CANT_WRITE => 'Failed to write file to disk',
+        UPLOAD_ERR_EXTENSION => 'A PHP extension stopped the file upload'
+    ];
     /**
      * use it if you need to restrict uploads based on file type
      * setting it as an empty array allows all file types
@@ -59,8 +63,9 @@ class Upload extends MediaType implements RequestMediaTypeInterface
      */
     private $request;
 
-    public function __construct(ServerRequestInterface $request)
+    public function __construct(Convert $convert, ServerRequestInterface $request)
     {
+        parent::__construct($convert);
         $this->request = $request;
     }
 
@@ -110,9 +115,8 @@ class Upload extends MediaType implements RequestMediaTypeInterface
             }
         } catch (HttpException $e) {
             if (static::$suppressExceptionsAsError) {
-                if (method_exists($file, 'setError')) {
-                    $file->setError($e->getCode() == 413 ? 1 : 6);
-                }
+                $file = new UploadedFile($file);
+                $file->setError($e->getCode() == 413 ? 1 : 6);
                 $file->exception = $e;
             } else {
                 throw $e;
