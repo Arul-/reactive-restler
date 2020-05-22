@@ -503,7 +503,7 @@ class Router
                     $m['model'] = $modelName;
                 }
                 if ($m['name'] == Defaults::$fullRequestDataName) {
-                    $from = 'body';
+                    $from = Param::FROM_BODY;
                     if (!isset($m['type'])) {
                         $type = $m['type'] = 'array';
                     }
@@ -513,14 +513,14 @@ class Router
                 } else {
                     if ((isset($type) && Type::isObjectOrArray($type))
                     ) {
-                        $from = 'body';
+                        $from = Param::FROM_BODY;
                         if (!isset($type)) {
                             $type = $m['type'] = 'array';
                         }
                     } elseif ($m['required'] && in_array($m['name'], static::$prefixingParameterNames)) {
-                        $from = 'path';
+                        $from = Param::FROM_PATH;
                     } else {
-                        $from = 'body';
+                        $from = Param::FROM_BODY;
                     }
                 }
                 $p['from'] = $from;
@@ -528,7 +528,7 @@ class Router
                     $type = $m['type'] = static::type($defaults[$position]);
                 }
 
-                if ($allowAmbiguity || $from == 'path') {
+                if ($allowAmbiguity || Param::FROM_PATH == $from) {
                     $pathParams [] = $position;
                 }
                 $position++;
@@ -578,11 +578,11 @@ class Router
                             strpos($url, '{' . $p['name'] . '}') ||
                             strpos($url, ':' . $p['name']);
                         if ($inPath) {
-                            $copy['metadata']['param'][$i][$dataName]['from'] = 'path';
+                            $copy['metadata']['param'][$i][$dataName]['from'] = Param::FROM_PATH;
                         } elseif ($httpMethod == 'GET' || $httpMethod == 'DELETE') {
-                            $copy['metadata']['param'][$i][$dataName]['from'] = 'query';
-                        } elseif (empty($p[$dataName]['from']) || $p[$dataName]['from'] == 'path') {
-                            $copy['metadata']['param'][$i][$dataName]['from'] = 'body';
+                            $copy['metadata']['param'][$i][$dataName]['from'] = Param::FROM_QUERY;
+                        } elseif (empty($p[$dataName]['from']) || Param::FROM_PATH == $p[$dataName]['from']) {
+                            $copy['metadata']['param'][$i][$dataName]['from'] = Param::FROM_BODY;
                         }
                     }
                     $url = preg_replace_callback('/{[^}]+}|:[^\/]+/',
@@ -617,11 +617,11 @@ class Router
                     : $resourcePath . $methodUrl;
                 for ($position = 0; $position < count($params); $position++) {
                     $from = $metadata['param'][$position][$dataName]['from'];
-                    if ($from == 'body' && ($httpMethod == 'GET' ||
-                            $httpMethod == 'DELETE')
+                    if (Param::FROM_BODY == $from && ('GET' == $httpMethod ||
+                            'DELETE' == $httpMethod)
                     ) {
                         $call['metadata']['param'][$position][$dataName]['from']
-                            = 'query';
+                            = Param::FROM_QUERY;
                     }
                 }
                 $copy = unserialize(serialize($call));
@@ -638,7 +638,7 @@ class Router
                             ? $call['metadata']['param'][$position]['type']
                             : null)
                         . $position . '}';
-                    $copy['metadata']['param'][$position][$dataName]['from'] = 'path';
+                    $copy['metadata']['param'][$position][$dataName]['from'] = Param::FROM_PATH;
                     $copy['metadata']['param'][$position][$dataName]['required'] = true;
                     if ($allowAmbiguity || $position == $lastPathParam) {
                         static::addPath($url, $copy, $httpMethod, $version);

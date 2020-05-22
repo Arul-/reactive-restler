@@ -1,4 +1,5 @@
-<?php namespace Luracast\Restler\Data;
+<?php
+namespace Luracast\Restler\Data;
 
 use Luracast\Restler\Utils\CommentParser;
 
@@ -11,6 +12,12 @@ class Param extends Type
 {
     const KEEP_NON_NUMERIC = false;
     const KEEP_NUMERIC = true;
+
+    const FROM_PATH = 'path';
+    const FROM_QUERY = 'query';
+    const FROM_BODY = 'body';
+    const FROM_HEADER = 'header';
+
     /**
      * @var int
      */
@@ -41,8 +48,8 @@ class Param extends Type
     public $required;
 
     /**
-     * @var string body or header or query where this parameter is coming from
-     *      in the http request
+     * @var string path or query or body or header where this parameter is coming from
+     *      in the http request {@choice path,query,body,header}
      */
     public $from;
 
@@ -156,12 +163,14 @@ class Param extends Type
 
     public function content($index = 0): self
     {
-        return Param::parse([
-            'name' => $this->name . '[' . $index . ']',
-            'type' => $this->contentType,
-            'children' => $this->children,
-            'required' => true,
-        ]);
+        return Param::parse(
+            [
+                'name' => $this->name . '[' . $index . ']',
+                'type' => $this->contentType,
+                'children' => $this->children,
+                'required' => true,
+            ]
+        );
     }
 
     public static function parse(array $metadata): self
