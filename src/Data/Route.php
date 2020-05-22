@@ -41,7 +41,7 @@ class Route extends ValueObject
     public $action;
 
     /**
-     * @var array[Param]
+     * @var Param[]
      */
     public $parameters = [];
 
@@ -54,16 +54,18 @@ class Route extends ValueObject
      * @var array
      */
     public $responses = [
-        //200 => [
-        //  'message'=> 'OK',
-        //  'type'=> Class::name,
-        //  'description'=> '',
-        //],
-        //404 => [
-        //  'message'=> 'Not Found',
-        //  'type'=> Exception:name,
-        //  'description'=> '',
-        //],
+        /*
+        200 => [
+          'message'=> 'OK',
+          'type'=> Class::name,
+          'description'=> '',
+        ],
+        404 => [
+          'message'=> 'Not Found',
+          'type'=> Exception:name,
+          'description'=> '',
+        ],
+        */
     ];
 
     /**
@@ -96,7 +98,6 @@ class Route extends ValueObject
 
     private function __construct()
     {
-
     }
 
     public static function make(callable $action, string $path, $httpMethod = 'GET', array $data = [])
@@ -229,14 +230,22 @@ class Route extends ValueObject
 
     public function setRequestMediaTypes(string ...$types): void
     {
-        Router::_setMediaTypes(RequestMediaTypeInterface::class, $types,
-            $this->requestFormatMap, $this->requestMediaTypes);
+        Router::_setMediaTypes(
+            RequestMediaTypeInterface::class,
+            $types,
+            $this->requestFormatMap,
+            $this->requestMediaTypes
+        );
     }
 
     public function setResponseMediaTypes(string ...$types): void
     {
-        Router::_setMediaTypes(ResponseMediaTypeInterface::class, $types,
-            $this->responseFormatMap, $this->responseMediaTypes);
+        Router::_setMediaTypes(
+            ResponseMediaTypeInterface::class,
+            $types,
+            $this->responseFormatMap,
+            $this->responseMediaTypes
+        );
     }
 
     public function addParameter(Param $parameter)
@@ -257,7 +266,6 @@ class Route extends ValueObject
             $this->validate($maker(Validator::class), $maker);
         }
         return $this->handle(1, $maker);
-
     }
 
     public function apply(array $arguments): array
@@ -322,8 +330,19 @@ class Route extends ValueObject
 
     public function filterParams(bool $body): array
     {
-        return array_filter($this->parameters, function ($v) use ($body) {
-            return $body ? $v->from === 'body' : $v->from !== 'body';
-        });
+        return array_filter(
+            $this->parameters,
+            function ($v) use ($body) {
+                return $body ? $v->from === 'body' : $v->from !== 'body';
+            }
+        );
+    }
+
+    /**
+     * @return array
+     */
+    public function getArguments(): array
+    {
+        return $this->arguments;
     }
 }
