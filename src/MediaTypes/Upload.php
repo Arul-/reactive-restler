@@ -83,7 +83,7 @@ class Upload extends MediaType implements RequestMediaTypeInterface
         /** @var UploadedFileInterface $file */
         $result = [];
         foreach ($files as $file) {
-            static::checkFile($file, $doMimeCheck, $doSizeCheck);
+            $file = static::checkFile($file, $doMimeCheck, $doSizeCheck);
             $result[$file->getClientFilename()] = $file;
         }
         parse_str($data, $result);
@@ -96,8 +96,11 @@ class Upload extends MediaType implements RequestMediaTypeInterface
      * @param bool $doSizeCheck
      * @throws HttpException
      */
-    protected static function checkFile(UploadedFileInterface $file, $doMimeCheck = false, $doSizeCheck = false)
-    {
+    protected static function checkFile(
+        UploadedFileInterface $file,
+        $doMimeCheck = false,
+        $doSizeCheck = false
+    ): UploadedFileInterface {
         try {
             if ($error = $file->getError()) {
                 throw new HttpException($error > 5 ? 500 : 413, static::$errors[$error]);
@@ -122,5 +125,6 @@ class Upload extends MediaType implements RequestMediaTypeInterface
                 throw $e;
             }
         }
+        return $file;
     }
 }
