@@ -15,7 +15,6 @@ use Luracast\Restler\Restler;
 use Luracast\Restler\Router;
 use Luracast\Restler\StaticProperties;
 use Luracast\Restler\UI\Tags as T;
-use Luracast\Restler\Utils\CommentParser;
 use Luracast\Restler\Utils\Text;
 use Luracast\Restler\Utils\Validator;
 use Psr\Http\Message\ServerRequestInterface;
@@ -186,16 +185,19 @@ class Forms implements FilterInterface
         }
         $r[] = $s;
         $t = [
-            'action' => $this->restler->baseUrl . trim($action, '/'),
+            'action' => $this->restler->baseUrl . '/' . trim($action, '/'),
             'method' => $method,
         ];
         if ($this->fileUpload) {
             $this->fileUpload = false;
             $t['enctype'] = 'multipart/form-data';
         }
+        //TODO: bring the below functionality
+        /*
         if (isset($m[CommentParser::$embeddedDataName])) {
             $t += $m[CommentParser::$embeddedDataName];
         }
+        */
         if (!$dataOnly) {
             $t = Emmet::make($this->style('form', $route->return), $t);
             $t->prefix = $prefix;
