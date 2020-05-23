@@ -190,8 +190,8 @@ class Param extends Type
         }
         if (is_array($instance->children)) {
             foreach ($instance->children as $key => $child) {
-                if (!$child instanceof self) {
-                    $instance->children[$key] = static::parse($child);
+                if (is_array($child)) {
+                    $instance->children[$key] = static::parse($child + ['from' => $instance->from]);
                 }
             }
         }
