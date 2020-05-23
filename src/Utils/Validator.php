@@ -302,6 +302,7 @@ class Validator implements ValidationInterface
                                 break;
                             }
                             foreach ($param->children as $key => $child) {
+                                $child = clone $child;
                                 $child->name = "{$param->name}[$key]";
                                 if (array_key_exists($key, $input) || $child->required) {
                                     $instance->{$key} = static::validate(($input[$key] ?? null), $child);
