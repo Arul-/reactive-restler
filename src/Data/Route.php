@@ -124,11 +124,9 @@ class Route extends ValueObject
 
         ];
         $extract = function (array &$from, string $key, $default = null) {
-            if ($value = $from[$key] ?? false) {
-                unset($from[$key]);
-                return $value;
-            }
-            return $default;
+            $value = $from[$key] ?? $default;
+            unset($from[$key]);
+            return $value;
         };
         $meta = $extract($call, 'metadata', []);
         $args = [
@@ -333,7 +331,7 @@ class Route extends ValueObject
         return array_filter(
             $this->parameters,
             function ($v) use ($body) {
-                return $body ? $v->from === 'body' : $v->from !== 'body';
+                return (Param::FROM_BODY === $v->from) === $body;
             }
         );
     }
