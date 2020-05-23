@@ -1,4 +1,5 @@
 <?php
+
 namespace Luracast\Restler\OpenApi3;
 
 use Luracast\Restler\Contracts\{DownloadableFileMediaTypeInterface,
@@ -263,14 +264,6 @@ class Explorer implements ProvidesMultiVersionApiInterface
             } else {
                 //lets group all body parameters under a generated model name
                 $name = $this->modelName($route);
-                $children = [];
-                /**
-                 * @var string $name
-                 * @var Param $child
-                 */
-                foreach ($body as $cname => $child) {
-                    $children[$cname] = $child->jsonSerialize();
-                }
                 $requestBody = $this->requestBody(
                     $route,
                     Param::__set_state(
@@ -279,7 +272,7 @@ class Explorer implements ProvidesMultiVersionApiInterface
                             'type' => $name,
                             'from' => 'body',
                             'required' => true,
-                            'children' => $children,
+                            'children' => $body,
                         ]
                     )
                 );
@@ -413,29 +406,31 @@ class Explorer implements ProvidesMultiVersionApiInterface
         $r->type = 'object';
         $r->properties = [];
         $required = [];
+        /** @var Type $child */
         foreach ($children as $child) {
-            $info = Param::parse($child);
             $p = new stdClass();
-            $this->setType($p, $info);
-            if (isset($child['description'])) {
-                $p->description = $child['description'];
+            $this->setType($p, $child);
+            if (isset($child->description)) {
+                $p->description = $child->description;
             }
-            if ($info->default) {
-                $p->default = $info->default;
+            if ($child instanceof Param) {
+                if ($child->default) {
+                    $p->default = $child->default;
+                }
+                if ($child->choice) {
+                    $p->enum = $child->choice;
+                }
+                if ($child->min) {
+                    $p->minimum = $child->min;
+                }
+                if ($child->max) {
+                    $p->maximum = $child->max;
+                }
+                if ($child->required) {
+                    $required[] = $child->name;
+                }
             }
-            if ($info->choice) {
-                $p->enum = $info->choice;
-            }
-            if ($info->min) {
-                $p->minimum = $info->min;
-            }
-            if ($info->max) {
-                $p->maximum = $info->max;
-            }
-            if ($info->required) {
-                $required[] = $info->name;
-            }
-            $r->properties[$info->name] = $p;
+            $r->properties[$child->name] = $p;
         }
         if (!empty($required)) {
             $r->required = $required;
