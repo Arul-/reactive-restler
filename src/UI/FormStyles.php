@@ -1,4 +1,5 @@
 <?php
+
 namespace Luracast\Restler\UI;
 
 /**
@@ -14,7 +15,7 @@ namespace Luracast\Restler\UI;
  */
 class FormStyles
 {
-    public static $html = array(
+    public static $html = [
         'form' => 'form[role=form id=$id# name=$name# method=$method# action=$action# enctype=$enctype#]',
         'input' => '.row>section>label{$label#}^input[id=$id# name=$name# value=$value# type=$type# required=$required# autofocus=$autofocus# placeholder=$default# accept=$accept# disabled=$disabled#]',
         'textarea' => '.row>label{$label#}^textarea[id=$id# name=$name# required=$required# autofocus=$autofocus# placeholder=$default# rows=3 disabled=$disabled#]{$value#}',
@@ -26,8 +27,8 @@ class FormStyles
         //------------- TYPE BASED STYLES ---------------------//
         'checkbox-array' => 'fieldset>legend{$label#}+section*options>label>input[name=$name# value=$value# type=checkbox checked=$selected# required=$required# autofocus=$autofocus# accept=$accept#]+{ $text#}',
         'select-array' => 'label{$label#}+select[name=$name# required=$required# multiple style="height: auto;background-image: none; outline: inherit;"]>option[value=$value# selected=$selected#]{$text#}*options',
-    );
-    public static $bootstrap3 = array(
+    ];
+    public static $bootstrap3 = [
         'form' => 'form[role=form id=$id# name=$name# method=$method# action=$action# enctype=$enctype#]',
         'input' => '.form-group.$error#>label{$label#}+input.form-control[id=$id# name=$name# value=$value# type=$type# required=$required# autofocus=$autofocus# placeholder=$default# accept=$accept# disabled=$disabled#]+small.help-block>{$message#}',
         'textarea' => '.form-group>label{$label#}+textarea.form-control[id=$id# name=$name# required=$required# autofocus=$autofocus# placeholder=$default# rows=3 disabled=$disabled#]{$value#}+small.help-block>{$message#}',
@@ -41,8 +42,8 @@ class FormStyles
         'select-array' => '.form-group>label{$label#}+select.form-control[name=$name# multiple=$multiple# required=$required#] size=$options#>option[value=$value# selected=$selected#]{$text#}*options',
         //------------- CUSTOM STYLES ---------------------//
         'radio-inline' => '.form-group>label{$label# : &nbsp;}+label.radio-inline*options>input.radio[name=$name# value=$value# type=radio checked=$selected# required=$required#]+{$text#}',
-    );
-    public static $foundation5 = array(
+    ];
+    public static $foundation5 = [
         'form' => 'form[id=$id# name=$name# method=$method# action=$action# enctype=$enctype#]',
         'input' => 'label{$label#}+input[id=$id# name=$name# value=$value# type=$type# required=$required# autofocus=$autofocus# placeholder=$default# accept=$accept# disabled=$disabled#]',
         'textarea' => 'label{$label#}+textarea[id=$id# name=$name# required=$required# autofocus=$autofocus# placeholder=$default# rows=3 disabled=$disabled#]{$value#}',
@@ -55,5 +56,5 @@ class FormStyles
         'checkbox-array' => 'fieldset>legend{$label#}+label*options>input[name=$name# value=$value# type=checkbox checked=$selected# required=$required# autofocus=$autofocus#]+{ $text#}',
         'select-array' => 'label{$label#}+select[name=$name# required=$required# multiple style="height: auto;background-image: none; outline: inherit;"]>option[value=$value# selected=$selected#]{$text#}*options',
         //------------- CUSTOM STYLES ---------------------//
-    );
+    ];
 }
