@@ -1,4 +1,5 @@
 <?php
+
 namespace Luracast\Restler\Data;
 
 use Luracast\Restler\Utils\CommentParser;
@@ -186,6 +187,13 @@ class Param extends Type
         unset($instance->rules['properties']);
         if (is_string($instance->type) && $instance->type == 'integer') {
             $instance->type = 'int';
+        }
+        if (is_array($instance->children)) {
+            foreach ($instance->children as $key => $child) {
+                if (!$child instanceof self) {
+                    $instance->children[$key] = static::parse($child);
+                }
+            }
         }
         return $instance;
     }

@@ -21,6 +21,13 @@ class Returns extends Type
         $instance = new static();
         $instance->applyProperties($properties);
         $instance->applyProperties($p2);
+        if (is_array($instance->children)) {
+            foreach ($instance->children as $key => $child) {
+                if (!$child instanceof static) {
+                    $instance->children[$key] = static::parse($child);
+                }
+            }
+        }
         return $instance;
     }
 
