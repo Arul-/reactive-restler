@@ -301,11 +301,10 @@ class Validator implements ValidationInterface
                                 $error .= ". Expecting an item of type `$param->type`";
                                 break;
                             }
-                            foreach ($param->children as $key => $value) {
-                                $cv = Param::parse($value);
-                                $cv->name = "{$param->name}[$key]";
-                                if (array_key_exists($key, $input) || $cv->required) {
-                                    $instance->{$key} = static::validate(($input[$key] ?? null), $cv);
+                            foreach ($param->children as $key => $child) {
+                                $child->name = "{$param->name}[$key]";
+                                if (array_key_exists($key, $input) || $child->required) {
+                                    $instance->{$key} = static::validate(($input[$key] ?? null), $child);
                                 }
                             }
                         }
