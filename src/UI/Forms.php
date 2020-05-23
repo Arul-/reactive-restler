@@ -122,6 +122,7 @@ class Forms implements FilterInterface
             }
             $current = $this->currentRoute;
             if ((($method == $current->httpMethod) && ($action == $current->path))) {
+                /** @var Route route */
                 $this->route = $route = $this->currentRoute;
             } else {
                 $this->route = $route = Router::find(
@@ -177,8 +178,7 @@ class Forms implements FilterInterface
         $s = [
             'tag' => 'button',
             'type' => 'submit',
-            'label' => $m['return'][CommentParser::$embeddedDataName]['label']
-                ?? 'Submit'
+            'label' => $route->return->label ?? 'Submit'
         ];
 
         if (!$dataOnly) {
