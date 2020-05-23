@@ -3,6 +3,9 @@
 namespace Luracast\Restler\UI;
 
 use Luracast\Restler\Contracts\FilterInterface;
+use Luracast\Restler\Data\Param;
+use Luracast\Restler\Data\Route;
+use Luracast\Restler\Data\Type;
 use Luracast\Restler\Defaults;
 use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\MediaTypes\Upload;
@@ -12,12 +15,11 @@ use Luracast\Restler\Restler;
 use Luracast\Restler\Router;
 use Luracast\Restler\StaticProperties;
 use Luracast\Restler\UI\Tags as T;
-use Luracast\Restler\Data\ApiMethodInfo;
 use Luracast\Restler\Utils\CommentParser;
 use Luracast\Restler\Utils\Text;
-use Luracast\Restler\Data\Param;
 use Luracast\Restler\Utils\Validator;
 use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Message\UploadedFileInterface;
 
 
 /**
@@ -31,19 +33,14 @@ use Psr\Http\Message\ServerRequestInterface;
 class Forms implements FilterInterface
 {
     const FORM_KEY = 'form_key';
+
     public static $filterFormRequestsOnly = false;
-
-    public static $excludedPaths = array();
-
+    public static $excludedPaths = [];
     public static $style;
     /**
      * @var bool should we fill up the form using given data?
      */
     public static $preFill = true;
-    /**
-     * @var Param
-     */
-    public static $validationInfo = null;
     protected $inputTypes = array(
         'hidden',
         'password',
@@ -74,9 +71,13 @@ class Forms implements FilterInterface
     protected $fileUpload = false;
     private $key = array();
     /**
-     * @var ApiMethodInfo;
+     * @var Route;
      */
-    private $apiMethodInfo;
+    private $route;
+    /**
+     * @var Route
+     */
+    private $currentRoute;
     /**
      * @var Restler
      */
@@ -86,10 +87,10 @@ class Forms implements FilterInterface
      */
     private $forms;
 
-    public function __construct(Restler $restler, ApiMethodInfo $info, StaticProperties $forms)
+    public function __construct(Restler $restler, Route $route, StaticProperties $forms)
     {
         $this->restler = $restler;
-        $this->apiMethodInfo = $info;
+        $this->currentRoute = $route;
         $this->forms = $forms;
     }
 
@@ -117,32 +118,27 @@ class Forms implements FilterInterface
 
         try {
             if (is_null($action)) {
-                $action = $this->restler->path;
+                $action = $this->currentRoute->path;
             }
-
-            $this->apiMethodInfo = $info = $this->restler->path == $action
-            && $this->restler->requestMethod == $method
-                ? $this->restler->apiMethodInfo
-                : Router::find(
+            $current = $this->currentRoute;
+            if ((($method == $current->httpMethod) && ($action == $current->path))) {
+                $this->route = $route = $this->currentRoute;
+            } else {
+                $this->route = $route = Router::find(
                     trim($action, '/'),
                     $method,
                     $this->restler->requestedApiVersion,
-                    $this->forms->preFill ||
-                    ($this->restler->requestMethod == $method &&
-                        $this->restler->path == $action)
-                        ? $this->restler->getRequestData()
-                        : array()
+                    []
                 );
-
+            }
         } catch (HttpException $e) {
             //echo $e->getErrorMessage();
-            $info = false;
+            $route = false;
         }
-        if (!$info) {
+        if (!$route) {
             throw new HttpException(500, 'invalid action path for form `' . $method . ' ' . $action . '`');
         }
-        $m = $info->metadata;
-        $r = static::fields($dataOnly);
+        $r = static::fields($route, $dataOnly);
         if ($method != 'GET' && $method != 'POST') {
             if ($dataOnly) {
                 $r[] = array(
@@ -186,7 +182,7 @@ class Forms implements FilterInterface
         ];
 
         if (!$dataOnly) {
-            $s = Emmet::make($this->style('submit', $m), $s);
+            $s = Emmet::make($this->style('submit', $route->return), $s);
         }
         $r[] = $s;
         $t = [
@@ -201,7 +197,7 @@ class Forms implements FilterInterface
             $t += $m[CommentParser::$embeddedDataName];
         }
         if (!$dataOnly) {
-            $t = Emmet::make($this->style('form', $m), $t);
+            $t = Emmet::make($this->style('form', $route->return), $t);
             $t->prefix = $prefix;
             $t->indent = $indent;
             $t[] = $r;
@@ -211,79 +207,82 @@ class Forms implements FilterInterface
         return $t;
     }
 
-    public function style($name, array $metadata, $type = '')
+    public function fields(Route $route, bool $dataOnly = false)
     {
-        return isset($metadata[CommentParser::$embeddedDataName][$name])
-            ? $metadata[CommentParser::$embeddedDataName][$name]
-            : (!empty($type) && isset($this->forms->style["$name-$type"])
-                ? $this->forms->style["$name-$type"]
-                : (isset($this->forms->style[$name])
-                    ? $this->forms->style[$name]
-                    : null
-                )
-            );
-    }
-
-    public function fields($dataOnly = false)
-    {
-        $m = $this->apiMethodInfo->metadata;
-        $params = $m['param'];
-        $values = $this->apiMethodInfo->parameters;
         $r = [];
-        foreach ($params as $k => $p) {
-            $value = $values[$k] ?? null;
-            if (
-                is_scalar($value) ||
-                ($p['type'] == 'array' && is_array($value) && $value == array_values($value)) ||
-                is_object($value) && $p['type'] == get_class($value)
-            ) {
-                $p['value'] = $value;
-            }
-            $this->forms->validationInfo = $v = new Param($p);
-            if ($v->from == 'path') {
+        $values = $route->getArguments();
+        foreach ($route->parameters as $parameter) {
+            if (!$this->fieldable($parameter)) {
                 continue;
             }
-            if (!empty($v->children)) {
-                $t = Emmet::make($this->style('fieldset', $m), array('label' => $v->label));
-                foreach ($v->children as $n => $c) {
-                    $value = $v->value->{$n} ?? null;
-                    if (
-                        is_scalar($value) ||
-                        ($c['type'] == 'array' && is_array($value) && $value == array_values($value)) ||
-                        is_object($value) && $c['type'] == get_class($value)
-                    ) {
-                        $c['value'] = $value;
-                    }
-                    $this->forms->validationInfo = $vc = new Param($c);
-                    if ($vc->from == 'path') {
+            $value = $values[$parameter->index] ?? null;
+            if (!$this->fillable($parameter, $value)) {
+                $value = null;
+            }
+            if (!empty($parameter->children)) {
+                $t = Emmet::make($this->style('fieldset', $parameter), ['label' => $parameter->label]);
+                /**
+                 * @var string|int $key
+                 * @var  Param $child
+                 */
+                foreach ($parameter->children as $key => $child) {
+                    if (!$this->fieldable($child)) {
                         continue;
                     }
-                    $vc->name = $v->name . '[' . $vc->name . ']';
-                    $t [] = $this->field($vc, $dataOnly);
+                    $childValue = $value[$key] ?? null;
+                    if (!$this->fillable($child, $childValue)) {
+                        $childValue = null;
+                    }
+                    $child = clone $child;
+                    $child->name = sprintf("%s[%s]", $parameter->name, $child->name);
+                    $t[] = $this->field($child, $childValue, false);
                 }
                 $r[] = $t;
-                $this->forms->validationInfo = null;
             } else {
-                $f = $this->field($v, $dataOnly);
-                $r [] = $f;
+                $f = $this->field($parameter, $value, false);
+                $r[] = $f;
             }
-            $this->forms->validationInfo = null;
         }
         return $r;
+    }
+
+    private function fieldable(Param $parameter): bool
+    {
+        return Param::FROM_PATH !== $parameter->from && Param::FROM_HEADER !== $parameter->from;
+    }
+
+    private function fillable(Param $param, $value): bool
+    {
+        return $this->forms->preFill && is_scalar($value) ||
+            ('array' == $param->type && is_array($value)) ||
+            (is_object($value) && $param->type == get_class($value));
+    }
+
+    public function style(string $name, ?Type $param, ?string $default = null)
+    {
+        if ($param) {
+            if (isset($param->{$name})) {
+                return $param->{$name};
+            }
+            if (isset($param->rules) && isset($param->rules[$name])) {
+                return $param->rules[$name];
+            }
+        }
+        return $this->forms->style[$name] ?? $default;
     }
 
     /**
      * @param Param $p
      *
+     * @param mixed $value
      * @param bool $dataOnly
-     *
      * @return array|T
      */
-    public function field(Param $p, $dataOnly = false)
+    public function field(Param $p, $value, bool $dataOnly = false)
     {
-        if (is_string($p->value)) {
+        if (is_string($value)) {
             //prevent XSS attacks
-            $p->value = htmlspecialchars($p->value, ENT_QUOTES | ENT_HTML401, 'UTF-8');
+            $value = htmlspecialchars($value, ENT_QUOTES | ENT_HTML401, 'UTF-8');
         }
         $type = $p->field ?: static::guessFieldType($p);
         $tag = in_array($type, $this->inputTypes)
@@ -301,7 +300,7 @@ class Forms implements FilterInterface
                 $option['text'] = isset($p->rules['select'][$i])
                     ? $p->rules['select'][$i]
                     : $choice;
-                if ($choice == $p->value) {
+                if ($choice == $value) {
                     $option['selected'] = true;
                 }
                 $options[] = $option;
@@ -318,7 +317,7 @@ class Forms implements FilterInterface
                     'text' => ' No ',
                     'value' => 'false'
                 );
-                if ($p->value || $p->default) {
+                if ($value || $p->default) {
                     $options[0]['selected'] = true;
                 }
             } else { //checkbox
@@ -345,7 +344,7 @@ class Forms implements FilterInterface
                 'name' => $name,
                 'type' => $type,
                 'label' => $p->label,
-                'value' => $p->value,
+                'value' => $value,
                 'default' => $p->default,
                 'options' => & $options,
                 'multiple' => $multiple,
@@ -354,13 +353,13 @@ class Forms implements FilterInterface
                 $r += $p->rules;
             }
         }
-        if ($type == 'file') {
+        if ('file' == $type) {
             $this->fileUpload = true;
             if (empty($r['accept'])) {
                 $r['accept'] = implode(', ', Upload::supportedMediaTypes());
             }
         }
-        if (!empty(Validator::$exceptions[$name]) && $this->apiMethodInfo->url == $this->restler->path) {
+        if (!empty(Validator::$exceptions[$name]) && $this->route->url == $this->restler->path) {
             $r['error'] = 'has-error';
             $r['message'] = Validator::$exceptions[$p->name]->getMessage();
         }
@@ -382,8 +381,7 @@ class Forms implements FilterInterface
         if (isset($p->rules['form'])) {
             return Emmet::make($p->rules['form'], $r);
         }
-        $m = $this->apiMethodInfo->metadata;
-        $t = Emmet::make($this->style($type, $m, $p->type) ?: $this->style($tag, $m, $p->type), $r);
+        $t = Emmet::make($this->style($type, $p) ?: $this->style($tag, $p), $r);
         return $t;
     }
 
@@ -402,6 +400,8 @@ class Forms implements FilterInterface
             case 'number':
             case 'float':
                 return 'number';
+            case UploadedFileInterface::class:
+                return 'file';
             case 'array':
                 return $this->guessFieldType($p, 'contentType');
         }
