@@ -4,9 +4,10 @@
 namespace Swoole\Http;
 
 
+use GuzzleHttp\Psr7\ServerRequest;
 use Luracast\Restler\Utils\ClassName;
-use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
 
 class Convert
 {
@@ -33,7 +34,7 @@ class Convert
             $instance = $instance->withCookieParams($request->cookie);
         }
         if ($request->files) {
-            $instance = $instance->withUploadedFiles($request->files);
+            $instance = $instance->withUploadedFiles(ServerRequest::normalizeFiles($request->files));
         }
         return $instance;
     }
