@@ -11,8 +11,9 @@ use Luracast\Restler\Data\{Param, Route, Type};
 use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\Exceptions\Redirect;
 use Luracast\Restler\Router;
-use Luracast\Restler\Utils\{ClassName, PassThrough, Text};
+use Luracast\Restler\Utils\{ClassName, PassThrough, Text, Type as TypeUtil};
 use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Message\UploadedFileInterface;
 use stdClass;
 
 class Explorer implements ProvidesMultiVersionApiInterface
@@ -414,6 +415,10 @@ class Explorer implements ProvidesMultiVersionApiInterface
                 $p->description = $child->description;
             }
             if ($child instanceof Param) {
+                if ($child->object && TypeUtil::isSameOrSubclass($child->type, UploadedFileInterface::class)) {
+                    $p->type = 'string';
+                    $p->format = 'binary';
+                }
                 if ($child->default) {
                     $p->default = $child->default;
                 }
