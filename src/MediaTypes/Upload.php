@@ -78,19 +78,19 @@ class Upload extends MediaType implements RequestMediaTypeInterface
     {
         $doMimeCheck = !empty(self::$allowedMimeTypes);
         $doSizeCheck = self::$maximumFileSize ? true : false;
+        $result = UrlEncoded::decoderTypeFix($this->request->getParsedBody() ?? []);
         //validate
         $files = $this->request->getUploadedFiles();
         /** @var UploadedFileInterface $file */
-        $result = [];
-        foreach ($files as $file) {
-            $file = static::checkFile($file, $doMimeCheck, $doSizeCheck);
-            $result[$file->getClientFilename()] = $file;
+        foreach ($files as $key => $file) {
+            $result[$key] = static::checkFile($file, $doMimeCheck, $doSizeCheck);
         }
-        parse_str($data, $result);
-        return UrlEncoded::decoderTypeFix($result);
+        //parse_str($data, $result); //it causes errors as uploaded file information is still there
+        return $result;
     }
 
     /**
+     * Making sure file type, size, or custom test passes
      * @param UploadedFileInterface $file
      * @param bool $doMimeCheck
      * @param bool $doSizeCheck
