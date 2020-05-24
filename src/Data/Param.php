@@ -195,6 +195,7 @@ class Param extends Type
                 }
             }
         }
+        $instance->updateFlags();
         return $instance;
     }
 

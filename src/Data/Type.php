@@ -4,6 +4,8 @@
 namespace Luracast\Restler\Data;
 
 
+use Luracast\Restler\Utils\Type as TypeUtil;
+
 class Type extends ValueObject
 {
     /**
@@ -23,7 +25,11 @@ class Type extends ValueObject
     /**
      * @var bool does it hold scalar data or object data
      */
-    public $scalar = false;
+    public $scalar = true;
+    /**
+     * @var bool does it hold instance of a class
+     */
+    public $object = false;
 
     /**
      * When the type is array, this field is used to define the type of the
@@ -43,4 +49,12 @@ class Type extends ValueObject
      * @var string
      */
     public $description = '';
+
+    public function updateFlags()
+    {
+        $this->scalar = TypeUtil::isScalar($this->type);
+        if (!$this->scalar) {
+            $this->object = TypeUtil::isObject($this->type);
+        }
+    }
 }

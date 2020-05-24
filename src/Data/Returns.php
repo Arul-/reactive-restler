@@ -28,6 +28,7 @@ class Returns extends Type
                 }
             }
         }
+        $instance->updateFlags();
         return $instance;
     }
 
