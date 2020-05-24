@@ -684,7 +684,7 @@ class Router
      * It can be used for rate limiting based on usage from a specific ip
      * address or filter by country, device etc.
      *
-     * @param string[] ...$classNames
+     * @param string ...$classNames
      * @throws Exception
      */
     public static function setFilters(string ...$classNames)
