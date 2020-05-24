@@ -1,10 +1,13 @@
-<?php namespace Luracast\Restler\Utils;
+<?php
+
+namespace Luracast\Restler\Utils;
 
 
 class Type
 {
     const SCALAR = '|bool|boolean|int|integer|float|string|';
-    const PRIMITIVE = '|Array|array' . Type::SCALAR;
+    const PRIMITIVE = '|array' . self::SCALAR;
+    const SIMPLE = '|resource' . self::PRIMITIVE;
 
     /**
      * verify if the given data type string is scalar or not
@@ -33,8 +36,36 @@ class Type
      * @param string $type
      * @return boolean
      */
+    public static function isScalar(string $type): bool
+    {
+        return (boolean)strpos(static::PRIMITIVE, strtolower($type));
+    }
+
+    /**
+     * @param string $type
+     * @return boolean
+     */
     public static function isPrimitive(string $type): bool
     {
-        return (boolean)strpos(static::PRIMITIVE, $type);
+        return (boolean)strpos(static::PRIMITIVE, strtolower($type));
+    }
+
+    /**
+     * @param string $type
+     * @return boolean
+     */
+    public static function isObject(string $type): bool
+    {
+        return !(boolean)strpos(static::SIMPLE, strtolower($type));
+    }
+
+    /**
+     * @param string $class
+     * @param string $superClass
+     * @return bool
+     */
+    public static function isSameOrSubclass(string $class, string $superClass)
+    {
+        return $class == $superClass || isset(class_implements($class)[$superClass]);
     }
 }
