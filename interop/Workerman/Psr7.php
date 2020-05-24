@@ -3,10 +3,12 @@
 namespace Workerman\Protocols;
 
 
+use GuzzleHttp\Psr7\ServerRequest;
 use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\Utils\ClassName;
 use Psr\Http\Message\ServerRequestInterface;
 use Workerman\Connection\TcpConnection;
+use Workerman\Protocols\Http\Request;
 
 class Psr7 extends Http
 {
@@ -20,42 +22,22 @@ class Psr7 extends Http
      */
     public static function decode($recv_buffer, TcpConnection $connection)
     {
-        list($http_header, $http_body) = explode("\r\n\r\n", $recv_buffer, 2);
-        $header_strings = explode("\r\n", $http_header);
-        list($method, $uri, $protocol) = explode(' ', $header_strings[0]);
-        array_shift($header_strings);
-        $headers = [];
-        foreach ($header_strings as $header_string) {
-            list ($key, $value) = explode(': ', $header_string);
-            $headers[$key] = $value;
-        }
-        $uri = ($connection->transport == 'ssl' ? 'https://' : 'http://') . $headers['Host'] . $uri;
-        $server = [
-            'REMOTE_ADDR' => $connection->getRemoteIp(),
-            'REMOTE_PORT' => $connection->getRemotePort()
-        ];
-
+        /** @var Request $r */
+        $r = parent::decode($recv_buffer, $connection);
         $class = ClassName::get(ServerRequestInterface::class);
         /** @var ServerRequestInterface $request */
-        $request = new $class($method, $uri, $headers, $http_body, $protocol, $server);
-        if ('POST' == $method && isset($headers['Content-Type'])) {
-            if (preg_match('/boundary="?(\S+)"?/', $headers['Content-Type'], $match)) {
-                $headers['Content-Type'] = 'multipart/form-data';
-                $http_post_boundary = '--' . $match[1];
-                static::parseUploadFiles($http_body, $http_post_boundary);
-                $request = $request->withUploadedFiles($_FILES);
-            }
-        }
-        $query = [];
-        parse_str(parse_url($uri, PHP_URL_QUERY), $query);
-        $request = $request->withQueryParams($query);
-        $cookieHeader = $request->getHeaderLine('Cookie');
-        if (empty($cookieHeader)) {
-            return $request;
-        }
-        $cookies = array();
-        parse_str(str_replace('; ', '&', $cookieHeader), $cookies);
-        return $request->withCookieParams($cookies);
+        $request = new $class($r->method(), $r->uri(), $r->header(), $r->rawBody(), null, $_SERVER);
 
+        $request = $request
+            ->withQueryParams($r->get())
+            ->withCookieParams($r->cookie())
+            ->withParsedBody($r->post());
+
+        $files = $r->file();
+        if (!empty($files)) {
+            $files = ServerRequest::normalizeFiles($files);
+            $request = $request->withUploadedFiles($files);
+        }
+        return $request;
     }
 }
