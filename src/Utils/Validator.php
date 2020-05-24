@@ -1,9 +1,13 @@
-<?php namespace Luracast\Restler\Utils;
+<?php
+
+namespace Luracast\Restler\Utils;
 
 use Luracast\Restler\Contracts\ValidationInterface;
+use Luracast\Restler\Contracts\ValueObjectInterface;
 use Luracast\Restler\Data\Param;
-use Luracast\Restler\Exceptions\Invalid;
 use Luracast\Restler\Exceptions\HttpException;
+use Luracast\Restler\Exceptions\Invalid;
+use Psr\Http\Message\UploadedFileInterface;
 
 class Validator implements ValidationInterface
 {
@@ -41,8 +45,10 @@ class Validator implements ValidationInterface
         try {
             if (is_null($input)) {
                 if ($param->required) {
-                    throw new HttpException(400,
-                        "$name is required.");
+                    throw new HttpException(
+                        400,
+                        "$name is required."
+                    );
                 }
                 return null;
             }
@@ -104,8 +110,10 @@ class Validator implements ValidationInterface
                 }
             }
 
-            if ('string' == $param->type && method_exists($class = get_called_class(),
-                    $param->contentType) && $param->contentType != 'validate') {
+            if ('string' == $param->type && method_exists(
+                    $class = get_called_class(),
+                    $param->contentType
+                ) && $param->contentType != 'validate') {
                 if (!$param->required && empty($input)) {
                     //optional parameter with a empty value assume null
                     return null;
@@ -118,6 +126,10 @@ class Validator implements ValidationInterface
             }
 
             switch ($param->type) {
+                case UploadedFileInterface::class:
+                    if ($input instanceof UploadedFileInterface) {
+                        return $input;
+                    }
                 case 'int' :
                 case 'float' :
                 case 'number' :
@@ -284,10 +296,11 @@ class Validator implements ValidationInterface
                         $implements = class_implements($param->type);
                         if (
                             is_array($implements) &&
-                            in_array('Luracast\\Restler\\Contracts\\ValueObjectInterface', $implements)
+                            in_array(ValueObjectInterface::class, $implements)
                         ) {
                             return call_user_func(
-                                "{$param->type}::__set_state", $input
+                                "{$param->type}::__set_state",
+                                $input
                             );
                         }
                         $class = $param->type;
@@ -497,8 +510,10 @@ class Validator implements ValidationInterface
         if (is_numeric($input) && '-' != substr($input, 0, 1)) {
             return $input;
         }
-        throw new Invalid('Expecting phone number, a numeric value ' .
-            'with optional `+` prefix');
+        throw new Invalid(
+            'Expecting phone number, a numeric value ' .
+            'with optional `+` prefix'
+        );
     }
 
     /**
@@ -611,10 +626,13 @@ class Validator implements ValidationInterface
     public static function datetime($input, Param $param = null)
     {
         if (
-            preg_match('/^(?P<year>19\d\d|20\d\d)\-(?P<month>0[1-9]|1[0-2])\-' .
+            preg_match(
+                '/^(?P<year>19\d\d|20\d\d)\-(?P<month>0[1-9]|1[0-2])\-' .
                 '(?P<day>0\d|[1-2]\d|3[0-1]) (?P<h>0\d|1\d|2[0-3]' .
                 ')\:(?P<i>[0-5][0-9])\:(?P<s>[0-5][0-9])$/',
-                $input, $date)
+                $input,
+                $date
+            )
             && checkdate($date['month'], $date['day'], $date['year'])
         ) {
             return $input;
@@ -678,7 +696,8 @@ class Validator implements ValidationInterface
     {
         if (preg_match(
             '/^([1-9]|1[0-2]|0[1-9]){1}(:[0-5][0-9])?\s?([aApP][mM]{1})?$/',
-            $input)
+            $input
+        )
         ) {
             return $input;
         }
