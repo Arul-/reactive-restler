@@ -1,15 +1,29 @@
-<?php namespace Luracast\Restler\MediaTypes;
+<?php
+
+namespace Luracast\Restler\MediaTypes;
 
 
 use Luracast\Restler\Contracts\RequestMediaTypeInterface;
 use Luracast\Restler\Contracts\ResponseMediaTypeInterface;
 use Luracast\Restler\ResponseHeaders;
+use Luracast\Restler\Utils\Convert;
+use Psr\Http\Message\ServerRequestInterface;
 
 class UrlEncoded extends MediaType implements RequestMediaTypeInterface, ResponseMediaTypeInterface
 {
 
     const MIME = 'application/x-www-form-urlencoded';
     const EXTENSION = 'post';
+    /**
+     * @var ServerRequestInterface
+     */
+    private $request;
+
+    public function __construct(Convert $convert, ServerRequestInterface $request)
+    {
+        parent::__construct($convert);
+        $this->request = $request;
+    }
 
     public function encode($data, ResponseHeaders $responseHeaders, bool $humanReadable = false)
     {
@@ -18,8 +32,10 @@ class UrlEncoded extends MediaType implements RequestMediaTypeInterface, Respons
 
     public function decode(string $data)
     {
-        parse_str($data, $r);
-
+        $r = $this->request->getParsedBody();
+        if (empty($r)) {
+            parse_str($data, $r);
+        }
         return self::decoderTypeFix($r);
     }
 
@@ -32,7 +48,6 @@ class UrlEncoded extends MediaType implements RequestMediaTypeInterface, Respons
                 $data[$k] = $v = static::decoderTypeFix($v);
             }
         }
-
         return $data;
     }
 
@@ -47,7 +62,6 @@ class UrlEncoded extends MediaType implements RequestMediaTypeInterface, Respons
                 unset($data[$k]);
             }
         }
-
         return $data;
     }
 }
