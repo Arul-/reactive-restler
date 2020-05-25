@@ -518,8 +518,8 @@ class Explorer implements ProvidesMultiVersionApiInterface
     {
         $schemes = [];
         foreach (Router::$authClasses as $class) {
-            if (class_implements($class)[ExplorableAuthenticationInterface::class] ?? false) {
-                $schemes[ClassName::short($class)] = (object)$class::scheme()->toArray();
+            if (TypeUtil::isSameOrSubclass($class, ExplorableAuthenticationInterface::class)) {
+                $schemes[ClassName::short($class)] = (object)$class::scheme()->toArray($this->restler->baseUrl->getPath() . '/');
             }
         }
         return (object)$schemes;

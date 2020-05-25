@@ -167,11 +167,14 @@ class Server implements ExplorableAuthenticationInterface
     {
         /** @var AuthorizationCode $g1 */
         $g1 = static::$server->getGrantType('authorization_code');
-        return new OAuth2(new AuthorizationCodeFlow(
-            '/restler4/examples/_015_oauth2_server/authorize',
-            '/restler4/examples/_015_oauth2_server/grant',
-            '/restler4/examples/_015_oauth2_server/grant',
-            []
-        ));
+        //providing relative path here! explorer will compute the full url
+        return new OAuth2(
+            new AuthorizationCodeFlow(
+                'examples/_015_oauth2_server/authorize',
+                'examples/_015_oauth2_server/grant',
+                'examples/_015_oauth2_server/grant',
+                []
+            )
+        );
     }
 }

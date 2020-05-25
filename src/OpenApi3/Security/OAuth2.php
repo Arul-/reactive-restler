@@ -12,13 +12,13 @@ class OAuth2 extends Scheme
     /**
      * @var OAuth2Flow[]
      */
-    protected $flows;
+    protected $flows = [];
 
     public function __construct(OAuth2Flow ...$flows)
     {
         foreach ($flows as $flow) {
             $name = lcfirst(ClassName::short(get_class($flow)));
-            $this->flows[$name] = $flow->toArray();
+            $this->flows[$name] = $flow;
         }
     }
 }
