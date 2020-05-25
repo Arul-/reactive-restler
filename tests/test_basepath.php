@@ -9,6 +9,6 @@ $scriptName = '/dev/index.php';
 
 $core  =  new \Luracast\Restler\Restler();
 
-$core->getPath($url, $scriptName);
+//$core->getPath($url, $scriptName);
 $updated = (string)$core->baseUrl;
 var_dump($updated);
