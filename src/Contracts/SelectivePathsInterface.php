@@ -1,11 +1,12 @@
-<?php namespace Luracast\Restler\Contracts;
+<?php
+namespace Luracast\Restler\Contracts;
 
 
 interface SelectivePathsInterface
 {
     /**
      * Paths to be included in the process
-     * @param string[] ...$included
+     * @param string ...$included
      * @return void
      * @private
      */

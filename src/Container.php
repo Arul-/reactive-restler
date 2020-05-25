@@ -231,7 +231,7 @@ class Container implements ContainerInterface
     /**
      * Throw an exception for an unresolvable primitive.
      *
-     * @param  \ReflectionParameter $parameter
+     * @param ReflectionParameter $parameter
      * @return void
      *
      * @throws Exception
