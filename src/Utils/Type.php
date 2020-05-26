@@ -5,9 +5,9 @@ namespace Luracast\Restler\Utils;
 
 class Type
 {
-    const SCALAR = '|bool|boolean|int|integer|float|string|';
+    const SCALAR = '|bool|boolean|int|integer|float|string';
     const PRIMITIVE = '|array' . self::SCALAR;
-    const SIMPLE = '|resource' . self::PRIMITIVE;
+    const SIMPLE = '|resource|mixed' . self::PRIMITIVE;
 
     /**
      * verify if the given data type string is scalar or not
