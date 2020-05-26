@@ -4,6 +4,7 @@ namespace Luracast\Restler\UI;
 
 use Luracast\Restler\Contracts\FilterInterface;
 use Luracast\Restler\Contracts\SessionInterface;
+use Luracast\Restler\Contracts\UserIdentificationInterface;
 use Luracast\Restler\Data\Param;
 use Luracast\Restler\Data\Route;
 use Luracast\Restler\Data\Type;
@@ -90,13 +91,23 @@ class Forms implements FilterInterface
      * @var SessionInterface
      */
     private $session;
+    /**
+     * @var UserIdentificationInterface
+     */
+    private $user;
 
-    public function __construct(Restler $restler, Route $route, StaticProperties $forms, SessionInterface $session)
-    {
+    public function __construct(
+        Restler $restler,
+        Route $route,
+        UserIdentificationInterface $user,
+        StaticProperties $forms,
+        SessionInterface $session
+    ) {
         $this->restler = $restler;
         $this->currentRoute = $route;
         $this->forms = $forms;
         $this->session = $session;
+        $this->user = $user;
     }
 
     /**
@@ -163,7 +174,7 @@ class Forms implements FilterInterface
             $method = 'POST';
         }
         if ($this->session->getId() != '') {
-            $form_key = static::key($method, $action);
+            $form_key = $this->key($method, $action);
             if ($dataOnly) {
                 $r[] = array(
                     'tag' => 'input',
@@ -435,7 +446,7 @@ class Forms implements FilterInterface
         }
         $target = "$method $action";
         if (empty($this->key[$target])) {
-            $this->key[$target] = md5($target . User::getIpAddress() . uniqid(mt_rand()));
+            $this->key[$target] = md5($target . $this->user->getCacheIdentifier() . uniqid(mt_rand()));
         }
         $this->session->set(static::FORM_KEY, $this->key);
         return $this->key[$target];
