@@ -3,6 +3,7 @@
 namespace Luracast\Restler\UI;
 
 use Luracast\Restler\Contracts\FilterInterface;
+use Luracast\Restler\Contracts\SessionInterface;
 use Luracast\Restler\Data\Param;
 use Luracast\Restler\Data\Route;
 use Luracast\Restler\Data\Type;
@@ -68,7 +69,7 @@ class Forms implements FilterInterface
         'week',
     );
     protected $fileUpload = false;
-    private $key = array();
+    private $key = [];
     /**
      * @var Route;
      */
@@ -85,12 +86,17 @@ class Forms implements FilterInterface
      * @var StaticProperties
      */
     private $forms;
+    /**
+     * @var SessionInterface
+     */
+    private $session;
 
-    public function __construct(Restler $restler, Route $route, StaticProperties $forms)
+    public function __construct(Restler $restler, Route $route, StaticProperties $forms, SessionInterface $session)
     {
         $this->restler = $restler;
         $this->currentRoute = $route;
         $this->forms = $forms;
+        $this->session = $session;
     }
 
     /**
@@ -156,7 +162,7 @@ class Forms implements FilterInterface
 
             $method = 'POST';
         }
-        if (session_id() != '') {
+        if ($this->session->getId() != '') {
             $form_key = static::key($method, $action);
             if ($dataOnly) {
                 $r[] = array(
@@ -431,7 +437,7 @@ class Forms implements FilterInterface
         if (empty($this->key[$target])) {
             $this->key[$target] = md5($target . User::getIpAddress() . uniqid(mt_rand()));
         }
-        $_SESSION[static::FORM_KEY] = $this->key;
+        $this->session->set(static::FORM_KEY, $this->key);
         return $this->key[$target];
     }
 
@@ -449,8 +455,8 @@ class Forms implements FilterInterface
      */
     public function _isAllowed(ServerRequestInterface $request, ResponseHeaders $responseHeaders): bool
     {
-        if (session_id() == '') {
-            session_start();
+        if ($this->session->getId() == '') {
+            $this->session->start();
         }
         /** @var Restler $restler */
         $restler = $this->restler;
@@ -467,12 +473,13 @@ class Forms implements FilterInterface
         $check = static::$filterFormRequestsOnly
             ? $restler->requestFormat instanceof UrlEncoded || $restler->requestFormat instanceof Upload
             : true;
-        if (!empty($_POST) && $check) {
+        $post = $request->getParsedBody();
+        if (!empty($post) && $check) {
             if (
-                isset($_POST[static::FORM_KEY]) &&
+                isset($post[static::FORM_KEY]) &&
                 ($target = $restler->requestMethod . ' ' . $restler->path) &&
-                isset($_SESSION[static::FORM_KEY][$target]) &&
-                $_POST[static::FORM_KEY] == $_SESSION[static::FORM_KEY][$target]
+                $this->session->has(static::FORM_KEY) &&
+                $post[static::FORM_KEY] == $this->session->get(static::FORM_KEY)[$target]
             ) {
                 return true;
             }

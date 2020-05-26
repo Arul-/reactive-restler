@@ -17,6 +17,7 @@ use JsonSerializable;
 use Luracast\Restler\ArrayObject;
 use Luracast\Restler\Contracts\ContainerInterface;
 use Luracast\Restler\Contracts\ResponseMediaTypeInterface;
+use Luracast\Restler\Contracts\SessionInterface;
 use Luracast\Restler\Defaults;
 use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\ResponseHeaders;
@@ -76,20 +77,34 @@ class Html extends MediaType implements ResponseMediaTypeInterface
      * @var ContainerInterface
      */
     private $container;
+    /**
+     * @var SessionInterface
+     */
+    private $session;
 
     public function __construct(
         Restler $restler,
+        SessionInterface $session,
         ContainerInterface $container,
         StaticProperties $html,
         StaticProperties $defaults
     ) {
-        $this->restler = $restler;
+        //============ SESSION MANAGEMENT =============//
+        if ($html->handleSession) {
+            $key = 'flash';
+            if ($session->start() && $session->hasFlash($key)) {
+                $html->data['flash'] = $session->flash($key);
+                $session->unsetFlash($key);
+            }
+        }
         if (!$html->viewPath) {
             $html->viewPath = dirname(dirname(__DIR__)) . DIRECTORY_SEPARATOR . 'views';
         }
+        $this->restler = $restler;
+        $this->session = $session;
+        $this->container = $container;
         $this->html = $html;
         $this->defaults = $defaults;
-        $this->container = $container;
     }
 
     public function guessViewName($path)
@@ -134,13 +149,15 @@ class Html extends MediaType implements ResponseMediaTypeInterface
             $exception = $this->restler->exception;
             $success = is_null($exception);
             $error = $success ? null : $exception->getMessage();
-            $data = ArrayObject::fromArray([
-                'response' => $data,
-                'success' => $success,
-                'error' => $error,
-                'restler' => $this->restler,
-                'container' => $this->container
-            ]);
+            $data = ArrayObject::fromArray(
+                [
+                    'response' => $data,
+                    'success' => $success,
+                    'error' => $error,
+                    'restler' => $this->restler,
+                    'container' => $this->container
+                ]
+            );
             $data->baseUrl = $this->restler->baseUrl;
             $data->basePath = $data->baseUrl->getPath();
             $data->currentPath = $this->restler->path;
@@ -184,8 +201,10 @@ class Html extends MediaType implements ResponseMediaTypeInterface
             }
             if (!file_exists($this->html['cacheDirectory'])) {
                 if (!mkdir($this->html['cacheDirectory'], 0770, true)) {
-                    throw new HttpException(500,
-                        'Unable to create cache directory `' . $this->html['cacheDirectory'] . '`');
+                    throw new HttpException(
+                        500,
+                        'Unable to create cache directory `' . $this->html['cacheDirectory'] . '`'
+                    );
                 }
             }
             if (method_exists($class = get_called_class(), $template)) {
@@ -309,11 +328,13 @@ class Html extends MediaType implements ResponseMediaTypeInterface
     public function twig(ArrayObject $data, $debug = true)
     {
         $loader = new \Twig_Loader_Filesystem($this->html->viewPath);
-        $twig = new \Twig_Environment($loader, array(
-            'cache' => $this->html->cacheDirectory,
-            'debug' => $debug,
-            'use_strict_variables' => $debug,
-        ));
+        $twig = new \Twig_Environment(
+            $loader, array(
+                       'cache' => $this->html->cacheDirectory,
+                       'debug' => $debug,
+                       'use_strict_variables' => $debug,
+                   )
+        );
         if ($debug) {
             $twig->addExtension(new \Twig_Extension_Debug());
         }
@@ -338,18 +359,20 @@ class Html extends MediaType implements ResponseMediaTypeInterface
             )
         );
 
-        $twig->registerUndefinedFunctionCallback(function ($name) {
-            if (
-                isset($this->html->data[$name]) &&
-                is_callable($this->html->data[$name])
-            ) {
-                return new \Twig_SimpleFunction(
-                    $name,
-                    $this->html->data[$name]
-                );
+        $twig->registerUndefinedFunctionCallback(
+            function ($name) {
+                if (
+                    isset($this->html->data[$name]) &&
+                    is_callable($this->html->data[$name])
+                ) {
+                    return new \Twig_SimpleFunction(
+                        $name,
+                        $this->html->data[$name]
+                    );
+                }
+                return false;
             }
-            return false;
-        });
+        );
         $template = $twig->loadTemplate($this->getViewFile());
         $data = $data->getArrayCopy() ?? [];
         return $template->render($data) ?? '';
@@ -393,27 +416,37 @@ class Html extends MediaType implements ResponseMediaTypeInterface
         $filesystem = new Filesystem();
         $compiler = new BladeCompiler($filesystem, $this->html->cacheDirectory);
         $engine = new CompilerEngine($compiler);
-        $resolver->register('blade', function () use ($engine) {
-            return $engine;
-        });
+        $resolver->register(
+            'blade',
+            function () use ($engine) {
+                return $engine;
+            }
+        );
         $phpEngine = new PhpEngine();
-        $resolver->register('php', function () use ($phpEngine) {
-            return $phpEngine;
-        });
+        $resolver->register(
+            'php',
+            function () use ($phpEngine) {
+                return $phpEngine;
+            }
+        );
 
         /** @var Restler $restler */
         $restler = $this->restler;
 
         //Lets expose shortcuts for our classes
-        spl_autoload_register(function ($className) use ($restler) {
-            if (isset($restler->apiMethodInfo->metadata['scope'][$className])) {
-                return class_alias($restler->apiMethodInfo->metadata['scope'][$className], $className);
-            }
-            if (isset(Defaults::$aliases[$className])) {
-                return class_alias(Defaults::$aliases[$className], $className);
-            }
-            return false;
-        }, true, true);
+        spl_autoload_register(
+            function ($className) use ($restler) {
+                if (isset($restler->apiMethodInfo->metadata['scope'][$className])) {
+                    return class_alias($restler->apiMethodInfo->metadata['scope'][$className], $className);
+                }
+                if (isset(Defaults::$aliases[$className])) {
+                    return class_alias(Defaults::$aliases[$className], $className);
+                }
+                return false;
+            },
+            true,
+            true
+        );
 
         $viewFinder = new FileViewFinder($filesystem, [$this->html->viewPath]);
         $factory = new Factory($resolver, $viewFinder, new Dispatcher());
