@@ -51,7 +51,10 @@
           SwaggerUIBundle.plugins.DownloadUrl
         ],
         oauth2RedirectUrl: basePath + 'oauth2-redirect.html',
-        layout: "StandaloneLayout"
+        layout: "StandaloneLayout",
+        //showCommonExtensions: true,
+        filter: true,
+        docExpansion: 'none'
       });
       // End Swagger UI call region
 

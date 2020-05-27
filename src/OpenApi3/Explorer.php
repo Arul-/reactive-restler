@@ -12,6 +12,7 @@ use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\Exceptions\Redirect;
 use Luracast\Restler\Router;
 use Luracast\Restler\Utils\{ClassName, PassThrough, Text, Type as TypeUtil};
+use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\UploadedFileInterface;
 use stdClass;
@@ -98,7 +99,7 @@ class Explorer implements ProvidesMultiVersionApiInterface
 
     /**
      * @param $filename
-     * @return \Psr\Http\Message\ResponseInterface
+     * @return ResponseInterface
      * @throws HttpException
      *
      * @url GET /{filename}
@@ -108,7 +109,7 @@ class Explorer implements ProvidesMultiVersionApiInterface
         $filename = str_replace(['../', './', '\\', '..', '.php'], '', $filename);
         if (empty($filename)) {
             $filename = 'index.html';
-        } elseif ('oauth2-redirect' == $filename) {
+        } elseif ('oauth2-redirect' == $filename || 'documentation' == $filename) {
             $filename .= '.html';
         }
         $file = __DIR__ . '/client/' . $filename;
@@ -136,6 +137,7 @@ class Explorer implements ProvidesMultiVersionApiInterface
     private function info(int $version)
     {
         $info = array_filter(call_user_func(static::$infoClass . '::format', static::OPEN_API_SPEC_VERSION));
+        $info['description'] .= '<p>Api Documentation - [ReDoc](' .dirname($this->request->getUri()).'/documentation.html)</p>';
         $info['version'] = (string)$version;
         return $info;
     }
