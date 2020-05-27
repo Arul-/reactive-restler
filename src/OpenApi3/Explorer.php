@@ -415,7 +415,7 @@ class Explorer implements ProvidesMultiVersionApiInterface
                 $p->description = $child->description;
             }
             if ($child instanceof Param) {
-                if ($child->object && TypeUtil::isSameOrSubclass($child->type, UploadedFileInterface::class)) {
+                if ($child->object && TypeUtil::matches($child->type, UploadedFileInterface::class)) {
                     $p->type = 'string';
                     $p->format = 'binary';
                 }
@@ -518,7 +518,7 @@ class Explorer implements ProvidesMultiVersionApiInterface
     {
         $schemes = [];
         foreach (Router::$authClasses as $class) {
-            if (TypeUtil::isSameOrSubclass($class, ExplorableAuthenticationInterface::class)) {
+            if (TypeUtil::matches($class, ExplorableAuthenticationInterface::class)) {
                 $schemes[ClassName::short($class)] = (object)$class::scheme()->toArray($this->restler->baseUrl->getPath() . '/');
             }
         }

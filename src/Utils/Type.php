@@ -64,7 +64,7 @@ class Type
      * @param string $superClass
      * @return bool
      */
-    public static function isSameOrSubclass(string $class, string $superClass)
+    public static function matches(string $class, string $superClass):bool
     {
         return $class == $superClass || isset(class_implements($class)[$superClass]);
     }
