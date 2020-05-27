@@ -293,11 +293,7 @@ class Validator implements ValidationInterface
                     //do type conversion
                     if (class_exists($param->type)) {
                         $input = $param->filterArray($input, false);
-                        $implements = class_implements($param->type);
-                        if (
-                            is_array($implements) &&
-                            in_array(ValueObjectInterface::class, $implements)
-                        ) {
+                        if (Type::implements($param->type, ValueObjectInterface::class)) {
                             return call_user_func(
                                 "{$param->type}::__set_state",
                                 $input

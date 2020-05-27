@@ -59,12 +59,17 @@ class Type
         return !(boolean)strpos(static::SIMPLE, strtolower($type));
     }
 
+    public static function implements(string $class, string $interface): bool
+    {
+        return isset(class_implements($class)[$interface]);
+    }
+
     /**
      * @param string $class
      * @param string $superClass
      * @return bool
      */
-    public static function matches(string $class, string $superClass):bool
+    public static function matches(string $class, string $superClass): bool
     {
         return $class == $superClass || isset(class_implements($class)[$superClass]);
     }

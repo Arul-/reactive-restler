@@ -234,7 +234,7 @@ class Router
         $extensions = [];
         $writable = $interface === ResponseMediaTypeInterface::class;
         foreach ($types as $type) {
-            if (!isset(class_implements($type)[$interface])) {
+            if (!Type::implements($type, $interface)) {
                 throw new Exception(
                     $type . ' is an invalid media type class; it must implement ' .
                     $interface . ' interface'
@@ -309,7 +309,7 @@ class Router
                     }
                     $className = $nextClass;
                 }
-                if (isset(class_implements($className)[ProvidesMultiVersionApiInterface::class])) {
+                if (Type::implements($className, ProvidesMultiVersionApiInterface::class)) {
                     $max = $className::$maxVersionMethod();
                     for ($i = $currentVersion; $i <= $max; $i++) {
                         $versionMap[$path][$i] = $className;
@@ -327,7 +327,7 @@ class Router
                     }
                     $nextClass = ClassName::build($info['name'], $info['namespace'], $version);
                     if (class_exists($nextClass)) {
-                        if (isset(class_implements($nextClass)[ProvidesMultiVersionApiInterface::class])) {
+                        if (Type::implements($nextClass, ProvidesMultiVersionApiInterface::class)) {
                             $max = $className::$maxVersionMethod();
                             for ($i = $version; $i <= $max; $i++) {
                                 $versionMap[$path][$i] = $nextClass;
@@ -755,13 +755,14 @@ class Router
         static::$postAuthFilterClasses = [];
         static::$preAuthFilterClasses = [];
         foreach ($classNames as $className) {
-            if (!isset(class_implements($className)[FilterInterface::class])) {
+            $implements = class_implements($className);
+            if (!isset($implements[FilterInterface::class])) {
                 throw new Exception(
                     $className . ' is an invalid filter class; it must implement ' .
                     'FilterInterface.'
                 );
             }
-            if (isset(class_implements($className)[UsesAuthenticationInterface::class])) {
+            if (isset($implements[UsesAuthenticationInterface::class])) {
                 static::$postAuthFilterClasses[] = $className;
             } else {
                 static::$preAuthFilterClasses[] = $className;
@@ -925,7 +926,7 @@ class Router
         $route = Route::parse($call);
         $route->httpMethod = $httpMethod;
         foreach (static::$authClasses as $authClass) {
-            if (class_implements($authClass)[SelectivePathsInterface::class] ?? false) {
+            if (Type::implements($authClass, SelectivePathsInterface::class)) {
                 if (!$authClass::isPathSelected($route->path)) {
                     continue;
                 }
@@ -1018,8 +1019,8 @@ class Router
      * @param Route $route
      * @param ServerRequestInterface $request
      * @param callable $maker
+     * @param array $verifiedClasses
      * @return bool
-     * @throws HttpException
      */
     public static function verifyAccess(
         Route $route,
@@ -1033,10 +1034,8 @@ class Router
         $ignore = new ResponseHeaders();
         $authenticated = false;
         foreach ($route->authClasses as $class) {
-            if (
-            $accessControl = class_implements($class)[AccessControlInterface::class] ?? false
-                || !array_key_exists($class, $verifiedClasses)
-            ) {
+            if ($accessControl = Type::implements($class, AccessControlInterface::class) ||
+                !array_key_exists($class, $verifiedClasses)) {
                 try {
                     $req = $request->withMethod($route->httpMethod)
                         ->withUri($request->getUri()->withPath($route->path));
@@ -1082,7 +1081,7 @@ class Router
     {
         if (Defaults::$smartParameterParsing) {
             if (count($route->parameters)) {
-                /** @var \Luracast\Restler\Data\Param $param */
+                /** @var Param $param */
                 $param = array_values($route->parameters)[0];
                 if (
                     !array_key_exists($param->name, $data) &&
@@ -1094,7 +1093,7 @@ class Router
                 } else {
                     $bodyParams = $route->filterParams(true);
                     if (1 == count($bodyParams)) {
-                        /** @var \Luracast\Restler\Data\Param $param */
+                        /** @var Param $param */
                         $param = array_values($bodyParams)[0];
                         if (!array_key_exists($param->name, $data) &&
                             array_key_exists(Defaults::$fullRequestDataName, $data) &&

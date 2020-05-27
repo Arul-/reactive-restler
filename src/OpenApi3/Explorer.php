@@ -471,7 +471,7 @@ class Explorer implements ProvidesMultiVersionApiInterface
         $content = [];
         foreach ($route->responseMediaTypes as $mime) {
             $mediaType = $route->responseFormatMap[$mime];
-            if (isset(class_implements($mediaType)[DownloadableFileMediaTypeInterface::class])) {
+            if (TypeUtil::implements($mediaType, DownloadableFileMediaTypeInterface::class)) {
                 $content[$mime] = ['schema' => (object)['type' => 'string', 'format' => 'binary']];
                 continue;
             }
@@ -519,7 +519,9 @@ class Explorer implements ProvidesMultiVersionApiInterface
         $schemes = [];
         foreach (Router::$authClasses as $class) {
             if (TypeUtil::matches($class, ExplorableAuthenticationInterface::class)) {
-                $schemes[ClassName::short($class)] = (object)$class::scheme()->toArray($this->restler->baseUrl->getPath() . '/');
+                $schemes[ClassName::short($class)] = (object)$class::scheme()->toArray(
+                    $this->restler->baseUrl->getPath() . '/'
+                );
             }
         }
         return (object)$schemes;

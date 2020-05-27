@@ -1,4 +1,5 @@
-<?php namespace Luracast\Restler\Utils;
+<?php
+namespace Luracast\Restler\Utils;
 
 
 use Luracast\Restler\Defaults;
@@ -89,7 +90,7 @@ class ClassName
         $interface = Defaults::$aliases[$abstract] ?? $abstract;
         if (($class = Defaults::$implementations[$interface][0] ?? Defaults::$implementations[$interface] ?? false)
             && is_string($class)) {
-            if (interface_exists($interface) && class_implements($class)[$interface] ?? false) {
+            if (interface_exists($interface) && Type::implements($class, $interface)) {
                 return $class;
             }
             throw new HttpException(
