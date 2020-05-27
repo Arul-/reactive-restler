@@ -1,9 +1,10 @@
-<?php namespace Luracast\Restler;
+<?php
+
+namespace Luracast\Restler;
 
 use ArrayAccess;
 use Exception;
-use Luracast\Restler\Contracts\{
-    AuthenticationInterface,
+use Luracast\Restler\Contracts\{AuthenticationInterface,
     ComposerInterface,
     ContainerInterface,
     FilterInterface,
@@ -16,7 +17,7 @@ use Luracast\Restler\Contracts\{
 use Luracast\Restler\Data\{Param, Route};
 use Luracast\Restler\Exceptions\{HttpException, InvalidAuthCredentials};
 use Luracast\Restler\MediaTypes\{Json, UrlEncoded, Xml};
-use Luracast\Restler\Utils\{ClassName, Header, Text, Validator};
+use Luracast\Restler\Utils\{ClassName, Header, Text, Type, Validator};
 use Psr\Http\Message\{ResponseInterface, ServerRequestInterface, UriInterface};
 use React\Promise\PromiseInterface;
 use ReflectionException;
@@ -106,8 +107,10 @@ abstract class Core
     public function __construct(ContainerInterface $container = null, &$config = [])
     {
         if (!is_array($config) && !$config instanceof ArrayAccess) {
-            throw new TypeError('Argument 2 passed to ' . __CLASS__
-                . '::__construct() must be an array or implement ArrayAccess');
+            throw new TypeError(
+                'Argument 2 passed to ' . __CLASS__
+                . '::__construct() must be an array or implement ArrayAccess'
+            );
         }
 
         $this->startTime = time();
@@ -346,7 +349,6 @@ abstract class Core
                     // Tell cache content is based on Accept header
                     $this->_responseHeaders['Vary'] = 'Accept';
                     return $format;
-
                 } elseif (false !== ($index = strrpos($accept, '+'))) {
                     $mime = substr($accept, 0, $index);
                     $vendor = 'application/vnd.'
@@ -359,7 +361,6 @@ abstract class Core
 
                             if ($version >= $this->router->minimumVersion &&
                                 $version <= $this->router->maximumVersion) {
-
                                 $this->requestedApiVersion = $version;
                                 $format = $this->make($map[$extension], null);
                                 $format->mediaType("$vendor$version+$extension");
@@ -371,7 +372,6 @@ abstract class Core
                             }
                         }
                     }
-
                 }
             }
         } else {
@@ -420,8 +420,7 @@ abstract class Core
         string $accessControlRequestMethod = '',
         string $accessControlRequestHeaders = '',
         string $origin = ''
-    ): void
-    {
+    ): void {
         if (!$this->defaults->crossOriginResourceSharing || $requestMethod != 'OPTIONS') {
             return;
         }
@@ -703,7 +702,7 @@ abstract class Core
 
     private static function isPathSelected(string $class, string $path): bool
     {
-        if (!isset(class_implements($class)[SelectivePathsInterface::class])) {
+        if (!Type::implements($class, SelectivePathsInterface::class)) {
             return true;
         }
         return $class::isPathSelected($path);
