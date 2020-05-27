@@ -1,4 +1,6 @@
-<?php namespace Luracast\Restler;
+<?php
+
+namespace Luracast\Restler;
 
 
 use Exception;
@@ -9,7 +11,8 @@ use Luracast\Restler\Contracts\{AccessControlInterface,
     RequestMediaTypeInterface,
     ResponseMediaTypeInterface,
     SelectivePathsInterface,
-    UsesAuthenticationInterface};
+    UsesAuthenticationInterface
+};
 use Luracast\Restler\Data\Param;
 use Luracast\Restler\Data\Route;
 use Luracast\Restler\Exceptions\HttpException;
@@ -138,11 +141,19 @@ class Router
      */
     public static function setMediaTypes(string ...$types): void
     {
-        static::_setMediaTypes(RequestMediaTypeInterface::class, $types,
-            static::$requestFormatMap, static::$requestMediaTypes);
+        static::_setMediaTypes(
+            RequestMediaTypeInterface::class,
+            $types,
+            static::$requestFormatMap,
+            static::$requestMediaTypes
+        );
 
-        static::_setMediaTypes(ResponseMediaTypeInterface::class, $types,
-            static::$responseFormatMap, static::$responseMediaTypes);
+        static::_setMediaTypes(
+            ResponseMediaTypeInterface::class,
+            $types,
+            static::$responseFormatMap,
+            static::$responseMediaTypes
+        );
     }
 
     /**
@@ -151,8 +162,12 @@ class Router
      */
     public static function setRequestMediaTypes(string ...$types): void
     {
-        static::_setMediaTypes(RequestMediaTypeInterface::class, $types,
-            static::$requestFormatMap, static::$requestMediaTypes);
+        static::_setMediaTypes(
+            RequestMediaTypeInterface::class,
+            $types,
+            static::$requestFormatMap,
+            static::$requestMediaTypes
+        );
     }
 
     /**
@@ -161,16 +176,24 @@ class Router
      */
     public static function setResponseMediaTypes(string ...$types): void
     {
-        static::_setMediaTypes(ResponseMediaTypeInterface::class, $types,
-            static::$responseFormatMap, static::$responseMediaTypes);
+        static::_setMediaTypes(
+            ResponseMediaTypeInterface::class,
+            $types,
+            static::$responseFormatMap,
+            static::$responseMediaTypes
+        );
     }
 
     public static function setOverridingRequestMediaTypes(string ...$types): void
     {
         static::$requestMediaTypeOverrides = $types;
         $ignore = [];
-        static::_setMediaTypes(RequestMediaTypeInterface::class, $types,
-            static::$requestFormatOverridesMap, $ignore);
+        static::_setMediaTypes(
+            RequestMediaTypeInterface::class,
+            $types,
+            static::$requestFormatOverridesMap,
+            $ignore
+        );
     }
 
     /**
@@ -181,8 +204,12 @@ class Router
     {
         static::$responseMediaTypeOverrides = $types;
         $ignore = [];
-        static::_setMediaTypes(ResponseMediaTypeInterface::class, $types,
-            static::$responseFormatOverridesMap, $ignore);
+        static::_setMediaTypes(
+            ResponseMediaTypeInterface::class,
+            $types,
+            static::$responseFormatOverridesMap,
+            $ignore
+        );
     }
 
     /**
@@ -198,8 +225,7 @@ class Router
         array $types,
         &$formatMap,
         &$mediaTypes
-    ): void
-    {
+    ): void {
         if (!count($types)) {
             return;
         }
@@ -209,8 +235,10 @@ class Router
         $writable = $interface === ResponseMediaTypeInterface::class;
         foreach ($types as $type) {
             if (!isset(class_implements($type)[$interface])) {
-                throw new Exception($type . ' is an invalid media type class; it must implement ' .
-                    $interface . ' interface');
+                throw new Exception(
+                    $type . ' is an invalid media type class; it must implement ' .
+                    $interface . ' interface'
+                );
             }
             foreach ($type::supportedMediaTypes() as $mime => $extension) {
                 $mediaTypes[] = $mime;
@@ -289,9 +317,11 @@ class Router
                 } else {
                     $versionMap[$path][$currentVersion] = $className;
                 }
-                for ($version = $currentVersion + 1;
-                     $version <= static::$maximumVersion;
-                     $version++) {
+                for (
+                    $version = $currentVersion + 1;
+                    $version <= static::$maximumVersion;
+                    $version++
+                ) {
                     if (isset($versionMap[$path][$version])) {
                         continue;
                     }
@@ -344,7 +374,6 @@ class Router
      */
     protected static function addAPIForVersion(string $className, string $resourcePath, int $version = 1): void
     {
-
         /*
          * Mapping Rules
          * =============
@@ -373,8 +402,10 @@ class Router
         unset($classMetadata['description']);
         unset($classMetadata['longDescription']);
         $classMetadata['scope'] = $scope = static::scope($class);
-        $methods = $class->getMethods(ReflectionMethod::IS_PUBLIC +
-            ReflectionMethod::IS_PROTECTED);
+        $methods = $class->getMethods(
+            ReflectionMethod::IS_PUBLIC +
+            ReflectionMethod::IS_PROTECTED
+        );
         foreach ($methods as $method) {
             if ($method->isStatic()) {
                 continue;
@@ -388,8 +419,11 @@ class Router
                 try {
                     $metadata = CommentParser::parse($doc) + $classMetadata;
                 } catch (Exception $e) {
-                    throw new HttpException(500,
-                        "Error while parsing comments of `{$className}::{$method->getName()}` method. " . $e->getMessage());
+                    throw new HttpException(
+                        500,
+                        "Error while parsing comments of `{$className}::{$method->getName()}` method. " . $e->getMessage(
+                        )
+                    );
                 }
             } else {
                 $metadata = $classMetadata;
@@ -432,11 +466,15 @@ class Router
                         ($rctype = $metadata['return'][$dataName]['type'] ?? false) &&
                         ($qualified = ClassName::resolve($rctype, $scope))
                     ) {
-                        list($metadata['return'][$dataName]['type'], $metadata['return']['children']) =
+                        list(
+                            $metadata['return'][$dataName]['type'], $metadata['return']['children']
+                            ) =
                             static::getTypeAndModel(new ReflectionClass($qualified), $scope);
                     }
                 } elseif ($qualified = ClassName::resolve($rtype, $scope)) {
-                    list($metadata['return']['type'], $metadata['return']['children']) =
+                    list(
+                        $metadata['return']['type'], $metadata['return']['children']
+                        ) =
                         static::getTypeAndModel(new ReflectionClass($qualified), $scope);
                 }
             } else {
@@ -482,17 +520,29 @@ class Router
                 $contentType = $p['type'] ?? false;
                 if ($type == 'array' && $contentType && $qualified = ClassName::resolve($contentType, $scope)) {
                     list($p['type'], $children, $modelName) = static::getTypeAndModel(
-                        new ReflectionClass($qualified), $scope,
-                        $className . Text::title($methodUrl), $p
+                        new ReflectionClass($qualified),
+                        $scope,
+                        $className . Text::title($methodUrl),
+                        $p
                     );
                 }
                 if ($type instanceof ReflectionClass) {
-                    list($type, $children, $modelName) = static::getTypeAndModel($type, $scope,
-                        $className . Text::title($methodUrl), $p);
+                    list($type, $children, $modelName) = static::getTypeAndModel(
+                        $type,
+                        $scope,
+                        $className . Text::title($methodUrl),
+                        $p
+                    );
                 } elseif ($type && is_string($type) && $qualified = ClassName::resolve($type, $scope)) {
-                    list($type, $children, $modelName)
-                        = static::getTypeAndModel(new ReflectionClass($qualified), $scope,
-                        $className . Text::title($methodUrl), $p);
+                    list(
+                        $type, $children, $modelName
+                        )
+                        = static::getTypeAndModel(
+                        new ReflectionClass($qualified),
+                        $scope,
+                        $className . Text::title($methodUrl),
+                        $p
+                    );
                 }
                 if (isset($type)) {
                     $m['type'] = $type;
@@ -507,7 +557,6 @@ class Router
                     if (!isset($m['type'])) {
                         $type = $m['type'] = 'array';
                     }
-
                 } elseif (isset($p['from'])) {
                     $from = $p['from'];
                 } else {
@@ -565,7 +614,9 @@ class Router
             if (preg_match_all(
                 '/@url\s+(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS)'
                 . '[ \t]*\/?(\S*)/s',
-                $doc, $matches, PREG_SET_ORDER
+                $doc,
+                $matches,
+                PREG_SET_ORDER
             )
             ) {
                 foreach ($matches as $match) {
@@ -585,17 +636,23 @@ class Router
                             $copy['metadata']['param'][$i][$dataName]['from'] = Param::FROM_BODY;
                         }
                     }
-                    $url = preg_replace_callback('/{[^}]+}|:[^\/]+/',
+                    $url = preg_replace_callback(
+                        '/{[^}]+}|:[^\/]+/',
                         function ($matches) use ($copy) {
                             $match = trim($matches[0], '{}:');
                             $index = $copy['arguments'][$match];
                             return '{' .
-                                static::typeChar(isset(
-                                    $copy['metadata']['param'][$index]['type'])
-                                    ? $copy['metadata']['param'][$index]['type']
-                                    : null)
+                                static::typeChar(
+                                    isset(
+                                        $copy['metadata']['param'][$index]['type']
+                                    )
+                                        ? $copy['metadata']['param'][$index]['type']
+                                        : null
+                                )
                                 . $index . '}';
-                        }, $url);
+                        },
+                        $url
+                    );
                     static::addPath($url, $copy, $httpMethod, $version);
                 }
                 //if auto route enabled, do so
@@ -603,7 +660,9 @@ class Router
                 // no configuration found so use convention
                 if (preg_match_all(
                     '/^(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS)/i',
-                    $methodUrl, $matches)
+                    $methodUrl,
+                    $matches
+                )
                 ) {
                     $httpMethod = strtoupper($matches[0][0]);
                     $methodUrl = substr($methodUrl, strlen($httpMethod));
@@ -634,9 +693,11 @@ class Router
                         $url .= '/';
                     }
                     $url .= '{' .
-                        static::typeChar(isset($call['metadata']['param'][$position]['type'])
-                            ? $call['metadata']['param'][$position]['type']
-                            : null)
+                        static::typeChar(
+                            isset($call['metadata']['param'][$position]['type'])
+                                ? $call['metadata']['param'][$position]['type']
+                                : null
+                        )
                         . $position . '}';
                     $copy['metadata']['param'][$position][$dataName]['from'] = Param::FROM_PATH;
                     $copy['metadata']['param'][$position][$dataName]['required'] = true;
@@ -654,17 +715,20 @@ class Router
      * in order to allow that method to be executed
      *
      * @param string $className of the authentication class
-     * @param string $resourcePath optional url for mapping
-     *
      * @throws Exception
      */
-    public static function addAuthenticator(string $className, string $resourcePath = null)
+    public static function addAuthenticator(string $className)
     {
+        if (!empty(static::$routes)) {
+            throw new Exception('Router::addAuthenticator should be called before adding api classes.');
+        }
         $implements = class_implements($className);
         if (!isset($implements[AuthenticationInterface::class])) {
-            throw new Exception($className .
+            throw new Exception(
+                $className .
                 ' is an invalid authenticator class; it must implement ' .
-                'AuthenticationInterface.');
+                'AuthenticationInterface.'
+            );
         }
         if (!in_array($className, Defaults::$implementations[AuthenticationInterface::class])) {
             Defaults::$implementations[AuthenticationInterface::class][] = $className;
@@ -674,7 +738,6 @@ class Router
             Defaults::$implementations[AccessControlInterface::class][] = $className;
         }
         static::$authClasses[] = $className;
-        static::mapApiClasses([$resourcePath => $className]);
     }
 
     /**
@@ -693,8 +756,10 @@ class Router
         static::$preAuthFilterClasses = [];
         foreach ($classNames as $className) {
             if (!isset(class_implements($className)[FilterInterface::class])) {
-                throw new Exception($className . ' is an invalid filter class; it must implement ' .
-                    'FilterInterface.');
+                throw new Exception(
+                    $className . ' is an invalid filter class; it must implement ' .
+                    'FilterInterface.'
+                );
             }
             if (isset(class_implements($className)[UsesAuthenticationInterface::class])) {
                 static::$postAuthFilterClasses[] = $className;
@@ -717,8 +782,7 @@ class Router
         $httpMethod,
         $version = 1,
         array $data = []
-    )
-    {
+    ) {
         if (empty(static::$routes)) {
             throw new HttpException(
                 500,
@@ -740,9 +804,12 @@ class Router
             return static::populate($p[$path][$httpMethod], $data);
         } elseif (isset($p['*'])) {
             //================== wildcard routes ========================
-            uksort($p['*'], function ($a, $b) {
-                return strlen($b) - strlen($a);
-            });
+            uksort(
+                $p['*'],
+                function ($a, $b) {
+                    return strlen($b) - strlen($a);
+                }
+            );
             foreach ($p['*'] as $key => $value) {
                 if (empty($key)) {
                     if ($route = $value[$httpMethod] ?? false) {
@@ -772,8 +839,11 @@ class Router
             }
             /** @var Route $route */
             $route = $value[$httpMethod];
-            $regex = str_replace(['{', '}'],
-                ['(?P<', '>[^/]+)'], $key);
+            $regex = str_replace(
+                ['{', '}'],
+                ['(?P<', '>[^/]+)'],
+                $key
+            );
             if (preg_match_all(":^$regex$:i", $path, $matches, PREG_SET_ORDER)) {
                 $matches = $matches[0];
                 $found = true;
@@ -843,8 +913,7 @@ class Router
         array $call,
         $httpMethod = 'GET',
         $version = 1
-    )
-    {
+    ) {
         $call['url'] = preg_replace_callback(
             "/\{\S(\d+)\}/",
             function ($matches) use ($call) {
@@ -896,8 +965,7 @@ class Router
         array $excludedPaths = [],
         array $excludedHttpMethods = [],
         $version = 1
-    )
-    {
+    ) {
         $map = [];
         $all = self::$routes["v$version"];
         $filter = [];
@@ -930,7 +998,10 @@ class Router
                         $route->httpMethod = $httpMethod;
                         $map[$route->path][] = [
                             'access' => static::verifyAccess(
-                                $route, $request, $maker, $verifiedAuthClasses
+                                $route,
+                                $request,
+                                $maker,
+                                $verifiedAuthClasses
                             ),
                             'route' => $route,
                             'hash' => $hash,
@@ -955,8 +1026,7 @@ class Router
         ServerRequestInterface $request,
         callable $maker,
         array &$verifiedClasses
-    )
-    {
+    ) {
         if ($route->access <= Route::ACCESS_HYBRID) {
             return true;
         }
@@ -1108,8 +1178,7 @@ class Router
         array $scope,
         $prefix = '',
         array $rules = []
-    )
-    {
+    ) {
         $className = $class->getName();
         $dataName = CommentParser::$embeddedDataName;
         if (isset(static::$models[$prefix . $className])) {
@@ -1165,12 +1234,16 @@ class Router
                     $child[$dataName]['required'] = $child[$dataName]['required'] ?? true;
                     $childScope = static::scope($class);
                     if ($child['type'] != $className && $qualified = ClassName::resolve($child['type'], $childScope)) {
-                        list($child['type'], $child['children'])
+                        list(
+                            $child['type'], $child['children']
+                            )
                             = static::getTypeAndModel(new ReflectionClass($qualified), $childScope);
                     } elseif (($contentType = $child[$dataName]['type'] ?? false) &&
                         ($qualified = ClassName::resolve($contentType, $childScope))
                     ) {
-                        list($child['contentType'], $child['children'])
+                        list(
+                            $child['contentType'], $child['children']
+                            )
                             = static::getTypeAndModel(new ReflectionClass($qualified), $childScope);
                     }
                     $children[$name] = $child;

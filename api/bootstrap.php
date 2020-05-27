@@ -193,12 +193,12 @@ try {
     Router::setOverridingResponseMediaTypes(Json::class, Xml::class, Html::class);
     Router::setOverridingRequestMediaTypes(Json::class, Upload::class);
     SimpleAuth::setIncludedPaths('examples/_005_protected_api');
-    Router::addAuthenticator(SimpleAuth::class, 'examples/_005_protected_api/simpleauth');
+    Router::addAuthenticator(SimpleAuth::class);
     KeyAuth::setIncludedPaths('examples/_009_rate_limiting');
-    Router::addAuthenticator(KeyAuth::class, 'examples/_009_rate_limiting/keyauth');
+    Router::addAuthenticator(KeyAuth::class);
     AccessControl::setIncludedPaths('examples/_010_access_control');
-    Router::addAuthenticator(AccessControl::class, 'examples/_010_access_control/accesscontrol');
-    Router::addAuthenticator(Server::class, 'examples/_015_oauth2_server/server');
+    Router::addAuthenticator(AccessControl::class);
+    Router::addAuthenticator(Server::class);
 
     RateLimiter::setIncludedPaths('examples/_009_rate_limiting');
     Router::setFilters(RateLimiter::class);
@@ -234,9 +234,9 @@ try {
         'explorer' => Explorer::class,
         'baseurl' => BaseUrl::class,
     ]);
-    //$cache = new HumanReadable();
-    //$cache->set('route', Router::toArray());
-    //$cache->set('models', Router::$models);
+    $cache = new HumanReadable();
+    $cache->set('route', Router::toArray());
+    $cache->set('models', Router::$models);
 } catch (Throwable $t) {
     die($t->getMessage());
 }
