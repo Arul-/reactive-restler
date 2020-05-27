@@ -192,12 +192,17 @@ class baseUrl
 try {
     Router::setOverridingResponseMediaTypes(Json::class, Xml::class, Html::class);
     Router::setOverridingRequestMediaTypes(Json::class, Upload::class);
+    //
     SimpleAuth::setIncludedPaths('examples/_005_protected_api');
     Router::addAuthenticator(SimpleAuth::class);
+    //
     KeyAuth::setIncludedPaths('examples/_009_rate_limiting');
     Router::addAuthenticator(KeyAuth::class);
+    //
     AccessControl::setIncludedPaths('examples/_010_access_control');
     Router::addAuthenticator(AccessControl::class);
+    //
+    Server::setIncludedPaths('examples/_015_oauth2_server');
     Router::addAuthenticator(Server::class);
 
     RateLimiter::setIncludedPaths('examples/_009_rate_limiting');

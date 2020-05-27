@@ -3,6 +3,8 @@
 namespace Auth;
 
 use Luracast\Restler\Contracts\ExplorableAuthenticationInterface;
+use Luracast\Restler\Contracts\SelectivePathsInterface;
+use Luracast\Restler\Contracts\SelectivePathsTrait;
 use Luracast\Restler\Defaults;
 use Luracast\Restler\OpenApi3\Security\AuthorizationCode as AuthorizationCodeFlow;
 use Luracast\Restler\OpenApi3\Security\OAuth2;
@@ -25,8 +27,10 @@ use Psr\Http\Message\ServerRequestInterface;
  * @package OAuth2
  *
  */
-class Server implements ExplorableAuthenticationInterface
+class Server implements ExplorableAuthenticationInterface, SelectivePathsInterface
 {
+    use SelectivePathsTrait;
+
     /**
      * @var OAuth2Server
      */
