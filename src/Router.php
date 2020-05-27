@@ -136,7 +136,7 @@ class Router
     }
 
     /**
-     * @param string[] ...$types
+     * @param string ...$types
      * @throws Exception
      */
     public static function setMediaTypes(string ...$types): void
@@ -157,7 +157,7 @@ class Router
     }
 
     /**
-     * @param string[] ...$types
+     * @param string ...$types
      * @throws Exception
      */
     public static function setRequestMediaTypes(string ...$types): void
@@ -171,7 +171,7 @@ class Router
     }
 
     /**
-     * @param string[] ...$types
+     * @param string ...$types
      * @throws Exception
      */
     public static function setResponseMediaTypes(string ...$types): void
@@ -184,6 +184,10 @@ class Router
         );
     }
 
+    /**
+     * @param string ...$types
+     * @throws Exception
+     */
     public static function setOverridingRequestMediaTypes(string ...$types): void
     {
         static::$requestMediaTypeOverrides = $types;
@@ -1012,6 +1016,7 @@ class Router
                 }
             }
         }
+        ksort($map, SORT_NATURAL);
         return $map;
     }
 
