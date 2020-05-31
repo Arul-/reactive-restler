@@ -3,12 +3,11 @@
 namespace Auth;
 
 use HttpClientInterface;
+use Luracast\Restler\Contracts\SessionInterface;
 use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\Restler;
-use Luracast\Restler\Session;
 use Luracast\Restler\StaticProperties;
 use Luracast\Restler\Utils\ClassName;
-use Psr\Http\Message\ResponseInterface;
 use SimpleHttpResponse;
 
 class Client
@@ -39,7 +38,7 @@ class Client
      */
     private $html;
 
-    public function __construct(Restler $restler, Session $session, StaticProperties $html)
+    public function __construct(Restler $restler, SessionInterface $session, StaticProperties $html)
     {
         $this->restler = $restler;
         $this->html = $html;
@@ -114,8 +113,7 @@ class Client
         $code = null,
         $error_description = null,
         $error_uri = null
-    )
-    {
+    ) {
         // the user denied the authorization request
         if (!$code) {
             $this->html->view = 'oauth2/client/denied.twig';
