@@ -1,10 +1,11 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 use Auth\Client;
 use Auth\Server;
 use improved\Authors as ImprovedAuthors;
 use Luracast\Restler\Cache\HumanReadable;
-use Luracast\Restler\Data\Route;
 use Luracast\Restler\Defaults;
 use Luracast\Restler\Filters\RateLimiter;
 use Luracast\Restler\MediaTypes\Html;
@@ -16,6 +17,7 @@ use Luracast\Restler\Middleware\StaticFiles;
 use Luracast\Restler\OpenApi3\Explorer;
 use Luracast\Restler\Restler;
 use Luracast\Restler\Router;
+use Luracast\Restler\UI\Forms;
 use Luracast\Restler\Utils\ClassName;
 use Luracast\Restler\Utils\Text;
 use Psr\Http\Message\ServerRequestInterface;
@@ -33,8 +35,6 @@ Defaults::$apiVendor = "SomeVendor";
 Defaults::$useVendorMIMEVersioning = true;
 Defaults::$implementations[HttpClientInterface::class] = [SimpleHttpClient::class];
 Router::setApiVersion(2);
-RateLimiter::setLimit('hour', 10);
-RateLimiter::setIncludedPaths('examples/_009_rate_limiting');
 Html::$template = 'blade'; //'handlebar'; //'twig'; //'php';
 if (!Text::endsWith($_SERVER['SCRIPT_NAME'], 'index.php')) {
     //when serving through apache or nginx, static files will be served direcly by apache / nginx
@@ -75,8 +75,9 @@ class ResetForTests
 
     function package()
     {
-        if (Text::contains(BASE, 'private'))
+        if (Text::contains(BASE, 'private')) {
             return [];
+        }
         //make sure the following classes are added
         class_exists(Symfony\Polyfill\Mbstring\Mbstring::class);
         class_exists(React\Promise\RejectedPromise::class);
@@ -122,13 +123,15 @@ class ResetForTests
         $files = get_included_files();
         $targets = [];
         foreach ($files as $file) {
-            if (Text::beginsWith($file, '/private/') || Text::beginsWith($file, Defaults::$cacheDirectory))
+            if (Text::beginsWith($file, '/private/') || Text::beginsWith($file, Defaults::$cacheDirectory)) {
                 continue;
+            }
             $base = str_replace(BASE . DIRECTORY_SEPARATOR, '', $file);
             $target = Defaults::$cacheDirectory . '/package/' . $base;
             $dir = dirname($target);
-            if (!is_dir($dir))
+            if (!is_dir($dir)) {
                 mkdir($dir, 0777, true);
+            }
             copy($file, $target);
             $targets[] = $base;
         }
@@ -136,8 +139,9 @@ class ResetForTests
             $file = BASE . DIRECTORY_SEPARATOR . $base;
             $target = Defaults::$cacheDirectory . '/package/' . $base;
             $dir = dirname($target);
-            if (!is_dir($dir))
+            if (!is_dir($dir)) {
                 mkdir($dir, 0777, true);
+            }
             copy($file, $target);
             $targets[] = $base;
         }
@@ -146,7 +150,10 @@ class ResetForTests
             $parent = '.' == $parent ? '' : $parent . '/';
             $command = sprintf(
                 'cp -R "%s/%s" "%s/package/%s"',
-                BASE, $dir, Defaults::$cacheDirectory, $parent
+                BASE,
+                $dir,
+                Defaults::$cacheDirectory,
+                $parent
             );
             return exec($command);
         };
@@ -190,8 +197,20 @@ class baseUrl
 }
 
 try {
-    Router::setOverridingResponseMediaTypes(Json::class, Xml::class, Html::class);
-    Router::setOverridingRequestMediaTypes(Json::class, Upload::class);
+    //
+    //---------------------------- MEDIA TYPES -----------------------------
+    //
+    Router::setOverridingResponseMediaTypes(
+        Json::class,
+        Xml::class,
+        Html::class
+    );
+    Router::setOverridingRequestMediaTypes(
+        Json::class,
+        Upload::class
+    );
+    //
+    //---------------------------- AUTH CLASSES ----------------------------
     //
     SimpleAuth::setIncludedPaths('examples/_005_protected_api');
     Router::addAuthenticator(SimpleAuth::class);
@@ -204,43 +223,52 @@ try {
     //
     Server::setIncludedPaths('examples/_015_oauth2_server');
     Router::addAuthenticator(Server::class);
-
+    //
+    //------------------------------ FILTERS ------------------------------
+    //
+    RateLimiter::setLimit('hour', 10);
     RateLimiter::setIncludedPaths('examples/_009_rate_limiting');
-    Router::setFilters(RateLimiter::class);
-    Router::mapApiClasses([
-        //clean up db for tests
-        '__cleanup_db' => ResetForTests::class,
-        //examples
-        'examples/_001_helloworld/say' => Say::class,
-        'examples/_002_minimal/math' => Math::class,
-        'examples/_003_multiformat/bmi' => BMI::class,
-        'examples/_004_error_response/currency' => Currency::class,
-        'examples/_005_protected_api' => Simple::class,
-        'examples/_005_protected_api/secured' => Secured::class,
-        'examples/_006_routing/api' => Api::class,
-        'examples/_007_crud/authors' => Authors::class,
-        'examples/_008_documentation/authors' => ImprovedAuthors::class,
-        'examples/_009_rate_limiting/authors' => RateLimitedAuthors::class,
-        'examples/_010_access_control' => Access::class,
-        'examples/_011_versioning/bmi' => BMI1::class,
-        'examples/_012_vendor_mime/bmi' => VendorBMI1::class,
-        'examples/_013_html/tasks' => Tasks::class,
-        'examples/_014_oauth2_client' => Client::class,
-        'examples/_015_oauth2_server' => Server::class,
-        'examples/_016_forms/users' => Users::class,
-        //tests
-        'tests/param/minmax' => MinMax::class,
-        'tests/param/minmaxfix' => MinMaxFix::class,
-        'tests/param/type' => Type::class,
-        'tests/param/validation' => Validation::class,
-        'tests/request_data' => Data::class,
-        'tests/upload/files' => Files::class,
-        'tests/storage/cache' => CacheTest::class,
-        'tests/storage/session' => SessionTest::class,
-        //Explorer
-        'explorer' => Explorer::class,
-        'baseurl' => BaseUrl::class,
-    ]);
+    Forms::setIncludedPaths('examples/_016_forms');
+    Router::setFilters(RateLimiter::class, Forms::class);
+    //
+    //---------------------------- API CLASSES ----------------------------
+    //
+    Router::mapApiClasses(
+        [
+            //clean up db for tests
+            '__cleanup_db' => ResetForTests::class,
+            //examples
+            'examples/_001_helloworld/say' => Say::class,
+            'examples/_002_minimal/math' => Math::class,
+            'examples/_003_multiformat/bmi' => BMI::class,
+            'examples/_004_error_response/currency' => Currency::class,
+            'examples/_005_protected_api' => Simple::class,
+            'examples/_005_protected_api/secured' => Secured::class,
+            'examples/_006_routing/api' => Api::class,
+            'examples/_007_crud/authors' => Authors::class,
+            'examples/_008_documentation/authors' => ImprovedAuthors::class,
+            'examples/_009_rate_limiting/authors' => RateLimitedAuthors::class,
+            'examples/_010_access_control' => Access::class,
+            'examples/_011_versioning/bmi' => BMI1::class,
+            'examples/_012_vendor_mime/bmi' => VendorBMI1::class,
+            'examples/_013_html/tasks' => Tasks::class,
+            'examples/_014_oauth2_client' => Client::class,
+            'examples/_015_oauth2_server' => Server::class,
+            'examples/_016_forms/users' => Users::class,
+            //tests
+            'tests/param/minmax' => MinMax::class,
+            'tests/param/minmaxfix' => MinMaxFix::class,
+            'tests/param/type' => Type::class,
+            'tests/param/validation' => Validation::class,
+            'tests/request_data' => Data::class,
+            'tests/upload/files' => Files::class,
+            'tests/storage/cache' => CacheTest::class,
+            'tests/storage/session' => SessionTest::class,
+            //Explorer
+            'explorer' => Explorer::class,
+            'baseurl' => BaseUrl::class,
+        ]
+    );
     $cache = new HumanReadable();
     $cache->set('route', Router::toArray());
     $cache->set('models', Router::$models);
