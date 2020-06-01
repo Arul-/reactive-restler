@@ -3,6 +3,8 @@
 namespace Luracast\Restler\UI;
 
 use Luracast\Restler\Contracts\FilterInterface;
+use Luracast\Restler\Contracts\SelectivePathsInterface;
+use Luracast\Restler\Contracts\SelectivePathsTrait;
 use Luracast\Restler\Contracts\SessionInterface;
 use Luracast\Restler\Contracts\UserIdentificationInterface;
 use Luracast\Restler\Data\Param;
@@ -31,12 +33,13 @@ use Psr\Http\Message\UploadedFileInterface;
  * @package    Restler
  * @author     R.Arul Kumaran <arul@luracast.com>
  */
-class Forms implements FilterInterface
+class Forms implements FilterInterface, SelectivePathsInterface
 {
+    use SelectivePathsTrait;
+
     const FORM_KEY = 'form_key';
 
     public static $filterFormRequestsOnly = false;
-    public static $excludedPaths = [];
     public static $style;
     /**
      * @var bool should we fill up the form using given data?
@@ -472,15 +475,6 @@ class Forms implements FilterInterface
         /** @var Restler $restler */
         $restler = $this->restler;
         $url = $restler->path;
-        foreach (static::$excludedPaths as $exclude) {
-            if (empty($exclude)) {
-                if ($url == $exclude) {
-                    return true;
-                }
-            } elseif (Text::beginsWith($url, $exclude)) {
-                return true;
-            }
-        }
         $check = static::$filterFormRequestsOnly
             ? $restler->requestFormat instanceof UrlEncoded || $restler->requestFormat instanceof Upload
             : true;
