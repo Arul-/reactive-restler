@@ -99,18 +99,24 @@ class RestContext implements Context
         $this->_restObject = new stdClass();
         $this->baseUrl = $baseUrl;
         $handler = HandlerStack::create();
-        $handler->push(Middleware::mapRequest(function (RequestInterface $request) {
-            // Notice that we have to return a request object
-            $this->_request = $request;
-            return $request;
-        }));
+        $handler->push(
+            Middleware::mapRequest(
+                function (RequestInterface $request) {
+                    // Notice that we have to return a request object
+                    $this->_request = $request;
+                    return $request;
+                }
+            )
+        );
         $cookieJar = new FileCookieJar(self::COOKIE_FILE, true);
-        $this->_client = new Client([
-            'base_uri' => $baseUrl,
-            'handler' => $handler,
-            'allow_redirects' => ['track_redirects' => true],
-            'cookies' => $cookieJar
-        ]);
+        $this->_client = new Client(
+            [
+                'base_uri' => $baseUrl,
+                'handler' => $handler,
+                'allow_redirects' => ['track_redirects' => true],
+                'cookies' => $cookieJar
+            ]
+        );
         /*
         //suppress few errors
         $this->_client
@@ -184,8 +190,10 @@ class RestContext implements Context
     {
         $data = json_encode($this->_data);
         if (!Text::contains($data, $response)) {
-            throw new Exception("Response value does not contain '$response' only\n\n"
-                . $this->echoLastResponse());
+            throw new Exception(
+                "Response value does not contain '$response' only\n\n"
+                . $this->echoLastResponse()
+            );
         }
     }
 
@@ -209,8 +217,10 @@ class RestContext implements Context
     {
         $data = json_encode($this->_data);
         if ($data !== $response) {
-            throw new Exception("Response value does not match '$response'\n\n"
-                . $this->echoLastResponse());
+            throw new Exception(
+                "Response value does not match '$response'\n\n"
+                . $this->echoLastResponse()
+            );
         }
     }
 
@@ -416,15 +426,18 @@ class RestContext implements Context
                         $message = 'unknown error';
                         break;
                 }
-                throw new Exception ('Error parsing JSON, ' . $message
-                    . "\n\n" . $this->echoLastResponse());
+                throw new Exception (
+                    'Error parsing JSON, ' . $message
+                    . "\n\n" . $this->echoLastResponse()
+                );
                 break;
             case 'application/xml':
                 $this->_type = 'xml';
                 libxml_use_internal_errors(true);
                 libxml_disable_entity_loader(true);
                 $this->_data = @simplexml_load_string(
-                    $this->_response->getBody(true));
+                    $this->_response->getBody(true)
+                );
                 if (!$this->_data) {
                     $message = '';
                     foreach (libxml_get_errors() as $error) {
@@ -507,8 +520,10 @@ class RestContext implements Context
     public function theResponseLanguageIs($language)
     {
         if ($this->_language != $language) {
-            throw new Exception("Response Language was not $language\n\n"
-                . $this->echoLastResponse());
+            throw new Exception(
+                "Response Language was not $language\n\n"
+                . $this->echoLastResponse()
+            );
         }
     }
 
@@ -519,14 +534,18 @@ class RestContext implements Context
     public function theResponseHeaderShouldBe($header, $value)
     {
         if (!$this->_response->hasHeader($header)) {
-            throw new Exception("Response header $header was not found\n\n"
-                . $this->echoLastResponse());
+            throw new Exception(
+                "Response header $header was not found\n\n"
+                . $this->echoLastResponse()
+            );
         }
         if (strcasecmp((string)$this->_response->getHeaderLine($header), $value)) {
-            throw new Exception("Response header $header ("
+            throw new Exception(
+                "Response header $header ("
                 . (string)$this->_response->getHeaderLine($header)
                 . ") does not match `$value`\n\n"
-                . $this->echoLastResponse());
+                . $this->echoLastResponse()
+            );
         }
     }
 
@@ -554,9 +573,11 @@ class RestContext implements Context
         usleep(1);
         $diff = 1000 * (microtime(true) - $this->_startTime);
         if ($diff < $milliSeconds) {
-            throw new Exception("Response time $diff is "
+            throw new Exception(
+                "Response time $diff is "
                 . "quicker than $milliSeconds\n\n"
-                . $this->echoLastResponse());
+                . $this->echoLastResponse()
+            );
         }
     }
 
@@ -607,8 +628,10 @@ class RestContext implements Context
                 }
         }
 
-        throw new Exception("Response is not of type '$type'\n\n" .
-            $this->echoLastResponse());
+        throw new Exception(
+            "Response is not of type '$type'\n\n" .
+            $this->echoLastResponse()
+        );
     }
 
     /**
@@ -618,8 +641,10 @@ class RestContext implements Context
     {
         $data = $this->_data;
         if ($data !== $sample) {
-            throw new Exception("Response value does not match '$sample'\n\n"
-                . $this->echoLastResponse());
+            throw new Exception(
+                "Response value does not match '$sample'\n\n"
+                . $this->echoLastResponse()
+            );
         }
     }
 
@@ -679,8 +704,10 @@ class RestContext implements Context
                 }
         }
 
-        throw new Exception("Response was JSON\n but not of type '$type'\n\n" .
-            $this->echoLastResponse());
+        throw new Exception(
+            "Response was JSON\n but not of type '$type'\n\n" .
+            $this->echoLastResponse()
+        );
     }
 
     /**
@@ -695,9 +722,11 @@ class RestContext implements Context
 
         if (!empty($data)) {
             if (!isset($data->$propertyName)) {
-                throw new Exception("Property '"
+                throw new Exception(
+                    "Property '"
                     . $propertyName . "' is not set!\n\n"
-                    . $this->echoLastResponse());
+                    . $this->echoLastResponse()
+                );
             }
         }
     }
@@ -706,7 +735,7 @@ class RestContext implements Context
      * @Then /^the "([^"]*)" property equals "([^"]*)"$/
      * @Then /^the "([^"]*)" property equals null$/
      */
-    public function thePropertyEquals($propertyName, $propertyValue=null)
+    public function thePropertyEquals($propertyName, $propertyValue = null)
     {
         $data = $this->_data;
 
@@ -715,9 +744,11 @@ class RestContext implements Context
             $properties = explode('.', $propertyName);
             foreach ($properties as $property) {
                 if (!isset($p->$property) && !is_null($propertyValue)) {
-                    throw new Exception("Property '"
+                    throw new Exception(
+                        "Property '"
                         . $propertyName . "' is not set!\n\n"
-                        . $this->echoLastResponse());
+                        . $this->echoLastResponse()
+                    );
                 }
                 $p = $p->$property;
             }
@@ -740,8 +771,10 @@ class RestContext implements Context
                 );
             }
         } else {
-            throw new Exception("Response was not JSON\n\n"
-                . $this->_response->getBody(true));
+            throw new Exception(
+                "Response was not JSON\n\n"
+                . $this->_response->getBody(true)
+            );
         }
     }
 
@@ -772,25 +805,30 @@ class RestContext implements Context
 
         if (!empty($data)) {
             if (!isset($data->$propertyName)) {
-                throw new Exception("Property '"
+                throw new Exception(
+                    "Property '"
                     . $propertyName . "' is not set!\n\n"
-                    . $this->echoLastResponse());
+                    . $this->echoLastResponse()
+                );
             }
             // check our type
             switch (strtolower($typeString)) {
                 case 'numeric':
                     if (!is_numeric($data->$propertyName)) {
-                        throw new Exception("Property '"
+                        throw new Exception(
+                            "Property '"
                             . $propertyName . "' is not of the correct type: "
                             . $typeString . "!\n\n"
-                            . $this->echoLastResponse());
+                            . $this->echoLastResponse()
+                        );
                     }
                     break;
             }
-
         } else {
-            throw new Exception("Response was not JSON\n"
-                . $this->_response->getBody(true));
+            throw new Exception(
+                "Response was not JSON\n"
+                . $this->_response->getBody(true)
+            );
         }
     }
 
@@ -800,9 +838,11 @@ class RestContext implements Context
     public function theResponseStatusCodeShouldBe($httpStatus)
     {
         if ((string)$this->_response->getStatusCode() !== $httpStatus) {
-            throw new \Exception('HTTP code does not match ' . $httpStatus .
+            throw new \Exception(
+                'HTTP code does not match ' . $httpStatus .
                 ' (actual: ' . $this->_response->getStatusCode() . ")\n\n"
-                . $this->echoLastResponse());
+                . $this->echoLastResponse()
+            );
         }
     }
 
@@ -837,7 +877,8 @@ class RestContext implements Context
         }
         /** @var ResponseInterface $res */
         $res = $this->_response;
-        echo 'HTTP/' . $res->getProtocolVersion() . ' ' . $res->getStatusCode() . ' ' . $res->getReasonPhrase() . PHP_EOL;
+        echo 'HTTP/' . $res->getProtocolVersion() . ' ' . $res->getStatusCode() . ' ' . $res->getReasonPhrase(
+            ) . PHP_EOL;
         foreach ($res->getHeaders() as $k => $v) {
             echo ucwords($k) . ': ' . implode(', ', $v) . PHP_EOL;
         }
@@ -857,8 +898,10 @@ class RestContext implements Context
             try {
                 $this->theValueEquals($value2);
             } catch (Exception $exception2) {
-                throw new Exception("Response value does not match both '$value1' and '$value2'\n\n"
-                    . $this->echoLastResponse());
+                throw new Exception(
+                    "Response value does not match both '$value1' and '$value2'\n\n"
+                    . $this->echoLastResponse()
+                );
             }
         }
     }
@@ -869,11 +912,13 @@ class RestContext implements Context
     public function theResponseRedirectsTo($expectedPath)
     {
         $redirects = $this->_response->getHeader(RedirectMiddleware::HISTORY_HEADER);
-        if (empty($redirects))
+        if (empty($redirects)) {
             throw new Exception("Response was not Redirected\n");
+        }
         $actual = ltrim(str_replace($this->baseUrl, '', $redirects[0]), '/');
-        if ($expectedPath !== $actual)
+        if ($expectedPath !== $actual) {
             throw new Exception("Redirect did not go to '$expectedPath'\n(actual: '$actual')\n");
+        }
     }
 
 }
