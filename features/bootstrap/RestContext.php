@@ -1,11 +1,11 @@
 <?php
 
 use Behat\Behat\Context\Context;
-use Behat\Behat\Tester\Exception\PendingException;
 use Behat\Gherkin\Node\PyStringNode;
 use Behat\Testwork\Hook\Scope\AfterSuiteScope;
 use Behat\Testwork\Hook\Scope\BeforeSuiteScope;
 use GuzzleHttp\Client;
+use GuzzleHttp\Cookie\FileCookieJar;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
@@ -28,6 +28,7 @@ use Psr\Http\Message\ResponseInterface;
  */
 class RestContext implements Context
 {
+    public const COOKIE_FILE = 'behat-guzzle-cookie-data.json';
 
     private $_request_debug_stream = null;
     private $_startTime = null;
@@ -103,10 +104,12 @@ class RestContext implements Context
             $this->_request = $request;
             return $request;
         }));
+        $cookieJar = new FileCookieJar(self::COOKIE_FILE, true);
         $this->_client = new Client([
             'base_uri' => $baseUrl,
             'handler' => $handler,
-            'allow_redirects' => ['track_redirects' => true]
+            'allow_redirects' => ['track_redirects' => true],
+            'cookies' => $cookieJar
         ]);
         /*
         //suppress few errors
@@ -571,27 +574,33 @@ class RestContext implements Context
                 if (is_bool($data)) {
                     return;
                 }
+                break;
             case 'string':
                 if (is_string($data)) {
                     return;
                 }
+                break;
             case 'int':
             case 'integer':
                 if (is_int($data)) {
                     return;
                 }
+                break;
             case 'float':
                 if (is_float($data)) {
                     return;
                 }
+                break;
             case 'array' :
                 if (is_array($data) || is_object($data)) {
                     return;
                 }
+                break;
             case 'object' :
                 if (is_object($data)) {
                     return;
                 }
+                break;
             case 'null' :
                 if (is_null($data)) {
                     return;
@@ -695,8 +704,9 @@ class RestContext implements Context
 
     /**
      * @Then /^the "([^"]*)" property equals "([^"]*)"$/
+     * @Then /^the "([^"]*)" property equals null$/
      */
-    public function thePropertyEquals($propertyName, $propertyValue)
+    public function thePropertyEquals($propertyName, $propertyValue=null)
     {
         $data = $this->_data;
 
@@ -704,7 +714,7 @@ class RestContext implements Context
             $p = $data;
             $properties = explode('.', $propertyName);
             foreach ($properties as $property) {
-                if (!isset($p->$property)) {
+                if (!isset($p->$property) && !is_null($propertyValue)) {
                     throw new Exception("Property '"
                         . $propertyName . "' is not set!\n\n"
                         . $this->echoLastResponse());
