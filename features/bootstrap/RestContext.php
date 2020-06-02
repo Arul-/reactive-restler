@@ -67,7 +67,7 @@ class RestContext implements Context
         // prepare system for test suite
         // before it runs
         $client = new Client(['base_uri' => $baseUrl]);
-        $result = $client->put('__cleanup_db');
+        $result = $client->delete('-storage-');
     }
 
     /**
@@ -85,7 +85,7 @@ class RestContext implements Context
         $client = new Client(['base_uri' => $baseUrl]);
         //load explorer dependencies
         $client->get('explorer/docs.json');
-        $result = $client->get('__cleanup_db/package');
+        $result = $client->get('-storage-/pack');
     }
 
     /**
@@ -637,13 +637,16 @@ class RestContext implements Context
     /**
      * @Given /^the value equals "([^"]*)"$/
      */
-    public function theValueEquals($sample)
+    public function theValueEquals($value)
     {
         $data = $this->_data;
-        if ($data !== $sample) {
+        if ($data !== $value) {
             throw new Exception(
-                "Response value does not match '$sample'\n\n"
-                . $this->echoLastResponse()
+                sprintf(
+                    "Response value does not match %s\n\n%s",
+                    $this->typeFormat($value),
+                    $this->echoLastResponse()
+                )
             );
         }
     }
@@ -651,19 +654,28 @@ class RestContext implements Context
     /**
      * @Given /^the value equals (\d+)$/
      */
-    public function theNumericValueEquals($sample)
+    public function theNumericValueEquals($value)
     {
-        $sample = is_float($sample) ? floatval($sample) : intval($sample);
-        return $this->theValueEquals($sample);
+        $value = is_float($value) ? floatval($value) : intval($value);
+        return $this->theValueEquals($value);
     }
 
     /**
      * @Given /^the value equals (true|false)$/
      */
-    public function theBooleanValueEquals($sample)
+    public function theBooleanValueEquals($value)
     {
-        $sample = $sample == 'true';
-        return $this->theValueEquals($sample);
+        $value = $value == 'true';
+        return $this->theValueEquals($value);
+    }
+
+    /**
+     * @Given /^the value equals (null)$/
+     * @Given /^the value is (null)$/
+     */
+    public function theValueIsNull($value)
+    {
+        return $this->theValueEquals(null);
     }
 
     /**
@@ -733,11 +745,16 @@ class RestContext implements Context
 
     /**
      * @Then /^the "([^"]*)" property equals "([^"]*)"$/
-     * @Then /^the "([^"]*)" property equals null$/
+     * @Then /^the "([^"]*)" property equals (null)$/
+     * @Then /^the "([^"]*)" property is (null)$/
      */
     public function thePropertyEquals($propertyName, $propertyValue = null)
     {
         $data = $this->_data;
+
+        if ('null' === $propertyValue) {
+            $propertyValue = null;
+        }
 
         if (!empty($data)) {
             $p = $data;
@@ -753,21 +770,13 @@ class RestContext implements Context
                 $p = $p->$property;
             }
             if ($p != $propertyValue) {
-                if (is_bool($p)) {
-                    $p = $p ? 'true' : 'false';
-                } else {
-                    $p = '"' . $p . '"';
-                }
-                if (is_bool($propertyValue)) {
-                    $propertyValue = $propertyValue ? 'true' : 'false';
-                } else {
-                    $propertyValue = '"' . $propertyValue . '"';
-                }
                 throw new \Exception(
-                    'Property value mismatch! (given: '
-                    . $propertyValue . ', expected: '
-                    . $p . ")\n\n"
-                    . $this->echoLastResponse()
+                    sprintf(
+                        "Property value mismatch! (given: %s, expected: %s)\n\n%s",
+                        $this->typeFormat($propertyValue),
+                        $this->typeFormat($p),
+                        $this->echoLastResponse()
+                    )
                 );
             }
         } else {
@@ -899,7 +908,11 @@ class RestContext implements Context
                 $this->theValueEquals($value2);
             } catch (Exception $exception2) {
                 throw new Exception(
-                    "Response value does not match both '$value1' and '$value2'\n\n"
+                    sprintf(
+                        "Response value does not match both %s and %s\n\n",
+                        $this->typeFormat($value1),
+                        $this->typeFormat($value2)
+                    )
                     . $this->echoLastResponse()
                 );
             }
@@ -919,6 +932,20 @@ class RestContext implements Context
         if ($expectedPath !== $actual) {
             throw new Exception("Redirect did not go to '$expectedPath'\n(actual: '$actual')\n");
         }
+    }
+
+    private function typeFormat($value): string
+    {
+        if (is_null($value)) {
+            return 'null';
+        }
+        if (is_bool($value)) {
+            return $value ? 'true' : 'false';
+        }
+        if (is_array($value) || is_object($value)) {
+            return json_encode($value);
+        }
+        return $value = '"' . $value . '"';
     }
 
 }
