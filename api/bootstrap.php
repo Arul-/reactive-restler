@@ -18,9 +18,7 @@ use Luracast\Restler\OpenApi3\Explorer;
 use Luracast\Restler\Restler;
 use Luracast\Restler\Router;
 use Luracast\Restler\UI\Forms;
-use Luracast\Restler\Utils\ClassName;
 use Luracast\Restler\Utils\Text;
-use Psr\Http\Message\ServerRequestInterface;
 use ratelimited\Authors as RateLimitedAuthors;
 use SomeVendor\v1\BMI as VendorBMI1;
 use v1\BMI as BMI1;
@@ -42,159 +40,6 @@ if (!Text::endsWith($_SERVER['SCRIPT_NAME'], 'index.php')) {
 }
 //Restler::$middleware[] = new SessionMiddleware('RESTLERSESSID', new ArrayCache(), [0, '', '', false, false]);
 Restler::$middleware[] = new SessionMiddleware();
-
-class ResetForTests
-{
-    /**
-     * @param string $folder {@from path}
-     * @param int $version
-     * @return array
-     */
-    function get($folder = 'explorer', $version = 1)
-    {
-        return Router::toArray();//["v$version"];//[$folder] ?? [];
-    }
-
-    function put()
-    {
-        //reset database
-        $class = ClassName::get(DataProviderInterface::class);
-        $class::reset();
-        //reset cache
-        $folder = Defaults::$cacheDirectory . DIRECTORY_SEPARATOR;
-
-        $pattern = Text::contains(BASE, 'private')
-            ? "$folder*.php"
-            : "$folder{,*/,*/*/,*/*/*/}*.php";
-        $files = glob($pattern, GLOB_BRACE);
-        foreach ($files as $filename) {
-            unlink($filename);
-        }
-        return $files;
-    }
-
-    function package()
-    {
-        if (Text::contains(BASE, 'private')) {
-            return [];
-        }
-        //make sure the following classes are added
-        class_exists(Symfony\Polyfill\Mbstring\Mbstring::class);
-        class_exists(React\Promise\RejectedPromise::class);
-        class_exists(ClassName::get('HttpClientInterface'));
-        /*
-
-        //class_exists(Symfony\Polyfill\Php73\Php73::class);
-        class_exists(\Luracast\Restler\ArrayObject::class);
-        class_exists(\Illuminate\Support\Collection::class);
-        class_exists(Twig\Node\Expression\Test\DefinedTest::class);
-        class_exists(Twig\Node\IfNode::class);
-        class_exists(Twig\Lexer::class);
-        class_exists(Twig\TwigFilter::class);
-        class_exists(Twig\TwigTest::class);
-        class_exists(Twig\TokenParser\ApplyTokenParser::class);
-        class_exists(Twig\TokenParser\ForTokenParser::class);
-        class_exists(Twig\TokenParser\IfTokenParser::class);
-        class_exists(Twig\TokenParser\ExtendsTokenParser::class);
-        class_exists(Twig\TokenParser\IncludeTokenParser::class);
-        class_exists(Twig\TokenParser\BlockTokenParser::class);
-        class_exists(Twig\TokenParser\UseTokenParser::class);
-        class_exists(Twig\TokenParser\FilterTokenParser::class);
-        class_exists(Twig\TokenParser\MacroTokenParser::class);
-        class_exists(Twig\TokenParser\ImportTokenParser::class);
-        class_exists(Twig\TokenParser\FromTokenParser::class);
-        class_exists(Twig\TokenParser\SetTokenParser::class);
-        class_exists(Twig\TokenParser\SpacelessTokenParser::class);
-        class_exists(Twig\TokenParser\FlushTokenParser::class);
-        class_exists(Twig\TokenParser\DoTokenParser::class);
-        class_exists(Twig\TokenParser\EmbedTokenParser::class);
-        class_exists(Twig\TokenParser\WithTokenParser::class);
-        class_exists(Twig\TokenParser\DeprecatedTokenParser::class);
-        class_exists(Twig\NodeVisitor\MacroAutoImportNodeVisitor::class);
-
-        class_exists(OAuth2\ResponseType\AccessToken::class);
-        class_exists(OAuth2\ResponseType\AuthorizationCode::class);
-        class_exists(OAuth2\Controller\AuthorizeController::class);
-        */
-        $assets = [
-            'src/OpenApi3/client/index.html',
-            'src/OpenApi3/client/oauth2-redirect.html',
-        ];
-        $files = get_included_files();
-        $targets = [];
-        foreach ($files as $file) {
-            if (Text::beginsWith($file, '/private/') || Text::beginsWith($file, Defaults::$cacheDirectory)) {
-                continue;
-            }
-            $base = str_replace(BASE . DIRECTORY_SEPARATOR, '', $file);
-            $target = Defaults::$cacheDirectory . '/package/' . $base;
-            $dir = dirname($target);
-            if (!is_dir($dir)) {
-                mkdir($dir, 0777, true);
-            }
-            copy($file, $target);
-            $targets[] = $base;
-        }
-        foreach ($assets as $base) {
-            $file = BASE . DIRECTORY_SEPARATOR . $base;
-            $target = Defaults::$cacheDirectory . '/package/' . $base;
-            $dir = dirname($target);
-            if (!is_dir($dir)) {
-                mkdir($dir, 0777, true);
-            }
-            copy($file, $target);
-            $targets[] = $base;
-        }
-        $pack = function ($dir) {
-            $parent = dirname($dir);
-            $parent = '.' == $parent ? '' : $parent . '/';
-            $command = sprintf(
-                'cp -R "%s/%s" "%s/package/%s"',
-                BASE,
-                $dir,
-                Defaults::$cacheDirectory,
-                $parent
-            );
-            return exec($command);
-        };
-        $pack('views');
-        $pack('src/views');
-        $pack('public');
-        exec('chmod +x "' . Defaults::$cacheDirectory . '/package/bootstrap"');
-        return $targets;
-    }
-}
-
-class baseUrl
-{
-    /**
-     * @var Restler
-     */
-    private $r;
-    /**
-     * @var ServerRequestInterface
-     */
-    private $s;
-
-    public function __construct(Restler $r, ServerRequestInterface $s)
-    {
-        $this->r = $r;
-        $this->s = $s;
-    }
-
-    function get()
-    {
-        return [
-            'BASE_URL' => (string)$this->r->baseUrl,
-            'BASE_PATH' => (string)$this->r->baseUrl->getPath(),
-            'SCRIPT_NAME' => $this->s->getServerParams()['SCRIPT_NAME'],
-            'REQUEST_URI' => $this->s->getServerParams()['REQUEST_URI'],
-            'PATH' => $this->r->path,
-            'FULL_URL' => (string)$this->s->getUri(),
-            'FULL_PATH' => (string)$this->s->getUri()->getPath(),
-        ];
-    }
-}
 
 try {
     //
@@ -235,8 +80,8 @@ try {
     //
     Router::mapApiClasses(
         [
-            //clean up db for tests
-            '__cleanup_db' => ResetForTests::class,
+            //utility api for running behat tests
+            '-storage-' => Storage::class,
             //examples
             'examples/_001_helloworld/say' => Say::class,
             'examples/_002_minimal/math' => Math::class,
@@ -266,7 +111,6 @@ try {
             'tests/storage/session' => SessionTest::class,
             //Explorer
             'explorer' => Explorer::class,
-            'baseurl' => BaseUrl::class,
         ]
     );
     $cache = new HumanReadable();
