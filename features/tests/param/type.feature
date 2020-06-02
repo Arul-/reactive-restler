@@ -195,7 +195,7 @@ Feature: Type Attribute
     When I request "tests/param/type/timestamp"
     Then the response status code should be 200
     And the response is JSON
-    And the type is "string"
+    And the type is "int"
     And the response equals <expected>
 
     Examples:
@@ -213,7 +213,7 @@ Feature: Type Attribute
     When I request "tests/param/type/timestamp"
     Then the response status code should be 200
     And the response is JSON
-    And the type is "string"
+    And the type is "int"
     And the response equals <expected>
 
     Examples:

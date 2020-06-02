@@ -576,6 +576,7 @@ class RestContext implements Context
                     return;
                 }
             case 'int':
+            case 'integer':
                 if (is_int($data)) {
                     return;
                 }
@@ -584,7 +585,7 @@ class RestContext implements Context
                     return;
                 }
             case 'array' :
-                if (is_array($data)) {
+                if (is_array($data) || is_object($data)) {
                     return;
                 }
             case 'object' :
@@ -711,10 +712,22 @@ class RestContext implements Context
                 $p = $p->$property;
             }
             if ($p != $propertyValue) {
-                throw new \Exception('Property value mismatch! (given: "'
-                    . $propertyValue . '", match: "'
-                    . $p . "\")\n\n"
-                    . $this->echoLastResponse());
+                if (is_bool($p)) {
+                    $p = $p ? 'true' : 'false';
+                } else {
+                    $p = '"' . $p . '"';
+                }
+                if (is_bool($propertyValue)) {
+                    $propertyValue = $propertyValue ? 'true' : 'false';
+                } else {
+                    $propertyValue = '"' . $propertyValue . '"';
+                }
+                throw new \Exception(
+                    'Property value mismatch! (given: '
+                    . $propertyValue . ', expected: '
+                    . $p . ")\n\n"
+                    . $this->echoLastResponse()
+                );
             }
         } else {
             throw new Exception("Response was not JSON\n\n"

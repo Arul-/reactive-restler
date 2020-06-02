@@ -139,8 +139,8 @@ Feature: Validation
     When I request "tests/param/validation/pattern"
     Then the response status code should be 400
     And the response is JSON
-    And the type is "string"
-    And the response contains "Strong password with at least one alpha and one numeric character is required"
+    And the type is "object"
+    And the "error.message" property equals "Strong password with at least one alpha and one numeric character is required"
 
   Examples:
     | password   |
