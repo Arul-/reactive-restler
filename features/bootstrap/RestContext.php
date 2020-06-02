@@ -773,8 +773,8 @@ class RestContext implements Context
                 throw new \Exception(
                     sprintf(
                         "Property value mismatch! (given: %s, expected: %s)\n\n%s",
-                        $this->typeFormat($propertyValue),
                         $this->typeFormat($p),
+                        $this->typeFormat($propertyValue),
                         $this->echoLastResponse()
                     )
                 );
