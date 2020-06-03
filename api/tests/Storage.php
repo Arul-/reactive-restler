@@ -119,22 +119,22 @@ class Storage
     private function deleteCache()
     {
         //template
-        exec('rm -rf ' . Defaults::$cacheDirectory . '/blade');
-        exec('rm -rf ' . Defaults::$cacheDirectory . '/twig');
-        exec('rm -rf ' . Defaults::$cacheDirectory . '/php');
+        @exec('rm -rf ' . Defaults::$cacheDirectory . '/blade');
+        @exec('rm -rf ' . Defaults::$cacheDirectory . '/twig');
+        @exec('rm -rf ' . Defaults::$cacheDirectory . '/php');
         //rate limit and other cache
-        exec('rm ' . Defaults::$cacheDirectory . '/*.php');
+        @exec('rm ' . Defaults::$cacheDirectory . '/*.php');
     }
 
     private function deletePackage()
     {
-        exec('rm -rf ' . Defaults::$cacheDirectory . '/package');
+        @exec('rm -rf ' . Defaults::$cacheDirectory . '/package');
     }
 
     private function deleteSessions()
     {
         $path = Defaults::$cacheDirectory . '/sessions';
-        exec('rm -rf ' . $path);
+        @exec('rm -rf ' . $path);
         mkdir($path, 0777, true);
     }
 
