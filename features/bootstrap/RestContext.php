@@ -349,14 +349,19 @@ class RestContext implements Context
      * @When /^I request "([^"]*)"$/
      * @When /^request "([^"]*)"$/
      */
-    public function iRequest($pageUrl)
+    public function iRequest($path)
     {
         try {
+            $parts = explode(' ', $path);
+            if(2 === count($parts)){
+                $this->_restObjectMethod = $parts[0];
+                $path = $parts[1];
+            }
             $this->_startTime = microtime(true);
-            $this->_requestUrl = $this->baseUrl . $pageUrl;
-            $url = false !== strpos($pageUrl, '{')
-                ? (new UriTemplate)->expand($pageUrl, (array)$this->_restObject)
-                : $pageUrl;
+            $this->_requestUrl = $this->baseUrl . $path;
+            $url = false !== strpos($path, '{')
+                ? (new UriTemplate)->expand($path, (array)$this->_restObject)
+                : $path;
 
             $method = strtoupper($this->_restObjectMethod);
 
