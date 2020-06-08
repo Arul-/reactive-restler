@@ -94,9 +94,9 @@ class Route extends ValueObject
     /**
      * @var array
      */
-    private $arguments = [];
+    protected $arguments = [];
 
-    private function __construct()
+    protected function __construct()
     {
     }
 
