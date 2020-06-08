@@ -90,6 +90,8 @@ class Route extends ValueObject
     public $responseFormatMap = [];
 
     public $authClasses = [];
+    public $preAuthFilterClasses = [];
+    public $postAuthFilterClasses = [];
 
     /**
      * @var array
