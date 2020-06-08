@@ -227,8 +227,8 @@ class Router
     public static function _setMediaTypes(
         string $interface,
         array $types,
-        &$formatMap,
-        &$mediaTypes
+        array &$formatMap,
+        array &$mediaTypes
     ): void {
         if (!count($types)) {
             return;
@@ -783,9 +783,9 @@ class Router
      * @throws HttpException
      */
     public static function find(
-        $path,
-        $httpMethod,
-        $version = 1,
+        string $path,
+        string $httpMethod,
+        int $version = 1,
         array $data = []
     ) {
         if (empty(static::$routes)) {
@@ -899,8 +899,10 @@ class Router
 
     /**
      * @access private
+     * @param string|null $type
+     * @return string
      */
-    public static function typeChar($type = null)
+    public static function typeChar(string $type = null)
     {
         if (!$type) {
             return 's';
@@ -914,10 +916,10 @@ class Router
     }
 
     protected static function addPath(
-        $path,
+        string $path,
         array $call,
-        $httpMethod = 'GET',
-        $version = 1
+        string $httpMethod = 'GET',
+        int $version = 1
     ) {
         $call['url'] = preg_replace_callback(
             "/\{\S(\d+)\}/",
@@ -969,7 +971,7 @@ class Router
         callable $maker,
         array $excludedPaths = [],
         array $excludedHttpMethods = [],
-        $version = 1
+        int $version = 1
     ) {
         $map = [];
         $all = self::$routes["v$version"];
@@ -1076,13 +1078,13 @@ class Router
      * Populates the parameter values
      *
      * @param Route $route
-     * @param       $data
+     * @param array $data
      *
      * @return Route
      *
      * @access private
      */
-    protected static function populate(Route $route, $data)
+    protected static function populate(Route $route, array $data)
     {
         if (Defaults::$smartParameterParsing) {
             if (count($route->parameters)) {
@@ -1148,7 +1150,7 @@ class Router
         return true;
     }
 
-    protected static function parseMagic(ReflectionClass $class, $forResponse = true)
+    protected static function parseMagic(ReflectionClass $class, bool $forResponse = true)
     {
         if (!$c = CommentParser::parse($class->getDocComment())) {
             return false;
@@ -1180,7 +1182,7 @@ class Router
     protected static function getTypeAndModel(
         ReflectionClass $class,
         array $scope,
-        $prefix = '',
+        string $prefix = '',
         array $rules = []
     ) {
         $className = $class->getName();
@@ -1293,7 +1295,7 @@ class Router
      *
      * @param array $routes
      */
-    public static function fromArray(array $routes)
+    public static function fromArray(array $routes): void
     {
         static::$routes = $routes;
     }
@@ -1303,7 +1305,7 @@ class Router
      *
      * @return array
      */
-    public static function toArray()
+    public static function toArray(): array
     {
         return static::$routes;
     }
