@@ -1,5 +1,8 @@
 # behat.yml
 default:
+  gherkin:
+    filters:
+      tags: "~@cookie&&~@session"
   suites:
     default:
       contexts:
