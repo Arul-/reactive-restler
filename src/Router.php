@@ -907,24 +907,6 @@ class Router
         int $version = 1
     ) {
         $call['url'] = $path;
-        //covert the readable route to easy to compute typed route
-        $call['path'] = preg_replace_callback(
-            '/{[^}]+}|:[^\/]+/',
-            function ($matches) use ($call) {
-                $match = trim($matches[0], '{}:');
-                $index = $call['arguments'][$match];
-                return '{' .
-                    static::typeChar(
-                        isset(
-                            $copy['metadata']['param'][$index]['type']
-                        )
-                            ? $copy['metadata']['param'][$index]['type']
-                            : null
-                    )
-                    . $index . '}';
-            },
-            $path
-        );
         $route = Route::parse($call);
         $route->httpMethod = $httpMethod;
         static::addRoute($route, $version);

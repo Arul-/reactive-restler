@@ -19,10 +19,13 @@ class Route extends ValueObject
 
     public $httpMethod = 'GET';
     /**
-     * @var string target uri
+     * @var string target uri. human readable, for documentation
      */
     public $url;
 
+    /**
+     * @var string path used for routing
+     */
     public $path;
 
     /**
@@ -98,14 +101,9 @@ class Route extends ValueObject
      */
     protected $arguments = [];
 
-    protected function __construct()
+    public static function make(callable $action, string $url, $httpMethod = 'GET', array $data = [])
     {
-    }
-
-    public static function make(callable $action, string $path, $httpMethod = 'GET', array $data = [])
-    {
-        $url = $path;
-        return static::parse(compact('action', 'path', 'httpMethod', 'url') + $data);
+        return static::parse(compact('action', 'url', 'httpMethod') + $data);
     }
 
     public static function parse(array $call): Route
@@ -215,6 +213,7 @@ class Route extends ValueObject
         } elseif (empty($route->responseFormatMap['default'])) {
             $route->responseFormatMap['default'] = array_values($route->responseFormatMap)[0];
         }
+        //TODO: Use the following to precompute the class properties to be set at runtime
         foreach ($classes as $class => $value) {
             $class = ClassName::resolve($class, $scope);
             $value = $value[CommentParser::$embeddedDataName] ?? [];
@@ -225,6 +224,17 @@ class Route extends ValueObject
         foreach ($params as $param) {
             $route->addParameter(Param::parse($param));
         }
+        //compute from the human readable url to machine computable typed route path
+        $route->path = preg_replace_callback(
+            '/{[^}]+}|:[^\/]+/',
+            function ($matches) use ($route) {
+                $match = trim($matches[0], '{}:');
+                $param = $route->parameters[$match];
+                return '{' . Router::typeChar($param->type) . $param->index . '}';
+            },
+            $route->url
+        );
+
         return $route;
     }
 
