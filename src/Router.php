@@ -357,7 +357,7 @@ class Router
                 }
             }
             if (Defaults::$productionMode) {
-                static::handleCache(static::$routes);
+                static::handleCache(true);
             }
         } catch (Throwable $e) {
             throw new Exception(
@@ -1415,21 +1415,19 @@ class Router
         return $imports;
     }
 
-    private static function handleCache(?array $routes = null): bool
+    private static function handleCache(bool $save = false): bool
     {
-        if (!empty(static::$routes) && empty($routes)) {
+        if (!$save && !empty(static::$routes)) {
             return true;
         }
         $cacheClass = ClassName::get(static::$cacheClass ?? CacheInterface::class);
         /** @var CacheInterface $cache */
         $cache = new $cacheClass;
-        if (!$routes) {
-            $routes = $cache->get('routes', false);
-            if (!$routes) {
-                return false;
-            }
-        } else {
-            return $cache->set('routes', static::toArray());
+        if ($save) {
+            return $cache->set('routes', static::$routes);
+        }
+        if (!$routes = $cache->get('routes', false)) {
+            return false;
         }
         static::fromArray($routes);
         return true;
