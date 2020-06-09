@@ -642,6 +642,7 @@ class Router
                             $copy['metadata']['param'][$i][$dataName]['from'] = Param::FROM_BODY;
                         }
                     }
+                    /*
                     $url = preg_replace_callback(
                         '/{[^}]+}|:[^\/]+/',
                         function ($matches) use ($copy) {
@@ -659,6 +660,7 @@ class Router
                         },
                         $url
                     );
+                    */
                     static::addPath($url, $copy, $httpMethod, $version);
                 }
                 //if auto route enabled, do so
@@ -698,6 +700,8 @@ class Router
                     if (!empty($url)) {
                         $url .= '/';
                     }
+                    $url .= '{' . $call['metadata']['param'][$position]['name'] . '}';
+                    /*
                     $url .= '{' .
                         static::typeChar(
                             isset($call['metadata']['param'][$position]['type'])
@@ -705,6 +709,7 @@ class Router
                                 : null
                         )
                         . $position . '}';
+                    */
                     $copy['metadata']['param'][$position][$dataName]['from'] = Param::FROM_PATH;
                     $copy['metadata']['param'][$position][$dataName]['required'] = true;
                     if ($allowAmbiguity || $position == $lastPathParam) {
@@ -929,10 +934,30 @@ class Router
         string $httpMethod = 'GET',
         int $version = 1
     ) {
-        $call['url'] = preg_replace_callback(
-            "/\{\S(\d+)\}/",
+        $call['url'] = $path;
+        /*
+        preg_replace_callback(
+        "/\{\S(\d+)\}/",
+        function ($matches) use ($call) {
+            return '{' . $call['metadata']['param'][$matches[1]]['name'] . '}';
+        },
+        $path
+    ); */
+
+        $path = preg_replace_callback(
+            '/{[^}]+}|:[^\/]+/',
             function ($matches) use ($call) {
-                return '{' . $call['metadata']['param'][$matches[1]]['name'] . '}';
+                $match = trim($matches[0], '{}:');
+                $index = $call['arguments'][$match];
+                return '{' .
+                    static::typeChar(
+                        isset(
+                            $copy['metadata']['param'][$index]['type']
+                        )
+                            ? $copy['metadata']['param'][$index]['type']
+                            : null
+                    )
+                    . $index . '}';
             },
             $path
         );
