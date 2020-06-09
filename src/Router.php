@@ -1349,6 +1349,7 @@ class Router
 
     public static function scope(ReflectionClass $class)
     {
+        //TODO: fix parsing *use* statements with curly braces
         $file = $class->getFileName();
         if ($scope = static::$parsedScopes[$file] ?? false) {
             return $scope;
