@@ -19,6 +19,7 @@ use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\MediaTypes\Json;
 use Luracast\Restler\Utils\{ClassName, CommentParser, Text, Type};
 use Psr\Http\Message\ServerRequestInterface;
+use Psr\SimpleCache\CacheInterface;
 use ReflectionClass;
 use ReflectionMethod;
 use ReflectionProperty;
@@ -111,6 +112,14 @@ class Router
     private static $parsedScopes = [];
 
     private static $basePath;
+
+    public static $productionMode = false;
+    private static $cached = null;
+    private static $commands = [];
+    /**
+     * @var null|string class to use for caching purpose, uses Defaults when null
+     */
+    public static $cacheClass = null;
 
     public static function getBasePath()
     {
@@ -285,6 +294,9 @@ class Router
      */
     public static function mapApiClasses(array $map): void
     {
+        if (static::$productionMode && static::handleCache()) {
+            return;
+        }
         $versionMap = [];
         $maxVersionMethod = 'getMaximumSupportedVersion';
         try {
@@ -347,6 +359,9 @@ class Router
                     static::addAPIForVersion($class, $path, $version);
                 }
             }
+            if (static::$productionMode) {
+                static::handleCache(static::$routes);
+            }
         } catch (Throwable $e) {
             throw new Exception(
                 "mapAPIClasses failed. " . $e->getMessage(),
@@ -354,16 +369,6 @@ class Router
                 $e
             );
         }
-    }
-
-    /**
-     * @param string $className
-     * @param string|null $resourcePath
-     * @throws Exception
-     */
-    public static function addAPI(string $className, ?string $resourcePath = null)
-    {
-        static::mapApiClasses(is_null($resourcePath) ? [$className] : [$resourcePath => $className]);
     }
 
     /**
@@ -721,8 +726,11 @@ class Router
      * @param string $className of the authentication class
      * @throws Exception
      */
-    public static function addAuthenticator(string $className)
+    public static function addAuthenticator(string $className): void
     {
+        if (static::$productionMode && static::handleCache()) {
+            return;
+        }
         if (!empty(static::$routes)) {
             throw new Exception('Router::addAuthenticator should be called before adding api classes.');
         }
@@ -754,8 +762,11 @@ class Router
      * @param string ...$classNames
      * @throws Exception
      */
-    public static function setFilters(string ...$classNames)
+    public static function setFilters(string ...$classNames): void
     {
+        if (static::$productionMode && static::handleCache()) {
+            return;
+        }
         static::$postAuthFilterClasses = [];
         static::$preAuthFilterClasses = [];
         foreach ($classNames as $className) {
@@ -924,13 +935,26 @@ class Router
         $call['url'] = preg_replace_callback(
             "/\{\S(\d+)\}/",
             function ($matches) use ($call) {
-                return '{' .
-                    $call['metadata']['param'][$matches[1]]['name'] . '}';
+                return '{' . $call['metadata']['param'][$matches[1]]['name'] . '}';
             },
             $path
         );
         $route = Route::parse($call);
+        $route->path = $path;
         $route->httpMethod = $httpMethod;
+        static::addRoute($route, $version);
+    }
+
+    public static function addRoute(Route $route, int $version = 1)
+    {
+        foreach (static::$preAuthFilterClasses as $preFilter) {
+            if (Type::implements($preFilter, SelectivePathsInterface::class)) {
+                if (!$preFilter::isPathSelected($route->path)) {
+                    continue;
+                }
+            }
+            $route->preAuthFilterClasses[] = $preFilter;
+        }
         foreach (static::$authClasses as $authClass) {
             if (Type::implements($authClass, SelectivePathsInterface::class)) {
                 if (!$authClass::isPathSelected($route->path)) {
@@ -939,22 +963,28 @@ class Router
             }
             $route->authClasses[] = $authClass;
         }
+        foreach (static::$postAuthFilterClasses as $postFilter) {
+            if (Type::implements($postFilter, SelectivePathsInterface::class)) {
+                if (!$postFilter::isPathSelected($route->path)) {
+                    continue;
+                }
+            }
+            $route->postAuthFilterClasses[] = $postFilter;
+        }
         //check for wildcard routes
-        if (substr($path, -1, 1) == '*') {
-            $path = rtrim($path, '/*');
-            static::$routes["v$version"]['*'][$path][$httpMethod] = $route;
+        if (substr($route->path, -1, 1) == '*') {
+            $path = rtrim($route->path, '/*');
+            static::$routes["v$version"]['*'][$path][$route->httpMethod] = $route;
         } else {
-            static::$routes["v$version"][$path][$httpMethod] = $route;
-            //create an alias with index if the method name is index
-            if ($call['methodName'] == 'index') {
-                static::$routes["v$version"][ltrim("$path/index", '/')][$httpMethod] = $route;
+            static::$routes["v$version"][$route->path][$route->httpMethod] = $route;
+            //create an alias with index if the base name is index
+            if (
+                (is_array($route->action) && 'index' == $route->action[1]) ||
+                (is_string($route->action) && 'index' == $route->action)
+            ) {
+                static::$routes["v$version"]["$route->path/index"][$route->httpMethod] = $route;
             }
         }
-    }
-
-    public static function addRoute(Route $route, int $version = 1)
-    {
-        static::$routes["v$version"][$route->path][$route->httpMethod] = $route;
     }
 
     /**
@@ -1386,5 +1416,25 @@ class Router
         }
         static::$parsedScopes[$file] = $imports;
         return $imports;
+    }
+
+    private static function handleCache(?array $routes = null): bool
+    {
+        if (!empty(static::$routes) && empty($routes)) {
+            return true;
+        }
+        $cacheClass = ClassName::get(static::$cacheClass ?? CacheInterface::class);
+        /** @var CacheInterface $cache */
+        $cache = new $cacheClass;
+        if (!$routes) {
+            $routes = $cache->get('routes', false);
+            if (!$routes) {
+                return false;
+            }
+        } else {
+            return $cache->set('routes', static::toArray());
+        }
+        static::fromArray($routes);
+        return true;
     }
 }
