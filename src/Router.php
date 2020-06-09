@@ -113,9 +113,6 @@ class Router
 
     private static $basePath;
 
-    public static $productionMode = false;
-    private static $cached = null;
-    private static $commands = [];
     /**
      * @var null|string class to use for caching purpose, uses Defaults when null
      */
@@ -294,7 +291,7 @@ class Router
      */
     public static function mapApiClasses(array $map): void
     {
-        if (static::$productionMode && static::handleCache()) {
+        if (Defaults::$productionMode && static::handleCache()) {
             return;
         }
         $versionMap = [];
@@ -359,7 +356,7 @@ class Router
                     static::addAPIForVersion($class, $path, $version);
                 }
             }
-            if (static::$productionMode) {
+            if (Defaults::$productionMode) {
                 static::handleCache(static::$routes);
             }
         } catch (Throwable $e) {
@@ -728,7 +725,7 @@ class Router
      */
     public static function addAuthenticator(string $className): void
     {
-        if (static::$productionMode && static::handleCache()) {
+        if (Defaults::$productionMode && static::handleCache()) {
             return;
         }
         if (!empty(static::$routes)) {
@@ -764,7 +761,7 @@ class Router
      */
     public static function setFilters(string ...$classNames): void
     {
-        if (static::$productionMode && static::handleCache()) {
+        if (Defaults::$productionMode && static::handleCache()) {
             return;
         }
         static::$postAuthFilterClasses = [];
