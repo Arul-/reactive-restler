@@ -3,6 +3,7 @@
 namespace Luracast\Restler;
 
 
+use ErrorException;
 use Exception;
 use Luracast\Restler\Contracts\{AccessControlInterface,
     AuthenticationInterface,
@@ -318,7 +319,7 @@ class Router
                 if (!class_exists($className)) {
                     $nextClass = ClassName::build($info['name'], $info['namespace'], $currentVersion, !$found);
                     if (!class_exists($nextClass)) {
-                        throw new \ErrorException("Class '$className' not found");
+                        throw new ErrorException("Class '$className' not found");
                     }
                     $className = $nextClass;
                 }
@@ -561,7 +562,7 @@ class Router
                 if ($m['name'] == Defaults::$fullRequestDataName) {
                     $from = Param::FROM_BODY;
                     if (!isset($m['type'])) {
-                        $type = $m['type'] = 'array';
+                        $m['type'] = 'array';
                     }
                 } elseif (isset($p['from'])) {
                     $from = $p['from'];
@@ -570,7 +571,7 @@ class Router
                     ) {
                         $from = Param::FROM_BODY;
                         if (!isset($type)) {
-                            $type = $m['type'] = 'array';
+                            $m['type'] = 'array';
                         }
                     } elseif ($m['required'] && in_array($m['name'], static::$prefixingParameterNames)) {
                         $from = Param::FROM_PATH;
@@ -580,7 +581,7 @@ class Router
                 }
                 $p['from'] = $from;
                 if (!isset($m['type'])) {
-                    $type = $m['type'] = static::type($defaults[$position]);
+                    $m['type'] = static::type($defaults[$position]);
                 }
 
                 if ($allowAmbiguity || Param::FROM_PATH == $from) {
@@ -642,25 +643,6 @@ class Router
                             $copy['metadata']['param'][$i][$dataName]['from'] = Param::FROM_BODY;
                         }
                     }
-                    /*
-                    $url = preg_replace_callback(
-                        '/{[^}]+}|:[^\/]+/',
-                        function ($matches) use ($copy) {
-                            $match = trim($matches[0], '{}:');
-                            $index = $copy['arguments'][$match];
-                            return '{' .
-                                static::typeChar(
-                                    isset(
-                                        $copy['metadata']['param'][$index]['type']
-                                    )
-                                        ? $copy['metadata']['param'][$index]['type']
-                                        : null
-                                )
-                                . $index . '}';
-                        },
-                        $url
-                    );
-                    */
                     static::addPath($url, $copy, $httpMethod, $version);
                 }
                 //if auto route enabled, do so
@@ -701,15 +683,6 @@ class Router
                         $url .= '/';
                     }
                     $url .= '{' . $call['metadata']['param'][$position]['name'] . '}';
-                    /*
-                    $url .= '{' .
-                        static::typeChar(
-                            isset($call['metadata']['param'][$position]['type'])
-                                ? $call['metadata']['param'][$position]['type']
-                                : null
-                        )
-                        . $position . '}';
-                    */
                     $copy['metadata']['param'][$position][$dataName]['from'] = Param::FROM_PATH;
                     $copy['metadata']['param'][$position][$dataName]['required'] = true;
                     if ($allowAmbiguity || $position == $lastPathParam) {
@@ -871,7 +844,6 @@ class Router
                         unset($matches[$k]);
                         continue;
                     }
-                    //TODO: optimize this
                     $index = intval(substr($k, 1));
 
                     /** @var Param $param */
@@ -935,16 +907,8 @@ class Router
         int $version = 1
     ) {
         $call['url'] = $path;
-        /*
-        preg_replace_callback(
-        "/\{\S(\d+)\}/",
-        function ($matches) use ($call) {
-            return '{' . $call['metadata']['param'][$matches[1]]['name'] . '}';
-        },
-        $path
-    ); */
-
-        $path = preg_replace_callback(
+        //covert the readable route to easy to compute typed route
+        $call['path'] = preg_replace_callback(
             '/{[^}]+}|:[^\/]+/',
             function ($matches) use ($call) {
                 $match = trim($matches[0], '{}:');
@@ -962,7 +926,6 @@ class Router
             $path
         );
         $route = Route::parse($call);
-        $route->path = $path;
         $route->httpMethod = $httpMethod;
         static::addRoute($route, $version);
     }
@@ -1016,7 +979,6 @@ class Router
      * @param array $excludedHttpMethods
      * @param int $version
      * @return array
-     * @throws HttpException
      */
     public static function findAll(
         ServerRequestInterface $request,
@@ -1093,8 +1055,8 @@ class Router
         $ignore = new ResponseHeaders();
         $authenticated = false;
         foreach ($route->authClasses as $class) {
-            if ($accessControl = Type::implements($class, AccessControlInterface::class) ||
-                !array_key_exists($class, $verifiedClasses)) {
+            $accessControl = Type::implements($class, AccessControlInterface::class);
+            if ($accessControl || !array_key_exists($class, $verifiedClasses)) {
                 try {
                     $req = $request->withMethod($route->httpMethod)
                         ->withUri($request->getUri()->withPath($route->path));
@@ -1202,6 +1164,12 @@ class Router
         return true;
     }
 
+    /**
+     * @param ReflectionClass $class
+     * @param bool $forResponse
+     * @return array|bool|mixed
+     * @throws Exception
+     */
     protected static function parseMagic(ReflectionClass $class, bool $forResponse = true)
     {
         if (!$c = CommentParser::parse($class->getDocComment())) {
