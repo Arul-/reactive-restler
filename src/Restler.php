@@ -103,8 +103,8 @@ class Restler extends Core
             }
         }
         if ($this->_responseCode == 401 && !isset($this->_responseHeaders['WWW-Authenticate'])) {
-            $authString = count($this->router->authClasses)
-                ? $this->router->authClasses[0]::getWWWAuthenticateString()
+            $authString = count($this->_route->authClasses)
+                ? $this->_route->authClasses[0]::getWWWAuthenticateString()
                 : 'Unknown';
             $this->_responseHeaders['WWW-Authenticate'] = $authString;
         }

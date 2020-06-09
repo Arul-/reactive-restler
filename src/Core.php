@@ -498,11 +498,7 @@ abstract class Core
     protected function filter(ServerRequestInterface $request, bool $postAuth = false)
     {
         $name = $postAuth ? 'postAuthFilterClasses' : 'preAuthFilterClasses';
-        foreach ($this->router->{$name} as $i => $filerClass) {
-            //exclude invalid paths
-            if (!static::isPathSelected($filerClass, $this->_path)) {
-                continue;
-            }
+        foreach ($this->_route->{$name} as $i => $filerClass) {
             /** @var FilterInterface $filter */
             $filter = $this->make($filerClass, null);
             if (!$filter->_isAllowed($request, $this->_responseHeaders)) {
@@ -522,30 +518,25 @@ abstract class Core
         $o = &$this->_route;
         $accessLevel = max($this->defaults->apiAccessLevel, $o->access);
         if ($accessLevel) {
-            if (!count($this->router->authClasses) && $accessLevel > 1) {
+            //when none of the auth classes apply and it's not a hybrid api
+            if (!count($o->authClasses) && $accessLevel > 1) {
                 throw new HttpException(
                     403,
-                    'at least one Authentication Class is required'
+                    'at least one Authentication Class should apply to path `' . $this->_path . '`'
                 );
             }
             $unauthorized = false;
-            $authClasses = $this->router->authClasses;
-            foreach ($authClasses as $i => $authClass) {
+            foreach ($o->authClasses as $i => $authClass) {
                 try {
-                    //exclude invalid paths
-                    if (!static::isPathSelected($authClass, $this->_path)) {
-                        array_splice($this->router->authClasses, $i, 1);
-                        continue;
-                    }
                     /** @var AuthenticationInterface $auth */
                     $auth = $this->make($authClass, null);
                     if (!$auth->_isAllowed($request, $this->_responseHeaders)) {
-                        throw new HttpException(401);
+                        throw new HttpException(401, null, ['from' => $authClass]);
                     }
                     $unauthorized = false;
                     //make this auth class as the first one
-                    array_splice($this->router->authClasses, $i, 1);
-                    array_unshift($this->router->authClasses, $authClass);
+                    array_splice($o->authClasses, $i, 1);
+                    array_unshift($o->authClasses, $authClass);
                     break;
                 } catch (InvalidAuthCredentials $e) { //provided credentials does not authenticate
                     $this->_authenticated = false;
@@ -555,13 +546,6 @@ abstract class Core
                         $unauthorized = $e;
                     }
                 }
-            }
-            //when none of the auth classes apply and it's not a hybrid api
-            if (!count($this->router->authClasses) && $accessLevel > 1) {
-                throw new HttpException(
-                    403,
-                    'at least one Authentication Class should apply to path `' . $this->_path . '`'
-                );
             }
             $this->_authVerified = true;
             if ($unauthorized) {
