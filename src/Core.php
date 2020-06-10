@@ -150,13 +150,12 @@ abstract class Core
         }
 
         $instance = $this->container->make($className);
-        if ($route && property_exists($route, 'set')) {
+        $shortName = ClassName::short($fullName);
+        if ($route && !empty($properties = $route->set[$fullName] ?? $route->set[$shortName] ?? [])) {
             $objectVars = get_object_vars($instance);
             $classVars = get_class_vars($className);
             $staticVars = array_diff_key($classVars, $objectVars);
             $instanceVars = array_intersect_key($classVars, $objectVars);
-            $shortName = ClassName::short($fullName);
-            $properties = $route->set[$fullName] ?? $route->set[$shortName] ?? [];
             $name = lcfirst($shortName);
             if (!isset($this->config[$name])) {
                 $this->config[$name] = new StaticProperties($fullName, array_keys($staticVars));

@@ -95,6 +95,11 @@ class Route extends ValueObject
     public $authClasses = [];
     public $preAuthFilterClasses = [];
     public $postAuthFilterClasses = [];
+    /**
+     * @var array [class => [property => $value ...]...]
+     * values to set on initialization of classes
+     */
+    public $set = [];
 
     /**
      * @var array
@@ -213,7 +218,6 @@ class Route extends ValueObject
         } elseif (empty($route->responseFormatMap['default'])) {
             $route->responseFormatMap['default'] = array_values($route->responseFormatMap)[0];
         }
-        //TODO: Use the following to precompute the class properties to be set at runtime
         foreach ($classes as $class => $value) {
             $class = ClassName::resolve($class, $scope);
             $value = $value[CommentParser::$embeddedDataName] ?? [];
