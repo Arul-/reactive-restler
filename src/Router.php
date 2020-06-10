@@ -1331,64 +1331,21 @@ class Router
 
     public static function scope(ReflectionClass $class)
     {
-        //TODO: fix parsing *use* statements with curly braces
-        $file = $class->getFileName();
-        if ($scope = static::$parsedScopes[$file] ?? false) {
-            return $scope;
-        }
-        $namespace = $class->getNamespaceName();
-        $imports = [
-            '*' => empty($namespace) ? '' : $namespace . '\\',
-        ];
-        $tokens = token_get_all(file_get_contents($file));
-        $namespace = '';
-        $alias = '';
-        $reading = false;
-        $last = 0;
-        foreach ($tokens as $token) {
-            if (is_string($token)) {
-                if ($reading && ',' == $token) {
-                    //===== STOP =====//
-                    $reading = false;
-                    if (!empty($namespace)) {
-                        $imports[$alias] = trim($namespace, '\\');
-                    }
-                    //===== START =====//
-                    $reading = true;
-                    $namespace = '';
-                    $alias = '';
-                } else {
-                    //===== STOP =====//
-                    $reading = false;
-                    if (!empty($namespace)) {
-                        $imports[$alias] = trim($namespace, '\\');
-                    }
-                }
-            } elseif (T_USE == $token[0]) {
-                //===== START =====//
-                $reading = true;
-                $namespace = '';
-                $alias = '';
-            } elseif ($reading) {
-                //echo token_name($token[0]) . ' ' . $token[1] . PHP_EOL;
-                switch ($token[0]) {
-                    case T_WHITESPACE:
-                        continue 2;
-                    case T_STRING:
-                        $alias = $token[1];
-                        if (T_AS == $last) {
-                            break;
-                        }
-                    //don't break;
-                    case T_NS_SEPARATOR:
-                        $namespace .= $token[1];
-                        break;
-                }
-                $last = $token[0];
+        if (!isset(self::$parsedScopes[$name = $class->getName()])) {
+            if ($class->isInternal()) {
+                return ['*' => ''];
             }
+            $code = file_get_contents($class->getFileName());
+            $namespace = $class->getNamespaceName();
+            self::$parsedScopes[$name] = [
+                    '*' => empty($namespace) ? '' : $namespace . '\\',
+                ] +
+                self::parseUseStatements(
+                    $code,
+                    $name
+                );
         }
-        static::$parsedScopes[$file] = $imports;
-        return $imports;
+        return self::$parsedScopes[$name];
     }
 
     private static function handleCache(bool $save = false): bool
@@ -1407,5 +1364,99 @@ class Router
         }
         static::fromArray($routes);
         return true;
+    }
+
+
+    /**
+     * Parses PHP code.
+     *
+     * @param string $code
+     * @param string|null $forClass
+     * @return array of [class => [alias => class, ...]]
+     */
+    protected static function parseUseStatements(string $code, ?string $forClass = null)
+    {
+        $tokens = token_get_all($code);
+        $namespace = $class = $classLevel = $level = null;
+        $res = $uses = [];
+        while ($token = current($tokens)) {
+            next($tokens);
+            switch (is_array($token) ? $token[0] : $token) {
+                case T_NAMESPACE:
+                    $namespace = ltrim(self::fetch($tokens, [T_STRING, T_NS_SEPARATOR]) . '\\', '\\');
+                    $uses = [];
+                    break;
+
+                case T_CLASS:
+                case T_INTERFACE:
+                case T_TRAIT:
+                    if ($name = self::fetch($tokens, T_STRING)) {
+                        $class = $namespace . $name;
+                        $classLevel = $level + 1;
+                        $res[$class] = $uses;
+                        if ($class === $forClass) {
+                            return $res[$class];
+                        }
+                    }
+                    break;
+
+                case T_USE:
+                    while (!$class && ($name = self::fetch($tokens, [T_STRING, T_NS_SEPARATOR]))) {
+                        $name = ltrim($name, '\\');
+                        if (self::fetch($tokens, '{')) {
+                            while ($suffix = self::fetch($tokens, [T_STRING, T_NS_SEPARATOR])) {
+                                if (self::fetch($tokens, T_AS)) {
+                                    $uses[self::fetch($tokens, T_STRING)] = $name . $suffix;
+                                } else {
+                                    $tmp = explode('\\', $suffix);
+                                    $uses[end($tmp)] = $name . $suffix;
+                                }
+                                if (!self::fetch($tokens, ',')) {
+                                    break;
+                                }
+                            }
+                        } elseif (self::fetch($tokens, T_AS)) {
+                            $uses[self::fetch($tokens, T_STRING)] = $name;
+                        } else {
+                            $tmp = explode('\\', $name);
+                            $uses[end($tmp)] = $name;
+                        }
+                        if (!self::fetch($tokens, ',')) {
+                            break;
+                        }
+                    }
+                    break;
+
+                case T_CURLY_OPEN:
+                case T_DOLLAR_OPEN_CURLY_BRACES:
+                case '{':
+                    $level++;
+                    break;
+
+                case '}':
+                    if ($level === $classLevel) {
+                        $class = $classLevel = null;
+                    }
+                    $level--;
+            }
+        }
+
+        return $forClass ? $res[$forClass] : $res;
+    }
+
+
+    private static function fetch(&$tokens, $take)
+    {
+        $res = null;
+        while ($token = current($tokens)) {
+            list($token, $s) = is_array($token) ? $token : [$token, $token];
+            if (in_array($token, (array)$take, true)) {
+                $res .= $s;
+            } elseif (!in_array($token, [T_DOC_COMMENT, T_WHITESPACE, T_COMMENT], true)) {
+                break;
+            }
+            next($tokens);
+        }
+        return $res;
     }
 }
