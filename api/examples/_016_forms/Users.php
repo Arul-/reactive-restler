@@ -50,7 +50,6 @@ class Users
             'sandstone',
             'simplex',
             'slate',
-            'solar',
             'spacelab',
             'superhero',
             'united',
