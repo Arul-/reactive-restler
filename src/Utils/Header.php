@@ -1,4 +1,6 @@
-<?php namespace Luracast\Restler\Utils;
+<?php
+
+namespace Luracast\Restler\Utils;
 
 
 class Header
@@ -17,17 +19,24 @@ class Header
      */
     public static function sortByPriority($accept)
     {
-        $acceptList = array();
+        $acceptList = [];
         $accepts = explode(',', strtolower($accept));
         if (!is_array($accepts)) {
-            $accepts = array($accepts);
+            $accepts = [$accepts];
         }
         foreach ($accepts as $pos => $accept) {
-            $parts = explode(';q=', trim($accept));
-            $type = strtok(array_shift($parts), ';');
-            $quality = count($parts) ?
-                floatval(array_shift($parts)) :
-                (1000 - $pos) / 1000;
+            $parts = explode(';', $accept);
+            $type = trim(array_shift($parts));
+            $parameters = [];
+            foreach ($parts as $part) {
+                $part = explode('=', $part);
+                if (2 !== count($part)) {
+                    continue;
+                }
+                $key = strtolower(trim($part[0]));
+                $parameters[$key] = trim($part[1], ' "');
+            }
+            $quality = (float)($parameters['q'] ?? (1000 - $pos) / 1000);
             $acceptList[$type] = $quality;
         }
         arsort($acceptList);

@@ -925,15 +925,15 @@ class RestContext implements Context
     }
 
     /**
-     * @Then the response redirects to :arg1
+     * @Then the response redirects to :expectedPath
      */
     public function theResponseRedirectsTo($expectedPath)
     {
-        $redirects = $this->_response->getHeader(RedirectMiddleware::HISTORY_HEADER);
+        $redirects = $this->_response->getHeaderLine(RedirectMiddleware::HISTORY_HEADER);
         if (empty($redirects)) {
             throw new Exception("Response was not Redirected\n");
         }
-        $actual = ltrim(str_replace($this->baseUrl, '', $redirects[0]), '/');
+        $actual = ltrim(str_replace($this->baseUrl, '', $redirects), '/');
         if ($expectedPath !== $actual) {
             throw new Exception("Redirect did not go to '$expectedPath'\n(actual: '$actual')\n");
         }
