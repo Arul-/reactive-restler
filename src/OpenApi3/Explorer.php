@@ -137,7 +137,9 @@ class Explorer implements ProvidesMultiVersionApiInterface
     private function info(int $version)
     {
         $info = array_filter(call_user_func(static::$infoClass . '::format', static::OPEN_API_SPEC_VERSION));
-        $info['description'] .= '<p>Api Documentation - [ReDoc](' .dirname($this->request->getUri()).'/documentation.html)</p>';
+        $info['description'] .= '<p>Api Documentation - [ReDoc](' . dirname(
+                $this->request->getUri()
+            ) . '/documentation.html)</p>';
         $info['version'] = (string)$version;
         return $info;
     }
@@ -317,6 +319,10 @@ class Explorer implements ProvidesMultiVersionApiInterface
         $p->description = $description;
         $p->in = $param->from; //$info->from == 'body' ? 'form' : $info->from;
         $p->required = $param->required;
+
+        if (isset($param->rules['example'])) {
+            $p->examples = [1 => ['value' => $param->rules['example']]];
+        }
 
         //$p->allowMultiple = false;
 
