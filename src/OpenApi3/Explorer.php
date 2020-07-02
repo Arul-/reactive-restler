@@ -166,7 +166,10 @@ class Explorer implements ProvidesMultiVersionApiInterface
      */
     private function paths(int $version = 1)
     {
-        $selfExclude = empty($this->route->path) ? ['', '{s0}', 'docs'] : [$this->route->path];
+        $self = explode('/', $this->route->path);
+        array_pop($self);
+        $self = implode('/', $self);
+        $selfExclude = empty($self) ? ['', '{s0}', 'docs'] : [$self];
         $map = Router::findAll(
             $this->request,
             [$this->restler, 'make'],
