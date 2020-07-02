@@ -99,6 +99,12 @@ class Html extends MediaType implements ResponseMediaTypeInterface
         StaticProperties $html,
         StaticProperties $defaults
     ) {
+        if (!static::$cacheDirectory) {
+            static::$cacheDirectory = Defaults::$cacheDirectory;
+        }
+        if (!static::$viewPath) {
+            static::$viewPath = dirname(dirname(__DIR__)) . DIRECTORY_SEPARATOR . 'views';
+        }
         //============ SESSION MANAGEMENT =============//
         if ($html->handleSession) {
             $key = 'flash';
@@ -106,9 +112,6 @@ class Html extends MediaType implements ResponseMediaTypeInterface
                 $html->data['flash'] = $session->flash($key);
                 $session->unsetFlash($key);
             }
-        }
-        if (!$html->viewPath) {
-            $html->viewPath = dirname(dirname(__DIR__)) . DIRECTORY_SEPARATOR . 'views';
         }
         $this->restler = $restler;
         $this->session = $session;
@@ -205,9 +208,6 @@ class Html extends MediaType implements ResponseMediaTypeInterface
             } else {
                 $this->html['template'] = $template = substr($this->html['view'], $i + 1);
                 $this->html['view'] = substr($this->html['view'], 0, $i);
-            }
-            if (!$this->html['cacheDirectory']) {
-                $this->html['cacheDirectory'] = $this->defaults['cacheDirectory'] . DIRECTORY_SEPARATOR . $template;
             }
             if (!file_exists($this->html['cacheDirectory'])) {
                 if (!mkdir($this->html['cacheDirectory'], 0770, true)) {
@@ -341,19 +341,16 @@ class Html extends MediaType implements ResponseMediaTypeInterface
      * @param bool $debug
      * @return false|string
      * @throws Throwable
-     * @throws \Twig_Error_Loader
-     * @throws \Twig_Error_Runtime
-     * @throws \Twig_Error_Syntax
      */
     public function twig(ArrayObject $data, $debug = true)
     {
-        $loader = new FilesystemLoader(static::$viewPath);
+        $loader = new FilesystemLoader($this->html->viewPath);
         $twig = new Environment(
             $loader, array(
-            'cache' => static::$cacheDirectory ?? false,
-            'debug' => $debug,
-            'use_strict_variables' => $debug,
-        )
+                       'cache' => static::$cacheDirectory ?? false,
+                       'debug' => $debug,
+                       'use_strict_variables' => $debug,
+                   )
         );
         if ($debug) {
             $twig->addExtension(new DebugExtension());
