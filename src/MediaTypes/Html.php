@@ -26,11 +26,21 @@ use Luracast\Restler\StaticProperties;
 use Luracast\Restler\UI\Forms;
 use Luracast\Restler\UI\Nav;
 use Throwable;
+use Twig\Environment;
+use Twig\Extension\DebugExtension;
+use Twig\Loader\FilesystemLoader;
+use Twig\TwigFunction;
 
 class Html extends MediaType implements ResponseMediaTypeInterface
 {
     const MIME = 'text/html';
     const EXTENSION = 'html';
+
+    const DEPENDENCIES = [
+        'blade' => ['Illuminate\View\View', 'illuminate/view:^8 || ^7'],
+        'twig' => ['Twig\Environment', 'twig/twig:^3'],
+        'mustache' => ['Mustache_Engine', 'mustache/mustache:^2"'],
+    ];
 
     public static $view;
     public static $errorView = 'debug.php';
@@ -208,6 +218,16 @@ class Html extends MediaType implements ResponseMediaTypeInterface
                 }
             }
             if (method_exists($class = get_called_class(), $template)) {
+                if (isset(self::DEPENDENCIES[$template])) {
+                    [$className, $package] = self::DEPENDENCIES[$template];
+                    if (!class_exists($className, true)) {
+                        throw new HttpException(
+                            500,
+                            get_called_class() . ' has external dependency. Please run `composer require ' .
+                            $package . '` from the project root. Read https://getcomposer.org for more info'
+                        );
+                    }
+                }
                 return call_user_func("$class::$template", $data, $humanReadable);
             }
             throw new HttpException(500, "Unsupported template system `$template`");
@@ -327,33 +347,33 @@ class Html extends MediaType implements ResponseMediaTypeInterface
      */
     public function twig(ArrayObject $data, $debug = true)
     {
-        $loader = new \Twig_Loader_Filesystem($this->html->viewPath);
-        $twig = new \Twig_Environment(
+        $loader = new FilesystemLoader(static::$viewPath);
+        $twig = new Environment(
             $loader, array(
-                       'cache' => $this->html->cacheDirectory,
-                       'debug' => $debug,
-                       'use_strict_variables' => $debug,
-                   )
+            'cache' => static::$cacheDirectory ?? false,
+            'debug' => $debug,
+            'use_strict_variables' => $debug,
+        )
         );
         if ($debug) {
-            $twig->addExtension(new \Twig_Extension_Debug());
+            $twig->addExtension(new DebugExtension());
         }
 
         $twig->addFunction(
-            new \Twig_SimpleFunction(
+            new TwigFunction(
                 'form',
                 'Luracast\Restler\UI\Forms::get',
                 array('is_safe' => array('html'))
             )
         );
         $twig->addFunction(
-            new \Twig_SimpleFunction(
+            new TwigFunction(
                 'form_key',
                 'Luracast\Restler\UI\Forms::key'
             )
         );
         $twig->addFunction(
-            new \Twig_SimpleFunction(
+            new TwigFunction(
                 'nav',
                 'Luracast\Restler\UI\Nav::get'
             )
@@ -365,7 +385,7 @@ class Html extends MediaType implements ResponseMediaTypeInterface
                     isset($this->html->data[$name]) &&
                     is_callable($this->html->data[$name])
                 ) {
-                    return new \Twig_SimpleFunction(
+                    return new TwigFunction(
                         $name,
                         $this->html->data[$name]
                     );
@@ -373,7 +393,7 @@ class Html extends MediaType implements ResponseMediaTypeInterface
                 return false;
             }
         );
-        $template = $twig->loadTemplate($this->getViewFile());
+        $template = $twig->load($this->getViewFile());
         $data = $data->getArrayCopy() ?? [];
         return $template->render($data) ?? '';
     }
