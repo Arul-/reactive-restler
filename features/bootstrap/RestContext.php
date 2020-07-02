@@ -10,10 +10,10 @@ use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Middleware;
 use GuzzleHttp\RedirectMiddleware;
-use GuzzleHttp\UriTemplate;
 use Luracast\Restler\Utils\Text;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
+use Rize\UriTemplate\UriTemplate;
 
 /**
  * Rest context.
@@ -353,7 +353,7 @@ class RestContext implements Context
     {
         try {
             $parts = explode(' ', $path);
-            if(2 === count($parts)){
+            if (2 === count($parts)) {
                 $this->_restObjectMethod = $parts[0];
                 $path = $parts[1];
             }
