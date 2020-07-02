@@ -11,3 +11,4 @@ php-parse
 psysh
 behat-guzzle-cookie-data.json
 /build/
+/enc/
