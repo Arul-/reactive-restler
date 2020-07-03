@@ -949,7 +949,7 @@ class Router
                 (is_array($route->action) && 'index' == $route->action[1]) ||
                 (is_string($route->action) && 'index' == $route->action)
             ) {
-                static::$routes["v$version"]["$route->path/index"][$route->httpMethod] = $route;
+                static::$routes["v$version"][ltrim("$route->path/index", '/')][$route->httpMethod] = $route;
             }
         }
     }
