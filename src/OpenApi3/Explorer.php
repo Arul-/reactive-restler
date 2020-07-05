@@ -2,12 +2,14 @@
 
 namespace Luracast\Restler\OpenApi3;
 
-use Luracast\Restler\Contracts\{DownloadableFileMediaTypeInterface,
+use Luracast\Restler\Contracts\{AuthenticationInterface,
+    DownloadableFileMediaTypeInterface,
     ExplorableAuthenticationInterface,
     ProvidesMultiVersionApiInterface
 };
 use Luracast\Restler\Core;
 use Luracast\Restler\Data\{Param, Route, Type};
+use Luracast\Restler\Defaults;
 use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\Exceptions\Redirect;
 use Luracast\Restler\Router;
@@ -69,6 +71,11 @@ class Explorer implements ProvidesMultiVersionApiInterface
      */
     private $route;
 
+    /**
+     * @var AuthenticationInterface[]
+     */
+    private $authClasses = [];
+
     public function __construct(ServerRequestInterface $request, Route $route, Core $restler)
     {
         $this->request = $request;
@@ -87,11 +94,8 @@ class Explorer implements ProvidesMultiVersionApiInterface
      */
     public function index()
     {
-        $base = '/' . $this->route->url;
         $path = $this->request->getUri()->getPath();
-        //return compact('base','path')+['redirect'=>Text::endsWith($path, $base)];
-        if ($path != '/' && Text::endsWith($path, $base)) {
-            //if not add and redirect
+        if (!empty($path) && !Text::endsWith($path, '/')) {
             throw new Redirect((string)$this->request->getUri() . '/');
         }
         return $this->get('index.html');
@@ -102,7 +106,7 @@ class Explorer implements ProvidesMultiVersionApiInterface
      * @return ResponseInterface
      * @throws HttpException
      *
-     * @url GET /{filename}
+     * @url GET {filename}
      */
     public function get($filename)
     {
@@ -118,7 +122,6 @@ class Explorer implements ProvidesMultiVersionApiInterface
 
     /**
      * @return stdClass
-     * @throws HttpException
      */
     public function docs()
     {
@@ -126,10 +129,27 @@ class Explorer implements ProvidesMultiVersionApiInterface
         $s->openapi = static::OPEN_API_SPEC_VERSION;
 
         $r = $this->restler;
-        $version = (string)$r->requestedApiVersion;
-        $s->info = $this->info($version);
-        $s->servers = $this->servers();
-        $s->paths = $this->paths($version);
+        if (Defaults::$useUrlBasedVersioning) {
+            $s->info = $this->info(Router::$maximumVersion);
+            $s->servers = $this->servers();
+            $s->paths = [];
+            for (
+                $version = max(Router::$minimumVersion, $r->requestedApiVersion);
+                $version <= Router::$maximumVersion;
+                $version++
+            ) {
+                $paths = $this->paths($version);
+                foreach ($paths as $path => $value) {
+                    $s->paths[1 === $version ? $path : "/v$version{$path}"] = $value;
+                }
+            }
+        } else {
+            $version = $r->requestedApiVersion;
+            $s->info = $this->info($version);
+            $s->servers = $this->servers();
+            $s->paths = $this->paths($version);
+        }
+
         $s->components = $this->components();
         return $s;
     }
@@ -162,7 +182,6 @@ class Explorer implements ProvidesMultiVersionApiInterface
     /**
      * @param int $version
      * @return array
-     * @throws HttpException
      */
     private function paths(int $version = 1)
     {
@@ -179,13 +198,11 @@ class Explorer implements ProvidesMultiVersionApiInterface
         );
         $paths = [];
         foreach ($map as $path => $data) {
-            $access = $data[0]['access'];
-            if (static::$hideProtected && !$access) {
-                continue;
-            }
             foreach ($data as $item) {
+                /** @var Route $route */
                 $route = $item['route'];
                 $access = $item['access'];
+                $this->authClasses = array_merge($this->authClasses, $route->authClasses);
                 if (static::$hideProtected && !$access) {
                     continue;
                 }
@@ -193,6 +210,7 @@ class Explorer implements ProvidesMultiVersionApiInterface
                 $paths["/$url"][strtolower($route->httpMethod)] = $this->operation($route);
             }
         }
+        $this->authClasses = array_unique($this->authClasses);
         return $paths;
     }
 
@@ -345,7 +363,7 @@ class Explorer implements ProvidesMultiVersionApiInterface
             $contentType = $param->contentType;
             if ($param->children) {
                 $contentType = ClassName::short($contentType);
-                $model = $this->model($contentType, $param->children);
+                $this->model($contentType, $param->children);
                 $object->items = (object)[
                     '$ref' => "#/components/schemas/$contentType",
                 ];
@@ -528,7 +546,7 @@ class Explorer implements ProvidesMultiVersionApiInterface
     private function securitySchemes()
     {
         $schemes = [];
-        foreach (Router::$authClasses as $class) {
+        foreach ($this->authClasses as $class) {
             if (TypeUtil::matches($class, ExplorableAuthenticationInterface::class)) {
                 $schemes[ClassName::short($class)] = (object)$class::scheme()->toArray(
                     $this->restler->baseUrl->getPath() . '/'
