@@ -57,7 +57,8 @@ class ClassName
         } else {
             $version = 1;
         }
-        $namespace = $count > 2 ? strrev($parts[2]) : '';
+        $expected = $version_found ? 2 : 1;
+        $namespace = $count > $expected ? strrev($parts[$expected]) : '';
         $result = compact('name', 'namespace', 'version', 'version_found');
         if (is_null($option)) {
             return $result;
