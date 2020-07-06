@@ -207,23 +207,23 @@ class Explorer implements ProvidesMultiVersionApiInterface
                     continue;
                 }
                 $url = $route->url;
-                $paths["/$url"][strtolower($route->httpMethod)] = $this->operation($route);
+                $paths["/$url"][strtolower($route->httpMethod)] = $this->operation($route, $version);
             }
         }
         $this->authClasses = array_unique($this->authClasses);
         return $paths;
     }
 
-    private function operation(Route $route)
+    private function operation(Route $route, int $version)
     {
         $r = new stdClass();
-        $r->operationId = $this->operationId($route);
+        $r->operationId = $this->operationId($route, $version);
         $base = strtok($route->url, '/');
         if (empty($base)) {
             $base = 'root';
         }
         $r->tags = [$base];
-        [$r->parameters, $r->requestBody] = $this->parameters($route);
+        [$r->parameters, $r->requestBody] = $this->parameters($route, $version);
 
         if (is_null($r->requestBody)) {
             unset($r->requestBody);
@@ -242,10 +242,10 @@ class Explorer implements ProvidesMultiVersionApiInterface
         return $r;
     }
 
-    private function operationId(Route $route, bool $asClassName = false)
+    private function operationId(Route $route, int $version, bool $asClassName = false)
     {
         static $hash = [];
-        $id = $route->httpMethod . ' ' . $route->url;
+        $id = sprintf("%s v%d/%s", $route->httpMethod, $version, $route->url);
         if (isset($hash[$id])) {
             return $hash[$id][$asClassName];
         }
@@ -271,7 +271,7 @@ class Explorer implements ProvidesMultiVersionApiInterface
         return $hash[$id][$asClassName];
     }
 
-    private function parameters(Route $route)
+    private function parameters(Route $route, int $version)
     {
         $parameters = $route->filterParams(false);
         $body = $route->filterParams(true);
@@ -289,7 +289,7 @@ class Explorer implements ProvidesMultiVersionApiInterface
                 $requestBody = $this->requestBody($route, $bodyValues[0]);
             } else {
                 //lets group all body parameters under a generated model name
-                $name = $this->modelName($route);
+                $name = $this->modelName($route, $version);
                 $requestBody = $this->requestBody(
                     $route,
                     Param::__set_state(
@@ -485,9 +485,9 @@ class Explorer implements ProvidesMultiVersionApiInterface
         return (object)['$ref' => "#/components/requestBodies/{$param->type}"];
     }
 
-    private function modelName(Route $route)
+    private function modelName(Route $route, int $version)
     {
-        return ucfirst($this->operationId($route, true)) . 'Model';
+        return ucfirst($this->operationId($route, $version, true)) . 'Model';
     }
 
     private function responses(Route $route)
