@@ -3,7 +3,7 @@ namespace v1;
 
 use stdClass;
 
-class BMI
+class BodyMassIndex
 {
     /**
      * Body Mass Index v1

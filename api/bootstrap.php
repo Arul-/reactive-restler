@@ -21,7 +21,7 @@ use Luracast\Restler\UI\Forms;
 use Luracast\Restler\Utils\Text;
 use ratelimited\Authors as RateLimitedAuthors;
 use SomeVendor\v1\BMI as VendorBMI1;
-use v1\BMI as BMI1;
+use v1\BodyMassIndex as BMI1;
 
 define('BASE', dirname(__DIR__));
 include BASE . "/vendor/autoload.php";
@@ -42,6 +42,7 @@ if (!Text::endsWith($_SERVER['SCRIPT_NAME'], 'index.php')) {
 Restler::$middleware[] = new SessionMiddleware();
 
 try {
+    Defaults::$productionMode = false;
     //
     //---------------------------- MEDIA TYPES -----------------------------
     //
@@ -113,9 +114,6 @@ try {
             'explorer' => Explorer::class,
         ]
     );
-    $cache = new HumanReadable();
-    $cache->set('route', Router::toArray());
-    $cache->set('models', Router::$models);
 } catch (Throwable $t) {
     die($t->getMessage());
 }

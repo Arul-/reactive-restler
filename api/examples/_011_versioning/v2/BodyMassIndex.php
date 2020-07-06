@@ -4,7 +4,7 @@ namespace v2;
 use Luracast\Restler\Exceptions\HttpException;
 use stdClass;
 
-class BMI
+class BodyMassIndex
 {
     /**
      * Body Mass Index v2
