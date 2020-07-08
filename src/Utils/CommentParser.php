@@ -52,6 +52,11 @@ class CommentParser
         'properties' => true,
     ];
 
+    public static $typeFixes = [
+        'integer' => 'int',
+        'boolean' => 'bool',
+    ];
+
     /**
      * separator for type definitions
      */
@@ -72,7 +77,7 @@ class CommentParser
      *
      * @var array
      */
-    private $_data = [];
+    private array $_data = [];
 
     /**
      * Parse the comment and extract the data.
@@ -85,7 +90,7 @@ class CommentParser
      * @return array associative array with the extracted values
      * @throws Exception
      */
-    public static function parse($comment, $isPhpDoc = true)
+    public static function parse($comment, bool $isPhpDoc = true): array
     {
         $p = new self();
         if (empty($comment)) {
@@ -110,7 +115,7 @@ class CommentParser
      *
      * @return string comments with out the tags
      */
-    public static function removeCommentTags($comment)
+    public static function removeCommentTags(string $comment): string
     {
         $pattern = '/(^\/\*\*)|(^\s*\**[ \/]?)|\s(?=@)|\s\*\//m';
         return preg_replace($pattern, '', $comment);
@@ -125,7 +130,7 @@ class CommentParser
      * @return array
      * @throws Exception
      */
-    private function extractData($comment)
+    private function extractData(string $comment): array
     {
         //to use @ as part of comment we need to
         $comment = str_replace(
@@ -197,7 +202,7 @@ class CommentParser
             $this->_data[self::$embeddedDataName] = $d2;
         }
         foreach ($params as $key => $line) {
-            list(, $param, $value) = preg_split('/\@|\s/', $line, 3)
+            list(, $param, $value) = preg_split('/@|\s/', $line, 3)
             + ['', '', ''];
             list($value, $embedded) = $this->parseEmbeddedData($value);
             $value = array_filter(preg_split('/\s+/msu', $value), 'strlen');
@@ -213,7 +218,7 @@ class CommentParser
      * @param array $value
      * @param array $embedded
      */
-    private function parseParam($param, array $value, array $embedded)
+    private function parseParam($param, array $value, array $embedded): void
     {
         $data = &$this->_data;
         $allowMultiple = false;
@@ -253,6 +258,7 @@ class CommentParser
             case 'header' :
             case 'link':
             case 'example':
+                /** @noinspection PhpMissingBreakStatementInspection */
             case 'todo':
                 $allowMultiple = true;
             //don't break, continue with code for default:
@@ -263,30 +269,26 @@ class CommentParser
             if (is_string($value)) {
                 $value = ['description' => $value];
             }
+            if (!empty($embedded['type'])) {
+                if ('array' === $value['type'][0]) {
+                    $this->typeFix($embedded['type']);
+                } else {
+                    $embedded['format'] = $embedded['type'][0];
+                    unset($embedded['type']);
+                }
+            }
             $value[self::$embeddedDataName] = $embedded;
         }
         if (empty ($data[$param])) {
-            if ($allowMultiple) {
-                $data[$param] = [
-                    $value,
-                ];
-            } else {
-                $data[$param] = $value;
-            }
+            $data[$param] = $allowMultiple ? [$value] : $value;
         } elseif ($allowMultiple) {
             $data[$param][] = $value;
-        } elseif ($param == 'param') {
-            $arr = [
-                $data[$param],
-                $value,
-            ];
-            $data[$param] = $arr;
         } else {
             if (!is_string($value) && isset($value[self::$embeddedDataName])
                 && isset($data[$param][self::$embeddedDataName])
             ) {
-                $value[self::$embeddedDataName]
-                    += $data[$param][self::$embeddedDataName];
+                $data[$param][self::$embeddedDataName] =
+                    $value[self::$embeddedDataName] + $data[$param][self::$embeddedDataName];
             }
             if (!is_array($data[$param])) {
                 $data[$param] = ['description' => (string)$data[$param]];
@@ -300,12 +302,12 @@ class CommentParser
     /**
      * Parses the inline php doc comments and embedded data.
      *
-     * @param $subject
+     * @param string $subject
      *
      * @return array
      * @throws Exception
      */
-    private function parseEmbeddedData($subject)
+    private function parseEmbeddedData(string $subject): array
     {
         $data = [];
 
@@ -327,7 +329,7 @@ class CommentParser
             } elseif ($matches[1] == 'required') {
                 $matches[2] = explode(static::$arrayDelimiter, $matches[2]);
             } elseif ($matches[1] == 'type') {
-                $matches[2] = explode(self::TYPE_SEPARATOR, $matches[2]);;
+                $matches[2] = explode(self::TYPE_SEPARATOR, $matches[2]);
             }
             $data[$matches[1]] = $matches[2];
         }
@@ -376,7 +378,7 @@ class CommentParser
         return [$subject, $data];
     }
 
-    private function formatThrows(array $value)
+    private function formatThrows(array $value): array
     {
         $code = 500;
         $exception = 'Exception';
@@ -410,7 +412,7 @@ class CommentParser
         return compact('code', 'message', 'exception');
     }
 
-    private function formatClass(array $value)
+    private function formatClass(array $value): array
     {
         $param = array_shift($value);
 
@@ -424,7 +426,7 @@ class CommentParser
         ];
     }
 
-    private function formatAuthor(array $value)
+    private function formatAuthor(array $value): array
     {
         $r = [];
         $email = end($value);
@@ -437,7 +439,7 @@ class CommentParser
         return $r;
     }
 
-    private function formatReturn(array $value)
+    private function formatReturn(array $value): array
     {
         $data = explode(self::TYPE_SEPARATOR, array_shift($value));
         $r = [
@@ -447,7 +449,7 @@ class CommentParser
         return $r;
     }
 
-    private function formatParam(array $value)
+    private function formatParam(array $value): array
     {
         $r = [];
         $data = array_shift($value);
@@ -465,17 +467,11 @@ class CommentParser
                 $r['name'] = substr($data, 1);
             }
         }
-        if (isset($r['type']) && is_string($r['type']) && Text::endsWith($r['type'], '[]')) {
-            $r[static::$embeddedDataName]['type'] = [substr($r['type'], 0, -2)];
-            $r['type'] = ['array'];
-        }
-        if ($value) {
-            $r['description'] = implode(' ', $value);
-        }
+        $this->typeAndDescription($r, $value);
         return $r;
     }
 
-    private function formatVar(array $value)
+    private function formatVar(array $value): array
     {
         $r = [];
         $data = array_shift($value);
@@ -488,13 +484,38 @@ class CommentParser
             $data = explode(self::TYPE_SEPARATOR, $data);
             $r['type'] = $data;
         }
-        if (isset($r['type']) && is_string($r['type']) && Text::endsWith($r['type'], '[]')) {
-            $r[static::$embeddedDataName]['type'] = [substr($r['type'], 0, -2)];
-            $r['type'] = ['array'];
+        $this->typeAndDescription($r, $value);
+        return $r;
+    }
+
+    private function typeFix(array &$type, string $default = 'string')
+    {
+        $length = count($type);
+        $type = str_ireplace(array_keys(static::$typeFixes), array_values(static::$typeFixes), $type);
+        if ($length) {
+            if ('null' === $type[0]) {
+                if (1 == $length) {
+                    array_unshift($type, $default);
+                } else {
+                    array_shift($type);
+                    array_push($type, 'null');
+                }
+            }
+        }
+    }
+
+    private function typeAndDescription(&$r, array $value, string $default = 'array'): void
+    {
+        if (count($r['type'])) {
+            if (Text::endsWith($r['type'][0], '[]')) {
+                $r[static::$embeddedDataName]['type'] = [substr($r['type'][0], 0, -2)];
+                $r['type'][0] = 'array';
+            } else {
+                $this->typeFix($r['type'], $default);
+            }
         }
         if ($value) {
             $r['description'] = implode(' ', $value);
         }
-        return $r;
     }
 }
