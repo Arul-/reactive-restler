@@ -20,7 +20,6 @@ use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\MediaTypes\Json;
 use Luracast\Restler\Utils\{ClassName, CommentParser, Text, Type};
 use Psr\Http\Message\ServerRequestInterface;
-use Psr\SimpleCache\CacheInterface;
 use ReflectionClass;
 use ReflectionMethod;
 use ReflectionProperty;
@@ -32,7 +31,7 @@ class Router
         'id',
     ];
 
-    public static $fieldTypesByName = [
+    public static $formatsByName = [
         'email' => 'email',
         'password' => 'password',
         'phone' => 'tel',
@@ -464,25 +463,20 @@ class Router
                 : ($metadata['return']['type'] ?? false)) {
                 if ('\\void' == $rtype || 'void' == $rtype) {
                     $rtype = $metadata['return']['type'] = 'null';
-                } elseif (Text::endsWith($rtype, '[]')) {
-                    $metadata['return'][$dataName]['type'] = substr($rtype, 0, -2);
-                    $rtype = $metadata['return']['type'] = 'array';
                 }
                 if ($rtype == 'array') {
                     if (
-                        ($rctype = $metadata['return'][$dataName]['type'] ?? false) &&
+                        ($rctype = $metadata['return'][$dataName]['type'][0] ?? false) &&
                         ($qualified = ClassName::resolve($rctype, $scope))
                     ) {
                         list(
                             $metadata['return'][$dataName]['type'], $metadata['return']['children']
-                            ) =
-                            static::getTypeAndModel(new ReflectionClass($qualified), $scope);
+                            ) = static::getTypeAndModel(new ReflectionClass($qualified), $scope);
                     }
                 } elseif ($qualified = ClassName::resolve($rtype, $scope)) {
                     list(
                         $metadata['return']['type'], $metadata['return']['children']
-                        ) =
-                        static::getTypeAndModel(new ReflectionClass($qualified), $scope);
+                        ) = static::getTypeAndModel(new ReflectionClass($qualified), $scope);
                 }
             } else {
                 //assume return type is array
@@ -515,12 +509,12 @@ class Router
                 if (is_null($type) && isset($m['type'])) {
                     $type = $m['type'];
                 }
-                if (Text::endsWith($type, '[]')) {
+                if (is_string($type) && Text::endsWith($type, '[]')) {
                     $p['type'] = substr($type, 0, -2);
                     $type = $metadata['return']['type'] = 'array';
                 }
-                if (isset(static::$fieldTypesByName[$m['name']]) && empty($p['type']) && $type == 'string') {
-                    $p['type'] = static::$fieldTypesByName[$m['name']];
+                if (isset(static::$formatsByName[$m['name']]) && empty($p['type']) && $type == 'string') {
+                    $p['type'] = static::$formatsByName[$m['name']];
                 }
                 $m ['default'] = $defaults [$position];
                 $m ['required'] = !$param->isOptional();
@@ -567,8 +561,7 @@ class Router
                 } elseif (isset($p['from'])) {
                     $from = $p['from'];
                 } else {
-                    if ((isset($type) && Type::isObjectOrArray($type))
-                    ) {
+                    if ((isset($type) && Type::isObjectOrArray($type))) {
                         $from = Param::FROM_BODY;
                         if (!isset($type)) {
                             $m['type'] = 'array';
@@ -682,7 +675,13 @@ class Router
                     if (!empty($url)) {
                         $url .= '/';
                     }
-                    $url .= '{' . $call['metadata']['param'][$position]['name'] . '}';
+                    $url .= '{' .
+                        static::typeChar(
+                            isset($call['metadata']['param'][$position]['type'])
+                                ? $call['metadata']['param'][$position]['type']
+                                : null
+                        )
+                        . $position . '}';
                     $copy['metadata']['param'][$position][$dataName]['from'] = Param::FROM_PATH;
                     $copy['metadata']['param'][$position][$dataName]['required'] = true;
                     if ($allowAmbiguity || $position == $lastPathParam) {
@@ -703,12 +702,6 @@ class Router
      */
     public static function addAuthenticator(string $className): void
     {
-        if (Defaults::$productionMode && static::handleCache()) {
-            return;
-        }
-        if (!empty(static::$routes)) {
-            throw new Exception('Router::addAuthenticator should be called before adding api classes.');
-        }
         $implements = class_implements($className);
         if (!isset($implements[AuthenticationInterface::class])) {
             throw new Exception(
@@ -949,7 +942,7 @@ class Router
                 (is_array($route->action) && 'index' == $route->action[1]) ||
                 (is_string($route->action) && 'index' == $route->action)
             ) {
-                static::$routes["v$version"][ltrim("$route->path/index",'/')][$route->httpMethod] = $route;
+                static::$routes["v$version"][ltrim("$route->path/index", '/')][$route->httpMethod] = $route;
             }
         }
     }
@@ -1181,7 +1174,7 @@ class Router
      * @throws HttpException
      * @access protected
      */
-    protected static function getTypeAndModel(
+    public static function getTypeAndModel(
         ReflectionClass $class,
         array $scope,
         string $prefix = '',
@@ -1202,8 +1195,8 @@ class Router
                     if (!isset($prop[$dataName]['label'])) {
                         $prop[$dataName]['label'] = Text::title($prop['name']);
                     }
-                    if (isset(static::$fieldTypesByName[$prop['name']]) && $prop['type'] == 'string' && !isset($prop[$dataName]['type'])) {
-                        $prop[$dataName]['type'] = static::$fieldTypesByName[$prop['name']];
+                    if (isset(static::$formatsByName[$prop['name']]) && $prop['type'] == 'string' && !isset($prop[$dataName]['type'])) {
+                        $prop[$dataName]['type'] = static::$formatsByName[$prop['name']];
                     }
                     $children[$prop['name']] = $prop;
                 }
@@ -1232,8 +1225,8 @@ class Router
                         }
                     }
                     if (!isset($child['type'])) {
-                        $child['type'] = isset(static::$fieldTypesByName[$child['name']])
-                            ? static::$fieldTypesByName[$child['name']]
+                        $child['type'] = isset(static::$formatsByName[$child['name']])
+                            ? static::$formatsByName[$child['name']]
                             : 'string';
                     }
                     if (!isset($child['label'])) {
@@ -1241,12 +1234,15 @@ class Router
                     }
                     $child[$dataName]['required'] = $child[$dataName]['required'] ?? true;
                     $childScope = static::scope($class);
-                    if ($child['type'] != $className && $qualified = ClassName::resolve($child['type'], $childScope)) {
+                    if ($child['type'] != $className && $qualified = ClassName::resolve(
+                            $child['type'][0],
+                            $childScope
+                        )) {
                         list(
                             $child['type'], $child['children']
                             )
                             = static::getTypeAndModel(new ReflectionClass($qualified), $childScope);
-                    } elseif (($contentType = $child[$dataName]['type'] ?? false) &&
+                    } elseif (($contentType = $child[$dataName]['type'][0] ?? false) &&
                         ($qualified = ClassName::resolve($contentType, $childScope))
                     ) {
                         list(

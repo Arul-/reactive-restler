@@ -1,8 +1,13 @@
-<?php
+<?php namespace Luracast\Restler\Data;
 
-namespace Luracast\Restler\Data;
-
+use Luracast\Restler\Router;
 use Luracast\Restler\Utils\CommentParser;
+use Luracast\Restler\Utils\Text;
+use ReflectionFunction;
+use ReflectionFunctionAbstract;
+use ReflectionMethod;
+use ReflectionParameter;
+use Reflector;
 
 /**
  * ValueObject for validation information. An instance is created and
@@ -20,6 +25,12 @@ class Param extends Type
     const FROM_HEADER = 'header';
 
     /**
+     * Name of the variable being validated
+     *
+     * @var string variable name
+     */
+    public $name;
+    /**
      * @var int
      */
     public $index;
@@ -28,7 +39,7 @@ class Param extends Type
      */
     public $label;
     /**
-     * @var string html element that can be used to represent the parameter for
+     * @var string|null html element that can be used to represent the parameter for
      *      input
      */
     public $field;
@@ -36,12 +47,6 @@ class Param extends Type
      * @var mixed default value for the parameter
      */
     public $default;
-    /**
-     * Name of the variable being validated
-     *
-     * @var string variable name
-     */
-    public $name;
 
     /**
      * @var bool is it required or not
@@ -49,8 +54,8 @@ class Param extends Type
     public $required;
 
     /**
-     * @var string path or query or body or header where this parameter is coming from
-     *      in the http request {@choice path,query,body,header}
+     * @var string body or header or query where this parameter is coming from
+     *      in the http request
      */
     public $from;
 
@@ -73,7 +78,7 @@ class Param extends Type
     /**
      * Given value should match one of the values in the array
      *
-     * @var array of choices to match to
+     * @var string[] of choices to match to
      */
     public $choice;
     /**
@@ -89,7 +94,7 @@ class Param extends Type
      *
      * @var number maximum value
      */
-    public $max;
+    public  $max;
 
     // ==================================================================
     //
@@ -147,9 +152,55 @@ class Param extends Type
      */
     public $apiClassInstance = null;
 
-    public static function filterArray(array $data, bool $onlyNumericKeys)
+    public static function fromMethod(ReflectionMethod $method, ?array $doc = null, array $scope = []): array
     {
-        $r = array();
+        if (empty($scope)) {
+            $scope = Router::scope($method->getDeclaringClass());
+        }
+        return static::fromAbstract($method, $doc, $scope);
+    }
+
+    public static function fromFunction(ReflectionFunction $function, ?array $doc = null, array $scope = []): array
+    {
+        if (empty($scope)) {
+            $scope = Router::scope($function->getClosureScopeClass());
+        }
+        return static::fromAbstract($function, $doc, $scope);
+    }
+
+    private static function fromAbstract(
+        ReflectionFunctionAbstract $function,
+        ?array $doc = null,
+        array $scope = []
+    ): array {
+        if (is_null($doc)) {
+            $doc = CommentParser::parse($function->getDocComment());
+        }
+        $params = [];
+        $position = 0;
+        foreach ($function->getParameters() as $reflectionParameter) {
+            $metadata = $doc['param'][$position] ?? [];
+            /** @var static $param */
+            $param = static::from($reflectionParameter, $metadata);
+            $param->name = $reflectionParameter->getName();
+            $param->index = $position;
+            $param->label = $metadata[CommentParser::$embeddedDataName]['label']
+                ?? Text::title($param->name);
+            $param->default = $reflectionParameter->isDefaultValueAvailable()
+                ? $reflectionParameter->getDefaultValue()
+                : null;
+            $param->format = $metadata[CommentParser::$embeddedDataName]['format']
+                ?? Router::$formatsByName[$param->name]
+                ?? null;
+            $params[] = $param;
+            $position++;
+        }
+        return $params;
+    }
+
+    public static function filterArray(array $data, bool $onlyNumericKeys): array
+    {
+        $r = [];
         foreach ($data as $key => $value) {
             if (is_numeric($key)) {
                 if ($onlyNumericKeys) {
@@ -164,14 +215,12 @@ class Param extends Type
 
     public function content($index = 0): self
     {
-        return Param::parse(
-            [
-                'name' => $this->name . '[' . $index . ']',
-                'type' => $this->contentType,
-                'children' => $this->children,
-                'required' => true,
-            ]
-        );
+        return Param::parse([
+            'name' => $this->name . '[' . $index . ']',
+            'type' => $this->contentType,
+            'children' => $this->properties,
+            'required' => true,
+        ]);
     }
 
     public static function parse(array $metadata): self
@@ -188,14 +237,7 @@ class Param extends Type
         if (is_string($instance->type) && $instance->type == 'integer') {
             $instance->type = 'int';
         }
-        if (is_array($instance->children)) {
-            foreach ($instance->children as $key => $child) {
-                if (is_array($child)) {
-                    $instance->children[$key] = static::parse($child + ['from' => $instance->from]);
-                }
-            }
-        }
-        $instance->updateFlags();
+        $instance->scalar = \Luracast\Restler\Utils\Type::isPrimitive($instance->type);
         return $instance;
     }
 
