@@ -115,9 +115,20 @@ class Route extends ValueObject
         $route->summary = $meta['description'] ?? '';
         $route->description = $meta['longDescription'] ?? '';
         $route->action = [$method->class, $method->getName()];
+        if ($method->isProtected()) {
+            $route->access = self::ACCESS_PROTECTED_METHOD;
+        } elseif (isset($metadata['access'])) {
+            if ($meta['access'] == 'protected') {
+                $route->access = self::ACCESS_PROTECTED_BY_COMMENT;
+            } elseif ($meta['access'] == 'hybrid') {
+                $route->access = self::ACCESS_HYBRID;
+            }
+        } elseif (isset($metadata['protected'])) {
+            $route->access = self::ACCESS_PROTECTED_BY_COMMENT;
+        }
         $route->return = Returns::fromReturnType(
             $method->hasReturnType() ? $method->getReturnType() : null,
-            $meta['return'] ?? ['type' => 'array'],
+            $meta['return'] ?? ['type' => ['array']],
             $scope
         );
         $route->parameters = Param::fromMethod($method, $meta, $scope);
@@ -202,6 +213,7 @@ class Route extends ValueObject
                 $match = trim($matches[0], '{}:');
                 $param = $instance->parameters[$match];
                 $param->from = Param::FROM_BODY;
+                $param->required = true;
                 $pathParams[$match] = $param;
                 return '{' . Router::typeChar($param->type) . $param->index . '}';
             },
@@ -221,6 +233,7 @@ class Route extends ValueObject
                 $param->from = Param::FROM_QUERY;
             }
         }
+        return $instance;
     }
 
     public static function make(callable $action, string $url, $httpMethod = 'GET', array $data = [])
