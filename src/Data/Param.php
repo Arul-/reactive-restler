@@ -208,7 +208,7 @@ class Param extends Type
 
             $params[] = static::fromParameter($reflectionParameter, $doc, $scope);
         }
-        return $params;
+        return array_column($params, null, 'name');
     }
 
     public static function filterArray(array $data, bool $onlyNumericKeys): array
