@@ -439,50 +439,10 @@ class Router
             if ('private' == ($metadata['access'] ?? false)) {
                 continue;
             }
-            $parameters = $method->getParameters();
-            $position = 0;
-            $pathParams = [];
-            $allowAmbiguity
-                = (isset($metadata['smart-auto-routing'])
-                    && $metadata['smart-auto-routing'] != 'true')
+
+            $route = Route::fromMethod($method, $metadata, $scope);
+            $allowAmbiguity = (isset($metadata['smart-auto-routing']) && $metadata['smart-auto-routing'] != 'true')
                 || !Defaults::$smartAutoRouting;
-            if (isset($classMetadata['description'])) {
-                $metadata['classDescription'] = $classMetadata['description'];
-            }
-            if (isset($classMetadata['classLongDescription'])) {
-                $metadata['classLongDescription']
-                    = $classMetadata['longDescription'];
-            }
-            if (!isset($metadata['param'])) {
-                $metadata['param'] = [];
-            }
-            $paramMetadata = array_column($metadata['param'], null, 'name');
-            $metadata['param'] = [];
-            $route = new Route();
-            $route->action = [$className, $method->getName()];
-            $route->return = Returns::fromReturnType(
-                $method->hasReturnType() ? $method->getReturnType() : null,
-                $metadata['return'] ?? [],
-                $scope
-            );
-            foreach ($parameters as $p) {
-                $param = Param::fromParameter($p, $paramMetadata, $scope);
-                if ($allowAmbiguity || Param::FROM_PATH == $param->from) {
-                    $pathParams [] = $position;
-                }
-                $route->addParameter($param);
-            }
-            if ($method->isProtected()) {
-                $route->access = 3;
-            } elseif (isset($metadata['access'])) {
-                if ($metadata['access'] == 'protected') {
-                    $route->access = 2;
-                } elseif ($metadata['access'] == 'hybrid') {
-                    $route->access = 1;
-                }
-            } elseif (isset($metadata['protected'])) {
-                $route->access = 2;
-            }
 
             // if manual route
             if (preg_match_all(
@@ -494,21 +454,7 @@ class Router
                 foreach ($matches as $match) {
                     $httpMethod = $match[1];
                     $url = rtrim($resourcePath . $match[2], '/');
-                    $copy = clone $route;
-                    $copy->url = $url;
-                    $copy->httpMethod = $httpMethod;
-                    /** @var Param $p */
-                    foreach ($copy->parameters as $p) {
-                        $inPath = strpos($url, '{' . $p->name . '}') || strpos($url, ':' . $p->name);
-                        if ($inPath) {
-                            $p->from = Param::FROM_PATH;
-                        } elseif ($httpMethod == 'GET' || $httpMethod == 'DELETE') {
-                            $p->from = Param::FROM_QUERY;
-                        } elseif (!$p->from) {
-                            $p->from = Param::FROM_BODY;
-                        }
-                    }
-                    static::addRoute($route, $version);
+                    self::addRoute($route->withLink($url, $httpMethod));
                 }
                 //if auto route enabled, do so
             } elseif (Defaults::$autoRoutingEnabled) {
@@ -523,31 +469,17 @@ class Router
                     $methodUrl = '';
                 }
                 $url = empty($methodUrl) ? rtrim($resourcePath, '/') : $resourcePath . $methodUrl;
-                $route->url = $url;
-                $route->httpMethod = $httpMethod;
-                if ('GET' === $httpMethod || 'DELETE' === $httpMethod) {
-                    foreach ($route->parameters as $p) {
-                        if (Param::FROM_BODY === $p->from)
-                            $p->from = Param::FROM_QUERY;
-                    }
-                }
-                $copy = clone $route;
+                $pathParams = $route->filterParams(true, Param::FROM_PATH);
                 if (empty($pathParams) || $allowAmbiguity) {
-                    static::addRoute($copy, $version);
-                }
-                $lastPathParam = end($pathParams);
-                /** @var Param $p */
-                foreach ($copy->parameters as $p) {
-                    if (Param::FROM_BODY === $p->from) {
-                        $url .= '{' . $p->name . '}';
-                        $p->required = true;
-                        if ($allowAmbiguity || $p->index == $lastPathParam) {
-                            $copy->url = $url;
-                            static::addRoute($copy, $version);
-                            $copy = clone $copy;
+                    self::addRoute($route->withLink($url, $httpMethod));
+                } else {
+                    $lastPathParam = end($pathParams);
+                    foreach ($pathParams as $p) {
+                        $url .= '/{' . $p->name . '}';
+                        if ($allowAmbiguity || $p === $lastPathParam) {
+                            self::addRoute($route->withLink($url, $httpMethod));
                         }
                     }
-
                 }
             }
         }
