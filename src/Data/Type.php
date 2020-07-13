@@ -146,7 +146,8 @@ class Type implements ValueObjectInterface
             method_exists($reflector, 'hasType') && $reflector->hasType()
                 ? $reflector->getType() : null,
             $types,
-            $itemTypes
+            $itemTypes,
+            $scope
         );
         return $instance;
     }
