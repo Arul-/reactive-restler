@@ -3,10 +3,12 @@
 use Luracast\Restler\Router;
 use Luracast\Restler\Utils\CommentParser;
 use Luracast\Restler\Utils\Text;
+use Luracast\Restler\Utils\Type as TypeUtil;
 use ReflectionFunction;
 use ReflectionFunctionAbstract;
 use ReflectionMethod;
 use ReflectionParameter;
+use ReflectionType;
 use Reflector;
 
 /**
@@ -94,7 +96,7 @@ class Param extends Type
      *
      * @var number maximum value
      */
-    public  $max;
+    public $max;
 
     // ==================================================================
     //
@@ -168,32 +170,38 @@ class Param extends Type
         return static::fromAbstract($function, $doc, $scope);
     }
 
+    public static function fromParameter(ReflectionParameter $parameter, ?array $doc, array $scope): self
+    {
+        $position = $parameter->getPosition();
+        $metadata = $doc['param'][$position] ?? [];
+        /** @var static $param */
+        $param = static::from($parameter, $metadata, $scope);
+        $param->name = $parameter->getName();
+        $param->index = $position;
+        $param->label = $metadata[CommentParser::$embeddedDataName]['label']
+            ?? Text::title($param->name);
+        $param->default = $parameter->isDefaultValueAvailable()
+            ? $parameter->getDefaultValue()
+            : null;
+        $param->format = $metadata[CommentParser::$embeddedDataName]['format']
+            ?? Router::$formatsByName[$param->name]
+            ?? null;
+        return $param;
+    }
+
     private static function fromAbstract(
         ReflectionFunctionAbstract $function,
         ?array $doc = null,
         array $scope = []
-    ): array {
+    ): array
+    {
         if (is_null($doc)) {
             $doc = CommentParser::parse($function->getDocComment());
         }
         $params = [];
-        $position = 0;
         foreach ($function->getParameters() as $reflectionParameter) {
-            $metadata = $doc['param'][$position] ?? [];
-            /** @var static $param */
-            $param = static::from($reflectionParameter, $metadata);
-            $param->name = $reflectionParameter->getName();
-            $param->index = $position;
-            $param->label = $metadata[CommentParser::$embeddedDataName]['label']
-                ?? Text::title($param->name);
-            $param->default = $reflectionParameter->isDefaultValueAvailable()
-                ? $reflectionParameter->getDefaultValue()
-                : null;
-            $param->format = $metadata[CommentParser::$embeddedDataName]['format']
-                ?? Router::$formatsByName[$param->name]
-                ?? null;
-            $params[] = $param;
-            $position++;
+
+            $params[] = static::fromParameter($reflectionParameter, $doc, $scope);
         }
         return $params;
     }
@@ -211,6 +219,16 @@ class Param extends Type
             }
         }
         return $r;
+    }
+
+    protected function apply(?ReflectionType $reflectionType, array $types, array $subTypes, array $scope = [])
+    {
+        parent::apply($reflectionType, $types, $subTypes, $scope);
+        if ($this->scalar) {
+            $this->from = $this->required ? self::FROM_PATH : self::FROM_QUERY;
+        } else {
+            $this->from = self::FROM_BODY;
+        }
     }
 
     public function content($index = 0): self
@@ -237,7 +255,7 @@ class Param extends Type
         if (is_string($instance->type) && $instance->type == 'integer') {
             $instance->type = 'int';
         }
-        $instance->scalar = \Luracast\Restler\Utils\Type::isPrimitive($instance->type);
+        $instance->scalar = TypeUtil::isPrimitive($instance->type);
         return $instance;
     }
 

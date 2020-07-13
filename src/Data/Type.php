@@ -6,10 +6,10 @@ namespace Luracast\Restler\Data;
 
 use Luracast\Restler\Contracts\ValueObjectInterface;
 use Luracast\Restler\Router;
+use Luracast\Restler\Utils\ClassName;
 use Luracast\Restler\Utils\CommentParser;
 use Luracast\Restler\Utils\Type as TypeUtil;
 use ReflectionClass;
-use ReflectionParameter;
 use ReflectionProperty;
 use ReflectionType;
 use Reflector;
@@ -50,7 +50,7 @@ class Type implements ValueObjectInterface
     /**
      * @var array|null of children to be validated. used only for non scalar type
      */
-    public  $properties = null;
+    public $properties = null;
 
     /**
      * @var string
@@ -100,12 +100,14 @@ class Type implements ValueObjectInterface
         return $instance;
     }
 
-    protected function apply(?ReflectionType $reflectionType, array $types, array $subTypes)
+    protected function apply(?ReflectionType $reflectionType, array $types, array $subTypes, array $scope = [])
     {
         $name = $types[0];
         $n = false;
+        $reflected = false;
         if ($reflectionType && ($n = $reflectionType->getName()) && $n !== 'Generator') {
             $name = $n;
+            $reflected = true;
         }
         $this->nullable = in_array('null', $types);
         if ('array' == $name) {
@@ -122,14 +124,19 @@ class Type implements ValueObjectInterface
                 $this->scalar = TypeUtil::isScalar($types[0]);
             }
         }
+        if (!$this->scalar && !$reflected && $qualified = ClassName::resolve($this->type, $scope)) {
+            [$this->type, $this->properties,] = Router::getTypeAndModel(new ReflectionClass($qualified), $scope);
+        }
+
     }
 
     /**
-     * @param ReflectionProperty|ReflectionParameter $reflector
+     * @param Reflector|null $reflector
      * @param array $metadata
+     * @param array $scope
      * @return static
      */
-    public static function from(?Reflector $reflector, array $metadata = [])
+    public static function from(?Reflector $reflector, array $metadata = [], array $scope = [])
     {
         $instance = new static();
         $types = $metadata['type'] ?? ['array'];
@@ -144,28 +151,22 @@ class Type implements ValueObjectInterface
         return $instance;
     }
 
-    public static function fromProperty(?ReflectionProperty $property, ?array $doc = null)
+    public static function fromProperty(?ReflectionProperty $property, ?array $doc = null, array $scope = [])
     {
-        $instance = new static();
         if ($doc) {
             $var = $doc;
         } else {
             try {
-                $var = ['type' => ['string']];
-                $var = CommentParser::parse($property->getDocComment() ?? '')['var'] ?? $var;
-            } catch (\Exception $e) {
+                $var = CommentParser::parse($property->getDocComment() ?? '')['var']
+                    ?? ['type' => ['string']];
+            } catch (Exception $e) {
                 //ignore
             }
         }
-        return static::from($property, $var);
+        return static::from($property, $var, $scope);
     }
 
-    public static function fromClass(
-        ReflectionClass $reflectionClass,
-        string $prefix = '',
-        ?array $doc = null,
-        array $scope = []
-    )
+    public static function fromClass(ReflectionClass $reflectionClass, string $prefix = '', ?array $doc = null, array $scope = [])
     {
         if (is_null($doc)) {
             $doc = CommentParser::parse($reflectionClass->getDocComment());
@@ -173,10 +174,9 @@ class Type implements ValueObjectInterface
         if (empty($scope)) {
             $scope = Router::scope($reflectionClass);
         }
-        $instance = static::from($reflectionClass, $doc);
-        [$name, $children, $reference] = Router::getTypeAndModel($reflectionClass, $scope, $prefix, $doc);
+        $instance = static::from($reflectionClass, $doc, $scope);
+        [, $children,] = Router::getTypeAndModel($reflectionClass, $scope, $prefix, $doc);
         $instance->children = $children;
-        $instance->reference = $reference;
         return $instance;
     }
 

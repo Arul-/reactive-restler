@@ -12,9 +12,9 @@ use Luracast\Restler\Contracts\{AccessControlInterface,
     RequestMediaTypeInterface,
     ResponseMediaTypeInterface,
     SelectivePathsInterface,
-    UsesAuthenticationInterface
-};
+    UsesAuthenticationInterface};
 use Luracast\Restler\Data\Param;
+use Luracast\Restler\Data\Returns;
 use Luracast\Restler\Data\Route;
 use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\MediaTypes\Json;
@@ -235,7 +235,8 @@ class Router
         array $types,
         array &$formatMap,
         array &$mediaTypes
-    ): void {
+    ): void
+    {
         if (!count($types)) {
             return;
         }
@@ -427,8 +428,7 @@ class Router
                 } catch (Exception $e) {
                     throw new HttpException(
                         500,
-                        "Error while parsing comments of `{$className}::{$method->getName()}` method. " . $e->getMessage(
-                        )
+                        "Error while parsing comments of `{$className}::{$method->getName()}` method. " . $e->getMessage()
                     );
                 }
             } else {
@@ -439,9 +439,7 @@ class Router
             if ('private' == ($metadata['access'] ?? false)) {
                 continue;
             }
-            $arguments = [];
-            $defaults = [];
-            $params = $method->getParameters();
+            $parameters = $method->getParameters();
             $position = 0;
             $pathParams = [];
             $allowAmbiguity
@@ -458,195 +456,64 @@ class Router
             if (!isset($metadata['param'])) {
                 $metadata['param'] = [];
             }
-            if ($rtype = $method->hasReturnType()
-                ? '\\' . $method->getReturnType()->getName()
-                : ($metadata['return']['type'] ?? false)) {
-                if ('\\void' == $rtype || 'void' == $rtype) {
-                    $rtype = $metadata['return']['type'] = 'null';
-                }
-                if ($rtype == 'array') {
-                    if (
-                        ($rctype = $metadata['return'][$dataName]['type'][0] ?? false) &&
-                        ($qualified = ClassName::resolve($rctype, $scope))
-                    ) {
-                        list(
-                            $metadata['return'][$dataName]['type'], $metadata['return']['children']
-                            ) = static::getTypeAndModel(new ReflectionClass($qualified), $scope);
-                    }
-                } elseif ($qualified = ClassName::resolve($rtype, $scope)) {
-                    list(
-                        $metadata['return']['type'], $metadata['return']['children']
-                        ) = static::getTypeAndModel(new ReflectionClass($qualified), $scope);
-                }
-            } else {
-                //assume return type is array
-                $metadata['return']['type'] = 'array';
-            }
             $paramMetadata = array_column($metadata['param'], null, 'name');
             $metadata['param'] = [];
-            foreach ($params as $param) {
-                $name = $param->getName();
-                $children = [];
-                $type = $param->isArray()
-                    ? 'array'
-                    : ($param->getClass() ??
-                        ($param->hasType()
-                            ? $param->getType()->getName()
-                            : null
-                        ));
-                $arguments[$name] = $position;
-                $defaults[$position] = $param->isDefaultValueAvailable() ? $param->getDefaultValue() : null;
-                $metadata['param'][$position] = $paramMetadata[$name] ?? [];
-                $m = &$metadata['param'][$position];
-                $m ['name'] = $name;
-                if (!isset($m[$dataName])) {
-                    $m[$dataName] = [];
-                }
-                $p = &$m[$dataName];
-                if (empty($m['label'])) {
-                    $m['label'] = Text::title($m['name']);
-                }
-                if (is_null($type) && isset($m['type'])) {
-                    $type = $m['type'];
-                }
-                if (is_string($type) && Text::endsWith($type, '[]')) {
-                    $p['type'] = substr($type, 0, -2);
-                    $type = $metadata['return']['type'] = 'array';
-                }
-                if (isset(static::$formatsByName[$m['name']]) && empty($p['type']) && $type == 'string') {
-                    $p['type'] = static::$formatsByName[$m['name']];
-                }
-                $m ['default'] = $defaults [$position];
-                $m ['required'] = !$param->isOptional();
-                $contentType = $p['type'] ?? false;
-                if ($type == 'array' && $contentType && $qualified = ClassName::resolve($contentType, $scope)) {
-                    list($p['type'], $children, $modelName) = static::getTypeAndModel(
-                        new ReflectionClass($qualified),
-                        $scope,
-                        $className . Text::title($methodUrl),
-                        $p
-                    );
-                }
-                if ($type instanceof ReflectionClass) {
-                    list($type, $children, $modelName) = static::getTypeAndModel(
-                        $type,
-                        $scope,
-                        $className . Text::title($methodUrl),
-                        $p
-                    );
-                } elseif ($type && is_string($type) && $qualified = ClassName::resolve($type, $scope)) {
-                    list(
-                        $type, $children, $modelName
-                        )
-                        = static::getTypeAndModel(
-                        new ReflectionClass($qualified),
-                        $scope,
-                        $className . Text::title($methodUrl),
-                        $p
-                    );
-                }
-                if (isset($type)) {
-                    $m['type'] = $type;
-                }
-
-                $m['children'] = $children;
-                if (isset($modelName)) {
-                    $m['model'] = $modelName;
-                }
-                if ($m['name'] == Defaults::$fullRequestDataName) {
-                    $from = Param::FROM_BODY;
-                    if (!isset($m['type'])) {
-                        $m['type'] = 'array';
-                    }
-                } elseif (isset($p['from'])) {
-                    $from = $p['from'];
-                } else {
-                    if ((isset($type) && Type::isObjectOrArray($type))) {
-                        $from = Param::FROM_BODY;
-                        if (!isset($type)) {
-                            $m['type'] = 'array';
-                        }
-                    } elseif ($m['required'] && in_array($m['name'], static::$prefixingParameterNames)) {
-                        $from = Param::FROM_PATH;
-                    } else {
-                        $from = Param::FROM_BODY;
-                    }
-                }
-                $p['from'] = $from;
-                if (!isset($m['type'])) {
-                    $m['type'] = static::type($defaults[$position]);
-                }
-
-                if ($allowAmbiguity || Param::FROM_PATH == $from) {
+            $route = new Route();
+            $route->action = [$className, $method->getName()];
+            $route->return = Returns::fromReturnType(
+                $method->hasReturnType() ? $method->getReturnType() : null,
+                $metadata['return'] ?? [],
+                $scope
+            );
+            foreach ($parameters as $p) {
+                $param = Param::fromParameter($p, $paramMetadata, $scope);
+                if ($allowAmbiguity || Param::FROM_PATH == $param->from) {
                     $pathParams [] = $position;
                 }
-                $position++;
+                $route->addParameter($param);
             }
-            $accessLevel = 0;
             if ($method->isProtected()) {
-                $accessLevel = 3;
+                $route->access = 3;
             } elseif (isset($metadata['access'])) {
                 if ($metadata['access'] == 'protected') {
-                    $accessLevel = 2;
+                    $route->access = 2;
                 } elseif ($metadata['access'] == 'hybrid') {
-                    $accessLevel = 1;
+                    $route->access = 1;
                 }
             } elseif (isset($metadata['protected'])) {
-                $accessLevel = 2;
+                $route->access = 2;
             }
-            /*
-            echo " access level $accessLevel for $className::"
-            .$method->getName().$method->isProtected().PHP_EOL;
-            */
 
-            // take note of the order
-            $call = [
-                'url' => null,
-                'className' => $className,
-                'path' => rtrim($resourcePath, '/'),
-                'methodName' => $method->getName(),
-                'arguments' => $arguments,
-                'defaults' => $defaults,
-                'metadata' => $metadata,
-                'accessLevel' => $accessLevel,
-            ];
             // if manual route
             if (preg_match_all(
-                '/@url\s+(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS)'
-                . '[ \t]*\/?(\S*)/s',
+                '/@url\s+(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS)[ \t]*\/?(\S*)/s',
                 $doc,
                 $matches,
                 PREG_SET_ORDER
-            )
-            ) {
+            )) {
                 foreach ($matches as $match) {
                     $httpMethod = $match[1];
                     $url = rtrim($resourcePath . $match[2], '/');
-                    //deep copy the call, as it may change for each @url
-                    $copy = unserialize(serialize($call));
-                    foreach ($copy['metadata']['param'] as $i => $p) {
-                        $inPath =
-                            strpos($url, '{' . $p['name'] . '}') ||
-                            strpos($url, ':' . $p['name']);
+                    $copy = clone $route;
+                    $copy->url = $url;
+                    $copy->httpMethod = $httpMethod;
+                    /** @var Param $p */
+                    foreach ($copy->parameters as $p) {
+                        $inPath = strpos($url, '{' . $p->name . '}') || strpos($url, ':' . $p->name);
                         if ($inPath) {
-                            $copy['metadata']['param'][$i][$dataName]['from'] = Param::FROM_PATH;
+                            $p->from = Param::FROM_PATH;
                         } elseif ($httpMethod == 'GET' || $httpMethod == 'DELETE') {
-                            $copy['metadata']['param'][$i][$dataName]['from'] = Param::FROM_QUERY;
-                        } elseif (empty($p[$dataName]['from']) || Param::FROM_PATH == $p[$dataName]['from']) {
-                            $copy['metadata']['param'][$i][$dataName]['from'] = Param::FROM_BODY;
+                            $p->from = Param::FROM_QUERY;
+                        } elseif (!$p->from) {
+                            $p->from = Param::FROM_BODY;
                         }
                     }
-                    static::addPath($url, $copy, $httpMethod, $version);
+                    static::addRoute($route, $version);
                 }
                 //if auto route enabled, do so
             } elseif (Defaults::$autoRoutingEnabled) {
                 // no configuration found so use convention
-                if (preg_match_all(
-                    '/^(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS)/i',
-                    $methodUrl,
-                    $matches
-                )
-                ) {
+                if (preg_match_all('/^(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS)/i', $methodUrl, $matches)) {
                     $httpMethod = strtoupper($matches[0][0]);
                     $methodUrl = substr($methodUrl, strlen($httpMethod));
                 } else {
@@ -655,39 +522,32 @@ class Router
                 if ($methodUrl == 'index') {
                     $methodUrl = '';
                 }
-                $url = empty($methodUrl) ? rtrim($resourcePath, '/')
-                    : $resourcePath . $methodUrl;
-                for ($position = 0; $position < count($params); $position++) {
-                    $from = $metadata['param'][$position][$dataName]['from'];
-                    if (Param::FROM_BODY == $from && ('GET' == $httpMethod ||
-                            'DELETE' == $httpMethod)
-                    ) {
-                        $call['metadata']['param'][$position][$dataName]['from']
-                            = Param::FROM_QUERY;
+                $url = empty($methodUrl) ? rtrim($resourcePath, '/') : $resourcePath . $methodUrl;
+                $route->url = $url;
+                $route->httpMethod = $httpMethod;
+                if ('GET' === $httpMethod || 'DELETE' === $httpMethod) {
+                    foreach ($route->parameters as $p) {
+                        if (Param::FROM_BODY === $p->from)
+                            $p->from = Param::FROM_QUERY;
                     }
                 }
-                $copy = unserialize(serialize($call));
+                $copy = clone $route;
                 if (empty($pathParams) || $allowAmbiguity) {
-                    static::addPath($url, $call, $httpMethod, $version);
+                    static::addRoute($copy, $version);
                 }
                 $lastPathParam = end($pathParams);
-                foreach ($pathParams as $position) {
-                    if (!empty($url)) {
-                        $url .= '/';
+                /** @var Param $p */
+                foreach ($copy->parameters as $p) {
+                    if (Param::FROM_BODY === $p->from) {
+                        $url .= '{' . $p->name . '}';
+                        $p->required = true;
+                        if ($allowAmbiguity || $p->index == $lastPathParam) {
+                            $copy->url = $url;
+                            static::addRoute($copy, $version);
+                            $copy = clone $copy;
+                        }
                     }
-                    $url .= '{' .
-                        static::typeChar(
-                            isset($call['metadata']['param'][$position]['type'])
-                                ? $call['metadata']['param'][$position]['type']
-                                : null
-                        )
-                        . $position . '}';
-                    $copy['metadata']['param'][$position][$dataName]['from'] = Param::FROM_PATH;
-                    $copy['metadata']['param'][$position][$dataName]['required'] = true;
-                    if ($allowAmbiguity || $position == $lastPathParam) {
-                        static::addPath($url, $copy, $httpMethod, $version);
-                        $copy = unserialize(serialize($copy));
-                    }
+
                 }
             }
         }
@@ -766,7 +626,8 @@ class Router
         string $httpMethod,
         int $version = 1,
         array $data = []
-    ) {
+    )
+    {
         if (empty(static::$routes)) {
             throw new HttpException(
                 500,
@@ -898,7 +759,8 @@ class Router
         array $call,
         string $httpMethod = 'GET',
         int $version = 1
-    ) {
+    )
+    {
         $call['url'] = $path;
         $route = Route::parse($call);
         $route->httpMethod = $httpMethod;
@@ -907,6 +769,18 @@ class Router
 
     public static function addRoute(Route $route, int $version = 1)
     {
+        if (empty($route->path)) {
+            //compute from the human readable url to machine computable typed route path
+            $route->path = preg_replace_callback(
+                '/{[^}]+}|:[^\/]+/',
+                function ($matches) use ($route) {
+                    $match = trim($matches[0], '{}:');
+                    $param = $route->parameters[$match];
+                    return '{' . Router::typeChar($param->type) . $param->index . '}';
+                },
+                $route->url
+            );
+        }
         foreach (static::$preAuthFilterClasses as $preFilter) {
             if (Type::implements($preFilter, SelectivePathsInterface::class)) {
                 if (!$preFilter::isPathSelected($route->path)) {
@@ -961,7 +835,8 @@ class Router
         array $excludedPaths = [],
         array $excludedHttpMethods = [],
         int $version = 1
-    ) {
+    )
+    {
         $map = [];
         $all = self::$routes["v$version"];
         $filter = [];
@@ -1023,7 +898,8 @@ class Router
         ServerRequestInterface $request,
         callable $maker,
         array &$verifiedClasses
-    ) {
+    )
+    {
         if ($route->access <= Route::ACCESS_HYBRID) {
             return true;
         }
@@ -1179,7 +1055,8 @@ class Router
         array $scope,
         string $prefix = '',
         array $rules = []
-    ) {
+    )
+    {
         $className = $class->getName();
         $dataName = CommentParser::$embeddedDataName;
         if (isset(static::$models[$prefix . $className])) {

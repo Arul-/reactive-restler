@@ -5,9 +5,19 @@ namespace Luracast\Restler\Data;
 
 
 use Luracast\Restler\Utils\CommentParser;
+use ReflectionNamedType;
 
 class Returns extends Type
 {
+    public static function fromReturnType(?ReflectionNamedType $type, ?array $metadata, array $scope): self
+    {
+        $instance = new static();
+        $types = $metadata['type'] ?? ['array'];
+        $itemTypes = $metadata[CommentParser::$embeddedDataName]['type'] ?? ['string'];
+        $instance->description = $metadata['description'] ?? '';
+        $instance->apply($type, $types, $itemTypes, $scope);
+        return $instance;
+    }
 
     public static function parse(array $properties): self
     {
