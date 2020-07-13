@@ -37,7 +37,7 @@ class Validator implements ValidationInterface
         }
         if (
             isset(static::$preFilters[$param->type]) &&
-            (is_scalar($input) || !empty($param->children)) &&
+            (is_scalar($input) || !empty($param->properties)) &&
             is_callable($func = static::$preFilters[$param->type])
         ) {
             $input = $func($input);
@@ -88,8 +88,15 @@ class Validator implements ValidationInterface
                 && $param->type != 'float'
                 && $param->type != 'number'
             ) {
-                if (!preg_match($param->pattern, $input)) {
+                if (!$param->multiple && !preg_match($param->pattern, $input)) {
                     throw new HttpException(400, $error);
+                }
+                if ($param->multiple && !empty($input)) {
+                    foreach ($input as $value) {
+                        if (!preg_match($param->pattern, $value)) {
+                            throw new HttpException(400, $error);
+                        }
+                    }
                 }
             }
 
@@ -112,8 +119,8 @@ class Validator implements ValidationInterface
 
             if ('string' == $param->type && method_exists(
                     $class = get_called_class(),
-                    $param->contentType
-                ) && $param->contentType != 'validate') {
+                    $param->format
+                ) && $param->format != 'validate') {
                 if (!$param->required && empty($input)) {
                     //optional parameter with a empty value assume null
                     return null;
@@ -230,7 +237,7 @@ class Validator implements ValidationInterface
                         $input = explode(CommentParser::$arrayDelimiter, $input);
                     }
                     if (is_array($input)) {
-                        $contentType = $param->contentType;
+                        $contentType = $param->contentType ?? '';
                         if ($param->fix) {
                             if ($contentType == 'indexed') {
                                 $input = Param::filterArray($input, Param::KEEP_NUMERIC);
