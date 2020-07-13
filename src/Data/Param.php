@@ -186,6 +186,11 @@ class Param extends Type
         $param->format = $metadata[CommentParser::$embeddedDataName]['format']
             ?? Router::$formatsByName[$param->name]
             ?? null;
+        if ($param->scalar) {
+            $param->from = $param->required && !$param->multiple ? self::FROM_PATH : self::FROM_QUERY;
+        } else {
+            $param->from = self::FROM_BODY;
+        }
         return $param;
     }
 

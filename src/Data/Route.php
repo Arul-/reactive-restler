@@ -106,6 +106,123 @@ class Route extends ValueObject
      */
     protected $arguments = [];
 
+    public static function fromMethod(ReflectionMethod $method, array $meta, array $scope = []): self
+    {
+        if (empty($scope)) {
+            $scope = Router::scope($method->getDeclaringClass());
+        }
+        $route = new self();
+        $route->summary = $meta['description'] ?? '';
+        $route->description = $meta['longDescription'] ?? '';
+        $route->action = [$method->class, $method->getName()];
+        $route->return = Returns::fromReturnType(
+            $method->hasReturnType() ? $method->getReturnType() : null,
+            $meta['return'] ?? ['type' => 'array'],
+            $scope
+        );
+        $route->parameters = Param::fromMethod($method, $meta, $scope);
+        $overrides = [];
+        $resolver = function ($value) use ($scope, &$overrides) {
+            $value = ClassName::resolve(trim($value), $scope);
+            foreach ($overrides as $key => $override) {
+                if (false === array_search($value, $override)) {
+                    throw new HttpException(
+                        500,
+                        "Given media type is not present in overriding list. " .
+                        "Please call `Router::setOverriding{$key}MediaTypes(\"$value\");` before other router methods."
+                    );
+                }
+            }
+            return $value;
+        };
+        if ($formats = $meta['format'] ?? false) {
+            $overrides = [
+                'Request' => Router::$requestMediaTypeOverrides,
+                'Response' => Router::$responseMediaTypeOverrides,
+            ];
+            $formats = explode(',', $formats);
+            $formats = array_map($resolver, $formats);
+            $route->setRequestMediaTypes(...$formats);
+            $route->setResponseMediaTypes(...$formats);
+        }
+        if ($formats = $meta['response-format'] ?? false) {
+            $overrides = [
+                'Response' => Router::$responseMediaTypeOverrides,
+            ];
+            $formats = explode(',', $formats);
+            $formats = array_map($resolver, $formats);
+            $route->setResponseMediaTypes(...$formats);
+        }
+        if ($formats = $meta['request-format'] ?? false) {
+            $overrides = [
+                'Request' => Router::$requestMediaTypeOverrides,
+            ];
+            $formats = explode(',', $formats);
+            $formats = array_map($resolver, $formats);
+            $route->setRequestMediaTypes(...$formats);
+        }
+        if (empty($route->responseMediaTypes)) {
+            $route->responseMediaTypes = Router::$responseMediaTypes;
+        }
+        if (empty($route->requestFormatMap)) {
+            $route->requestFormatMap = Router::$requestFormatMap;
+        } elseif (empty($route->requestFormatMap['default'])) {
+            $route->requestFormatMap['default'] = array_values($route->requestFormatMap)[0];
+        }
+        if (empty($route->requestMediaTypes)) {
+            $route->requestMediaTypes = Router::$requestMediaTypes;
+        }
+        if (empty($route->responseFormatMap)) {
+            $route->responseFormatMap = Router::$responseFormatMap;
+        } elseif (empty($route->responseFormatMap['default'])) {
+            $route->responseFormatMap['default'] = array_values($route->responseFormatMap)[0];
+        }
+        $classes = $meta['class'] ?? [];
+        foreach ($classes as $class => $value) {
+            $class = ClassName::resolve($class, $scope);
+            $value = $value[CommentParser::$embeddedDataName] ?? [];
+            foreach ($value as $k => $v) {
+                $route->set[$class][$k] = $v;
+            }
+        }
+        return $route;
+    }
+
+    public function withLink(string $url, string $httpMethod = 'GET'): self
+    {
+        $instance = clone $this;
+        $instance->url = $url;
+        $instance->httpMethod = $httpMethod;
+        $prevPathParams = $instance->filterParams(true, Param::FROM_PATH);
+        $pathParams = [];
+        //compute from the human readable url to machine computable typed route path
+        $instance->path = preg_replace_callback(
+            '/{[^}]+}|:[^\/]+/',
+            function ($matches) use (&$pathParams, $instance) {
+                $match = trim($matches[0], '{}:');
+                $param = $instance->parameters[$match];
+                $param->from = Param::FROM_BODY;
+                $pathParams[$match] = $param;
+                return '{' . Router::typeChar($param->type) . $param->index . '}';
+            },
+            $instance->url
+        );
+        $noBody = 'GET' === $httpMethod || 'DELETE' === $httpMethod;
+        foreach ($prevPathParams as $name => $param) {
+            //remap unused path parameters to query or body
+            if (!isset($pathParams[$name])) {
+                $param->to = $noBody ? Param::FROM_QUERY : Param::FROM_BODY;
+            }
+        }
+        if ($noBody) {
+            //map body parameters to query
+            $bodyParams = $instance->filterParams(true);
+            foreach ($bodyParams as $name => $param) {
+                $param->from = Param::FROM_QUERY;
+            }
+        }
+    }
+
     public static function make(callable $action, string $url, $httpMethod = 'GET', array $data = [])
     {
         return static::parse(compact('action', 'url', 'httpMethod') + $data);
@@ -342,12 +459,12 @@ class Route extends ValueObject
         }
     }
 
-    public function filterParams(bool $body): array
+    public function filterParams(bool $include, string $from = Param::FROM_BODY): array
     {
         return array_filter(
             $this->parameters,
-            function ($v) use ($body) {
-                return (Param::FROM_BODY === $v->from) === $body;
+            function ($v) use ($from, $include) {
+                return $include ? $from === $v->from : $from !== $v->from;
             }
         );
     }
