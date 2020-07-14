@@ -177,12 +177,10 @@ class Param extends Type
         /** @var static $param */
         $param = static::from($parameter, $metadata, $scope);
         $param->name = $parameter->getName();
+        $param->required = !$parameter->isOptional();
         $param->index = $position;
         $param->label = $metadata[CommentParser::$embeddedDataName]['label']
             ?? Text::title($param->name);
-        $param->default = $parameter->isDefaultValueAvailable()
-            ? $parameter->getDefaultValue()
-            : null;
         $param->format = $metadata[CommentParser::$embeddedDataName]['format']
             ?? Router::$formatsByName[$param->name]
             ?? null;
@@ -209,6 +207,32 @@ class Param extends Type
             $params[] = static::fromParameter($reflectionParameter, $doc, $scope);
         }
         return array_column($params, null, 'name');
+    }
+
+    protected static function from(?Reflector $reflector, array $metadata = [], array $scope = [])
+    {
+        $instance = new static();
+        $types = $metadata['type'] ?? [];
+        $itemTypes = $metadata[CommentParser::$embeddedDataName]['type'] ?? [];
+        $instance->description = $metadata['description'] ?? '';
+        if ($reflector->isDefaultValueAvailable()) {
+            $default = $reflector->getDefaultValue();
+            $instance->default = $default;
+            $types[] = Router::type($default);
+        }
+        if (empty($types)) {
+            array_unshift($types, 'string');
+        } elseif (in_array('array', $types)) {
+            array_unshift($itemTypes, 'string');
+        }
+        $instance->apply(
+            method_exists($reflector, 'hasType') && $reflector->hasType()
+                ? $reflector->getType() : null,
+            $types,
+            $itemTypes,
+            $scope
+        );
+        return $instance;
     }
 
     public static function filterArray(array $data, bool $onlyNumericKeys): array

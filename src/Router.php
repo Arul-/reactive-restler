@@ -400,7 +400,6 @@ class Router
          *              - Map it to query string with name[property]=value syntax
          */
         $class = new ReflectionClass($className);
-        $dataName = CommentParser::$embeddedDataName;
         try {
             $classMetadata = CommentParser::parse($class->getDocComment());
         } catch (Exception $e) {
@@ -469,16 +468,18 @@ class Router
                     $methodUrl = '';
                 }
                 $url = empty($methodUrl) ? rtrim($resourcePath, '/') : $resourcePath . $methodUrl;
-                $pathParams = $route->filterParams(true, Param::FROM_PATH);
+                $pathParams = $allowAmbiguity
+                    ? $route->filterParams(false, Param::FROM_BODY)
+                    : $route->filterParams(true, Param::FROM_PATH);
                 if (empty($pathParams) || $allowAmbiguity) {
                     self::addRoute($route->withLink($url, $httpMethod));
                 } else {
                     $lastPathParam = end($pathParams);
-                    foreach ($pathParams as $p) {
-                        $url .= '/{' . $p->name . '}';
-                        if ($allowAmbiguity || $p === $lastPathParam) {
-                            self::addRoute($route->withLink($url, $httpMethod));
-                        }
+                }
+                foreach ($pathParams as $p) {
+                    $url .= '/{' . $p->name . '}';
+                    if ($allowAmbiguity || $p === $lastPathParam) {
+                        self::addRoute($route->withLink($url, $httpMethod));
                     }
                 }
             }

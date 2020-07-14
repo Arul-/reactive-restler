@@ -106,10 +106,13 @@ class Route extends ValueObject
      */
     protected $arguments = [];
 
-    public static function fromMethod(ReflectionMethod $method, array $meta, array $scope = []): self
+    public static function fromMethod(ReflectionMethod $method, ?array $meta = null, array $scope = []): self
     {
         if (empty($scope)) {
             $scope = Router::scope($method->getDeclaringClass());
+        }
+        if (is_null($meta)) {
+            $meta = CommentParser::parse($method->getDocComment());
         }
         $route = new self();
         $route->summary = $meta['description'] ?? '';
@@ -447,6 +450,14 @@ class Route extends ValueObject
                 unset($info['autofocus']);
             }
         }
+    }
+
+    public function __clone()
+    {
+        $this->parameters = array_map(function ($param) {
+            return clone $param;
+        }, $this->parameters);
+        $this->return = clone $this->return;
     }
 
     public function handle(int $access, callable $maker)

@@ -25,8 +25,29 @@ class Validator implements ValidationInterface
     public static $holdException = false;
     public static $exceptions = [];
 
-    public static function validate($input, Param $param, $full = null)
+    public static function validate($input, Param $param)
     {
+        if ($param->multiple) {
+            $clone = clone $param;
+            $clone->multiple = false;
+            $func = function ($input) use ($clone) {
+                return static::validate($input, $clone);
+            };
+            if (!is_array($input)) {
+                if ($param->fix) {
+                    $input = [$input];
+                } else {
+                    var_dump((string)$param);
+                    print_r($param);
+                    $error = isset ($param->message)
+                        ? $param->message
+                        : "Invalid value specified for $param->name";
+                    $error .= ". Expecting items of type `$param->type`";
+                    throw new HttpException(400, $error);
+                }
+            }
+            return array_map($func, $input);
+        }
         $name = "`$param->name`";
         if (
             isset(static::$preFilters['*']) &&
@@ -126,7 +147,7 @@ class Validator implements ValidationInterface
                     return null;
                 }
                 try {
-                    return call_user_func("$class::$param->contentType", $input, $param);
+                    return call_user_func("$class::$param->format", $input, $param);
                 } catch (Invalid $e) {
                     throw new HttpException(400, $error . '. ' . $e->getMessage());
                 }
@@ -237,21 +258,21 @@ class Validator implements ValidationInterface
                         $input = explode(CommentParser::$arrayDelimiter, $input);
                     }
                     if (is_array($input)) {
-                        $contentType = $param->contentType ?? '';
+                        $format = $param->format ?? '';
                         if ($param->fix) {
-                            if ($contentType == 'indexed') {
+                            if ($format == 'indexed') {
                                 $input = Param::filterArray($input, Param::KEEP_NUMERIC);
-                            } elseif ($contentType == 'associative') {
+                            } elseif ($format == 'associative') {
                                 $input = Param::filterArray($input, Param::KEEP_NON_NUMERIC);
                             }
                         } elseif (
-                            $contentType == 'indexed' &&
+                            $format == 'indexed' &&
                             array_values($input) != $input
                         ) {
                             $error .= '. Expecting a list of items but an item is given';
                             break;
                         } elseif (
-                            $contentType == 'associative' &&
+                            $format == 'associative' &&
                             array_values($input) == $input &&
                             count($input)
                         ) {
@@ -274,17 +295,17 @@ class Validator implements ValidationInterface
                             }
                         }
                         if (
-                            isset($contentType) &&
-                            $contentType != 'associative' &&
-                            $contentType != 'indexed'
+                            isset($format) &&
+                            $format != 'associative' &&
+                            $format != 'indexed'
                         ) {
                             foreach ($input as $key => $chinput) {
                                 $input[$key] = static::validate($chinput, $param->content($key));
                             }
                         }
                         return $input;
-                    } elseif (isset($contentType)) {
-                        $error .= ". Expecting items of type `$contentType`";
+                    } elseif (isset($format)) {
+                        $error .= ". Expecting items of type `$format`";
                         break;
                     }
                     break;
@@ -299,7 +320,7 @@ class Validator implements ValidationInterface
                     }
                     //do type conversion
                     if (class_exists($param->type)) {
-                        $input = $param->filterArray($input, false);
+                        $input = $param->filterArray($input, Param::KEEP_NON_NUMERIC);
                         if (Type::implements($param->type, ValueObjectInterface::class)) {
                             return call_user_func(
                                 "{$param->type}::__set_state",
@@ -308,7 +329,7 @@ class Validator implements ValidationInterface
                         }
                         $class = $param->type;
                         $instance = new $class();
-                        if (is_array($param->children)) {
+                        if (is_array($param->properties)) {
                             if (
                                 empty($input) ||
                                 !is_array($input) ||
@@ -317,7 +338,7 @@ class Validator implements ValidationInterface
                                 $error .= ". Expecting an item of type `$param->type`";
                                 break;
                             }
-                            foreach ($param->children as $key => $child) {
+                            foreach ($param->properties as $key => $child) {
                                 $child = clone $child;
                                 $child->name = "{$param->name}[$key]";
                                 if (array_key_exists($key, $input) || $child->required) {

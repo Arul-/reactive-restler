@@ -136,11 +136,11 @@ class Type implements ValueObjectInterface
      * @param array $scope
      * @return static
      */
-    public static function from(?Reflector $reflector, array $metadata = [], array $scope = [])
+    protected static function from(?Reflector $reflector, array $metadata = [], array $scope = [])
     {
         $instance = new static();
-        $types = $metadata['type'] ?? ['array'];
-        $itemTypes = $metadata[CommentParser::$embeddedDataName]['type'] ?? ['string'];
+        $types = $metadata['type'] ?? [];
+        $itemTypes = $metadata[CommentParser::$embeddedDataName]['type'] ?? [];
         $instance->description = $metadata['description'] ?? '';
         $instance->apply(
             method_exists($reflector, 'hasType') && $reflector->hasType()
