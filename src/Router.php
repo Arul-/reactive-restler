@@ -14,7 +14,6 @@ use Luracast\Restler\Contracts\{AccessControlInterface,
     SelectivePathsInterface,
     UsesAuthenticationInterface};
 use Luracast\Restler\Data\Param;
-use Luracast\Restler\Data\Returns;
 use Luracast\Restler\Data\Route;
 use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\MediaTypes\Json;
@@ -453,7 +452,7 @@ class Router
                 foreach ($matches as $match) {
                     $httpMethod = $match[1];
                     $url = rtrim($resourcePath . $match[2], '/');
-                    self::addRoute($route->withLink($url, $httpMethod));
+                    self::addRoute($route->withLink($url, $httpMethod), $version);
                 }
                 //if auto route enabled, do so
             } elseif (Defaults::$autoRoutingEnabled) {
@@ -472,14 +471,14 @@ class Router
                     ? $route->filterParams(false, Param::FROM_BODY)
                     : $route->filterParams(true, Param::FROM_PATH);
                 if (empty($pathParams) || $allowAmbiguity) {
-                    self::addRoute($route->withLink($url, $httpMethod));
+                    self::addRoute($route->withLink($url, $httpMethod), $version);
                 } else {
                     $lastPathParam = end($pathParams);
                 }
                 foreach ($pathParams as $p) {
                     $url .= '/{' . $p->name . '}';
                     if ($allowAmbiguity || $p === $lastPathParam) {
-                        self::addRoute($route->withLink($url, $httpMethod));
+                        self::addRoute($route->withLink($url, $httpMethod), $version);
                     }
                 }
             }

@@ -1,5 +1,6 @@
 <?php namespace Luracast\Restler\Data;
 
+use Luracast\Restler\Defaults;
 use Luracast\Restler\Router;
 use Luracast\Restler\Utils\CommentParser;
 use Luracast\Restler\Utils\Text;
@@ -252,6 +253,10 @@ class Param extends Type
 
     protected function apply(?ReflectionType $reflectionType, array $types, array $subTypes, array $scope = [])
     {
+        if (Defaults::$fullRequestDataName === $this->name) {
+            array_unshift($types, 'array');
+            array_unshift($subTypes, 'string');
+        }
         parent::apply($reflectionType, $types, $subTypes, $scope);
         if ($this->scalar) {
             $this->from = $this->required ? self::FROM_PATH : self::FROM_QUERY;

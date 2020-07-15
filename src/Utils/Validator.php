@@ -350,7 +350,7 @@ class Validator implements ValidationInterface
                     }
             }
             throw new HttpException(400, $error);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             self::$exceptions[$param->name] = $e;
             if (self::$holdException) {
                 return null;
