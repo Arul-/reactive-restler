@@ -229,13 +229,13 @@ class Route extends ValueObject
                 $param->to = $noBody ? Param::FROM_QUERY : Param::FROM_BODY;
             }
         }
-        if ($noBody) {
-            //map body parameters to query
-            $bodyParams = $instance->filterParams(true, Param::FROM_BODY);
-            foreach ($bodyParams as $name => $param) {
-                $param->from = Param::FROM_QUERY;
-            }
+
+        //map body parameters to query or map query params to body
+        $bodyParams = $instance->filterParams(true, $noBody ? Param::FROM_BODY : Param::FROM_QUERY);
+        foreach ($bodyParams as $name => $param) {
+            $param->from = $noBody ? Param::FROM_QUERY : Param::FROM_BODY;
         }
+
         return $instance;
     }
 
