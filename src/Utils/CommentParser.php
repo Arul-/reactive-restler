@@ -77,7 +77,7 @@ class CommentParser
      *
      * @var array
      */
-    private array $_data = [];
+    private $_data = [];
 
     /**
      * Parse the comment and extract the data.
@@ -271,7 +271,11 @@ class CommentParser
             }
             if (!empty($embedded['type'])) {
                 if ('array' === $value['type'][0]) {
-                    $this->typeFix($embedded['type']);
+                    $this->typeFix($embedded['type'], 'associative');
+                    if ('associative' === $embedded['type'][0] || 'indexed' === $embedded['type'][0]) {
+                        $embedded['format'] = $embedded['type'][0];
+                        unset($embedded['type']);
+                    }
                 } else {
                     $embedded['format'] = $embedded['type'][0];
                     unset($embedded['type']);

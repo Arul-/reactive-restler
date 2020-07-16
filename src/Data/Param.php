@@ -182,9 +182,11 @@ class Param extends Type
         $param->index = $position;
         $param->label = $metadata[CommentParser::$embeddedDataName]['label']
             ?? Text::title($param->name);
-        $param->format = $metadata[CommentParser::$embeddedDataName]['format']
-            ?? Router::$formatsByName[$param->name]
-            ?? null;
+        if (!$param->format) {
+            $param->format = $metadata[CommentParser::$embeddedDataName]['format']
+                ?? Router::$formatsByName[$param->name]
+                ?? null;
+        }
         if ($param->scalar) {
             $param->from = $param->required && !$param->multiple ? self::FROM_PATH : self::FROM_QUERY;
         } else {
@@ -221,7 +223,11 @@ class Param extends Type
             $instance->default = $default;
             $types[] = Router::type($default);
         }
-        if (empty($types)) {
+        if (Defaults::$fullRequestDataName === $reflector->name) {
+            $types = ['array'];
+            $instance->format = 'associative';
+            $itemTypes = [];
+        } elseif (empty($types)) {
             array_unshift($types, 'string');
         } elseif (in_array('array', $types)) {
             array_unshift($itemTypes, 'string');
@@ -233,6 +239,11 @@ class Param extends Type
             $itemTypes,
             $scope
         );
+        if ($instance->scalar) {
+            $instance->from = $instance->required ? self::FROM_PATH : self::FROM_QUERY;
+        } else {
+            $instance->from = self::FROM_BODY;
+        }
         return $instance;
     }
 
@@ -251,25 +262,11 @@ class Param extends Type
         return $r;
     }
 
-    protected function apply(?ReflectionType $reflectionType, array $types, array $subTypes, array $scope = [])
-    {
-        if (Defaults::$fullRequestDataName === $this->name) {
-            array_unshift($types, 'array');
-            array_unshift($subTypes, 'string');
-        }
-        parent::apply($reflectionType, $types, $subTypes, $scope);
-        if ($this->scalar) {
-            $this->from = $this->required ? self::FROM_PATH : self::FROM_QUERY;
-        } else {
-            $this->from = self::FROM_BODY;
-        }
-    }
-
     public function content($index = 0): self
     {
         return Param::parse([
             'name' => $this->name . '[' . $index . ']',
-            'type' => $this->contentType,
+            'type' => $this->format,
             'children' => $this->properties,
             'required' => true,
         ]);
