@@ -245,6 +245,7 @@ class CommentParser
                 break;
             case 'expires' :
             case 'status' :
+            case 'throttle' :
                 $value = intval(reset($value));
                 break;
             case 'throws' :
