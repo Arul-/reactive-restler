@@ -1,8 +1,9 @@
-<?php namespace Luracast\Restler;
+<?php
+
+namespace Luracast\Restler;
 
 use Luracast\Restler\Cache\HumanReadable;
-use Luracast\Restler\Contracts\{
-    AccessControlInterface,
+use Luracast\Restler\Contracts\{AccessControlInterface,
     AuthenticationInterface,
     ComposerInterface,
     ContainerInterface,
@@ -21,11 +22,10 @@ use Luracast\Restler\UI\Nav;
 use Luracast\Restler\Utils\Convert;
 use Luracast\Restler\Utils\Text;
 use Luracast\Restler\Utils\Validator;
-use Psr\{
-    SimpleCache\CacheInterface,
-    Http\Message\RequestInterface,
+use Psr\{Http\Message\RequestInterface,
     Http\Message\ResponseInterface,
-    Http\Message\ServerRequestInterface
+    Http\Message\ServerRequestInterface,
+    SimpleCache\CacheInterface
 };
 use RingCentral\Psr7\Response;
 use RingCentral\Psr7\ServerRequest;
@@ -90,6 +90,10 @@ class Defaults
      * null and client is requesting for the custom MIME type
      */
     public static $useVendorMIMEVersioning = false;
+    /**
+     * @var string template used for setting the vendor specific media type
+     */
+    public static $vendorMIMETemplate = ' application/vnd.{vendor}-v{version}+json';
 
     /**
      * @var bool set it to true to use enableUrl based versioning

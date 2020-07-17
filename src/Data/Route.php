@@ -59,6 +59,26 @@ class Route extends ValueObject
     public $status = 200;
 
     /**
+     * @var array headers set through comments
+     */
+    public $header = [];
+
+    /**
+     * @var string[] cache setting from comments
+     */
+    public $cache = [];
+
+    /**
+     * @var int|null
+     */
+    public $expires;
+
+    /**
+     * @var int|null
+     */
+    public $throttle;
+
+    /**
      * @var array
      */
     public $responses = [
@@ -123,6 +143,13 @@ class Route extends ValueObject
         $route->summary = $metadata['description'] ?? '';
         $route->description = $metadata['longDescription'] ?? '';
         $route->status = $metadata['status'] ?? 200;
+        $route->header = $metadata['header'] ?? [];
+        if (isset($metadata['cache'])) {
+            $route->cache = [$metadata['cache']];
+        }
+        $route->expires = $metadata['expires'] ?? 0;
+        $route->throttle = $metadata['throttle'] ?? 0;
+
         $route->action = [$method->class, $method->getName()];
         if ($method->isProtected()) {
             $route->access = self::ACCESS_PROTECTED_METHOD;

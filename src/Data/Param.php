@@ -197,7 +197,8 @@ class Param extends Type
     {
         $instance = new static();
         $types = $metadata['type'] ?? [];
-        $itemTypes = $metadata[CommentParser::$embeddedDataName]['type'] ?? [];
+        $properties = $metadata[CommentParser::$embeddedDataName] ?? [];
+        $itemTypes = $properties['type'] ?? [];
         $instance->description = $metadata['description'] ?? '';
         if ($reflector->isDefaultValueAvailable()) {
             $default = $reflector->getDefaultValue();
@@ -210,7 +211,7 @@ class Param extends Type
             $itemTypes = [];
         } elseif (empty($types)) {
             array_unshift($types, 'string');
-        } elseif (in_array('array', $types)) {
+        } elseif (in_array('array', $types) && empty($itemTypes)) {
             array_unshift($itemTypes, 'string');
         }
         $instance->apply(
@@ -220,17 +221,27 @@ class Param extends Type
             $itemTypes,
             $scope
         );
-        $instance->name = $reflector->getName();
-        $instance->required = !$reflector->isOptional();
-        $instance->index = $reflector->getPosition();
-        $instance->label = $metadata[CommentParser::$embeddedDataName]['label']
+        $instance->required = self::booleanValue($properties['required'] ?? $reflector && !$reflector->isOptional());
+        if ($reflector) {
+            $instance->name = $reflector->getName();
+            $instance->index = $reflector->getPosition();
+        } else {
+            $instance->name = $metadata['name'] ?? null;
+        }
+
+        $instance->label = $properties['label']
             ?? Text::title($instance->name);
 
-        $instance->from = $metadata[CommentParser::$embeddedDataName]['from']
+        $instance->min = $properties['min'] ?? null;
+        $instance->max = $properties['max'] ?? null;
+        $instance->pattern = $properties['pattern'] ?? null;
+
+
+        $instance->from = $properties['from']
             ?? (in_array($instance->name, Router::$prefixingParameterNames) ? self::FROM_PATH
                 : ($instance->scalar ? self::FROM_QUERY : self::FROM_BODY));
         if (!$instance->format) {
-            $instance->format = $metadata[CommentParser::$embeddedDataName]['format']
+            $instance->format = $properties['format']
                 ?? Router::$formatsByName[$instance->name]
                 ?? null;
         }

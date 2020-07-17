@@ -302,7 +302,7 @@ abstract class Core
         $this->container->instance(Route::class, $o);
         //set defaults based on api method comments
         foreach ($this->defaults->fromComments as $key => $property) {
-            if (property_exists($o, $key)) {
+            if (!empty($o->{$key})) {
                 $value = $o->{$key};
                 $this->changeAppProperty($property, $value);
             }
@@ -362,7 +362,12 @@ abstract class Core
                                 $version <= $this->router->maximumVersion) {
                                 $this->requestedApiVersion = $version;
                                 $format = $this->make($map[$extension], null);
-                                $format->mediaType("$vendor$version+$extension");
+                                $mediatype = str_replace(
+                                    ['{vendor}', '{version}'],
+                                    [$this->defaults->apiVendor ?? 'name', $version],
+                                    $this->defaults->vendorMIMETemplate
+                                );
+                                $format->mediaType($mediatype);
                                 if (is_null($this->defaults->useVendorMIMEVersioning)) {
                                     $this->defaults->useVendorMIMEVersioning = true;
                                 }
@@ -419,7 +424,8 @@ abstract class Core
         string $accessControlRequestMethod = '',
         string $accessControlRequestHeaders = '',
         string $origin = ''
-    ): void {
+    ): void
+    {
         if (!$this->defaults->crossOriginResourceSharing || $requestMethod != 'OPTIONS') {
             return;
         }
