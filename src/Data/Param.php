@@ -173,26 +173,7 @@ class Param extends Type
 
     public static function fromParameter(ReflectionParameter $parameter, ?array $doc, array $scope): self
     {
-        $position = $parameter->getPosition();
-        $metadata = $doc['param'][$position] ?? [];
-        /** @var static $param */
-        $param = static::from($parameter, $metadata, $scope);
-        $param->name = $parameter->getName();
-        $param->required = !$parameter->isOptional();
-        $param->index = $position;
-        $param->label = $metadata[CommentParser::$embeddedDataName]['label']
-            ?? Text::title($param->name);
-        if (!$param->format) {
-            $param->format = $metadata[CommentParser::$embeddedDataName]['format']
-                ?? Router::$formatsByName[$param->name]
-                ?? null;
-        }
-        if ($param->scalar) {
-            $param->from = $param->required && !$param->multiple ? self::FROM_PATH : self::FROM_QUERY;
-        } else {
-            $param->from = self::FROM_BODY;
-        }
-        return $param;
+        return static::from($parameter, $doc['param'][$parameter->getPosition()] ?? [], $scope);
     }
 
     private static function fromAbstract(
@@ -239,10 +220,19 @@ class Param extends Type
             $itemTypes,
             $scope
         );
-        if ($instance->scalar) {
-            $instance->from = $instance->required ? self::FROM_PATH : self::FROM_QUERY;
-        } else {
-            $instance->from = self::FROM_BODY;
+        $instance->name = $reflector->getName();
+        $instance->required = !$reflector->isOptional();
+        $instance->index = $reflector->getPosition();
+        $instance->label = $metadata[CommentParser::$embeddedDataName]['label']
+            ?? Text::title($instance->name);
+
+        $instance->from = $metadata[CommentParser::$embeddedDataName]['from']
+            ?? (in_array($instance->name, Router::$prefixingParameterNames) ? self::FROM_PATH
+                : ($instance->scalar ? self::FROM_QUERY : self::FROM_BODY));
+        if (!$instance->format) {
+            $instance->format = $metadata[CommentParser::$embeddedDataName]['format']
+                ?? Router::$formatsByName[$instance->name]
+                ?? null;
         }
         return $instance;
     }

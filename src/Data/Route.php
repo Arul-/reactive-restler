@@ -54,6 +54,11 @@ class Route extends ValueObject
     public $return;
 
     /**
+     * @var int http status
+     */
+    public $status = 200;
+
+    /**
      * @var array
      */
     public $responses = [
@@ -106,24 +111,25 @@ class Route extends ValueObject
      */
     protected $arguments = [];
 
-    public static function fromMethod(ReflectionMethod $method, ?array $meta = null, array $scope = []): self
+    public static function fromMethod(ReflectionMethod $method, ?array $metadata = null, array $scope = []): self
     {
         if (empty($scope)) {
             $scope = Router::scope($method->getDeclaringClass());
         }
-        if (is_null($meta)) {
-            $meta = CommentParser::parse($method->getDocComment());
+        if (is_null($metadata)) {
+            $metadata = CommentParser::parse($method->getDocComment());
         }
         $route = new self();
-        $route->summary = $meta['description'] ?? '';
-        $route->description = $meta['longDescription'] ?? '';
+        $route->summary = $metadata['description'] ?? '';
+        $route->description = $metadata['longDescription'] ?? '';
+        $route->status = $metadata['status'] ?? 200;
         $route->action = [$method->class, $method->getName()];
         if ($method->isProtected()) {
             $route->access = self::ACCESS_PROTECTED_METHOD;
         } elseif (isset($metadata['access'])) {
-            if ($meta['access'] == 'protected') {
+            if ($metadata['access'] == 'protected') {
                 $route->access = self::ACCESS_PROTECTED_BY_COMMENT;
-            } elseif ($meta['access'] == 'hybrid') {
+            } elseif ($metadata['access'] == 'hybrid') {
                 $route->access = self::ACCESS_HYBRID;
             }
         } elseif (isset($metadata['protected'])) {
@@ -131,10 +137,10 @@ class Route extends ValueObject
         }
         $route->return = Returns::fromReturnType(
             $method->hasReturnType() ? $method->getReturnType() : null,
-            $meta['return'] ?? ['type' => ['array']],
+            $metadata['return'] ?? ['type' => ['array']],
             $scope
         );
-        $route->parameters = Param::fromMethod($method, $meta, $scope);
+        $route->parameters = Param::fromMethod($method, $metadata, $scope);
         $overrides = [];
         $resolver = function ($value) use ($scope, &$overrides) {
             $value = ClassName::resolve(trim($value), $scope);
@@ -149,7 +155,7 @@ class Route extends ValueObject
             }
             return $value;
         };
-        if ($formats = $meta['format'] ?? false) {
+        if ($formats = $metadata['format'] ?? false) {
             $overrides = [
                 'Request' => Router::$requestMediaTypeOverrides,
                 'Response' => Router::$responseMediaTypeOverrides,
@@ -159,7 +165,7 @@ class Route extends ValueObject
             $route->setRequestMediaTypes(...$formats);
             $route->setResponseMediaTypes(...$formats);
         }
-        if ($formats = $meta['response-format'] ?? false) {
+        if ($formats = $metadata['response-format'] ?? false) {
             $overrides = [
                 'Response' => Router::$responseMediaTypeOverrides,
             ];
@@ -167,7 +173,7 @@ class Route extends ValueObject
             $formats = array_map($resolver, $formats);
             $route->setResponseMediaTypes(...$formats);
         }
-        if ($formats = $meta['request-format'] ?? false) {
+        if ($formats = $metadata['request-format'] ?? false) {
             $overrides = [
                 'Request' => Router::$requestMediaTypeOverrides,
             ];
@@ -191,7 +197,7 @@ class Route extends ValueObject
         } elseif (empty($route->responseFormatMap['default'])) {
             $route->responseFormatMap['default'] = array_values($route->responseFormatMap)[0];
         }
-        $classes = $meta['class'] ?? [];
+        $classes = $metadata['class'] ?? [];
         foreach ($classes as $class => $value) {
             $class = ClassName::resolve($class, $scope);
             $value = $value[CommentParser::$embeddedDataName] ?? [];
@@ -226,16 +232,16 @@ class Route extends ValueObject
         foreach ($prevPathParams as $name => $param) {
             //remap unused path parameters to query or body
             if (!isset($pathParams[$name])) {
-                $param->to = $noBody ? Param::FROM_QUERY : Param::FROM_BODY;
+                $param->from = $noBody ? Param::FROM_QUERY : Param::FROM_BODY;
             }
         }
-
-        //map body parameters to query or map query params to body
-        $bodyParams = $instance->filterParams(true, $noBody ? Param::FROM_BODY : Param::FROM_QUERY);
-        foreach ($bodyParams as $name => $param) {
-            $param->from = $noBody ? Param::FROM_QUERY : Param::FROM_BODY;
+        if ($noBody) {
+            //map body parameters to query
+            $bodyParams = $instance->filterParams(true, Param::FROM_BODY);
+            foreach ($bodyParams as $name => $param) {
+                $param->from = Param::FROM_QUERY;
+            }
         }
-
         return $instance;
     }
 
