@@ -37,8 +37,6 @@ class Validator implements ValidationInterface
                 if ($param->fix) {
                     $input = [$input];
                 } else {
-                    var_dump((string)$param);
-                    print_r($param);
                     $error = isset ($param->message)
                         ? $param->message
                         : "Invalid value specified for $param->name";
