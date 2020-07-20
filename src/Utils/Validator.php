@@ -28,23 +28,39 @@ class Validator implements ValidationInterface
     public static function validate($input, Param $param)
     {
         if ($param->multiple) {
-            $clone = clone $param;
-            $clone->multiple = false;
-            $func = function ($input) use ($clone) {
+            $error = isset ($param->message)
+                ? $param->message
+                : "Invalid value specified for $param->name";
+            $func = function ($input, $index) use ($param) {
+                $clone = clone $param;
+                $clone->multiple = false;
+                $clone->name = $param->name . '[' . $index . ']';
                 return static::validate($input, $clone);
             };
             if (!is_array($input)) {
                 if ($param->fix) {
                     $input = [$input];
                 } else {
-                    $error = isset ($param->message)
-                        ? $param->message
-                        : "Invalid value specified for $param->name";
                     $error .= ". Expecting items of type `$param->type`";
                     throw new HttpException(400, $error);
                 }
             }
-            return array_map($func, $input);
+            $r = count($input);
+            if ($param->minCount && $r < $param->minCount) {
+                $item = $param->minCount > 1 ? 'items' : 'item';
+                $error .= ". Minimum $param->minCount $item required.";
+                throw new HttpException(400, $error);
+            }
+            if ($param->maxCount && $r > $param->maxCount) {
+                if ($param->fix) {
+                    $input = array_slice($input, 0, $param->maxCount);
+                } else {
+                    $item = $param->maxCount > 1 ? 'items' : 'item';
+                    $error .= ". Maximum $param->maxCount $item allowed.";
+                    throw new HttpException(400, $error);
+                }
+            }
+            return array_map($func, $input, array_keys($input));
         }
         $name = "`$param->name`";
         if (
@@ -279,7 +295,7 @@ class Validator implements ValidationInterface
                         }
                         $r = count($input);
                         if (isset ($param->min) && $r < $param->min) {
-                            $item = $param->max > 1 ? 'items' : 'item';
+                            $item = $param->min > 1 ? 'items' : 'item';
                             $error .= ". Minimum $param->min $item required.";
                             break;
                         }

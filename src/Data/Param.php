@@ -99,6 +99,19 @@ class Param extends Type
      */
     public $max;
 
+    /**
+     * only for arrays
+     *
+     * @var int minimum array count
+     */
+    public $minCount;
+    /**
+     * Only for arrays
+     *
+     * @var int maximum array count
+     */
+    public $maxCount;
+
     // ==================================================================
     //
     // REGEX VALIDATION
@@ -232,14 +245,19 @@ class Param extends Type
         $instance->label = $properties['label']
             ?? Text::title($instance->name);
 
-        $instance->min = $properties['min'] ?? null;
-        $instance->max = $properties['max'] ?? null;
-        $instance->pattern = $properties['pattern'] ?? null;
-
+        if (isset($properties['min'])) {
+            $instance->minCount = $properties['min'][0];
+            $instance->min = $properties['min'][1];
+        }
+        if (isset($properties['max'])) {
+            $instance->maxCount = $properties['max'][0];
+            $instance->max = $properties['max'][1];
+        }
+        $instance->fix = $properties['fix'] ?? false;
 
         $instance->from = $properties['from']
             ?? (in_array($instance->name, Router::$prefixingParameterNames) ? self::FROM_PATH
-                : ($instance->scalar ? self::FROM_QUERY : self::FROM_BODY));
+                : ($instance->scalar && !$instance->multiple ? self::FROM_QUERY : self::FROM_BODY));
         if (!$instance->format) {
             $instance->format = $properties['format']
                 ?? Router::$formatsByName[$instance->name]

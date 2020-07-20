@@ -3,6 +3,7 @@
 namespace Luracast\Restler\Utils;
 
 use Exception;
+use Luracast\Restler\Data\Param;
 use Luracast\Restler\Exceptions\HttpException;
 
 /**
@@ -323,20 +324,30 @@ class CommentParser
         }
         while (preg_match('/{@(\w+)\s?([^}]*)}/ms', $subject, $matches)) {
             $subject = str_replace($matches[0], '', $subject);
-            if ($matches[1] == 'pattern') {
+            $key = $matches[1];
+            $val = $matches[2];
+            if ($key == 'pattern') {
                 throw new Exception('Inline pattern tag should follow {@pattern /REGEX_PATTERN_HERE/} format and can optionally include PCRE modifiers following the ending `/`');
-            } elseif (isset(static::$allowsArrayValue[$matches[1]])) {
-                $matches[2] = explode(static::$arrayDelimiter, $matches[2]);
-            } elseif ($matches[2] == 'true' || $matches[2] == 'false') {
-                $matches[2] = $matches[2] == 'true';
-            } elseif ($matches[2] == '') {
-                $matches[2] = true;
-            } elseif ($matches[1] == 'required') {
-                $matches[2] = explode(static::$arrayDelimiter, $matches[2]);
-            } elseif ($matches[1] == 'type') {
-                $matches[2] = explode(self::TYPE_SEPARATOR, $matches[2]);
+            } elseif (isset(static::$allowsArrayValue[$key])) {
+                $val = explode(static::$arrayDelimiter, $val);
+            } elseif ($val == 'true' || $val == 'false') {
+                $val = $val == 'true';
+            } elseif ($val == '') {
+                $val = true;
+            } elseif ($key == 'required') {
+                $val = explode(static::$arrayDelimiter, $val);
+            } elseif ($key == 'type') {
+                $val = explode(self::TYPE_SEPARATOR, $val);
+            } elseif ($key == 'min' || $key == 'max') {
+                $val = explode(self::TYPE_SEPARATOR, $val);
+                if (count($val) < 2) {
+                    $val = [null, empty($val[0]) ? null : Param::numericValue($val[0])];
+                } else {
+                    $val[0] = empty($val[0]) ? null : (int)$val[0];
+                    $val[1] = empty($val[1]) ? null : Param::numericValue($val[1]);
+                }
             }
-            $data[$matches[1]] = $matches[2];
+            $data[$key] = $val;
         }
 
         while (preg_match(self::$embeddedDataPattern, $subject, $matches)) {
