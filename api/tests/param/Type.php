@@ -150,11 +150,11 @@ class Type
     /**
      * Custom class parameter
      *
-     * @param Author $author
+     * @param Person $author
      *
-     * @return Author
+     * @return Person
      */
-    function postAuthor(Author $author)
+    function postAuthor(Person $author)
     {
         return $author;
     }
@@ -162,9 +162,9 @@ class Type
     /**
      * Array of authors
      *
-     * @param array $authors {@type Author}
+     * @param array $authors {@type Person}
      *
-     * @return array {@type Author}
+     * @return array {@type Person}
      */
     function postAuthors(array $authors)
     {
@@ -208,7 +208,7 @@ class Type
     }
 }
 
-class Author
+class Person
 {
     /**
      * @var string {@from body} {@min 3}{@max 100}

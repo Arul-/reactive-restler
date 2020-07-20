@@ -213,7 +213,7 @@ class Param extends Type
         $properties = $metadata[CommentParser::$embeddedDataName] ?? [];
         $itemTypes = $properties['type'] ?? [];
         $instance->description = $metadata['description'] ?? '';
-        if ($reflector->isDefaultValueAvailable()) {
+        if ($reflector && method_exists($reflector, 'isDefaultValueAvailable') && $reflector->isDefaultValueAvailable()) {
             $default = $reflector->getDefaultValue();
             $instance->default = $default;
             $types[] = Router::type($default);
@@ -234,10 +234,12 @@ class Param extends Type
             $itemTypes,
             $scope
         );
-        $instance->required = self::booleanValue($properties['required'] ?? $reflector && !$reflector->isOptional());
+        $instance->required = self::booleanValue($properties['required'] ?? $reflector && method_exists($reflector, 'isOptional') && !$reflector->isOptional());
         if ($reflector) {
             $instance->name = $reflector->getName();
-            $instance->index = $reflector->getPosition();
+            if (method_exists($reflector, 'getPosition')) {
+                $instance->index = $reflector->getPosition();
+            }
         } else {
             $instance->name = $metadata['name'] ?? null;
         }
@@ -253,6 +255,8 @@ class Param extends Type
             $instance->maxCount = $properties['max'][0];
             $instance->max = $properties['max'][1];
         }
+        $instance->pattern = $properties['pattern'] ?? null;
+        $instance->message = $properties['message'] ?? null;
         $instance->fix = $properties['fix'] ?? false;
 
         $instance->from = $properties['from']

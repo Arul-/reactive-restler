@@ -4,6 +4,7 @@
 namespace Luracast\Restler\Data;
 
 
+use Exception;
 use Luracast\Restler\Contracts\ValueObjectInterface;
 use Luracast\Restler\Router;
 use Luracast\Restler\Utils\ClassName;
@@ -123,8 +124,10 @@ class Type implements ValueObjectInterface
                 $this->scalar = 'array' !== $name && TypeUtil::isScalar($types[0]);
             }
         }
-        if (!$this->scalar && !$reflected && $qualified = ClassName::resolve($this->type, $scope)) {
-            [$this->type, $this->properties,] = Router::getTypeAndModel(new ReflectionClass($qualified), $scope);
+        if (!$this->scalar && $qualified = ClassName::resolve($this->type, $scope)) {
+            $this->type = $qualified;
+            $class = new ReflectionClass($qualified);
+            $this->properties = static::fromClass($class);
         }
 
     }
@@ -166,7 +169,53 @@ class Type implements ValueObjectInterface
         return static::from($property, $var, $scope);
     }
 
-    public static function fromClass(ReflectionClass $reflectionClass, string $prefix = '', ?array $doc = null, array $scope = [])
+    public static function fromClass(ReflectionClass $reflectionClass, array $selectedProperties = [], array $requiredProperties = [])
+    {
+        $isParameter = Param::class == get_called_class();
+        $filter = !empty($selectedProperties);
+        $properties = [];
+        $scope = Router::scope($reflectionClass);
+        //When Magic properties exist
+        if ($c = CommentParser::parse($reflectionClass->getDocComment())) {
+            $p = 'property';
+            $magicProperties = empty($c[$p]) ? [] : $c[$p];
+            $p .= '-' . ($isParameter ? 'write' : 'read');
+            if (!empty($c[$p])) {
+                $magicProperties = array_merge($magicProperties, $c[$p]);
+            }
+            foreach ($magicProperties as $magicProperty) {
+                if (!$name = $magicProperty['name'] ?? false) {
+                    throw new Exception('@property comment is not properly defined in ' . $reflectionClass->getName() . ' class');
+                }
+                if ($filter && !in_array($name, $selectedProperties)) {
+                    continue;
+                }
+                $properties[$name] = static::from(null, $magicProperty, $scope);
+            }
+        } else {
+            $reflectionProperties = $reflectionClass->getProperties(ReflectionProperty::IS_PUBLIC);
+            foreach ($reflectionProperties as $reflectionProperty) {
+                $name = $reflectionProperty->getName();
+                if ($filter && !in_array($name, $selectedProperties)) {
+                    continue;
+                }
+                $properties[$name] = static::fromProperty($reflectionProperty, null, $scope);
+            }
+        }
+        $modifyRequired = !empty($requiredProperties);
+        if ($modifyRequired) {
+            /**
+             * @var string $name
+             * @var Type $property
+             */
+            foreach ($properties as $name => $property) {
+                $property->required = in_array($name, $requiredProperties);
+            }
+        }
+        return $properties;
+    }
+
+    public static function fromClassOLD(ReflectionClass $reflectionClass, string $prefix = '', ?array $doc = null, array $scope = [])
     {
         if (is_null($doc)) {
             $doc = CommentParser::parse($reflectionClass->getDocComment());

@@ -10,7 +10,7 @@ class MinMaxFix
     /**
      * Restrict the number of items in an array
      *
-     * @param array $array {@min 2|}{@max 5|}{@fix true}
+     * @param array $array {@min 2|}{@max 5|}{@fix true}{@type int}
      *
      * @return array
      */
