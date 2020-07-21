@@ -17,6 +17,32 @@ class Route extends ValueObject
     const ACCESS_PROTECTED_BY_COMMENT = 2;
     const ACCESS_PROTECTED_METHOD = 3;
 
+
+    const TAG_TO_PROPERTY = [
+        'summary',
+        'description',
+        'status',
+        'header',
+        'cache',
+        'expires',
+        'throttle',
+        'throttle',
+        'view',
+        'errorView',
+    ];
+
+    const TAGS_INTERNAL = [
+        'param',
+        'return',
+    ];
+
+    const TAG_TO_METHOD = [
+        'throws',
+        'access',
+        'class',
+        'format',
+    ];
+
     public $httpMethod = 'GET';
     /**
      * @var string target uri. human readable, for documentation
@@ -31,12 +57,12 @@ class Route extends ValueObject
     /**
      * @var string
      */
-    public $summary;
+    public $summary = '';
 
     /**
      * @var string
      */
-    public $description;
+    public $description = '';
 
     /**
      * @var callable
@@ -131,6 +157,7 @@ class Route extends ValueObject
      */
     protected $arguments = [];
 
+
     public static function fromMethod(ReflectionMethod $method, ?array $metadata = null, array $scope = []): self
     {
         if (empty($scope)) {
@@ -140,15 +167,11 @@ class Route extends ValueObject
             $metadata = CommentParser::parse($method->getDocComment());
         }
         $route = new self();
-        $route->summary = $metadata['description'] ?? '';
-        $route->description = $metadata['longDescription'] ?? '';
-        $route->status = $metadata['status'] ?? 200;
-        $route->header = $metadata['header'] ?? [];
-        if (isset($metadata['cache'])) {
-            $route->cache = [$metadata['cache']];
+        foreach (self::TAG_TO_PROPERTY as $property) {
+            if (isset($metadata[$property])) {
+                $route->{$property} = $metadata[$property];
+            }
         }
-        $route->expires = $metadata['expires'] ?? 0;
-        $route->throttle = $metadata['throttle'] ?? 0;
 
         $route->action = [$method->class, $method->getName()];
         if ($method->isProtected()) {
