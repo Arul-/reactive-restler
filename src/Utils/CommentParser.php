@@ -139,11 +139,11 @@ class CommentParser
             ['*/', '@'],
             $comment);
 
+        $summary = [];
         $description = [];
-        $longDescription = [];
         $params = [];
 
-        $mode = 0; // extract short description;
+        $mode = 0; // extract short summary;
         $comments = preg_split("/(\r?\n)/", $comment);
         // remove first blank line;
         if (empty($comments[0])) {
@@ -166,11 +166,11 @@ class CommentParser
             }
             switch ($mode) {
                 case 0 :
-                    $description[] = $line;
-                    if (count($description) > 3) {
+                    $summary[] = $line;
+                    if (count($summary) > 3) {
                         // if more than 3 lines take only first line
-                        $longDescription = $description;
-                        $description[] = array_shift($longDescription);
+                        $description = $summary;
+                        $summary[] = array_shift($description);
                         $mode = 1;
                     } elseif (substr($line, -1) == '.') {
                         $mode = 1;
@@ -180,7 +180,7 @@ class CommentParser
                     if ($addNewline) {
                         $line = ' ' . $line;
                     }
-                    $longDescription[] = $line;
+                    $description[] = $line;
                     break;
                 case 2 :
                     $newParam
@@ -189,15 +189,15 @@ class CommentParser
             }
             $addNewline = false;
         }
+        $summary = implode(' ', $summary);
         $description = implode(' ', $description);
-        $longDescription = implode(' ', $longDescription);
+        $summary = preg_replace('/\s+/msu', ' ', $summary);
         $description = preg_replace('/\s+/msu', ' ', $description);
-        $longDescription = preg_replace('/\s+/msu', ' ', $longDescription);
-        list($description, $d1)
+        list($summary, $d1)
+            = $this->parseEmbeddedData($summary);
+        list($description, $d2)
             = $this->parseEmbeddedData($description);
-        list($longDescription, $d2)
-            = $this->parseEmbeddedData($longDescription);
-        $this->_data = compact('description', 'longDescription');
+        $this->_data = compact('summary', 'description');
         $d2 += $d1;
         if (!empty($d2)) {
             $this->_data[self::$embeddedDataName] = $d2;
