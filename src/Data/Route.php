@@ -28,7 +28,7 @@ class Route extends ValueObject
         'throttle',
         'throttle',
         'view',
-        'errorView',
+        'error-view' => 'errorView',
     ];
 
     const TAGS_INTERNAL = [
@@ -37,10 +37,11 @@ class Route extends ValueObject
     ];
 
     const TAG_TO_METHOD = [
-        'throws',
-        'access',
-        'class',
-        'format',
+        'throws' => 'computeResponses',
+        'access' => 'setAccess',
+        'class' => 'setClassProperties',
+        'request-format' => 'overrideResponseFormat',
+        'response-format' => 'overrideResponseFormat',
     ];
 
     public $httpMethod = 'GET';
@@ -167,9 +168,12 @@ class Route extends ValueObject
             $metadata = CommentParser::parse($method->getDocComment());
         }
         $route = new self();
-        foreach (self::TAG_TO_PROPERTY as $property) {
-            if (isset($metadata[$property])) {
-                $route->{$property} = $metadata[$property];
+        foreach (self::TAG_TO_PROPERTY as $key => $property) {
+            if (is_numeric($key)) {
+                $key = $property;
+            }
+            if (isset($metadata[$key])) {
+                $route->{$property} = $metadata[$key];
             }
         }
 
