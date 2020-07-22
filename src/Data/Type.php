@@ -104,10 +104,8 @@ class Type implements ValueObjectInterface
     protected function apply(?ReflectionType $reflectionType, array $types, array $subTypes, array $scope = [])
     {
         $name = $types[0];
-        $reflected = false;
         if ($reflectionType && ($n = $reflectionType->getName()) && $n !== 'Generator') {
             $name = $n;
-            $reflected = true;
         }
         $this->nullable = in_array('null', $types);
         if ('array' == $name && count($subTypes)) {
@@ -224,14 +222,6 @@ class Type implements ValueObjectInterface
             $filtered = $properties;
         }
         foreach ($filtered as $k => $v) if (!is_null($v)) $this->{$k} = $v;
-    }
-
-    public function updateFlags()
-    {
-        $this->scalar = TypeUtil::isScalar($this->type);
-        if (!$this->scalar) {
-            $this->object = TypeUtil::isObject($this->type);
-        }
     }
 
 }
