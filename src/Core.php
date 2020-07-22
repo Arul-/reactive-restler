@@ -722,7 +722,7 @@ abstract class Core
         }
         if ($detail = Defaults::$propertyValidations[$property] ?? false) {
             /** @noinspection PhpParamsInspection */
-            $value = Validator::validate($value, Param::parse($detail));
+            $value = Validator::validate($value, Param::__set_state($detail));
         }
         $this->defaults->{$property} = $value;
         return true;

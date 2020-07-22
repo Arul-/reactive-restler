@@ -283,50 +283,5 @@ class Param extends Type
         }
         return $r;
     }
-
-    public static function parse(array $metadata): self
-    {
-        $instance = new self();
-        $properties = get_object_vars($instance);
-        unset($properties['contentType']);
-        foreach ($properties as $property => $value) {
-            $instance->{$property} = $instance->getProperty($metadata, $property);
-        }
-        $inner = $metadata['properties'] ?? null;
-        $instance->rules = !empty($inner) ? $inner + $metadata : $metadata;
-        unset($instance->rules['properties']);
-        if (is_string($instance->type) && $instance->type == 'integer') {
-            $instance->type = 'int';
-        }
-        $instance->scalar = TypeUtil::isPrimitive($instance->type);
-        return $instance;
-    }
-
-    private function getProperty(array &$from, $property)
-    {
-        $p = $from[$property] ?? null;
-        unset($from[$property]);
-        $p2 = $from[CommentParser::$embeddedDataName][$property] ?? null;
-        unset($from[CommentParser::$embeddedDataName][$property]);
-
-        if ($property == 'type' && $p2) {
-            $this->contentType = $p2;
-            return $p;
-        }
-        $r = $p2 ?? $p ?? null;
-        if (!is_null($r)) {
-            if ($property == 'min' || $property == 'max') {
-                return TypeUtil::numericValue($r);
-            } elseif ($property == 'required' || $property == 'fix') {
-                return TypeUtil::booleanValue($r);
-            } elseif ($property == 'choice') {
-                return TypeUtil::arrayValue($r);
-            } elseif ($property == 'pattern') {
-                return TypeUtil::stringValue($r);
-            }
-        }
-        return $r;
-    }
-
 }
 
