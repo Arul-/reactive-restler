@@ -308,15 +308,6 @@ class Validator implements ValidationInterface
                                 break;
                             }
                         }
-                        if (
-                            isset($format) &&
-                            $format != 'associative' &&
-                            $format != 'indexed'
-                        ) {
-                            foreach ($input as $key => $chinput) {
-                                $input[$key] = static::validate($chinput, $param->content($key));
-                            }
-                        }
                         return $input;
                     } elseif (isset($format)) {
                         $error .= ". Expecting items of type `$format`";
