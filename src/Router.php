@@ -20,6 +20,7 @@ use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\MediaTypes\Json;
 use Luracast\Restler\Utils\{ClassName, CommentParser, Text, Type};
 use Psr\Http\Message\ServerRequestInterface;
+use Psr\SimpleCache\CacheInterface;
 use ReflectionClass;
 use ReflectionMethod;
 use Throwable;
