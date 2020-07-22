@@ -241,6 +241,11 @@ class CommentParser
                 $data = &$data[$param];
                 list ($param, $value) = $this->formatClass($value);
                 break;
+            case 'format':
+            case 'request-format':
+            case 'response-format':
+                $value = explode(',', $value[0]);
+                break;
             case 'access' :
                 $value = reset($value);
                 break;
