@@ -250,142 +250,6 @@ class Route extends ValueObject
         return $instance;
     }
 
-    public static function make(callable $action, string $url, $httpMethod = 'GET', array $data = [])
-    {
-        return static::parse(compact('action', 'url', 'httpMethod') + $data);
-    }
-
-    public static function parse(array $call): Route
-    {
-        $transform = [
-            //----- RENAME -----------
-            'url' => 'url',
-            'className' => ['action', 0],
-            'methodName' => ['action', 1],
-            'accessLevel' => 'access',
-            'description' => 'summary',
-            'longDescription' => 'description',
-            //----- REMOVE -----------
-            'metadata' => true,
-            'arguments' => true,
-            'defaults' => true,
-            'access' => true,
-
-        ];
-        $extract = function (array &$from, string $key, $default = null) {
-            $value = $from[$key] ?? $default;
-            unset($from[$key]);
-            return $value;
-        };
-        $meta = $extract($call, 'metadata', []);
-        $args = [
-            'summary' => $extract($meta, 'description', ''),
-            'description' => $extract($meta, 'longDescription', ''),
-            'return' => Returns::parse($extract($meta, 'return', ['type' => 'array'])),
-        ];
-        foreach ($call as $key => $value) {
-            if ($k = $transform[$key] ?? false) {
-                if (is_array($k)) {
-                    $args[$k[0]][$k[1]] = $value;
-                } elseif (true !== $k) {
-                    $args[$k] = $value;
-                }
-            } else {
-                $args[$key] = $value;
-            }
-        }
-        $params = $extract($meta, 'param', []);
-        $classes = $extract($meta, 'class', []);
-        $scope = $extract($meta, 'scope', []);
-        $route = new static();
-        $route->applyProperties($args);
-        $overrides = [];
-        $resolver = function ($value) use ($scope, &$overrides) {
-            $value = ClassName::resolve(trim($value), $scope);
-            foreach ($overrides as $key => $override) {
-                if (false === array_search($value, $override)) {
-                    throw new HttpException(
-                        500,
-                        "Given media type is not present in overriding list. " .
-                        "Please call `Router::setOverriding{$key}MediaTypes(\"$value\");` before other router methods."
-                    );
-                }
-            }
-            return $value;
-        };
-        if ($formats = $meta['format'] ?? false) {
-            unset($meta['format']);
-            $overrides = [
-                'Request' => Router::$requestMediaTypeOverrides,
-                'Response' => Router::$responseMediaTypeOverrides,
-            ];
-            $formats = explode(',', $formats);
-            $formats = array_map($resolver, $formats);
-            $route->setRequestMediaTypes(...$formats);
-            $route->setResponseMediaTypes(...$formats);
-        }
-        if ($formats = $meta['response-format'] ?? false) {
-            unset($meta['response-format']);
-            $overrides = [
-                'Response' => Router::$responseMediaTypeOverrides,
-            ];
-            $formats = explode(',', $formats);
-            $formats = array_map($resolver, $formats);
-            $route->setResponseMediaTypes(...$formats);
-        }
-        if ($formats = $meta['request-format'] ?? false) {
-            unset($meta['request-format']);
-            $overrides = [
-                'Request' => Router::$requestMediaTypeOverrides,
-            ];
-            $formats = explode(',', $formats);
-            $formats = array_map($resolver, $formats);
-            $route->setRequestMediaTypes(...$formats);
-        }
-        foreach ($transform as $key => $value) {
-            unset($meta[$key]);
-        }
-        $route->applyProperties($meta);
-        if (empty($route->responseMediaTypes)) {
-            $route->responseMediaTypes = Router::$responseMediaTypes;
-        }
-        if (empty($route->requestFormatMap)) {
-            $route->requestFormatMap = Router::$requestFormatMap;
-        } elseif (empty($route->requestFormatMap['default'])) {
-            $route->requestFormatMap['default'] = array_values($route->requestFormatMap)[0];
-        }
-        if (empty($route->requestMediaTypes)) {
-            $route->requestMediaTypes = Router::$requestMediaTypes;
-        }
-        if (empty($route->responseFormatMap)) {
-            $route->responseFormatMap = Router::$responseFormatMap;
-        } elseif (empty($route->responseFormatMap['default'])) {
-            $route->responseFormatMap['default'] = array_values($route->responseFormatMap)[0];
-        }
-        foreach ($classes as $class => $value) {
-            $class = ClassName::resolve($class, $scope);
-            $value = $value[CommentParser::$embeddedDataName] ?? [];
-            foreach ($value as $k => $v) {
-                $route->set[$class][$k] = $v;
-            }
-        }
-        foreach ($params as $param) {
-            $route->addParameter(Param::parse($param));
-        }
-        //compute from the human readable url to machine computable typed route path
-        $route->path = preg_replace_callback(
-            '/{[^}]+}|:[^\/]+/',
-            function ($matches) use ($route) {
-                $match = trim($matches[0], '{}:');
-                $param = $route->parameters[$match];
-                return '{' . Router::typeChar($param->type) . $param->index . '}';
-            },
-            $route->url
-        );
-
-        return $route;
-    }
-
     public function setRequestMediaTypes(string ...$types): void
     {
         Router::_setMediaTypes(
@@ -569,13 +433,18 @@ class Route extends ValueObject
 
     private function computeResponses(string $name, ?array $throws = null, ReflectionFunctionAbstract $function, ?array $metadata = null, array $scope = []): void
     {
-        $classes = $class ?? [];
-        foreach ($classes as $class => $value) {
-            $class = ClassName::resolve($class, $scope);
-            $value = $value[CommentParser::$embeddedDataName] ?? [];
-            foreach ($value as $k => $v) {
-                $this->set[$class][$k] = $v;
-            }
+        $this->responses[$this->status] = [
+            'message' => HttpException::$codes[$this->status] ?? '',
+            'type' => $this->return->multiple ? 'array' : $this->return->type,
+            'description' => $this->return->description,
+        ];
+        if (!$throws) return;
+        foreach ($throws as $throw) {
+            $this->responses[$throw['code']] = [
+                'message' => HttpException::$codes[$throw['code']] ?? '',
+                'type' => 'array',
+                'description' => $throw['message'],
+            ];
         }
     }
 
