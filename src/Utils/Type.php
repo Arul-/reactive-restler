@@ -73,4 +73,30 @@ class Type
     {
         return $class == $superClass || isset(class_implements($class)[$superClass]);
     }
+
+    public static function booleanValue($value)
+    {
+        return is_bool($value)
+            ? $value
+            : $value !== 'false';
+    }
+
+    public static function numericValue($value)
+    {
+        return ( int )$value == $value
+            ? ( int )$value
+            : floatval($value);
+    }
+
+    public static function stringValue($value, $glue = ',')
+    {
+        return is_array($value)
+            ? implode($glue, $value)
+            : ( string )$value;
+    }
+
+    public static function arrayValue($value)
+    {
+        return is_array($value) ? $value : [$value];
+    }
 }

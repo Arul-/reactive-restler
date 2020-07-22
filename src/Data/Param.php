@@ -9,7 +9,6 @@ use ReflectionFunction;
 use ReflectionFunctionAbstract;
 use ReflectionMethod;
 use ReflectionParameter;
-use ReflectionType;
 use Reflector;
 
 /**
@@ -234,7 +233,7 @@ class Param extends Type
             $itemTypes,
             $scope
         );
-        $instance->required = self::booleanValue($properties['required'] ?? $reflector && method_exists($reflector, 'isOptional') && !$reflector->isOptional());
+        $instance->required = TypeUtil::booleanValue($properties['required'] ?? $reflector && method_exists($reflector, 'isOptional') && !$reflector->isOptional());
         if ($reflector) {
             $instance->name = $reflector->getName();
             if (method_exists($reflector, 'getPosition')) {
@@ -285,16 +284,6 @@ class Param extends Type
         return $r;
     }
 
-    public function content($index = 0): self
-    {
-        return Param::parse([
-            'name' => $this->name . '[' . $index . ']',
-            'type' => $this->format,
-            'children' => $this->properties,
-            'required' => true,
-        ]);
-    }
-
     public static function parse(array $metadata): self
     {
         $instance = new self();
@@ -327,42 +316,17 @@ class Param extends Type
         $r = $p2 ?? $p ?? null;
         if (!is_null($r)) {
             if ($property == 'min' || $property == 'max') {
-                return static::numericValue($r);
+                return TypeUtil::numericValue($r);
             } elseif ($property == 'required' || $property == 'fix') {
-                return static::booleanValue($r);
+                return TypeUtil::booleanValue($r);
             } elseif ($property == 'choice') {
-                return static::arrayValue($r);
+                return TypeUtil::arrayValue($r);
             } elseif ($property == 'pattern') {
-                return static::stringValue($r);
+                return TypeUtil::stringValue($r);
             }
         }
         return $r;
     }
 
-    public static function numericValue($value)
-    {
-        return ( int )$value == $value
-            ? ( int )$value
-            : floatval($value);
-    }
-
-    public static function booleanValue($value)
-    {
-        return is_bool($value)
-            ? $value
-            : $value !== 'false';
-    }
-
-    public static function arrayValue($value)
-    {
-        return is_array($value) ? $value : [$value];
-    }
-
-    public static function stringValue($value, $glue = ',')
-    {
-        return is_array($value)
-            ? implode($glue, $value)
-            : ( string )$value;
-    }
 }
 

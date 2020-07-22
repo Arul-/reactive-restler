@@ -189,7 +189,7 @@ class Validator implements ValidationInterface
                             break;
                         }
                     } else {
-                        $r = $param->numericValue($input);
+                        $r = Type::numericValue($input);
                     }
                     if (isset ($param->min) && $r < $param->min) {
                         if ($param->fix) {

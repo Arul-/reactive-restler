@@ -346,10 +346,10 @@ class CommentParser
             } elseif ($key == 'min' || $key == 'max') {
                 $val = explode(self::TYPE_SEPARATOR, $val);
                 if (count($val) < 2) {
-                    $val = [null, empty($val[0]) ? null : Param::numericValue($val[0])];
+                    $val = [null, empty($val[0]) ? null : Type::numericValue($val[0])];
                 } else {
                     $val[0] = empty($val[0]) ? null : (int)$val[0];
-                    $val[1] = empty($val[1]) ? null : Param::numericValue($val[1]);
+                    $val[1] = empty($val[1]) ? null : Type::numericValue($val[1]);
                 }
             }
             $data[$key] = $val;
