@@ -713,30 +713,6 @@ class Router
                 $route->url
             );
         }
-        foreach (static::$preAuthFilterClasses as $preFilter) {
-            if (Type::implements($preFilter, SelectivePathsInterface::class)) {
-                if (!$preFilter::isPathSelected($route->path)) {
-                    continue;
-                }
-            }
-            $route->preAuthFilterClasses[] = $preFilter;
-        }
-        foreach (static::$authClasses as $authClass) {
-            if (Type::implements($authClass, SelectivePathsInterface::class)) {
-                if (!$authClass::isPathSelected($route->path)) {
-                    continue;
-                }
-            }
-            $route->authClasses[] = $authClass;
-        }
-        foreach (static::$postAuthFilterClasses as $postFilter) {
-            if (Type::implements($postFilter, SelectivePathsInterface::class)) {
-                if (!$postFilter::isPathSelected($route->path)) {
-                    continue;
-                }
-            }
-            $route->postAuthFilterClasses[] = $postFilter;
-        }
         //check for wildcard routes
         if (substr($route->path, -1, 1) == '*') {
             $path = rtrim($route->path, '/*');

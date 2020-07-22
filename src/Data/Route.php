@@ -4,10 +4,13 @@
 namespace Luracast\Restler\Data;
 
 
-use Luracast\Restler\Contracts\{RequestMediaTypeInterface, ResponseMediaTypeInterface, ValidationInterface};
+use Luracast\Restler\Contracts\{RequestMediaTypeInterface,
+    ResponseMediaTypeInterface,
+    SelectivePathsInterface,
+    ValidationInterface};
 use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\Router;
-use Luracast\Restler\Utils\{ClassName, CommentParser, Validator};
+use Luracast\Restler\Utils\{ClassName, CommentParser, Type, Validator};
 use ReflectionFunctionAbstract;
 use ReflectionMethod;
 
@@ -160,85 +163,6 @@ class Route extends ValueObject
      */
     protected $arguments = [];
 
-    private function setAccess(string $name, ?string $access = null, ReflectionFunctionAbstract $function, ?array $metadata = null, array $scope = []): void
-    {
-        if ($function->isProtected()) {
-            $this->access = self::ACCESS_PROTECTED_METHOD;
-        } elseif (is_string($access)) {
-            if ('protected' == $access) {
-                $this->access = self::ACCESS_PROTECTED_BY_COMMENT;
-            } elseif ('hybrid' == $access) {
-                $this->access = self::ACCESS_HYBRID;
-            }
-        } elseif (isset($metadata['protected'])) {
-            $this->access = self::ACCESS_PROTECTED_BY_COMMENT;
-        }
-    }
-
-    private function setClassProperties(string $name, ?array $class = null, ReflectionFunctionAbstract $function, ?array $metadata = null, array $scope = []): void
-    {
-        $classes = $class ?? [];
-        foreach ($classes as $class => $value) {
-            $class = ClassName::resolve($class, $scope);
-            $value = $value[CommentParser::$embeddedDataName] ?? [];
-            foreach ($value as $k => $v) {
-                $this->set[$class][$k] = $v;
-            }
-        }
-    }
-
-    private function computeResponses(string $name, ?array $throws = null, ReflectionFunctionAbstract $function, ?array $metadata = null, array $scope = []): void
-    {
-        $classes = $class ?? [];
-        foreach ($classes as $class => $value) {
-            $class = ClassName::resolve($class, $scope);
-            $value = $value[CommentParser::$embeddedDataName] ?? [];
-            foreach ($value as $k => $v) {
-                $this->set[$class][$k] = $v;
-            }
-        }
-    }
-
-    private function overrideFormats(string $name, ?array $formats = null, ReflectionFunctionAbstract $function, ?array $metadata = null, array $scope = []): void
-    {
-        if (!$formats) return;
-        $overrides = [];
-        $resolver = function ($value) use ($scope, &$overrides) {
-            $value = ClassName::resolve(trim($value), $scope);
-            foreach ($overrides as $key => $override) {
-                if (false === array_search($value, $override)) {
-                    throw new HttpException(
-                        500,
-                        "Given media type is not present in overriding list. " .
-                        "Please call `Router::setOverriding{$key}MediaTypes(\"$value\");` before other router methods."
-                    );
-                }
-            }
-            return $value;
-        };
-        $overrides = [
-            'Request' => Router::$requestMediaTypeOverrides,
-            'Response' => Router::$responseMediaTypeOverrides,
-        ];
-        switch ($name) {
-            case 'request-format':
-                unset($overrides['Response']);
-                $formats = array_map($resolver, $formats);
-                $this->setRequestMediaTypes(...$formats);
-                break;
-            case 'response-format':
-                unset($overrides['Request']);
-                $formats = array_map($resolver, $formats);
-                $this->setResponseMediaTypes(...$formats);
-                break;
-            default:
-                $formats = array_map($resolver, $formats);
-                $this->setRequestMediaTypes(...$formats);
-                $this->setResponseMediaTypes(...$formats);
-
-        }
-    }
-
 
     public static function fromMethod(ReflectionMethod $method, ?array $metadata = null, array $scope = []): self
     {
@@ -322,6 +246,7 @@ class Route extends ValueObject
                 $param->from = Param::FROM_QUERY;
             }
         }
+        $instance->setAuthAndFilters();
         return $instance;
     }
 
@@ -585,5 +510,112 @@ class Route extends ValueObject
     public function getArguments(): array
     {
         return $this->arguments;
+    }
+
+    private function setAuthAndFilters(): void
+    {
+        foreach (Router::$preAuthFilterClasses as $preFilter) {
+            if (Type::implements($preFilter, SelectivePathsInterface::class)) {
+                if (!$preFilter::isPathSelected($this->path)) {
+                    continue;
+                }
+            }
+            $this->preAuthFilterClasses[] = $preFilter;
+        }
+        foreach (Router::$authClasses as $authClass) {
+            if (Type::implements($authClass, SelectivePathsInterface::class)) {
+                if (!$authClass::isPathSelected($this->path)) {
+                    continue;
+                }
+            }
+            $this->authClasses[] = $authClass;
+        }
+        foreach (Router::$postAuthFilterClasses as $postFilter) {
+            if (Type::implements($postFilter, SelectivePathsInterface::class)) {
+                if (!$postFilter::isPathSelected($this->path)) {
+                    continue;
+                }
+            }
+            $this->postAuthFilterClasses[] = $postFilter;
+        }
+    }
+
+    private function setAccess(string $name, ?string $access = null, ReflectionFunctionAbstract $function, ?array $metadata = null, array $scope = []): void
+    {
+        if ($function->isProtected()) {
+            $this->access = self::ACCESS_PROTECTED_METHOD;
+        } elseif (is_string($access)) {
+            if ('protected' == $access) {
+                $this->access = self::ACCESS_PROTECTED_BY_COMMENT;
+            } elseif ('hybrid' == $access) {
+                $this->access = self::ACCESS_HYBRID;
+            }
+        } elseif (isset($metadata['protected'])) {
+            $this->access = self::ACCESS_PROTECTED_BY_COMMENT;
+        }
+    }
+
+    private function setClassProperties(string $name, ?array $class = null, ReflectionFunctionAbstract $function, ?array $metadata = null, array $scope = []): void
+    {
+        $classes = $class ?? [];
+        foreach ($classes as $class => $value) {
+            $class = ClassName::resolve($class, $scope);
+            $value = $value[CommentParser::$embeddedDataName] ?? [];
+            foreach ($value as $k => $v) {
+                $this->set[$class][$k] = $v;
+            }
+        }
+    }
+
+    private function computeResponses(string $name, ?array $throws = null, ReflectionFunctionAbstract $function, ?array $metadata = null, array $scope = []): void
+    {
+        $classes = $class ?? [];
+        foreach ($classes as $class => $value) {
+            $class = ClassName::resolve($class, $scope);
+            $value = $value[CommentParser::$embeddedDataName] ?? [];
+            foreach ($value as $k => $v) {
+                $this->set[$class][$k] = $v;
+            }
+        }
+    }
+
+    private function overrideFormats(string $name, ?array $formats = null, ReflectionFunctionAbstract $function, ?array $metadata = null, array $scope = []): void
+    {
+        if (!$formats) return;
+        $overrides = [];
+        $resolver = function ($value) use ($scope, &$overrides) {
+            $value = ClassName::resolve(trim($value), $scope);
+            foreach ($overrides as $key => $override) {
+                if (false === array_search($value, $override)) {
+                    throw new HttpException(
+                        500,
+                        "Given media type is not present in overriding list. " .
+                        "Please call `Router::setOverriding{$key}MediaTypes(\"$value\");` before other router methods."
+                    );
+                }
+            }
+            return $value;
+        };
+        $overrides = [
+            'Request' => Router::$requestMediaTypeOverrides,
+            'Response' => Router::$responseMediaTypeOverrides,
+        ];
+        switch ($name) {
+            case 'request-format':
+                unset($overrides['Response']);
+                $formats = array_map($resolver, $formats);
+                $this->setRequestMediaTypes(...$formats);
+                break;
+            case 'response-format':
+                unset($overrides['Request']);
+                $formats = array_map($resolver, $formats);
+                $this->setResponseMediaTypes(...$formats);
+                break;
+            default:
+                $formats = array_map($resolver, $formats);
+                $this->setRequestMediaTypes(...$formats);
+                $this->setResponseMediaTypes(...$formats);
+
+        }
     }
 }
