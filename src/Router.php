@@ -5,14 +5,15 @@ namespace Luracast\Restler;
 
 use ErrorException;
 use Exception;
-use Luracast\Restler\Contracts\{AccessControlInterface,
+use Luracast\Restler\Contracts\{
+    AccessControlInterface,
     AuthenticationInterface,
     FilterInterface,
     ProvidesMultiVersionApiInterface,
     RequestMediaTypeInterface,
     ResponseMediaTypeInterface,
-    SelectivePathsInterface,
-    UsesAuthenticationInterface};
+    UsesAuthenticationInterface
+};
 use Luracast\Restler\Data\Param;
 use Luracast\Restler\Data\Route;
 use Luracast\Restler\Exceptions\HttpException;
@@ -21,7 +22,6 @@ use Luracast\Restler\Utils\{ClassName, CommentParser, Text, Type};
 use Psr\Http\Message\ServerRequestInterface;
 use ReflectionClass;
 use ReflectionMethod;
-use ReflectionProperty;
 use Throwable;
 
 class Router
@@ -942,135 +942,6 @@ class Router
         }
 
         return $r;
-    }
-
-    /**
-     * Get the type and associated model
-     *
-     * @param ReflectionClass $class
-     * @param array $scope
-     *
-     * @param string $prefix
-     * @param array $rules
-     * @return array
-     *
-     * @throws Exception
-     * @throws HttpException
-     * @access protected
-     */
-    public static function getTypeAndModel(
-        ReflectionClass $class,
-        array $scope,
-        string $prefix = '',
-        array $rules = []
-    )
-    {
-        $className = $class->getName();
-        $dataName = CommentParser::$embeddedDataName;
-        if (isset(static::$models[$prefix . $className])) {
-            return static::$models[$prefix . $className];
-        }
-        $children = [];
-        try {
-            if ($magic_properties = static::parseMagic($class, empty($prefix))) {
-                foreach ($magic_properties as $prop) {
-                    if (!isset($prop['name'])) {
-                        throw new Exception('@property comment is not properly defined in ' . $className . ' class');
-                    }
-                    if (!isset($prop[$dataName]['label'])) {
-                        $prop[$dataName]['label'] = Text::title($prop['name']);
-                    }
-                    if (isset(static::$formatsByName[$prop['name']]) && $prop['type'] == 'string' && !isset($prop[$dataName]['type'])) {
-                        $prop[$dataName]['type'] = static::$formatsByName[$prop['name']];
-                    }
-                    $children[$prop['name']] = $prop;
-                }
-            } else {
-                $props = $class->getProperties(ReflectionProperty::IS_PUBLIC);
-                foreach ($props as $prop) {
-                    $name = $prop->getName();
-                    $child = ['name' => $name];
-                    if ($c = $prop->getDocComment()) {
-                        $child += CommentParser::parse($c)['var'] ?? [];
-                    } else {
-                        $o = $class->newInstance();
-                        $p = $prop->getValue($o);
-                        if (is_object($p)) {
-                            $child['type'] = get_class($p);
-                        } elseif (is_array($p)) {
-                            $child['type'] = 'array';
-                            if (count($p)) {
-                                $pc = reset($p);
-                                if (is_object($pc)) {
-                                    $child['contentType'] = get_class($pc);
-                                }
-                            }
-                        } elseif (is_numeric($p)) {
-                            $child['type'] = is_float($p) ? 'float' : 'int';
-                        }
-                    }
-                    if (!isset($child['type'])) {
-                        $child['type'] = isset(static::$formatsByName[$child['name']])
-                            ? static::$formatsByName[$child['name']]
-                            : 'string';
-                    }
-                    if (!isset($child['label'])) {
-                        $child['label'] = Text::title($child['name']);
-                    }
-                    $child[$dataName]['required'] = $child[$dataName]['required'] ?? true;
-                    $childScope = static::scope($class);
-                    if ($child['type'] != $className && $qualified = ClassName::resolve(
-                            $child['type'][0],
-                            $childScope
-                        )) {
-                        list(
-                            $child['type'], $child['children']
-                            )
-                            = static::getTypeAndModel(new ReflectionClass($qualified), $childScope);
-                    } elseif (($contentType = $child[$dataName]['type'][0] ?? false) &&
-                        ($qualified = ClassName::resolve($contentType, $childScope))
-                    ) {
-                        list(
-                            $child['contentType'], $child['children']
-                            )
-                            = static::getTypeAndModel(new ReflectionClass($qualified), $childScope);
-                    }
-                    $children[$name] = $child;
-                }
-            }
-        } catch (Exception $e) {
-            if (Text::endsWith($e->getFile(), 'CommentParser.php')) {
-                throw new HttpException(500, "Error while parsing comments of `$className` class. " . $e->getMessage());
-            }
-            throw $e;
-        }
-        if ($properties = $rules['properties'] ?? false) {
-            if (is_string($properties)) {
-                $properties = [$properties];
-            }
-            $c = [];
-            foreach ($properties as $property) {
-                if (isset($children[$property])) {
-                    $c[$property] = $children[$property];
-                }
-            }
-            $children = $c;
-        }
-        if ($required = $rules['required'] ?? false) {
-            //override required on children
-            if (is_bool($required)) {
-                // true means all are required false means none are required
-                $required = $required ? array_keys($children) : [];
-            } elseif (is_string($required)) {
-                $required = [$required];
-            }
-            $required = array_fill_keys($required, true);
-            foreach ($children as $name => $child) {
-                $children[$name][$dataName]['required'] = isset($required[$name]);
-            }
-        }
-        static::$models[$prefix . $className] = [$className, $children, $prefix . $className];
-        return static::$models[$prefix . $className];
     }
 
     /**

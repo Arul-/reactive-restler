@@ -215,20 +215,6 @@ class Type implements ValueObjectInterface
         return $properties;
     }
 
-    public static function fromClassOLD(ReflectionClass $reflectionClass, string $prefix = '', ?array $doc = null, array $scope = [])
-    {
-        if (is_null($doc)) {
-            $doc = CommentParser::parse($reflectionClass->getDocComment());
-        }
-        if (empty($scope)) {
-            $scope = Router::scope($reflectionClass);
-        }
-        $instance = static::from($reflectionClass, $doc, $scope);
-        [, $children,] = Router::getTypeAndModel($reflectionClass, $scope, $prefix, $doc);
-        $instance->children = $children;
-        return $instance;
-    }
-
     protected function applyProperties(array $properties, bool $filter = true)
     {
         if ($filter) {
