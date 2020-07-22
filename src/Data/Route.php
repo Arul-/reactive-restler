@@ -8,6 +8,7 @@ use Luracast\Restler\Contracts\{RequestMediaTypeInterface, ResponseMediaTypeInte
 use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\Router;
 use Luracast\Restler\Utils\{ClassName, CommentParser, Validator};
+use ReflectionFunctionAbstract;
 use ReflectionMethod;
 
 class Route extends ValueObject
@@ -18,7 +19,7 @@ class Route extends ValueObject
     const ACCESS_PROTECTED_METHOD = 3;
 
 
-    const TAG_TO_PROPERTY = [
+    const PROPERTY_TAGS = [
         'summary',
         'description',
         'status',
@@ -31,17 +32,18 @@ class Route extends ValueObject
         'error-view' => 'errorView',
     ];
 
-    const TAGS_INTERNAL = [
+    const INTERNAL_TAGS = [
         'param',
         'return',
     ];
 
-    const TAG_TO_METHOD = [
-        'throws' => 'computeResponses',
+    const METHOD_TAGS = [
         'access' => 'setAccess',
         'class' => 'setClassProperties',
-        'request-format' => 'overrideResponseFormat',
-        'response-format' => 'overrideResponseFormat',
+        'throws' => 'computeResponses',
+        'format' => 'overrideFormats',
+        'request-format' => 'overrideFormats',
+        'response-format' => 'overrideFormats',
     ];
 
     public $httpMethod = 'GET';
@@ -158,43 +160,48 @@ class Route extends ValueObject
      */
     protected $arguments = [];
 
-
-    public static function fromMethod(ReflectionMethod $method, ?array $metadata = null, array $scope = []): self
+    private function setAccess(string $name, ?string $access = null, ReflectionFunctionAbstract $function, ?array $metadata = null, array $scope = []): void
     {
-        if (empty($scope)) {
-            $scope = Router::scope($method->getDeclaringClass());
-        }
-        if (is_null($metadata)) {
-            $metadata = CommentParser::parse($method->getDocComment());
-        }
-        $route = new self();
-        foreach (self::TAG_TO_PROPERTY as $key => $property) {
-            if (is_numeric($key)) {
-                $key = $property;
-            }
-            if (isset($metadata[$key])) {
-                $route->{$property} = $metadata[$key];
-            }
-        }
-
-        $route->action = [$method->class, $method->getName()];
-        if ($method->isProtected()) {
-            $route->access = self::ACCESS_PROTECTED_METHOD;
-        } elseif (isset($metadata['access'])) {
-            if ($metadata['access'] == 'protected') {
-                $route->access = self::ACCESS_PROTECTED_BY_COMMENT;
-            } elseif ($metadata['access'] == 'hybrid') {
-                $route->access = self::ACCESS_HYBRID;
+        if ($function->isProtected()) {
+            $this->access = self::ACCESS_PROTECTED_METHOD;
+        } elseif (is_string($access)) {
+            if ('protected' == $access) {
+                $this->access = self::ACCESS_PROTECTED_BY_COMMENT;
+            } elseif ('hybrid' == $access) {
+                $this->access = self::ACCESS_HYBRID;
             }
         } elseif (isset($metadata['protected'])) {
-            $route->access = self::ACCESS_PROTECTED_BY_COMMENT;
+            $this->access = self::ACCESS_PROTECTED_BY_COMMENT;
         }
-        $route->return = Returns::fromReturnType(
-            $method->hasReturnType() ? $method->getReturnType() : null,
-            $metadata['return'] ?? ['type' => ['array']],
-            $scope
-        );
-        $route->parameters = Param::fromMethod($method, $metadata, $scope);
+    }
+
+    private function setClassProperties(string $name, ?array $class = null, ReflectionFunctionAbstract $function, ?array $metadata = null, array $scope = []): void
+    {
+        $classes = $class ?? [];
+        foreach ($classes as $class => $value) {
+            $class = ClassName::resolve($class, $scope);
+            $value = $value[CommentParser::$embeddedDataName] ?? [];
+            foreach ($value as $k => $v) {
+                $this->set[$class][$k] = $v;
+            }
+        }
+    }
+
+    private function computeResponses(string $name, ?array $throws = null, ReflectionFunctionAbstract $function, ?array $metadata = null, array $scope = []): void
+    {
+        $classes = $class ?? [];
+        foreach ($classes as $class => $value) {
+            $class = ClassName::resolve($class, $scope);
+            $value = $value[CommentParser::$embeddedDataName] ?? [];
+            foreach ($value as $k => $v) {
+                $this->set[$class][$k] = $v;
+            }
+        }
+    }
+
+    private function overrideFormats(string $name, ?array $formats = null, ReflectionFunctionAbstract $function, ?array $metadata = null, array $scope = []): void
+    {
+        if (!$formats) return;
         $overrides = [];
         $resolver = function ($value) use ($scope, &$overrides) {
             $value = ClassName::resolve(trim($value), $scope);
@@ -209,31 +216,57 @@ class Route extends ValueObject
             }
             return $value;
         };
-        if ($formats = $metadata['format'] ?? false) {
-            $overrides = [
-                'Request' => Router::$requestMediaTypeOverrides,
-                'Response' => Router::$responseMediaTypeOverrides,
-            ];
-            $formats = explode(',', $formats);
-            $formats = array_map($resolver, $formats);
-            $route->setRequestMediaTypes(...$formats);
-            $route->setResponseMediaTypes(...$formats);
+        $overrides = [
+            'Request' => Router::$requestMediaTypeOverrides,
+            'Response' => Router::$responseMediaTypeOverrides,
+        ];
+        switch ($name) {
+            case 'request-format':
+                unset($overrides['Response']);
+                $formats = array_map($resolver, $formats);
+                $this->setRequestMediaTypes(...$formats);
+                break;
+            case 'response-format':
+                unset($overrides['Request']);
+                $formats = array_map($resolver, $formats);
+                $this->setResponseMediaTypes(...$formats);
+                break;
+            default:
+                $formats = array_map($resolver, $formats);
+                $this->setRequestMediaTypes(...$formats);
+                $this->setResponseMediaTypes(...$formats);
+
         }
-        if ($formats = $metadata['response-format'] ?? false) {
-            $overrides = [
-                'Response' => Router::$responseMediaTypeOverrides,
-            ];
-            $formats = explode(',', $formats);
-            $formats = array_map($resolver, $formats);
-            $route->setResponseMediaTypes(...$formats);
+    }
+
+
+    public static function fromMethod(ReflectionMethod $method, ?array $metadata = null, array $scope = []): self
+    {
+        if (empty($scope)) {
+            $scope = Router::scope($method->getDeclaringClass());
         }
-        if ($formats = $metadata['request-format'] ?? false) {
-            $overrides = [
-                'Request' => Router::$requestMediaTypeOverrides,
-            ];
-            $formats = explode(',', $formats);
-            $formats = array_map($resolver, $formats);
-            $route->setRequestMediaTypes(...$formats);
+        if (is_null($metadata)) {
+            $metadata = CommentParser::parse($method->getDocComment());
+        }
+        $route = new self();
+        foreach (self::PROPERTY_TAGS as $key => $property) {
+            if (is_numeric($key)) {
+                $key = $property;
+            }
+            if (isset($metadata[$key])) {
+                $route->{$property} = $metadata[$key];
+            }
+        }
+
+        $route->action = [$method->class, $method->getName()];
+        $route->return = Returns::fromReturnType(
+            $method->hasReturnType() ? $method->getReturnType() : null,
+            $metadata['return'] ?? ['type' => ['array']],
+            $scope
+        );
+        $route->parameters = Param::fromMethod($method, $metadata, $scope);
+        foreach (self::METHOD_TAGS as $key => $func) {
+            call_user_func([$route, $func], $key, $metadata[$key] ?? null, $method, $metadata, $scope);
         }
         if (empty($route->responseMediaTypes)) {
             $route->responseMediaTypes = Router::$responseMediaTypes;
@@ -251,14 +284,7 @@ class Route extends ValueObject
         } elseif (empty($route->responseFormatMap['default'])) {
             $route->responseFormatMap['default'] = array_values($route->responseFormatMap)[0];
         }
-        $classes = $metadata['class'] ?? [];
-        foreach ($classes as $class => $value) {
-            $class = ClassName::resolve($class, $scope);
-            $value = $value[CommentParser::$embeddedDataName] ?? [];
-            foreach ($value as $k => $v) {
-                $route->set[$class][$k] = $v;
-            }
-        }
+
         return $route;
     }
 
