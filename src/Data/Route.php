@@ -211,7 +211,7 @@ class Route extends ValueObject
             function ($matches) use (&$pathParams, $instance) {
                 $match = trim($matches[0], '{}:');
                 $param = $instance->parameters[$match];
-                $param->from = Param::FROM_BODY;
+                $param->from = Param::FROM_PATH;
                 $param->required = true;
                 $pathParams[$match] = $param;
                 return '{' . Router::typeChar($param->type) . $param->index . '}';
