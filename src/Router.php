@@ -405,8 +405,8 @@ class Router
         } catch (Exception $e) {
             throw new HttpException(500, "Error while parsing comments of `$className` class. " . $e->getMessage());
         }
+        unset($classMetadata['summary']);
         unset($classMetadata['description']);
-        unset($classMetadata['longDescription']);
         $classMetadata['scope'] = $scope = static::scope($class);
         $methods = $class->getMethods(
             ReflectionMethod::IS_PUBLIC +
@@ -685,19 +685,6 @@ class Router
                 return 'n';
         }
         return 's';
-    }
-
-    protected static function addPath(
-        string $path,
-        array $call,
-        string $httpMethod = 'GET',
-        int $version = 1
-    )
-    {
-        $call['url'] = $path;
-        $route = Route::parse($call);
-        $route->httpMethod = $httpMethod;
-        static::addRoute($route, $version);
     }
 
     public static function addRoute(Route $route, int $version = 1)
