@@ -310,12 +310,36 @@ class Explorer implements ProvidesMultiVersionApiInterface
     private function parameter(Param $param, $description = '')
     {
         $p = (object)[
-            'name' => '',
-            'in' => 'query',
-            'description' => '',
-            'required' => false,
+            'name' => $param->name ?? '',
+            'in' => $param->from,
+            'description' => $description,
+            'required' => $param->required,
             'schema' => new stdClass(),
         ];
+        //primitives
+        if ($param->scalar) {
+            if ($param->multiple) {
+                $p->schema->type = 'array';
+                $p->schema->items = new stdClass;
+                $this->scalarProperties($p->schema->items, $param);
+            } else {
+                $this->scalarProperties($p->schema, $param);
+            }
+            //TODO: $p->items and $p->uniqueItems boolean
+        } elseif ('array' === $param->type) {
+            if ('associative' == $param->format) {
+                $p->schema->type = 'object';
+            } else { //'indexed == $param->format
+                $p->schema->type = 'array';
+            }
+        }
+        if (isset($param->rules['example'])) {
+            $p->examples = [1 => ['value' => $param->rules['example']]];
+        }
+
+        return $p;
+
+
         //if (isset($info->rules['model'])) {
         //$info->type = $info->rules['model'];
         //}
@@ -353,6 +377,45 @@ class Explorer implements ProvidesMultiVersionApiInterface
         }
 
         return $p;
+    }
+
+    private function scalarProperties(stdClass $s, Type $param)
+    {
+        if ($t = static::$dataTypeAlias[$param->type] ?? null) {
+            is_array($t) ? [$s->type, $s->format] = $t : $s->type = $t;
+        } else {
+            $s->type = $param->type;
+        }
+        if (is_array($t)) {
+            $s->type = $t[0];
+            $s->format = $t[1];
+        } elseif (is_string($t)) {
+            $s->type = $t;
+        } else {
+
+        }
+        $has64bit = PHP_INT_MAX > 2147483647;
+        if ($s->type == 'integer') {
+            $s->format = $has64bit
+                ? 'int64'
+                : 'int32';
+        } elseif ($s->type == 'number') {
+            $s->format = $has64bit
+                ? 'double'
+                : 'float';
+        }
+        if ($param->default) {
+            $s->default = $param->default;
+        }
+        if ($param->choice) {
+            $s->enum = $param->choice;
+        }
+        if ($param->min) {
+            $s->minimum = $param->min;
+        }
+        if ($param->max) {
+            $s->maximum = $param->max;
+        }
     }
 
     private function setType(&$object, Type $param)
