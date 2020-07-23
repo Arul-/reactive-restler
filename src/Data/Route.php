@@ -159,12 +159,14 @@ class Route extends ValueObject
             $metadata = CommentParser::parse($method->getDocComment());
         }
         $route = new self();
-        foreach (self::PROPERTY_TAGS as $key => $property) {
-            if (is_numeric($key)) {
-                $key = $property;
-            }
-            if (isset($metadata[$key])) {
-                $route->{$property} = $metadata[$key];
+        if(!empty($metadata)){
+            foreach (self::PROPERTY_TAGS as $key => $property) {
+                if (is_numeric($key)) {
+                    $key = $property;
+                }
+                if (isset($metadata[$key])) {
+                    $route->{$property} = $metadata[$key];
+                }
             }
         }
 
