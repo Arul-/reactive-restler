@@ -38,7 +38,7 @@ class Type
      */
     public static function isScalar(string $type): bool
     {
-        return (boolean)strpos(static::PRIMITIVE, strtolower($type));
+        return (boolean)strpos(static::SCALAR, strtolower($type));
     }
 
     /**
