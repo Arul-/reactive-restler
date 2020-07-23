@@ -119,7 +119,7 @@ class Type implements ValueObjectInterface
                 $this->nullable = $reflectionType->allowsNull();
                 $this->scalar = 'array' !== $name && $reflectionType->isBuiltin();
             } else {
-                $this->scalar = 'array' !== $name && TypeUtil::isScalar($types[0]);
+                $this->scalar = TypeUtil::isScalar($types[0]);
             }
         }
         if (!$this->scalar && $qualified = ClassName::resolve($this->type, $scope)) {
