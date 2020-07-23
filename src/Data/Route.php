@@ -30,7 +30,7 @@ class Route extends ValueObject
         'cache',
         'expires',
         'throttle',
-        'throttle',
+        'throws',
         'view',
         'error-view' => 'errorView',
     ];
@@ -43,7 +43,6 @@ class Route extends ValueObject
     const METHOD_TAGS = [
         'access' => 'setAccess',
         'class' => 'setClassProperties',
-        'throws' => 'computeResponses',
         'format' => 'overrideFormats',
         'request-format' => 'overrideFormats',
         'response-format' => 'overrideFormats',
@@ -113,20 +112,7 @@ class Route extends ValueObject
     /**
      * @var array
      */
-    public $responses = [
-        /*
-        200 => [
-          'message'=> 'OK',
-          'type'=> Class::name,
-          'description'=> '',
-        ],
-        404 => [
-          'message'=> 'Not Found',
-          'type'=> Exception:name,
-          'description'=> '',
-        ],
-        */
-    ];
+    public $throws = [];
 
     /**
      * @var int access level
@@ -428,23 +414,6 @@ class Route extends ValueObject
             foreach ($value as $k => $v) {
                 $this->set[$class][$k] = $v;
             }
-        }
-    }
-
-    private function computeResponses(string $name, ?array $throws = null, ReflectionFunctionAbstract $function, ?array $metadata = null, array $scope = []): void
-    {
-        $this->responses[$this->status] = [
-            'message' => HttpException::$codes[$this->status] ?? '',
-            'type' => $this->return->multiple ? 'array' : $this->return->type,
-            'description' => $this->return->description,
-        ];
-        if (!$throws) return;
-        foreach ($throws as $throw) {
-            $this->responses[$throw['code']] = [
-                'message' => HttpException::$codes[$throw['code']] ?? '',
-                'type' => 'array',
-                'description' => $throw['message'],
-            ];
         }
     }
 
