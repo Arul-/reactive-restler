@@ -469,7 +469,9 @@ class Router
                 }
                 $url = empty($methodUrl) ? rtrim($resourcePath, '/') : $resourcePath . $methodUrl;
                 $pathParams = $allowAmbiguity
-                    ? $route->filterParams(false, Param::FROM_BODY)
+                    ? array_filter($route->parameters, function (Param $p) {
+                        return $p->scalar && !$p->multiple;
+                    })
                     : $route->filterParams(true, Param::FROM_PATH);
                 if (empty($pathParams) || $allowAmbiguity) {
                     self::addRoute($route->withLink($url, $httpMethod), $version);
