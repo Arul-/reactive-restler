@@ -259,8 +259,11 @@ class Param extends Type
         $instance->fix = $properties['fix'] ?? false;
 
         $instance->from = $properties['from']
-            ?? (in_array($instance->name, Router::$prefixingParameterNames) ? self::FROM_PATH
-                : ($instance->scalar && !$instance->multiple ? self::FROM_QUERY : self::FROM_BODY));
+            ?? (
+            in_array($instance->name, Router::$prefixingParameterNames)
+                ? self::FROM_PATH
+                : self::FROM_BODY
+            );
         if (!$instance->format) {
             $instance->format = $properties['format']
                 ?? Router::$formatsByName[$instance->name]
