@@ -27,6 +27,9 @@ class Validator implements ValidationInterface
 
     public static function validate($input, Param $param)
     {
+        if ('mixed' == $param->type) {
+            return $input;
+        }
         if ($param->multiple) {
             $error = isset ($param->message)
                 ? $param->message

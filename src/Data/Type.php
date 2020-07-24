@@ -108,7 +108,9 @@ class Type implements ValueObjectInterface
             $name = $n;
         }
         $this->nullable = in_array('null', $types);
-        if ('array' == $name && count($subTypes)) {
+        if (empty($types) || in_array('mixed', $types) || ($this->nullable && 1 == count($types))) {
+            $this->type = 'mixed';
+        } elseif ('array' == $name && count($subTypes)) {
             $this->multiple = true;
             $this->type = $subTypes[0];
             $this->scalar = TypeUtil::isScalar($subTypes[0]);

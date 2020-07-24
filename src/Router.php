@@ -966,7 +966,7 @@ class Router
         if (is_numeric($var)) {
             return is_float($var) ? 'float' : 'int';
         }
-        return 'string';
+        return is_null($var) ? 'null' : 'string';
     }
 
     public static function scope(ReflectionClass $class)
