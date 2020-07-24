@@ -74,7 +74,7 @@ class Type
         return $class == $superClass || isset(class_implements($class)[$superClass]);
     }
 
-    public static function booleanValue($value)
+    public static function booleanValue($value): bool
     {
         return is_bool($value)
             ? $value
@@ -88,14 +88,14 @@ class Type
             : floatval($value);
     }
 
-    public static function stringValue($value, $glue = ',')
+    public static function stringValue($value, $glue = ','): string
     {
         return is_array($value)
             ? implode($glue, $value)
             : ( string )$value;
     }
 
-    public static function arrayValue($value)
+    public static function arrayValue($value): array
     {
         return is_array($value) ? $value : [$value];
     }
