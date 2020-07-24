@@ -215,7 +215,7 @@ class Param extends Type
         if ($reflector && method_exists($reflector, 'isDefaultValueAvailable') && $reflector->isDefaultValueAvailable()) {
             $default = $reflector->getDefaultValue();
             $instance->default = $default;
-            $types[] = Router::type($default);
+            $types[] = TypeUtil::fromValue($default);
         }
         if (Defaults::$fullRequestDataName === $reflector->name) {
             $types = ['array'];

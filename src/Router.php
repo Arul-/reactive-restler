@@ -952,23 +952,6 @@ class Router
         return static::$routes;
     }
 
-    public static function type($var)
-    {
-        if (is_object($var)) {
-            return get_class($var);
-        }
-        if (is_array($var)) {
-            return 'array';
-        }
-        if (is_bool($var)) {
-            return 'boolean';
-        }
-        if (is_numeric($var)) {
-            return is_float($var) ? 'float' : 'int';
-        }
-        return is_null($var) ? 'null' : 'string';
-    }
-
     public static function scope(ReflectionClass $class)
     {
         if (!isset(self::$parsedScopes[$name = $class->getName()])) {

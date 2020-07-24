@@ -99,4 +99,21 @@ class Type
     {
         return is_array($value) ? $value : [$value];
     }
+
+    public static function fromValue($value): string
+    {
+        if (is_object($value)) {
+            return get_class($value);
+        }
+        if (is_array($value)) {
+            return 'array';
+        }
+        if (is_bool($value)) {
+            return 'boolean';
+        }
+        if (is_numeric($value)) {
+            return is_float($value) ? 'float' : 'int';
+        }
+        return is_null($value) ? 'null' : 'string';
+    }
 }
