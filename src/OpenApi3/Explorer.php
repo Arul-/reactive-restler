@@ -8,7 +8,7 @@ use Luracast\Restler\Contracts\{AuthenticationInterface,
     ProvidesMultiVersionApiInterface
 };
 use Luracast\Restler\Core;
-use Luracast\Restler\Data\{Param, Route, Type};
+use Luracast\Restler\Data\{Param, Returns, Route, Type};
 use Luracast\Restler\Defaults;
 use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\Exceptions\Redirect;
@@ -404,6 +404,9 @@ class Explorer implements ProvidesMultiVersionApiInterface
                 ? 'double'
                 : 'float';
         }
+        if ($param instanceof Returns) {
+            return;
+        }
         if ($param->default) {
             $s->default = $param->default;
         }
@@ -579,14 +582,35 @@ class Explorer implements ProvidesMultiVersionApiInterface
         if (!empty($return)) {
             if ('null' == $return->type) {
                 unset($r[$code]['content']);
+            } elseif ($return->scalar) {
+                if ($return->multiple) {
+                    $schema->type = 'array';
+                    $schema->items = new stdClass;
+                    $this->scalarProperties($schema->items, $return);
+                } else {
+                    $this->scalarProperties($schema, $return);
+                }
+            } elseif ('array' === $return->type) {
+                if ('associative' == $return->format) {
+                    $schema->type = 'object';
+                } else { //'indexed == $return->format
+                    $schema->type = 'array';
+                }
+            } elseif ('object' == $return->type) {
+                if ($return->multiple) {
+                    $schema->type = 'array';
+                    $schema->items = (object)['type' => 'object'];
+                } else {
+                    $schema->type = 'object';
+                }
             } else {
-                $this->setType($schema, $return);
+                //$this->setType($schema, $return);
             }
         }
 
         if (is_array($throws = $route->throws ?? null)) {
-            foreach ($throws as $message) {
-                $r[$message['code']] = ['description' => $message['message']];
+            foreach ($throws as $throw) {
+                $r[$throw['code']] = ['description' => $throw['message']];
             }
         }
 
