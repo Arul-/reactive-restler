@@ -296,15 +296,47 @@ class Explorer implements ProvidesMultiVersionApiInterface
                         [
                             'name' => $name,
                             'type' => $name,
+                            'scalar' => false,
+                            'multiple' => false,
                             'from' => 'body',
                             'required' => true,
-                            'children' => $body,
+                            'properties' => $body,
                         ]
                     )
                 );
             }
         }
         return [$r, $requestBody];
+    }
+
+    private function setProperties(Param $param, stdClass $schema)
+    {
+        //primitives
+        if ($param->scalar) {
+            if ($param->multiple) {
+                $schema->type = 'array';
+                $schema->items = new stdClass;
+                $this->scalarProperties($schema->items, $param);
+            } else {
+                $this->scalarProperties($schema, $param);
+            }
+            //TODO: $p->items and $p->uniqueItems boolean
+        } elseif ('array' === $param->type) {
+            if ('associative' == $param->format) {
+                $schema->type = 'object';
+            } else { //'indexed == $param->format
+                $schema->type = 'array';
+            }
+        } else {
+            $schema->type = 'object';
+            if (!empty($param->properties)) {
+                $schema->properties = new stdClass;
+                foreach ($param->properties as $name => $child) {
+                    $sch = $schema->properties->{$name} = new stdClass();
+                    $this->setProperties($child, $sch);
+                }
+            }
+        }
     }
 
     private function parameter(Param $param, $description = '')
@@ -316,23 +348,9 @@ class Explorer implements ProvidesMultiVersionApiInterface
             'required' => $param->required,
             'schema' => new stdClass(),
         ];
-        //primitives
-        if ($param->scalar) {
-            if ($param->multiple) {
-                $p->schema->type = 'array';
-                $p->schema->items = new stdClass;
-                $this->scalarProperties($p->schema->items, $param);
-            } else {
-                $this->scalarProperties($p->schema, $param);
-            }
-            //TODO: $p->items and $p->uniqueItems boolean
-        } elseif ('array' === $param->type) {
-            if ('associative' == $param->format) {
-                $p->schema->type = 'object';
-            } else { //'indexed == $param->format
-                $p->schema->type = 'array';
-            }
-        }
+
+        $this->setProperties($param, $p->schema);
+
         if (isset($param->rules['example'])) {
             $p->examples = [1 => ['value' => $param->rules['example']]];
         }
