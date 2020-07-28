@@ -309,7 +309,7 @@ class Explorer implements ProvidesMultiVersionApiInterface
         return [$r, $requestBody];
     }
 
-    private function setProperties(Param $param, stdClass $schema)
+    private function setProperties(Type $param, stdClass $schema)
     {
         //primitives
         if ($param->scalar) {
@@ -353,45 +353,6 @@ class Explorer implements ProvidesMultiVersionApiInterface
 
         if (isset($param->rules['example'])) {
             $p->examples = [1 => ['value' => $param->rules['example']]];
-        }
-
-        return $p;
-
-
-        //if (isset($info->rules['model'])) {
-        //$info->type = $info->rules['model'];
-        //}
-        $p->name = $param->name;
-        $this->setType($p->schema, $param);
-        if (empty($param->children) || $param->type != 'array') {
-            //primitives
-            if ($param->default) {
-                $p->schema->default = $param->default;
-            }
-            if ($param->choice) {
-                $p->schema->enum = $param->choice;
-            }
-            if ($param->min) {
-                $p->schema->minimum = $param->min;
-            }
-            if ($param->max) {
-                $p->schema->maximum = $param->max;
-            }
-            //TODO: $p->items and $p->uniqueItems boolean
-        }
-        $p->description = $description;
-        $p->in = $param->from; //$info->from == 'body' ? 'form' : $info->from;
-        $p->required = $param->required;
-
-        if (isset($param->rules['example'])) {
-            $p->examples = [1 => ['value' => $param->rules['example']]];
-        }
-
-        //$p->allowMultiple = false;
-
-        if (isset($p->{'$ref'})) {
-            $p->schema = (object)['$ref' => ($p->{'$ref'})];
-            unset($p->{'$ref'});
         }
 
         return $p;
@@ -596,34 +557,8 @@ class Explorer implements ProvidesMultiVersionApiInterface
                 'content' => $content,
             ],
         ];
-        $return = $route->return;
-        if (!empty($return)) {
-            if ('null' == $return->type) {
-                unset($r[$code]['content']);
-            } elseif ($return->scalar) {
-                if ($return->multiple) {
-                    $schema->type = 'array';
-                    $schema->items = new stdClass;
-                    $this->scalarProperties($schema->items, $return);
-                } else {
-                    $this->scalarProperties($schema, $return);
-                }
-            } elseif ('array' === $return->type) {
-                if ('associative' == $return->format) {
-                    $schema->type = 'object';
-                } else { //'indexed == $return->format
-                    $schema->type = 'array';
-                }
-            } elseif ('object' == $return->type) {
-                if ($return->multiple) {
-                    $schema->type = 'array';
-                    $schema->items = (object)['type' => 'object'];
-                } else {
-                    $schema->type = 'object';
-                }
-            } else {
-                //$this->setType($schema, $return);
-            }
+        if ($route->return) {
+            $this->setProperties($route->return, $schema);
         }
 
         if (is_array($throws = $route->throws ?? null)) {
