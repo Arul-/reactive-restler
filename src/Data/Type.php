@@ -63,11 +63,6 @@ class Type implements ValueObjectInterface
      */
     public $reference = null;
 
-    /**
-     * @var array|null
-     */
-    public $children = null;
-
 
     /**
      * @inheritDoc
@@ -151,6 +146,7 @@ class Type implements ValueObjectInterface
             $itemTypes,
             $scope
         );
+
         return $instance;
     }
 
@@ -192,7 +188,8 @@ class Type implements ValueObjectInterface
                 }
                 $properties[$name] = static::from(null, $magicProperty, $scope);
             }
-        } else {
+        }
+        if (empty($magicProperties)) {
             $reflectionProperties = $reflectionClass->getProperties(ReflectionProperty::IS_PUBLIC);
             foreach ($reflectionProperties as $reflectionProperty) {
                 $name = $reflectionProperty->getName();
