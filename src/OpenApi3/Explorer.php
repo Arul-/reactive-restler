@@ -328,11 +328,17 @@ class Explorer implements ProvidesMultiVersionApiInterface
                 $schema->type = 'array';
             }
         } else {
-            $schema->type = 'object';
+            $target = $schema;
+            if ($param->multiple) {
+                $schema->type = 'array';
+                $schema->items = new stdClass;
+                $target = $schema->items;
+            }
+            $target->type = 'object';
             if (!empty($param->properties)) {
-                $schema->properties = new stdClass;
+                $target->properties = new stdClass;
                 foreach ($param->properties as $name => $child) {
-                    $sch = $schema->properties->{$name} = new stdClass();
+                    $sch = $target->properties->{$name} = new stdClass();
                     $this->setProperties($child, $sch);
                 }
             }
