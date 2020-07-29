@@ -236,9 +236,7 @@ class Explorer implements ProvidesMultiVersionApiInterface
         $r->summary = $route->summary ?? '';
         $r->description = $route->description ?? '';
         $r->responses = $this->responses($route);
-        if (property_exists($route, 'deprecated')) {
-            $r->deprecated = true;
-        }
+        $r->deprecated = $route->deprecated;
         return $r;
     }
 

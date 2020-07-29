@@ -262,6 +262,9 @@ class CommentParser
                 $value = $this->formatAuthor($value);
                 $allowMultiple = true;
                 break;
+            case 'deprecated':
+                $value = true;
+                break;
             case 'header' :
             case 'link':
             case 'example':

@@ -33,6 +33,7 @@ class Route extends ValueObject
         'throws',
         'view',
         'error-view' => 'errorView',
+        'deprecated'
     ];
 
     const INTERNAL_TAGS = [
@@ -110,6 +111,11 @@ class Route extends ValueObject
     public $throttle;
 
     /**
+     * @var bool
+     */
+    public $deprecated = false;
+
+    /**
      * @var array
      */
     public $throws = [];
@@ -159,7 +165,7 @@ class Route extends ValueObject
             $metadata = CommentParser::parse($method->getDocComment());
         }
         $route = new self();
-        if(!empty($metadata)){
+        if (!empty($metadata)) {
             foreach (self::PROPERTY_TAGS as $key => $property) {
                 if (is_numeric($key)) {
                     $key = $property;
