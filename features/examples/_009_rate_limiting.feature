@@ -38,7 +38,7 @@ Feature: Testing Rate Limiting Example
     And his "email" is "jac@wright.com"
     And his "id" is 1
     And the request is sent as JSON
-    When I request "examples/_009_rate_limiting/authors/{id}?api_key=r3rocks"
+    When I request "examples/_009_rate_limiting/authors/{id}?api_key=r4rocks"
     Then the response status code should be 200
     And the response should be JSON
     And the "name" property equals "Jac"
@@ -56,7 +56,7 @@ Feature: Testing Rate Limiting Example
   Scenario: Deleting Author
     Given that I want to delete an "Author"
     And his "id" is 1
-    When I request "examples/_009_rate_limiting/authors/{id}?api_key=r3rocks"
+    When I request "examples/_009_rate_limiting/authors/{id}?api_key=r4rocks"
     Then the response status code should be 200
     And the response should be JSON
     And the response has an "id" property
@@ -64,6 +64,6 @@ Feature: Testing Rate Limiting Example
   Scenario: Deleting with invalid author id
     Given that I want to delete an "Author"
     And his "id" is 1
-    When I request "examples/_009_rate_limiting/authors/{id}?api_key=r3rocks"
+    When I request "examples/_009_rate_limiting/authors/{id}?api_key=r4rocks"
     Then the response status code should be 404
     And the response should be JSON

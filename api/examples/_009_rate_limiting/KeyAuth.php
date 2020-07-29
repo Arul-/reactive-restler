@@ -1,21 +1,23 @@
 <?php
 
-use Luracast\Restler\Contracts\AuthenticationInterface;
+use Luracast\Restler\Contracts\ExplorableAuthenticationInterface;
 use Luracast\Restler\Contracts\SelectivePathsInterface;
 use Luracast\Restler\Contracts\SelectivePathsTrait;
 use Luracast\Restler\Contracts\UserIdentificationInterface;
+use Luracast\Restler\OpenApi3\Security\ApiKeyAuth;
+use Luracast\Restler\OpenApi3\Security\Scheme;
 use Luracast\Restler\ResponseHeaders;
 use Luracast\Restler\Utils\ClassName;
 use Psr\Http\Message\ServerRequestInterface;
 
-class KeyAuth implements AuthenticationInterface, SelectivePathsInterface
+class KeyAuth implements ExplorableAuthenticationInterface, SelectivePathsInterface
 {
     use SelectivePathsTrait;
 
     public function _isAllowed(ServerRequestInterface $request, ResponseHeaders $responseHeaders): bool
     {
         $query = $request->getQueryParams();
-        $allowed = isset($query['api_key']) && $query['api_key'] == 'r3rocks';
+        $allowed = isset($query['api_key']) && $query['api_key'] == 'r4rocks';
         if ($allowed) {
             // if api key is unique for each user
             // we can use that to identify and track the user
@@ -36,5 +38,10 @@ class KeyAuth implements AuthenticationInterface, SelectivePathsInterface
     public static function getWWWAuthenticateString(): string
     {
         return 'Query name="api_key"';
+    }
+
+    public static function scheme(): Scheme
+    {
+        return new ApiKeyAuth('api_key', ApiKeyAuth::IN_QUERY);
     }
 }
