@@ -12,6 +12,8 @@ use Luracast\Restler\Data\{Param, Returns, Route, Type};
 use Luracast\Restler\Defaults;
 use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\Exceptions\Redirect;
+use Luracast\Restler\OpenApi3\Tags\TagByBasePath;
+use Luracast\Restler\OpenApi3\Tags\Tagger;
 use Luracast\Restler\Router;
 use Luracast\Restler\Utils\{ClassName, PassThrough, Text, Type as TypeUtil};
 use Psr\Http\Message\ResponseInterface;
@@ -56,6 +58,10 @@ class Explorer implements ProvidesMultiVersionApiInterface
         'patch' => 'modify',
         'delete' => 'remove',
     ];
+
+    protected static $tagger = TagByBasePath::class;
+
+    protected $tags = [];
     protected $models = [];
     protected $requestBodies = [];
     /**
@@ -86,6 +92,14 @@ class Explorer implements ProvidesMultiVersionApiInterface
     public static function getMaximumSupportedVersion(): int
     {
         return Router::$maximumVersion;
+    }
+
+    /**
+     * @param Tagger $tagger
+     */
+    public static function setTagger(Tagger $tagger): void
+    {
+        self::$tagger = $tagger;
     }
 
     /**
@@ -151,6 +165,10 @@ class Explorer implements ProvidesMultiVersionApiInterface
         }
 
         $s->components = $this->components();
+        $s->tags = [];
+        foreach ($this->tags as $name => $description) {
+            $s->tags[] = compact('name', 'description');
+        }
         return $s;
     }
 
@@ -218,11 +236,9 @@ class Explorer implements ProvidesMultiVersionApiInterface
     {
         $r = new stdClass();
         $r->operationId = $this->operationId($route, $version);
-        $base = strtok($route->url, '/');
-        if (empty($base)) {
-            $base = 'root';
-        }
-        $r->tags = [$base];
+        $tags = call_user_func([static::$tagger, 'tags'], $route, $version);
+        $r->tags = array_keys($tags);
+        $this->tags = array_merge($tags, $this->tags);
         [$r->parameters, $r->requestBody] = $this->parameters($route, $version);
 
         if (is_null($r->requestBody)) {
@@ -374,8 +390,6 @@ class Explorer implements ProvidesMultiVersionApiInterface
             $s->format = $t[1];
         } elseif (is_string($t)) {
             $s->type = $t;
-        } else {
-
         }
         $has64bit = PHP_INT_MAX > 2147483647;
         if ($s->type == 'integer') {
@@ -387,7 +401,7 @@ class Explorer implements ProvidesMultiVersionApiInterface
                 ? 'double'
                 : 'float';
         }
-        if ($param instanceof Returns) {
+        if (!$param instanceof Param) {
             return;
         }
         if ($param->default) {
@@ -402,125 +416,6 @@ class Explorer implements ProvidesMultiVersionApiInterface
         if ($param->max) {
             $s->maximum = $param->max;
         }
-    }
-
-    private function setType(&$object, Type $param)
-    {
-        $type = ClassName::short($param->type);
-        if ($param->type == 'array') {
-            $object->type = 'array';
-            $contentType = $param->contentType;
-            if ($param->children) {
-                $contentType = ClassName::short($contentType);
-                $this->model($contentType, $param->children);
-                $object->items = (object)[
-                    '$ref' => "#/components/schemas/$contentType",
-                ];
-            } elseif ('associative' == $contentType) {
-                $param->contentType = null;
-                $object->type = 'object';
-            } elseif ('object' == $contentType) {
-                $param->contentType = null;
-                $object->items = (object)['type' => 'object'];
-            } elseif ('indexed' != $contentType) {
-                if (is_string($param->contentType) &&
-                    $t = static::$dataTypeAlias[strtolower($contentType)] ?? null) {
-                    if (is_array($t)) {
-                        $object->items = (object)[
-                            'type' => $t[0],
-                            'format' => $t[1],
-                        ];
-                    } else {
-                        $object->items = (object)[
-                            'type' => $t,
-                        ];
-                    }
-                } elseif (is_string($contentType)) {
-                    $contentType = ClassName::short($contentType);
-                    $object->items = (object)[
-                        '$ref' => "#/components/schemas/$contentType",
-                    ];
-                } else { //assume as array of objects
-                    $param->contentType = null;
-                    $object->items = (object)['type' => 'object'];
-                }
-            } else {
-                $object->items = (object)[
-                    'type' => 'string',
-                ];
-            }
-        } elseif ($param->children) {
-            $this->model($type, $param->children);
-            $object->{'$ref'} = "#/components/schemas/$type";
-        } elseif (is_string($param->type) && $t = static::$dataTypeAlias[strtolower($param->type)] ?? null) {
-            if (is_array($t)) {
-                $object->type = $t[0];
-                $object->format = $t[1];
-            } else {
-                $object->type = $t;
-            }
-        } else {
-            $object->type = 'string';
-        }
-        $has64bit = PHP_INT_MAX > 2147483647;
-        if (isset($object->type)) {
-            if ($object->type == 'integer') {
-                $object->format = $has64bit
-                    ? 'int64'
-                    : 'int32';
-            } elseif ($object->type == 'number') {
-                $object->format = $has64bit
-                    ? 'double'
-                    : 'float';
-            }
-        }
-    }
-
-    private function model($type, array $children)
-    {
-        if (isset($this->models[$type])) {
-            return $this->models[$type];
-        }
-        $r = new stdClass();
-        $r->type = 'object';
-        $r->properties = [];
-        $required = [];
-        /** @var Type $child */
-        foreach ($children as $child) {
-            $p = new stdClass();
-            $this->setType($p, $child);
-            if (isset($child->description)) {
-                $p->description = $child->description;
-            }
-            if ($child instanceof Param) {
-                if ($child->object && TypeUtil::matches($child->type, UploadedFileInterface::class)) {
-                    $p->type = 'string';
-                    $p->format = 'binary';
-                }
-                if ($child->default) {
-                    $p->default = $child->default;
-                }
-                if ($child->choice) {
-                    $p->enum = $child->choice;
-                }
-                if ($child->min) {
-                    $p->minimum = $child->min;
-                }
-                if ($child->max) {
-                    $p->maximum = $child->max;
-                }
-                if ($child->required) {
-                    $required[] = $child->name;
-                }
-            }
-            $r->properties[$child->name] = $p;
-        }
-        if (!empty($required)) {
-            $r->required = $required;
-        }
-        $this->models[$type] = $r;
-
-        return $r;
     }
 
     private function requestBody(Route $route, Param $param, $description = '')
