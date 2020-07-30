@@ -402,11 +402,13 @@ class Router
         $class = new ReflectionClass($className);
         try {
             $classMetadata = CommentParser::parse($class->getDocComment());
+            $classMetadata['resource']['summary'] = $classMetadata['summary'] ?? '';
+            $classMetadata['resource']['description'] = $classMetadata['description'] ?? '';
+            unset($classMetadata['summary']);
+            unset($classMetadata['description']);
         } catch (Exception $e) {
             throw new HttpException(500, "Error while parsing comments of `$className` class. " . $e->getMessage());
         }
-        unset($classMetadata['summary']);
-        unset($classMetadata['description']);
         $classMetadata['scope'] = $scope = static::scope($class);
         $methods = $class->getMethods(
             ReflectionMethod::IS_PUBLIC +

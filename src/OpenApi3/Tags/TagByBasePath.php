@@ -23,9 +23,15 @@ class TagByBasePath implements Tagger
         if (empty($base)) {
             $base = 'root';
         } else {
-            $base = Text::title($base);
+            $base = Text::slug($base, '');
         }
-
-        return [$base => self::$descriptions[$base] ?? ''];
+        if (!$description = self::$descriptions[$base] ?? false) {
+            if (!empty($route->resource['summary'])) {
+                $description = self::$descriptions[$base] = $route->resource['summary'];
+            } else {
+                $description = '';
+            }
+        }
+        return [$base => $description];
     }
 }

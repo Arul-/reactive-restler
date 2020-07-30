@@ -33,7 +33,8 @@ class Route extends ValueObject
         'throws',
         'view',
         'error-view' => 'errorView',
-        'deprecated'
+        'deprecated',
+        'resource'
     ];
 
     const INTERNAL_TAGS = [
@@ -114,6 +115,9 @@ class Route extends ValueObject
      * @var bool
      */
     public $deprecated = false;
+
+
+    public $resource = ['summary' => '', 'description' => ''];
 
     /**
      * @var array
