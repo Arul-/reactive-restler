@@ -1,5 +1,8 @@
 <?php
 
+/**
+ * that walk you through restler examples.
+ */
 class Say
 {
     function hello($to = 'world')

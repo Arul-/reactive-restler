@@ -15,6 +15,8 @@ class BodyMassIndex
      * @param float $weight weight in kilograms
      *
      * @return object
+     *
+     * @deprecated
      */
     function index($height = 162.6, $weight = 84.0)
     {

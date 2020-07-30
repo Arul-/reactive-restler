@@ -8,6 +8,9 @@ use Luracast\Restler\Utils\ClassName;
 use Luracast\Restler\Utils\Text;
 use Psr\Http\Message\ServerRequestInterface;
 
+/**
+ * api for resetting various storage so that tests can run in expected state.
+ */
 class Storage
 {
 

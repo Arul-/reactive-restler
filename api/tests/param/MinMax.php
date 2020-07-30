@@ -1,5 +1,7 @@
 <?php
 /**
+ * to make sure the core functionality works when restler codebase changes.
+ *
  * Class MinMax provides an api to check min and max
  * attributes for array, int, and string
  */
