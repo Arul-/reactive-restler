@@ -24,4 +24,12 @@ interface ComposerInterface
      * @return mixed
      */
     public function message(HttpException $exception);
+
+    /**
+     * Used by Explorer to
+     * @param int $httpStatus http status code {@example 404}
+     * @param string $mediaType
+     * @return string
+     */
+    public static function errorResponseClass(int $httpStatus, string $mediaType): string;
 }

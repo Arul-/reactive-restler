@@ -122,7 +122,7 @@ class Type implements ValueObjectInterface
         if (!$this->scalar && $qualified = ClassName::resolve($this->type, $scope)) {
             $this->type = $qualified;
             $class = new ReflectionClass($qualified);
-            $this->properties = static::fromClass($class);
+            $this->properties = static::propertiesFromClass($class);
         }
 
     }
@@ -165,7 +165,16 @@ class Type implements ValueObjectInterface
         return static::from($property, $var, $scope);
     }
 
-    public static function fromClass(ReflectionClass $reflectionClass, array $selectedProperties = [], array $requiredProperties = [])
+    public static function fromClass(ReflectionClass $reflectionClass)
+    {
+        $instance = new static;
+        $instance->scalar = false;
+        $instance->type = $reflectionClass->name;
+        $instance->properties = self::propertiesFromClass($reflectionClass);
+        return $instance;
+    }
+
+    protected static function propertiesFromClass(ReflectionClass $reflectionClass, array $selectedProperties = [], array $requiredProperties = [])
     {
         $isParameter = Param::class == get_called_class();
         $filter = !empty($selectedProperties);

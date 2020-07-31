@@ -3,10 +3,10 @@
 namespace Luracast\Restler\OpenApi3;
 
 use Luracast\Restler\Contracts\{AuthenticationInterface,
+    ComposerInterface,
     DownloadableFileMediaTypeInterface,
     ExplorableAuthenticationInterface,
-    ProvidesMultiVersionApiInterface
-};
+    ProvidesMultiVersionApiInterface};
 use Luracast\Restler\Core;
 use Luracast\Restler\Data\{Param, Returns, Route, Type};
 use Luracast\Restler\Defaults;
@@ -15,10 +15,11 @@ use Luracast\Restler\Exceptions\Redirect;
 use Luracast\Restler\OpenApi3\Tags\TagByBasePath;
 use Luracast\Restler\OpenApi3\Tags\Tagger;
 use Luracast\Restler\Router;
-use Luracast\Restler\Utils\{ClassName, PassThrough, Text, Type as TypeUtil};
+use Luracast\Restler\Utils\{ClassName, Convert, PassThrough, Text, Type as TypeUtil};
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\UploadedFileInterface;
+use ReflectionClass;
 use stdClass;
 
 class Explorer implements ProvidesMultiVersionApiInterface
@@ -461,8 +462,17 @@ class Explorer implements ProvidesMultiVersionApiInterface
         }
 
         if (is_array($throws = $route->throws ?? null)) {
+            $composer = ClassName::get(ComposerInterface::class);
             foreach ($throws as $throw) {
                 $r[$throw['code']] = ['description' => $throw['message']];
+                $content = [];
+                foreach ($route->requestMediaTypes as $mime) {
+                    $schema = new stdClass();
+                    $class = $composer::errorResponseClass($throw['code'], $mime);
+                    $content[$mime] = ['schema' => $schema];
+                    $this->setProperties(Returns::fromClass(new ReflectionClass($class)), $schema);
+                }
+                $r[$throw['code']]['content'] = $content;
             }
         }
 

@@ -2,6 +2,8 @@
 
 
 use Luracast\Restler\Contracts\ComposerInterface;
+use Luracast\Restler\Contracts\ResponseMediaTypeInterface;
+use Luracast\Restler\Data\ErrorResponse;
 use Luracast\Restler\Exceptions\HttpException;
 
 class Composer implements ComposerInterface
@@ -31,53 +33,15 @@ class Composer implements ComposerInterface
      *
      * @param HttpException $exception exception that has reasons for failure
      *
-     * @return mixed
+     * @return ErrorResponse
      */
     public function message(HttpException $exception)
     {
-        $r = [
-            'error' => [
-                    'code' => $exception->getCode(),
-                    'message' => $exception->getErrorMessage(),
-                ] + $exception->getDetails()
-        ];
-        if (!Defaults::$productionMode && self::$includeDebugInfo) {
-            $innerException = $exception;
-            while ($prev = $innerException->getPrevious()) {
-                $innerException = $prev;
-            }
-            $trace = array_slice($innerException->getTrace(), 0, 10);
-            $r['debug'] = [
-                'source' => $exception->getSource(),
-                'trace' => array_map([static::class, 'simplifyTrace'], $trace)
-            ];
-        }
-        return $r;
+        return new ErrorResponse($exception, !Defaults::$productionMode && self::$includeDebugInfo);
     }
 
-    public static function simplifyTrace(array $trace)
+    public static function errorResponseClass(int $httpStatus, string $mediaType): string
     {
-        $parts = explode('\\', $trace['class'] ?? '');
-        $class = array_pop($parts);
-        $parts = explode('/', $trace['file'] ?? '');
-        return [
-            'file' => array_pop($parts) . (isset($trace['line']) ? ':' . $trace['line'] : ''),
-            'function' => $class . ($trace['type'] ?? '') . $trace['function'],
-            'args' => array_map([static::class, 'simplifyTraceArgs'], $trace['args'] ?? []),
-        ];
-    }
-
-    public static function simplifyTraceArgs($argument)
-    {
-        if (is_object($argument)) {
-            return 'new ' . get_class($argument) . '()';
-        }
-        if (is_array($argument)) {
-            return array_map(__METHOD__, $argument);
-        }
-        if (is_resource($argument)) {
-            return 'resource(' . get_resource_type($argument) . ')';
-        }
-        return $argument;
+        return ErrorResponse::class;
     }
 }

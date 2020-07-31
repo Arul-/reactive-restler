@@ -1,5 +1,6 @@
 <?php namespace Luracast\Restler\Data;
 
+use Exception;
 use Luracast\Restler\Defaults;
 use Luracast\Restler\Router;
 use Luracast\Restler\Utils\CommentParser;
@@ -195,7 +196,11 @@ class Param extends Type
     ): array
     {
         if (is_null($doc)) {
-            $doc = CommentParser::parse($function->getDocComment());
+            try {
+                $doc = CommentParser::parse($function->getDocComment());
+            } catch (Exception $e) {
+                //ignore
+            }
         }
         $params = [];
         foreach ($function->getParameters() as $reflectionParameter) {
