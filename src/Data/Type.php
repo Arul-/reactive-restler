@@ -17,7 +17,6 @@ use Reflector;
 
 class Type implements ValueObjectInterface
 {
-    private const DIRECT_PROPERTIES = ['type', 'multiple', 'nullable', 'scalar'];
     /**
      * Data type of the variable being validated.
      * It will be mostly string
