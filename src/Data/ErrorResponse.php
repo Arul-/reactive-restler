@@ -6,9 +6,10 @@ namespace Luracast\Restler\Data;
 
 use Exception;
 use JsonSerializable;
+use Luracast\Restler\Contracts\TypedResponseInterface;
 use Luracast\Restler\Exceptions\HttpException;
 
-class ErrorResponse implements JsonSerializable
+class ErrorResponse implements TypedResponseInterface
 {
     /** @var Error */
     public $error;
@@ -20,8 +21,9 @@ class ErrorResponse implements JsonSerializable
     public function __construct(Exception $exception, bool $debug = false)
     {
         $this->error = new Error($exception->getCode(), $exception->getErrorMessage());
-        if ($exception instanceof HttpException)
+        if ($exception instanceof HttpException) {
             $this->details = $exception->getDetails();
+        }
         if ($debug) {
             $innerException = $exception;
             while ($prev = $innerException->getPrevious()) {
@@ -69,6 +71,127 @@ class ErrorResponse implements JsonSerializable
     public function jsonSerialize()
     {
         return array_filter(get_object_vars($this));
+    }
+
+    public function type(): Returns
+    {
+        return Returns::__set_state([
+            'type' => 'ErrorResponse',
+            'multiple' => false,
+            'nullable' => true,
+            'scalar' => false,
+            'format' => null,
+            'properties' =>
+                [
+                    'error' =>
+                        Returns::__set_state([
+                            'type' => 'Error',
+                            'multiple' => false,
+                            'nullable' => false,
+                            'scalar' => false,
+                            'format' => null,
+                            'properties' =>
+                                [
+                                    'code' =>
+                                        Returns::__set_state([
+                                            'type' => 'int',
+                                            'multiple' => false,
+                                            'nullable' => false,
+                                            'scalar' => true,
+                                            'format' => null,
+                                            'properties' => null,
+                                            'description' => '',
+                                            'reference' => null,
+                                        ]),
+                                    'message' =>
+                                        Returns::__set_state([
+                                            'type' => 'string',
+                                            'multiple' => false,
+                                            'nullable' => false,
+                                            'scalar' => true,
+                                            'format' => null,
+                                            'properties' => null,
+                                            'description' => '',
+                                            'reference' => null,
+                                        ]),
+                                ],
+                            'description' => '',
+                            'reference' => null,
+                        ]),
+                    'debug' =>
+                        Returns::__set_state([
+                            'type' => 'Debug',
+                            'multiple' => false,
+                            'nullable' => false,
+                            'scalar' => false,
+                            'format' => null,
+                            'properties' =>
+                                [
+                                    'source' =>
+                                        Returns::__set_state([
+                                            'type' => 'string',
+                                            'multiple' => false,
+                                            'nullable' => false,
+                                            'scalar' => true,
+                                            'format' => null,
+                                            'properties' => null,
+                                            'description' => '',
+                                            'reference' => null,
+                                        ]),
+                                    'trace' =>
+                                        Returns::__set_state([
+                                            'type' => 'Trace',
+                                            'multiple' => true,
+                                            'nullable' => false,
+                                            'scalar' => false,
+                                            'format' => null,
+                                            'properties' =>
+                                                [
+                                                    'file' =>
+                                                        Returns::__set_state([
+                                                            'type' => 'string',
+                                                            'multiple' => false,
+                                                            'nullable' => false,
+                                                            'scalar' => true,
+                                                            'format' => null,
+                                                            'properties' => null,
+                                                            'description' => '',
+                                                            'reference' => null,
+                                                        ]),
+                                                    'function' =>
+                                                        Returns::__set_state([
+                                                            'type' => 'string',
+                                                            'multiple' => false,
+                                                            'nullable' => false,
+                                                            'scalar' => true,
+                                                            'format' => null,
+                                                            'properties' => null,
+                                                            'description' => '',
+                                                            'reference' => null,
+                                                        ]),
+                                                    'args' =>
+                                                        Returns::__set_state([
+                                                            'type' => 'string',
+                                                            'multiple' => true,
+                                                            'nullable' => false,
+                                                            'scalar' => true,
+                                                            'format' => null,
+                                                            'properties' => null,
+                                                            'description' => '',
+                                                            'reference' => null,
+                                                        ]),
+                                                ],
+                                            'description' => '',
+                                            'reference' => null,
+                                        ]),
+                                ],
+                            'description' => '',
+                            'reference' => null,
+                        ]),
+                ],
+            'description' => '',
+            'reference' => null,
+        ]);
     }
 }
 
