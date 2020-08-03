@@ -2,6 +2,8 @@
 
 use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\Restler;
+use Luracast\Restler\StaticProperties;
+use Luracast\Restler\Utils\Convert;
 use Luracast\Restler\Utils\Dump;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -95,6 +97,10 @@ $data['render'] = $render = function ($data, $shadow = true) use (&$render) {
 };
 
 $icon = '';
+if (is_object($response)) {
+    $convert = new Convert(new StaticProperties(Convert::class));
+    $response = $convert->toArray($response);
+}
 if ($success && isset($api)) {
     $arguments = implode(', ', $api->parameters);
     $icon = "<icon class=\"success\"></icon>";
