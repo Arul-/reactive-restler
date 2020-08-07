@@ -222,7 +222,7 @@ class Param extends Type
             $instance->default = $default;
             $types[] = TypeUtil::fromValue($default);
         }
-        if (Defaults::$fullRequestDataName === $reflector->name) {
+        if ($reflector && Defaults::$fullRequestDataName === $reflector->name) {
             $types = ['array'];
             $instance->format = 'associative';
             $itemTypes = [];
