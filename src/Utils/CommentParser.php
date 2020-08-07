@@ -469,7 +469,7 @@ class CommentParser
         $r = [
             'type' => $data,
         ];
-        $r['description'] = implode(' ', $value);
+        $this->typeAndDescription($r, $value);
         return $r;
     }
 
