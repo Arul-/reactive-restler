@@ -136,12 +136,8 @@ class ClassName
         if (Type::isPrimitive($name)) {
             return false;
         }
-
-        $divider = '\\';
-        $qualified = false;
-        if ($name[0] == $divider) {
-            $qualified = trim($name, $divider);
-        } elseif (array_key_exists($name, $scope)) {
+        $name = trim($name, '\\');
+        if (array_key_exists($name, $scope)) {
             $qualified = $scope[$name];
         } else {
             $qualified = $scope['*'] . $name;
@@ -149,11 +145,8 @@ class ClassName
         if (class_exists($qualified)) {
             return $qualified;
         }
-        if (isset(Defaults::$aliases[$name])) {
-            $qualified = Defaults::$aliases[$name];
-            if (class_exists($qualified)) {
-                return $qualified;
-            }
+        if (class_exists($qualified = Defaults::$aliases[$name] ?? $name)) {
+            return $qualified;
         }
         return false;
     }
