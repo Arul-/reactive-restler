@@ -6,6 +6,7 @@ namespace Luracast\Restler\Data;
 
 use Exception;
 use Luracast\Restler\Contracts\ValueObjectInterface;
+use Luracast\Restler\Exceptions\Invalid;
 use Luracast\Restler\Router;
 use Luracast\Restler\Utils\ClassName;
 use Luracast\Restler\Utils\CommentParser;
@@ -82,7 +83,17 @@ class Type implements ValueObjectInterface
      */
     public function jsonSerialize()
     {
-        return get_object_vars($this);
+        return array_filter(get_object_vars($this));
+    }
+
+    public function __debugInfo()
+    {
+        return $this->jsonSerialize();
+    }
+
+    public function __sleep()
+    {
+        return $this->jsonSerialize();
     }
 
     /**
@@ -218,6 +229,45 @@ class Type implements ValueObjectInterface
             }
         }
         return $properties;
+    }
+
+    public static function fromSampleData(array $data)
+    {
+        if (empty($data)) {
+            throw new Invalid('data can\'t be empty');
+        }
+        $properties = Param::filterArray($data, Param::KEEP_NON_NUMERIC);
+        if (empty($properties)) {
+            //array of items
+            /** @var Type $value */
+            $value = static::fromSampleData($data[0]);
+            $value->multiple = true;
+            return $value;
+        }
+        /** @var Type $obj */
+        $obj = static::fromValue($data);
+        foreach ($properties as $name => $value) {
+            $obj->properties[$name] = static::fromValue($value);
+        }
+        return $obj;
+    }
+
+    public static function fromValue($value): Type
+    {
+        $instance = new static();
+        if (is_scalar($value)) {
+            $instance->scalar = true;
+            if (is_numeric($value)) {
+                $instance->type = is_float($value) ? 'float' : 'int';
+            } else {
+                $instance->type = 'string';
+            }
+        } else {
+            $instance->scalar = false;
+            $instance->type = 'object';
+
+        }
+        return $instance;
     }
 
     protected function applyProperties(array $properties, bool $filter = true)
