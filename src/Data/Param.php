@@ -279,17 +279,8 @@ class Param extends Type
 
     public static function filterArray(array $data, bool $onlyNumericKeys): array
     {
-        $r = [];
-        foreach ($data as $key => $value) {
-            if (is_numeric($key)) {
-                if ($onlyNumericKeys) {
-                    $r[$key] = $value;
-                }
-            } elseif (!$onlyNumericKeys) {
-                $r[$key] = $value;
-            }
-        }
-        return $r;
+        $callback = $onlyNumericKeys ? 'is_numeric' : 'is_string';
+        return array_filter($data, $callback, ARRAY_FILTER_USE_KEY);
     }
 }
 
