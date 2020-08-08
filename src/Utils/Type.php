@@ -3,33 +3,17 @@
 namespace Luracast\Restler\Utils;
 
 
+use Luracast\Restler\Data\Param;
+
 class Type
 {
     const SCALAR = '|bool|boolean|int|integer|float|string';
     const PRIMITIVE = '|array' . self::SCALAR;
     const SIMPLE = '|resource|mixed' . self::PRIMITIVE;
 
-    /**
-     * verify if the given data type string is scalar or not
-     *
-     * @static
-     *
-     * @param string $type data type as string
-     *
-     * @return bool true or false
-     */
-    public static function isObjectOrArray(string $type): bool
+    public static function isAssociative(array $value): bool
     {
-        if (is_array($type)) {
-            $result = true;
-            foreach ($type as $t) {
-                if (!static::isObjectOrArray($t)) {
-                    $result = false;
-                }
-            }
-            return $result;
-        }
-        return !(boolean)strpos(static::SCALAR, $type);
+        return !empty(Param::filterArray($value, Param::KEEP_NON_NUMERIC));
     }
 
     /**
