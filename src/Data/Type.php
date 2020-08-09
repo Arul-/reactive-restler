@@ -137,9 +137,14 @@ class Type implements ValueObjectInterface
             $isParameter = Param::class === get_called_class();
             $interface = $isParameter ? TypedRequestInterface::class : TypedResponseInterface::class;
             $method = $isParameter ? 'requests' : 'responds';
-            $this->properties = $class->implementsInterface($interface)
-                ? (call_user_func([$class->name, $method]))->properties
-                : static::propertiesFromClass($class);
+            if ($class->implementsInterface($interface)) {
+                /** @var Type $type */
+                $type = call_user_func([$class->name, $method], $subTypes);
+                $this->properties = $type->properties;
+                $this->type = $type->type;
+            } else {
+                $this->properties = static::propertiesFromClass($class);
+            }
         }
     }
 
