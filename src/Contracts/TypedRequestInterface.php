@@ -8,5 +8,5 @@ use Luracast\Restler\Data\Param;
 
 interface TypedRequestInterface extends ValueObjectInterface
 {
-    public function type(): Param;
+    public static function requests(string  ...$types): Param;
 }

@@ -9,5 +9,5 @@ use Luracast\Restler\Data\Returns;
 
 interface TypedResponseInterface extends JsonSerializable
 {
-    public function type(): Returns;
+    public static function responds(string  ...$types): Returns;
 }

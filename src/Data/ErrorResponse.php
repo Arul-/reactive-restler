@@ -5,7 +5,6 @@ namespace Luracast\Restler\Data;
 
 
 use Exception;
-use JsonSerializable;
 use Luracast\Restler\Contracts\TypedResponseInterface;
 use Luracast\Restler\Exceptions\HttpException;
 
@@ -73,78 +72,50 @@ class ErrorResponse implements TypedResponseInterface
         return array_filter(get_object_vars($this));
     }
 
-    public function type(): Returns
+    public static function responds(string ...$types): Returns
     {
         return Returns::__set_state([
             'type' => 'ErrorResponse',
-            'multiple' => false,
-            'nullable' => true,
             'scalar' => false,
-            'format' => null,
+            'description' => '',
             'properties' =>
                 [
                     'error' =>
                         Returns::__set_state([
                             'type' => 'Error',
-                            'multiple' => false,
-                            'nullable' => false,
                             'scalar' => false,
-                            'format' => null,
+                            'description' => '',
                             'properties' =>
                                 [
                                     'code' =>
                                         Returns::__set_state([
                                             'type' => 'int',
-                                            'multiple' => false,
-                                            'nullable' => false,
-                                            'scalar' => true,
-                                            'format' => null,
-                                            'properties' => null,
                                             'description' => '',
-                                            'reference' => null,
                                         ]),
                                     'message' =>
                                         Returns::__set_state([
                                             'type' => 'string',
-                                            'multiple' => false,
-                                            'nullable' => false,
-                                            'scalar' => true,
-                                            'format' => null,
-                                            'properties' => null,
                                             'description' => '',
-                                            'reference' => null,
                                         ]),
                                 ],
-                            'description' => '',
-                            'reference' => null,
                         ]),
                     'debug' =>
                         Returns::__set_state([
                             'type' => 'Debug',
-                            'multiple' => false,
-                            'nullable' => false,
                             'scalar' => false,
-                            'format' => null,
+                            'description' => '',
                             'properties' =>
                                 [
                                     'source' =>
                                         Returns::__set_state([
                                             'type' => 'string',
-                                            'multiple' => false,
-                                            'nullable' => false,
-                                            'scalar' => true,
-                                            'format' => null,
-                                            'properties' => null,
                                             'description' => '',
-                                            'reference' => null,
                                         ]),
                                     'trace' =>
                                         Returns::__set_state([
                                             'type' => 'Trace',
-                                            'multiple' => true,
-                                            'nullable' => false,
                                             'scalar' => false,
-                                            'format' => null,
+                                            'description' => '',
                                             'properties' =>
                                                 [
                                                     'file' =>
@@ -181,16 +152,12 @@ class ErrorResponse implements TypedResponseInterface
                                                             'reference' => null,
                                                         ]),
                                                 ],
-                                            'description' => '',
-                                            'reference' => null,
                                         ]),
                                 ],
-                            'description' => '',
-                            'reference' => null,
+
+
                         ]),
                 ],
-            'description' => '',
-            'reference' => null,
         ]);
     }
 }

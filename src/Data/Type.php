@@ -5,6 +5,8 @@ namespace Luracast\Restler\Data;
 
 
 use Exception;
+use Luracast\Restler\Contracts\TypedRequestInterface;
+use Luracast\Restler\Contracts\TypedResponseInterface;
 use Luracast\Restler\Contracts\ValueObjectInterface;
 use Luracast\Restler\Exceptions\Invalid;
 use Luracast\Restler\Router;
@@ -132,9 +134,13 @@ class Type implements ValueObjectInterface
         if (!$this->scalar && $qualified = ClassName::resolve($this->type, $scope)) {
             $this->type = $qualified;
             $class = new ReflectionClass($qualified);
-            $this->properties = static::propertiesFromClass($class);
+            $isParameter = Param::class === get_called_class();
+            $interface = $isParameter ? TypedRequestInterface::class : TypedResponseInterface::class;
+            $method = $isParameter ? 'requests' : 'responds';
+            $this->properties = $class->implementsInterface($interface)
+                ? (call_user_func([$class->name, $method]))->properties
+                : static::propertiesFromClass($class);
         }
-
     }
 
     /**
@@ -177,6 +183,12 @@ class Type implements ValueObjectInterface
 
     public static function fromClass(ReflectionClass $reflectionClass)
     {
+        $isParameter = Param::class === get_called_class();
+        $interface = $isParameter ? TypedRequestInterface::class : TypedResponseInterface::class;
+        $method = $isParameter ? 'requests' : 'responds';
+        if ($reflectionClass->implementsInterface($interface)) {
+            return call_user_func([$reflectionClass->name, $method]);
+        }
         $instance = new static;
         $instance->scalar = false;
         $instance->type = $reflectionClass->name;
@@ -186,7 +198,7 @@ class Type implements ValueObjectInterface
 
     protected static function propertiesFromClass(ReflectionClass $reflectionClass, array $selectedProperties = [], array $requiredProperties = [])
     {
-        $isParameter = Param::class == get_called_class();
+        $isParameter = Param::class === get_called_class();
         $filter = !empty($selectedProperties);
         $properties = [];
         $scope = Router::scope($reflectionClass);
