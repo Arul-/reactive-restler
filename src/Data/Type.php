@@ -142,7 +142,7 @@ class Type implements ValueObjectInterface
                     $subTypes[$key] = ClassName::resolve($subType, $scope);
                 }
                 /** @var Type $type */
-                $type = call_user_func([$class->name, $method], $subTypes);
+                $type = call_user_func_array([$class->name, $method], $subTypes);
                 $this->properties = $type->properties;
                 $this->type = $type->type;
             } else {
