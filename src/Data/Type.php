@@ -137,12 +137,16 @@ class Type implements ValueObjectInterface
             $isParameter = Param::class === get_called_class();
             $interface = $isParameter ? TypedRequestInterface::class : TypedResponseInterface::class;
             $method = $isParameter ? 'requests' : 'responds';
+
             if ($class->implementsInterface($interface)) {
-                foreach ($subTypes as $key => $subType) {
-                    $subTypes[$key] = ClassName::resolve($subType, $scope);
+                $generics = explode(',', $this->format);
+                foreach ($generics as $key => $generic) {
+                    if ($generic = ClassName::resolve($generic, $scope)) {
+                        $generics[$key] = $generic;
+                    }
                 }
                 /** @var Type $type */
-                $type = call_user_func_array([$class->name, $method], $subTypes);
+                $type = call_user_func_array([$class->name, $method], $generics);
                 $this->properties = $type->properties;
                 $this->type = $type->type;
             } else {

@@ -15,6 +15,7 @@ class Returns extends Type
         $types = $metadata['type'] ?? ['array'];
         $itemTypes = $metadata[CommentParser::$embeddedDataName]['type'] ?? ['object'];
         $instance->description = $metadata['description'] ?? '';
+        $instance->format = $metadata[CommentParser::$embeddedDataName]['format'] ?? '';
         $instance->apply($reflectionType, $types, $itemTypes, $scope);
         return $instance;
     }
