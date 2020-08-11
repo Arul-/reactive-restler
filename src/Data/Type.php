@@ -5,8 +5,8 @@ namespace Luracast\Restler\Data;
 
 
 use Exception;
-use Luracast\Restler\Contracts\TypedRequestInterface;
-use Luracast\Restler\Contracts\TypedResponseInterface;
+use Luracast\Restler\Contracts\GenericRequestInterface;
+use Luracast\Restler\Contracts\GenericResponseInterface;
 use Luracast\Restler\Contracts\ValueObjectInterface;
 use Luracast\Restler\Exceptions\Invalid;
 use Luracast\Restler\Router;
@@ -135,7 +135,7 @@ class Type implements ValueObjectInterface
             $this->type = $qualified;
             $class = new ReflectionClass($qualified);
             $isParameter = Param::class === get_called_class();
-            $interface = $isParameter ? TypedRequestInterface::class : TypedResponseInterface::class;
+            $interface = $isParameter ? GenericRequestInterface::class : GenericResponseInterface::class;
             $method = $isParameter ? 'requests' : 'responds';
 
             if ($class->implementsInterface($interface)) {
@@ -196,7 +196,7 @@ class Type implements ValueObjectInterface
     public static function fromClass(ReflectionClass $reflectionClass)
     {
         $isParameter = Param::class === get_called_class();
-        $interface = $isParameter ? TypedRequestInterface::class : TypedResponseInterface::class;
+        $interface = $isParameter ? GenericRequestInterface::class : GenericResponseInterface::class;
         $method = $isParameter ? 'requests' : 'responds';
         if ($reflectionClass->implementsInterface($interface)) {
             return call_user_func([$reflectionClass->name, $method]);
