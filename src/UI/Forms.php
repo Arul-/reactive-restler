@@ -241,23 +241,23 @@ class Forms implements FilterInterface, SelectivePathsInterface
             if (!$this->fillable($parameter, $value)) {
                 $value = null;
             }
-            if (!empty($parameter->children)) {
+            if (!empty($parameter->properties)) {
                 $t = Emmet::make($this->style('fieldset', $parameter), ['label' => $parameter->label]);
                 /**
                  * @var string|int $key
-                 * @var  Param $child
+                 * @var  Param $property
                  */
-                foreach ($parameter->children as $key => $child) {
-                    if (!$this->fieldable($child)) {
+                foreach ($parameter->properties as $key => $property) {
+                    if (!$this->fieldable($property)) {
                         continue;
                     }
                     $childValue = $value[$key] ?? null;
-                    if (!$this->fillable($child, $childValue)) {
+                    if (!$this->fillable($property, $childValue)) {
                         $childValue = null;
                     }
-                    $child = clone $child;
-                    $child->name = sprintf("%s[%s]", $parameter->name, $child->name);
-                    $t[] = $this->field($child, $childValue, false);
+                    $property = clone $property;
+                    $property->name = sprintf("%s[%s]", $parameter->name, $property->name);
+                    $t[] = $this->field($property, $childValue, false);
                 }
                 $r[] = $t;
             } else {
