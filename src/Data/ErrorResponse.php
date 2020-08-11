@@ -44,7 +44,6 @@ class ErrorResponse implements GenericResponseInterface
         return Returns::__set_state([
             'type' => 'ErrorResponse',
             'scalar' => false,
-            'description' => '',
             'properties' =>
                 [
                     'error' => Returns::__set_state([
