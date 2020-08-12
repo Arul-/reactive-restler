@@ -216,6 +216,8 @@ class Param extends Type
         $types = $metadata['type'] ?? [];
         $properties = $metadata[CommentParser::$embeddedDataName] ?? [];
         $itemTypes = $properties['type'] ?? [];
+        unset($properties['type']);
+        $instance->rules = $properties;
         $instance->description = $metadata['description'] ?? '';
         if ($reflector && method_exists($reflector, 'isDefaultValueAvailable') && $reflector->isDefaultValueAvailable()) {
             $default = $reflector->getDefaultValue();
