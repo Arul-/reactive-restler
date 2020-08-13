@@ -27,9 +27,12 @@ class HumanReadable extends Base
     public function get($key, $default = null)
     {
         $file = $this->_file($key);
-        return file_exists($file)
-            ? include($file)
-            : $default;
+        if (!file_exists($file)) {
+            return $default;
+        }
+        $value;
+        include($file);
+        return $value();
     }
 
     /**
@@ -72,7 +75,7 @@ class HumanReadable extends Base
             $s = 'return ' . var_export($value, true) . ';';
         }
         $file = $this->_file($key);
-        $r = @file_put_contents($file, "<?php $s");
+        $r = @file_put_contents($file, '<?php $value=function(){' . PHP_EOL . $s . PHP_EOL . '};');
         @chmod($file, 0777);
         if ($r === false) {
             $this->throwException();

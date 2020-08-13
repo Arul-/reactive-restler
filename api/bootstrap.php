@@ -8,6 +8,7 @@ use improved\Authors as ImprovedAuthors;
 use Luracast\Restler\Cache\HumanReadable;
 use Luracast\Restler\Defaults;
 use Luracast\Restler\Filters\RateLimiter;
+use Luracast\Restler\GraphQL\GraphQL;
 use Luracast\Restler\MediaTypes\Html;
 use Luracast\Restler\MediaTypes\Json;
 use Luracast\Restler\MediaTypes\Upload;
@@ -112,6 +113,8 @@ try {
             'tests/storage/session' => SessionTest::class,
             //Explorer
             'explorer' => Explorer::class,
+            //GraphQL
+            GraphQL::class,
         ]
     );
 } catch (Throwable $t) {
