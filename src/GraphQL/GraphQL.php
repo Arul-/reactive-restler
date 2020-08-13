@@ -28,14 +28,14 @@ class GraphQL
         return PassThrough::file(__DIR__ . '/client/' . static::$UI . '.html');
     }
 
+
     /**
-     * send query or mutation request
-     * @param array $request_data
-     * @return array|mixed[]
+     * @param string $query {@from body}
+     * @param array $variables {@from body}
      *
-     * @request-format Json
+     * @return array|mixed[]
      */
-    public function post(array $request_data)
+    public function post(string $query = '', array $variables = [])
     {
         $queryType = new ObjectType([
             'name' => 'Query',
@@ -54,10 +54,8 @@ class GraphQL
         $schema = new Schema([
             'query' => $queryType
         ]);
-        $query = $request_data['query'] ?? '';
-        $variableValues = $request_data['variables'] ?? null;
         $rootValue = ['prefix' => 'You said: '];
-        $result = \GraphQL\GraphQL::executeQuery($schema, $query, $rootValue, null, $variableValues);
+        $result = \GraphQL\GraphQL::executeQuery($schema, $query, $rootValue, null, $variables);
         return $result->toArray();
 
         /*
