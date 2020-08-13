@@ -51,8 +51,24 @@ class GraphQL
                 ],
             ],
         ]);
+        $mutationType = new ObjectType([
+            'name' => 'Calc',
+            'fields' => [
+                'sum' => [
+                    'type' => Type::int(),
+                    'args' => [
+                        'x' => ['type' => Type::int()],
+                        'y' => ['type' => Type::int()],
+                    ],
+                    'resolve' => function ($calc, $args) {
+                        return $args['x'] + $args['y'];
+                    },
+                ],
+            ],
+        ]);
         $schema = new Schema([
-            'query' => $queryType
+            'query' => $queryType,
+            'mutation' => $mutationType
         ]);
         $rootValue = ['prefix' => 'You said: '];
         $result = \GraphQL\GraphQL::executeQuery($schema, $query, $rootValue, null, $variables);
