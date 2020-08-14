@@ -5,6 +5,10 @@ namespace Luracast\Restler\Data;
 
 
 use Exception;
+
+use GraphQL\Type\Definition\ObjectType;
+use GraphQL\Type\Definition\Type as GraphQLType;
+
 use Luracast\Restler\Contracts\GenericRequestInterface;
 use Luracast\Restler\Contracts\GenericResponseInterface;
 use Luracast\Restler\Contracts\ValueObjectInterface;
@@ -305,4 +309,27 @@ class Type implements ValueObjectInterface
         foreach ($filtered as $k => $v) if (!is_null($v)) $this->{$k} = $v;
     }
 
+    public function toGraphQL(): GraphQLType
+    {
+        $type = null;
+        if ($this->scalar) {
+            $type = call_user_func([GraphQLType::class, $this->type]);
+        } else {
+            $config = ['name' => $this->type, 'fields' => []];
+            if(is_array($this->properties)){
+                /** @var Type $property */
+                foreach ($this->properties as $name => $property) {
+                    $config['fields'][$name] = $property->toGraphQL();
+                }
+            }
+            $type = new ObjectType($config);
+        }
+        if (!$this->nullable) {
+            $type = GraphQLType::nonNull($type);
+        }
+        if ($this->multiple) {
+            $type = GraphQLType::listOf($type);
+        }
+        return $type;
+    }
 }

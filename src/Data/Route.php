@@ -374,6 +374,25 @@ class Route extends ValueObject
         return $this->arguments;
     }
 
+    public function toGraphQL(callable $maker): array
+    {
+        $config = [
+            'type' => $this->return->toGraphQL(),
+            'args' => [],
+            'resolve' => function ($rootValue, $args) use ($maker) {
+                return $this->call($args, true, $maker);
+            }
+        ];
+        /**
+         * @var string $name
+         * @var Type $param
+         */
+        foreach ($this->parameters as $name => $param) {
+            $config['args'][$name] = $param->toGraphQL();
+        }
+        return $config;
+    }
+
     private function setAuthAndFilters(): void
     {
         foreach (Router::$preAuthFilterClasses as $preFilter) {
