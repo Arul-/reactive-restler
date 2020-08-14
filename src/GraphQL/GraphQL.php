@@ -7,6 +7,7 @@ use Exception;
 use GraphQL\Type\Definition\ObjectType;
 use GraphQL\Type\Definition\Type;
 use GraphQL\Type\Schema;
+use ratelimited\Authors;
 use Luracast\Restler\Data\Route;
 use Luracast\Restler\Restler;
 use Luracast\Restler\Utils\ClassName;
@@ -74,6 +75,7 @@ class GraphQL
         ];
         $this->add(Say::class, 'hello');
         $this->add(Math::class, 'add');
+        $this->add(Authors::class, 'post');
 
         $queryType = new ObjectType(['name' => 'Query', 'fields' => static::$queries]);
         $mutationType = new ObjectType(['name' => 'Mutation', 'fields' => static::$mutations]);
