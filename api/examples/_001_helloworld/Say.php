@@ -5,12 +5,12 @@
  */
 class Say
 {
-    function hello($to = 'world')
+    function hello(string $to = 'world'): string
     {
         return "Hello $to!";
     }
 
-    function hi($to)
+    function hi(string $to): string
     {
         return "Hi $to!";
     }
