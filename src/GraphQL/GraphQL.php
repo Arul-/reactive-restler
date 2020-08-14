@@ -9,8 +9,11 @@ use GraphQL\Type\Definition\Type;
 use GraphQL\Type\Schema;
 use Luracast\Restler\Data\Route;
 use Luracast\Restler\Restler;
+use Luracast\Restler\Utils\ClassName;
 use Luracast\Restler\Utils\PassThrough;
+use Math;
 use ReflectionMethod;
+use Say;
 
 class GraphQL
 {
@@ -19,13 +22,8 @@ class GraphQL
 
     public static $UI = self::UI_GRAPHQL_PLAYGROUND;
 
-    public static $typeDefinitions = '';
-    public static $resolvers = [
-        'Query' => [],
-        'Mutation' => [],
-    ];
-
-    private static $schema;
+    public static $mutations = [];
+    public static $queries = [];
     /**
      * @var Restler
      */
@@ -55,41 +53,31 @@ class GraphQL
      */
     public function post(string $query = '', array $variables = [])
     {
-        $queryType = new ObjectType([
-            'name' => 'Query',
-            'fields' => [
-                'echo' => [
-                    'type' => Type::string(),
-                    'args' => [
-                        'message' => Type::nonNull(Type::string()),
-                    ],
-                    'resolve' => function ($rootValue, $args) {
-                        return $rootValue['prefix'] . $args['message'];
-                    }
-                ],
-                'hello' => (Route::fromMethod(new ReflectionMethod(\Say::class, 'hello')))->toGraphQL([$this->restler, 'make']),
+        static::$queries['echo'] = [
+            'type' => Type::string(),
+            'args' => [
+                'message' => Type::nonNull(Type::string()),
             ],
-        ]);
-        $mutationType = new ObjectType([
-            'name' => 'Calc',
-            'fields' => [
-                'sum' => [
-                    'type' => Type::int(),
-                    'args' => [
-                        'x' => ['type' => Type::int()],
-                        'y' => ['type' => Type::int()],
-                    ],
-                    'resolve' => function ($calc, $args) {
-                        return $args['x'] + $args['y'];
-                    },
-                ],
-                'add' => (Route::fromMethod(new ReflectionMethod(\Math::class, 'add')))->toGraphQL([$this->restler, 'make']),
+            'resolve' => function ($rootValue, $args) {
+                return $rootValue['prefix'] . $args['message'];
+            }
+        ];
+        static::$mutations['sum'] = [
+            'type' => Type::int(),
+            'args' => [
+                'x' => ['type' => Type::int()],
+                'y' => ['type' => Type::int()],
             ],
-        ]);
-        $schema = new Schema([
-            'query' => $queryType,
-            'mutation' => $mutationType
-        ]);
+            'resolve' => function ($calc, $args) {
+                return $args['x'] + $args['y'];
+            },
+        ];
+        $this->add(Say::class, 'hello');
+        $this->add(Math::class, 'add');
+
+        $queryType = new ObjectType(['name' => 'Query', 'fields' => static::$queries]);
+        $mutationType = new ObjectType(['name' => 'Mutation', 'fields' => static::$mutations]);
+        $schema = new Schema(['query' => $queryType, 'mutation' => $mutationType]);
         $rootValue = ['prefix' => 'You said: '];
         try {
             $result = \GraphQL\GraphQL::executeQuery($schema, $query, $rootValue, null, $variables);
@@ -99,13 +87,27 @@ class GraphQL
                 'errors' => [['message' => $exception->getMessage()]]
             ];
         }
+    }
 
-        /*
-        if (!static::$schema) {
-            static::$schema = schema(static::$typeDefinitions, static::$resolvers);
+    private function add(string $class, string $method): void
+    {
+        $route = Route::fromMethod(new ReflectionMethod($class, $method));
+        $name = ClassName::short($class);
+        switch ($route->httpMethod) {
+            case 'POST':
+                $name = 'make' . $name;
+                break;
+            case 'DELETE':
+                $name = 'remove' . $name;
+                break;
+            case 'PUT':
+            case 'PATCH':
+                $name = 'update' . $name;
+                break;
+            default:
+                $name = lcfirst($name);
         }
-        return execute(static::$schema, $request_data);
-        */
-
+        $target = 'GET' === $route->httpMethod ? 'queries' : 'mutations';
+        static::$$target[$name] = $route->toGraphQL([$this->restler, 'make']);
     }
 }
