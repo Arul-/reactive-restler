@@ -313,11 +313,10 @@ class Type implements ValueObjectInterface
     public function toGraphQL(): GraphQLType
     {
         $type = null;
-        if (isset(GraphQL::$definitions[$this->type])) {
-            return GraphQL::$definitions[$this->type];
-        }
         if ($this->scalar) {
             $type = call_user_func([GraphQLType::class, $this->type]);
+        } elseif (isset(GraphQL::$definitions[$this->type])) {
+            $type = GraphQL::$definitions[$this->type];
         } else {
             $config = ['name' => $this->type, 'fields' => []];
             if (is_array($this->properties)) {
@@ -327,6 +326,7 @@ class Type implements ValueObjectInterface
                 }
             }
             $type = new ObjectType($config);
+            GraphQL::$definitions[$this->type] = $type;
         }
         if (!$this->nullable) {
             $type = GraphQLType::nonNull($type);
@@ -334,7 +334,6 @@ class Type implements ValueObjectInterface
         if ($this->multiple) {
             $type = GraphQLType::listOf($type);
         }
-        GraphQL::$definitions[$this->type] = $type;
         return $type;
     }
 }
