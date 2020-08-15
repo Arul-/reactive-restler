@@ -23,6 +23,8 @@ class Route extends ValueObject
 
 
     const PROPERTY_TAGS = [
+        'query',
+        'mutation',
         'summary',
         'description',
         'status',
@@ -49,6 +51,9 @@ class Route extends ValueObject
         'request-format' => 'overrideFormats',
         'response-format' => 'overrideFormats',
     ];
+
+    public $query;
+    public $mutation;
 
     public $httpMethod = 'GET';
     /**

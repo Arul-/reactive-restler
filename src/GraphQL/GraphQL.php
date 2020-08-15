@@ -73,9 +73,9 @@ class GraphQL
                 return $args['x'] + $args['y'];
             },
         ];
-        $this->add(Say::class, 'hello');
-        $this->add(Math::class, 'add');
-        $this->add(Authors::class, 'post');
+        $this->addMethod(Say::class, 'hello');
+        $this->addMethod(Math::class, 'add');
+        $this->addMethod(Authors::class, 'post');
 
         $queryType = new ObjectType(['name' => 'Query', 'fields' => static::$queries]);
         $mutationType = new ObjectType(['name' => 'Mutation', 'fields' => static::$mutations]);
@@ -91,25 +91,36 @@ class GraphQL
         }
     }
 
-    private function add(string $class, string $method): void
+    private function addMethod(string $class, string $method): void
     {
         $route = Route::fromMethod(new ReflectionMethod($class, $method));
-        $name = ClassName::short($class);
-        switch ($route->httpMethod) {
-            case 'POST':
-                $name = 'make' . $name;
-                break;
-            case 'DELETE':
-                $name = 'remove' . $name;
-                break;
-            case 'PUT':
-            case 'PATCH':
-                $name = 'update' . $name;
-                break;
-            default:
-                $name = lcfirst($name);
+        if ($mutation = $route->mutation ?? false) {
+            $this->add($mutation, $route, true);
+        } elseif ($query = $route->query ?? false) {
+            $this->add($query, $route, false);
+        } else {
+            $name = ClassName::short($class);
+            switch ($route->httpMethod) {
+                case 'POST':
+                    $name = 'make' . $name;
+                    break;
+                case 'DELETE':
+                    $name = 'remove' . $name;
+                    break;
+                case 'PUT':
+                case 'PATCH':
+                    $name = 'update' . $name;
+                    break;
+                default:
+                    $name = lcfirst($name);
+            }
+            $this->add($name, $route, 'GET' === $route->httpMethod);
         }
-        $target = 'GET' === $route->httpMethod ? 'queries' : 'mutations';
+    }
+
+    private function add(string $name, Route $route, bool $isMutation = false): void
+    {
+        $target = $isMutation ? 'mutations' : 'queries';
         static::$$target[$name] = $route->toGraphQL([$this->restler, 'make']);
     }
 }

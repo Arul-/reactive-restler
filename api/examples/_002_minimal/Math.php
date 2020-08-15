@@ -3,6 +3,8 @@
 class Math
 {
     /**
+     * @mutation addIntegers
+     *
      * @param int $n1
      * @param int $n2
      *
