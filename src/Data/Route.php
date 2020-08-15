@@ -9,10 +9,12 @@ use Luracast\Restler\Contracts\{RequestMediaTypeInterface,
     SelectivePathsInterface,
     ValidationInterface};
 use Luracast\Restler\Exceptions\HttpException;
+use Luracast\Restler\GraphQL\Error;
 use Luracast\Restler\Router;
 use Luracast\Restler\Utils\{ClassName, CommentParser, Type, Validator};
 use ReflectionFunctionAbstract;
 use ReflectionMethod;
+use Throwable;
 
 class Route extends ValueObject
 {
@@ -393,7 +395,11 @@ class Route extends ValueObject
             'type' => $this->return->toGraphQL(),
             'args' => [],
             'resolve' => function ($rootValue, $args) use ($maker) {
-                return $this->call($args, true, $maker);
+                try {
+                    return $this->call($args, true, $maker);
+                } catch (Throwable $throwable) {
+                    throw new Error('restler', $throwable->getMessage(), $throwable->getCode(), $throwable);
+                }
             }
         ];
         /**

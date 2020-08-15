@@ -107,20 +107,21 @@ class GraphQL
             return $this->add($query, $route, false);
         }
         $name = ClassName::short($class);
+        $single = Str::singular($name);
         switch ($route->httpMethod) {
             case 'POST':
-                $name = 'make' . Str::singular($name);
+                $name = 'make' . $single;
                 break;
             case 'DELETE':
-                $name = 'remove' . $name;
+                $name = 'remove' . $single;
                 break;
             case 'PUT':
             case 'PATCH':
-                $name = 'update' . $name;
+                $name = 'update' . $single;
                 break;
             default:
                 $name = isset($route->parameters['id'])
-                    ? 'get' . Str::singular($name)
+                    ? 'get' . $single
                     : lcfirst($name);
         }
         $this->add($name, $route, 'GET' !== $route->httpMethod);
