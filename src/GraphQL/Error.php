@@ -15,10 +15,10 @@ class Error extends Exception implements ClientAware
      */
     private $category;
 
-    public function __construct(string $category, $message = "", $code = 0, Throwable $previous = null)
+    public function __construct(string $category, Throwable $previous = null)
     {
         $this->category = $category;
-        parent::__construct($message, $code, $previous);
+        parent::__construct($previous->getMessage(), $previous->getCode(), $previous);
     }
 
     /**

@@ -398,7 +398,8 @@ class Route extends ValueObject
                 try {
                     return $this->call($args, true, $maker);
                 } catch (Throwable $throwable) {
-                    throw new Error('restler', $throwable->getMessage(), $throwable->getCode(), $throwable);
+                    $source = strtolower(pathinfo($throwable->getFile(), PATHINFO_FILENAME));
+                    throw new Error($source, $throwable);
                 }
             }
         ];

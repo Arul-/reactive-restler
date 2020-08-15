@@ -69,7 +69,9 @@ class HttpException extends Exception
         ?string $errorMessage = null,
         array $details = array(),
         $previous = null
-    ) {
+    )
+    {
+        $errorMessage = $errorMessage ?? static::$codes[$httpStatusCode] ?? null;
         $this->details = $details;
         parent::__construct($errorMessage, $httpStatusCode, $previous);
     }
