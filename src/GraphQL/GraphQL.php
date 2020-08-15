@@ -24,6 +24,7 @@ class GraphQL
 
     public static $UI = self::UI_GRAPHQL_PLAYGROUND;
 
+    public static $definitions = [];
     public static $mutations = [];
     public static $queries = [];
     /**
@@ -76,7 +77,11 @@ class GraphQL
         ];
         $this->addMethod(Say::class, 'hello');
         $this->addMethod(Math::class, 'add');
+        $this->addMethod(Authors::class, 'index');
+        $this->addMethod(Authors::class, 'get');
         $this->addMethod(Authors::class, 'post');
+        $this->addMethod(Authors::class, 'put');
+        $this->addMethod(Authors::class, 'delete');
 
         $queryType = new ObjectType(['name' => 'Query', 'fields' => static::$queries]);
         $mutationType = new ObjectType(['name' => 'Mutation', 'fields' => static::$mutations]);
@@ -114,7 +119,9 @@ class GraphQL
                 $name = 'update' . $name;
                 break;
             default:
-                $name = lcfirst($name);
+                $name = isset($route->parameters['id'])
+                    ? 'get' . Str::singular($name)
+                    : lcfirst($name);
         }
         $this->add($name, $route, 'GET' !== $route->httpMethod);
 

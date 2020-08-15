@@ -13,6 +13,7 @@ use Luracast\Restler\Contracts\GenericRequestInterface;
 use Luracast\Restler\Contracts\GenericResponseInterface;
 use Luracast\Restler\Contracts\ValueObjectInterface;
 use Luracast\Restler\Exceptions\Invalid;
+use Luracast\Restler\GraphQL\GraphQL;
 use Luracast\Restler\Router;
 use Luracast\Restler\Utils\ClassName;
 use Luracast\Restler\Utils\CommentParser;
@@ -312,11 +313,14 @@ class Type implements ValueObjectInterface
     public function toGraphQL(): GraphQLType
     {
         $type = null;
+        if (isset(GraphQL::$definitions[$this->type])) {
+            return GraphQL::$definitions[$this->type];
+        }
         if ($this->scalar) {
             $type = call_user_func([GraphQLType::class, $this->type]);
         } else {
             $config = ['name' => $this->type, 'fields' => []];
-            if(is_array($this->properties)){
+            if (is_array($this->properties)) {
                 /** @var Type $property */
                 foreach ($this->properties as $name => $property) {
                     $config['fields'][$name] = $property->toGraphQL();
@@ -330,6 +334,7 @@ class Type implements ValueObjectInterface
         if ($this->multiple) {
             $type = GraphQLType::listOf($type);
         }
+        GraphQL::$definitions[$this->type] = $type;
         return $type;
     }
 }
