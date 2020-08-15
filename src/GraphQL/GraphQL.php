@@ -7,12 +7,13 @@ use Exception;
 use GraphQL\Type\Definition\ObjectType;
 use GraphQL\Type\Definition\Type;
 use GraphQL\Type\Schema;
-use ratelimited\Authors;
+use Illuminate\Support\Str;
 use Luracast\Restler\Data\Route;
 use Luracast\Restler\Restler;
 use Luracast\Restler\Utils\ClassName;
 use Luracast\Restler\Utils\PassThrough;
 use Math;
+use ratelimited\Authors;
 use ReflectionMethod;
 use Say;
 
@@ -91,31 +92,32 @@ class GraphQL
         }
     }
 
-    private function addMethod(string $class, string $method): void
+    private function addMethod(string $class, string $method)
     {
         $route = Route::fromMethod(new ReflectionMethod($class, $method));
         if ($mutation = $route->mutation ?? false) {
-            $this->add($mutation, $route, true);
-        } elseif ($query = $route->query ?? false) {
-            $this->add($query, $route, false);
-        } else {
-            $name = ClassName::short($class);
-            switch ($route->httpMethod) {
-                case 'POST':
-                    $name = 'make' . $name;
-                    break;
-                case 'DELETE':
-                    $name = 'remove' . $name;
-                    break;
-                case 'PUT':
-                case 'PATCH':
-                    $name = 'update' . $name;
-                    break;
-                default:
-                    $name = lcfirst($name);
-            }
-            $this->add($name, $route, 'GET' === $route->httpMethod);
+            return $this->add($mutation, $route, true);
         }
+        if ($query = $route->query ?? false) {
+            return $this->add($query, $route, false);
+        }
+        $name = ClassName::short($class);
+        switch ($route->httpMethod) {
+            case 'POST':
+                $name = 'make' . Str::singular($name);
+                break;
+            case 'DELETE':
+                $name = 'remove' . $name;
+                break;
+            case 'PUT':
+            case 'PATCH':
+                $name = 'update' . $name;
+                break;
+            default:
+                $name = lcfirst($name);
+        }
+        $this->add($name, $route, 'GET' !== $route->httpMethod);
+
     }
 
     private function add(string $name, Route $route, bool $isMutation = false): void

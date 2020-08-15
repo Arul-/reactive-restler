@@ -184,6 +184,14 @@ class Route extends ValueObject
                 }
             }
         }
+        $methodUrl = strtolower($method->getName());
+        if ($url = $metadata['url'][0] ?? false) {
+            $route->httpMethod = strtoupper(strtok($url, ' '));
+        } elseif (preg_match_all('/^(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS)/i', $methodUrl, $matches)) {
+            $route->httpMethod = strtoupper($matches[0][0]);
+        } else {
+            $route->httpMethod = 'GET';
+        }
 
         $route->action = [$method->class, $method->getName()];
         $route->return = Returns::fromReturnType(
