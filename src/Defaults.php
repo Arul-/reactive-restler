@@ -16,7 +16,9 @@ use Luracast\Restler\Contracts\{AccessControlInterface,
 };
 use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\Filters\RateLimiter;
+use Luracast\Restler\GraphQL\GraphQL;
 use Luracast\Restler\MediaTypes\{Amf, Csv, Html, Js, Json, Plist, Spreadsheet, Tsv, Upload, UrlEncoded, Xml, Yaml};
+use Luracast\Restler\OpenApi3\Explorer;
 use Luracast\Restler\UI\Forms;
 use Luracast\Restler\UI\Nav;
 use Luracast\Restler\Utils\Convert;
@@ -328,6 +330,7 @@ class Defaults
         // Core
         'Application' => Restler::class,
         'Session' => Session::class,
+
         // Formats
         'Amf' => Amf::class,
         'Csv' => Csv::class,
@@ -341,10 +344,13 @@ class Defaults
         'Yaml' => Yaml::class,
         'Html' => Html::class,
         'Spreadsheet' => Spreadsheet::class,
+
         //Filters,
         'RateLimiter' => RateLimiter::class,
+
         // Exception
         'HttpException' => HttpException::class,
+
         // Backward Compatibility
         'RestException' => HttpException::class,
         'Restler' => Restler::class,
@@ -353,11 +359,17 @@ class Defaults
         'XmlFormat' => Xml::class,
         'HtmlFormat' => Html::class,
         'UploadFormat' => Upload::class,
+
         //Utils
         'Text' => Text::class,
         'Convert' => Convert::class,
+
         //UI
         'Forms' => Forms::class,
-        'Nav' => Nav::class
+        'Nav' => Nav::class,
+
+        //Api
+        'Explorer' => Explorer::class,
+        'GraphQL' => GraphQL::class
     ];
 }

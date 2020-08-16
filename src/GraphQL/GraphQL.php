@@ -10,6 +10,7 @@ use GraphQL\Type\Schema;
 use Illuminate\Support\Str;
 use Luracast\Restler\Data\Route;
 use Luracast\Restler\Restler;
+use Luracast\Restler\StaticProperties;
 use Luracast\Restler\Utils\ClassName;
 use Luracast\Restler\Utils\PassThrough;
 use Math;
@@ -24,6 +25,7 @@ class GraphQL
 
     public static $UI = self::UI_GRAPHQL_PLAYGROUND;
 
+    public static $context = [];
     public static $definitions = [];
     public static $mutations = [];
     public static $queries = [];
@@ -31,28 +33,28 @@ class GraphQL
      * @var Restler
      */
     private $restler;
+    /**
+     * @var StaticProperties
+     */
+    private $graphQL;
 
     public function get()
     {
         return PassThrough::file(__DIR__ . '/client/' . static::$UI . '.html');
     }
 
-    public function __construct(Restler $restler)
+    public function __construct(Restler $restler, StaticProperties $graphQL)
     {
         $this->restler = $restler;
+        $this->graphQL = $graphQL;
     }
 
-    public function test()
-    {
-        print_r((Route::fromMethod(new ReflectionMethod(\Say::class, 'hello')))->toGraphQL([$this->restler, 'make']));
-    }
 
     /**
      * @param string $query {@from body}
      * @param array $variables {@from body}
      *
      * @return array|mixed[]
-     * @throws \ReflectionException
      */
     public function post(string $query = '', array $variables = [])
     {
