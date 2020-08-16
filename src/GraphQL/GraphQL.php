@@ -9,14 +9,20 @@ use GraphQL\Type\Definition\Type;
 use GraphQL\Type\Schema;
 use Illuminate\Support\Str;
 use Luracast\Restler\Data\Route;
+use Luracast\Restler\Defaults;
+use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\Restler;
+use Luracast\Restler\Router;
 use Luracast\Restler\StaticProperties;
 use Luracast\Restler\Utils\ClassName;
+use Luracast\Restler\Utils\CommentParser;
 use Luracast\Restler\Utils\PassThrough;
 use Math;
 use ratelimited\Authors;
+use ReflectionClass;
 use ReflectionMethod;
 use Say;
+use Throwable;
 
 class GraphQL
 {
@@ -78,13 +84,11 @@ class GraphQL
                 return $args['x'] + $args['y'];
             },
         ];
-        $this->addMethod(Say::class, 'hello');
-        $this->addMethod(Math::class, 'add');
-        $this->addMethod(Authors::class, 'index');
-        $this->addMethod(Authors::class, 'get');
-        $this->addMethod(Authors::class, 'post');
-        $this->addMethod(Authors::class, 'put');
-        $this->addMethod(Authors::class, 'delete');
+        static::mapApiClasses([
+            Authors::class,
+            Say::class,
+        ]);
+        static::addMethod('', new ReflectionMethod(Math::class, 'add'));
 
         $queryType = new ObjectType(['name' => 'Query', 'fields' => static::$queries]);
         $mutationType = new ObjectType(['name' => 'Mutation', 'fields' => static::$mutations]);
@@ -100,16 +104,79 @@ class GraphQL
         }
     }
 
-    private function addMethod(string $class, string $method)
+    /**
+     * @param array $map $className => Resource name or just $className
+     * @throws Exception
+     */
+    public static function mapApiClasses(array $map): void
     {
-        $route = Route::fromMethod(new ReflectionMethod($class, $method));
+        try {
+            foreach ($map as $className => $name) {
+                if (is_numeric($className)) {
+                    $className = $name;
+                    $name = ClassName::short($className);
+                }
+                $className = Defaults::$aliases[$className] ?? $className;
+                if (!class_exists($className)) {
+                    throw new Exception(
+                        'Class not found',
+                        500
+                    );
+                }
+                $class = new ReflectionClass($className);
+                $methods = $class->getMethods(
+                    ReflectionMethod::IS_PUBLIC +
+                    ReflectionMethod::IS_PROTECTED
+                );
+                $scope = null;
+                foreach ($methods as $method) {
+                    if ($method->isStatic()) {
+                        continue;
+                    }
+                    $methodName = strtolower($method->getName());
+                    //method name should not begin with _
+                    if ($methodName[0] == '_') {
+                        continue;
+                    }
+                    $metadata = [];
+                    if ($doc = $method->getDocComment()) {
+                        try {
+                            $metadata = CommentParser::parse($doc);
+                        } catch (Exception $e) {
+                            throw new HttpException(
+                                500,
+                                "Error while parsing comments of `{$className}::{$method->getName()}` method. " . $e->getMessage()
+                            );
+                        }
+                        //@access should not be private
+                        if ('private' == ($metadata['access'] ?? false)) {
+                            continue;
+                        }
+                    }
+                    if (is_null($scope)) {
+                        $scope = Router::scope($class);
+                    }
+                    static::addMethod($name, $method, $metadata, $scope);
+                }
+            }
+        } catch (Throwable $e) {
+            throw new Exception(
+                "mapAPIClasses failed. " . $e->getMessage(),
+                $e->getCode(),
+                $e
+            );
+        }
+    }
+
+    public static function addMethod(string $name, ReflectionMethod $method, ?array $metadata = null, array $scope = [])
+    {
+        $route = Route::fromMethod($method, $metadata, $scope);
         if ($mutation = $route->mutation ?? false) {
-            return $this->add($mutation, $route, true);
+            return static::addRoute($mutation, $route, true);
         }
         if ($query = $route->query ?? false) {
-            return $this->add($query, $route, false);
+            return static::addRoute($query, $route, false);
         }
-        $name = ClassName::short($class);
         $single = Str::singular($name);
         switch ($route->httpMethod) {
             case 'POST':
@@ -127,11 +194,10 @@ class GraphQL
                     ? 'get' . $single
                     : lcfirst($name);
         }
-        $this->add($name, $route, 'GET' !== $route->httpMethod);
-
+        return static::addRoute($name, $route, 'GET' !== $route->httpMethod);
     }
 
-    private function add(string $name, Route $route, bool $isMutation = false): void
+    public static function addRoute(string $name, Route $route, bool $isMutation = false)
     {
         $target = $isMutation ? 'mutations' : 'queries';
         static::$$target[$name] = $route->toGraphQL();
