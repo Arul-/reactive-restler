@@ -65,31 +65,6 @@ class GraphQL
      */
     public function post(string $query = '', array $variables = [])
     {
-        static::$queries['echo'] = [
-            'type' => Type::string(),
-            'args' => [
-                'message' => Type::nonNull(Type::string()),
-            ],
-            'resolve' => function ($root, $args) {
-                return $root['prefix'] . $args['message'];
-            }
-        ];
-        static::$mutations['sum'] = [
-            'type' => Type::int(),
-            'args' => [
-                'x' => ['type' => Type::int()],
-                'y' => ['type' => Type::int()],
-            ],
-            'resolve' => function ($calc, $args) {
-                return $args['x'] + $args['y'];
-            },
-        ];
-        static::mapApiClasses([
-            Authors::class,
-            Say::class,
-        ]);
-        static::addMethod('', new ReflectionMethod(Math::class, 'add'));
-
         $queryType = new ObjectType(['name' => 'Query', 'fields' => static::$queries]);
         $mutationType = new ObjectType(['name' => 'Mutation', 'fields' => static::$mutations]);
         $schema = new Schema(['query' => $queryType, 'mutation' => $mutationType]);

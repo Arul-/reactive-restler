@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Auth\Client;
 use Auth\Server;
+use GraphQL\Type\Definition\Type;
 use improved\Authors as ImprovedAuthors;
 use Luracast\Restler\Cache\HumanReadable;
 use Luracast\Restler\Defaults;
@@ -21,6 +22,7 @@ use Luracast\Restler\Router;
 use Luracast\Restler\UI\Forms;
 use Luracast\Restler\Utils\Text;
 use ratelimited\Authors as RateLimitedAuthors;
+use ratelimited\Authors;
 use SomeVendor\v1\BMI as VendorBMI1;
 use v1\BodyMassIndex as BMI1;
 
@@ -117,6 +119,34 @@ try {
             GraphQL::class,
         ]
     );
+    //
+    //---------------------------- GRAPHQL API ----------------------------
+    //
+    GraphQL::$queries['echo'] = [
+        'type' => Type::string(),
+        'args' => [
+            'message' => Type::nonNull(Type::string()),
+        ],
+        'resolve' => function ($root, $args) {
+            return $root['prefix'] . $args['message'];
+        }
+    ];
+    GraphQL::$mutations['sum'] = [
+        'type' => Type::int(),
+        'args' => [
+            'x' => ['type' => Type::int()],
+            'y' => ['type' => Type::int()],
+        ],
+        'resolve' => function ($calc, $args) {
+            return $args['x'] + $args['y'];
+        },
+    ];
+    GraphQL::mapApiClasses([
+        Authors::class,
+        Say::class,
+    ]);
+    GraphQL::addMethod('', new ReflectionMethod(Math::class, 'add'));
+
 } catch (Throwable $t) {
     die($t->getMessage());
 }
