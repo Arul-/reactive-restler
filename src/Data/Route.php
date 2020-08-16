@@ -4,6 +4,7 @@
 namespace Luracast\Restler\Data;
 
 
+use GraphQL\Type\Definition\ResolveInfo;
 use Luracast\Restler\Contracts\{RequestMediaTypeInterface,
     ResponseMediaTypeInterface,
     SelectivePathsInterface,
@@ -389,14 +390,16 @@ class Route extends ValueObject
         return $this->arguments;
     }
 
-    public function toGraphQL(callable $maker): array
+    public function toGraphQL(): array
     {
         $config = [
             'type' => $this->return->toGraphQL(),
             'args' => [],
-            'resolve' => function ($rootValue, $args) use ($maker) {
+            'resolve' => function ($root, $args, array $context, ResolveInfo $info) {
                 try {
-                    return $this->call($args, true, $maker);
+                    $context['root'] = $root;
+                    $context['info'] = $info;
+                    return $this->call($args, true, $context['maker']);
                 } catch (Throwable $throwable) {
                     $source = strtolower(pathinfo($throwable->getFile(), PATHINFO_FILENAME));
                     throw new Error($source, $throwable);

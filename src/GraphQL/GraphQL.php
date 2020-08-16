@@ -46,6 +46,7 @@ class GraphQL
     public function __construct(Restler $restler, StaticProperties $graphQL)
     {
         $this->restler = $restler;
+        $graphQL->context['maker'] = [$restler, 'make'];
         $this->graphQL = $graphQL;
     }
 
@@ -63,8 +64,8 @@ class GraphQL
             'args' => [
                 'message' => Type::nonNull(Type::string()),
             ],
-            'resolve' => function ($rootValue, $args) {
-                return $rootValue['prefix'] . $args['message'];
+            'resolve' => function ($root, $args) {
+                return $root['prefix'] . $args['message'];
             }
         ];
         static::$mutations['sum'] = [
@@ -88,9 +89,9 @@ class GraphQL
         $queryType = new ObjectType(['name' => 'Query', 'fields' => static::$queries]);
         $mutationType = new ObjectType(['name' => 'Mutation', 'fields' => static::$mutations]);
         $schema = new Schema(['query' => $queryType, 'mutation' => $mutationType]);
-        $rootValue = ['prefix' => 'You said: '];
+        $root = ['prefix' => 'You said: '];
         try {
-            $result = \GraphQL\GraphQL::executeQuery($schema, $query, $rootValue, null, $variables);
+            $result = \GraphQL\GraphQL::executeQuery($schema, $query, $root, $this->graphQL->context, $variables);
             return $result->toArray();
         } catch (Exception $exception) {
             return [
@@ -133,6 +134,6 @@ class GraphQL
     private function add(string $name, Route $route, bool $isMutation = false): void
     {
         $target = $isMutation ? 'mutations' : 'queries';
-        static::$$target[$name] = $route->toGraphQL([$this->restler, 'make']);
+        static::$$target[$name] = $route->toGraphQL();
     }
 }
