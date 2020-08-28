@@ -4,19 +4,21 @@
 namespace Luracast\Restler\Data;
 
 
-use Exception;
+use Error;
 use Luracast\Restler\Contracts\GenericResponseInterface;
 use Luracast\Restler\Exceptions\HttpException;
+use Throwable;
 
 class ErrorResponse implements GenericResponseInterface
 {
     public $response = [];
 
-    public function __construct(Exception $exception, bool $debug = false)
+    public function __construct(Throwable $exception, bool $debug = false)
     {
+        $code = $exception->getCode();
         $this->response['error'] = [
-            'code' => $exception->getCode(),
-            'message' => $exception->getErrorMessage()
+            'code' => $code > 99 ? $code : 500,
+            'message' => $exception->getMessage()
         ];
         if ($exception instanceof HttpException) {
             $this->response += $exception->getDetails();
@@ -28,15 +30,10 @@ class ErrorResponse implements GenericResponseInterface
             }
             $trace = array_slice($innerException->getTrace(), 0, 10);
             $this->response['debug'] = [
-                'source' => $exception->getSource(),
+                'source' => $exception instanceof Error ? 'internal' : $exception->getSource(),
                 'trace' => array_map([static::class, 'simplifyTrace'], $trace)
             ];
         }
-    }
-
-    public function jsonSerialize()
-    {
-        return $this->response;
     }
 
     public static function responds(string ...$types): Returns
@@ -119,6 +116,11 @@ class ErrorResponse implements GenericResponseInterface
             return 'resource(' . get_resource_type($argument) . ')';
         }
         return $argument;
+    }
+
+    public function jsonSerialize()
+    {
+        return $this->response;
     }
 }
 
