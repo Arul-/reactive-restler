@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 use Auth\Client;
 use Auth\Server;
-use GraphQL\Type\Definition\Type;
+use GraphQL\Type\Definition\Type as GraphQLType;
 use improved\Authors as ImprovedAuthors;
 use Luracast\Restler\Cache\HumanReadable;
 use Luracast\Restler\Defaults;
@@ -22,7 +22,6 @@ use Luracast\Restler\Router;
 use Luracast\Restler\UI\Forms;
 use Luracast\Restler\Utils\Text;
 use ratelimited\Authors as RateLimitedAuthors;
-use ratelimited\Authors;
 use SomeVendor\v1\BMI as VendorBMI1;
 use v1\BodyMassIndex as BMI1;
 
@@ -123,26 +122,26 @@ try {
     //---------------------------- GRAPHQL API ----------------------------
     //
     GraphQL::$queries['echo'] = [
-        'type' => Type::string(),
+        'type' => GraphQLType::string(),
         'args' => [
-            'message' => Type::nonNull(Type::string()),
+            'message' => GraphQLType::nonNull(GraphQLType::string()),
         ],
         'resolve' => function ($root, $args) {
             return $root['prefix'] . $args['message'];
         }
     ];
     GraphQL::$mutations['sum'] = [
-        'type' => Type::int(),
+        'type' => GraphQLType::int(),
         'args' => [
-            'x' => ['type' => Type::int()],
-            'y' => ['type' => Type::int()],
+            'x' => ['type' => GraphQLType::int()],
+            'y' => ['type' => GraphQLType::int()],
         ],
         'resolve' => function ($calc, $args) {
             return $args['x'] + $args['y'];
         },
     ];
     GraphQL::mapApiClasses([
-        Authors::class,
+        RateLimitedAuthors::class,
         Say::class,
     ]);
     GraphQL::addMethod('', new ReflectionMethod(Math::class, 'add'));
