@@ -24,6 +24,9 @@ use ReflectionMethod;
 use Say;
 use Throwable;
 
+/**
+ * query language support
+ */
 class GraphQL
 {
     const UI_GRAPHQL_PLAYGROUND = 'graphql-playground';
@@ -44,11 +47,6 @@ class GraphQL
      */
     private $graphQL;
 
-    public function get()
-    {
-        return PassThrough::file(__DIR__ . '/client/' . static::$UI . '.html');
-    }
-
     public function __construct(Restler $restler, StaticProperties $graphQL)
     {
         $this->restler = $restler;
@@ -56,8 +54,19 @@ class GraphQL
         $this->graphQL = $graphQL;
     }
 
+    /**
+     * loads graphql client
+     * @return \Psr\Http\Message\ResponseInterface
+     * @throws HttpException
+     */
+    public function get()
+    {
+        return PassThrough::file(__DIR__ . '/client/' . static::$UI . '.html');
+    }
+
 
     /**
+     * runs graphql queries
      * @param string $query {@from body}
      * @param array $variables {@from body}
      *
