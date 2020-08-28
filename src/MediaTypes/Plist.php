@@ -1,13 +1,11 @@
 <?php namespace Luracast\Restler\MediaTypes;
 
 
+use CFPropertyList\CFPropertyList;
+use CFPropertyList\CFTypeDetector;
 use Luracast\Restler\Contracts\RequestMediaTypeInterface;
 use Luracast\Restler\Contracts\ResponseMediaTypeInterface;
 use Luracast\Restler\ResponseHeaders;
-use Luracast\Restler\Utils\Convert;
-
-use CFPropertyList\CFTypeDetector;
-use CFPropertyList\CFPropertyList;
 
 class Plist extends Dependent implements RequestMediaTypeInterface, ResponseMediaTypeInterface
 {
@@ -17,7 +15,7 @@ class Plist extends Dependent implements RequestMediaTypeInterface, ResponseMedi
      * @return array {@type associative}
      *               CLASS_NAME => vendor/project:version
      */
-    public function dependencies()
+    public static function dependencies()
     {
         return [
             'CFPropertyList\CFPropertyList' => 'rodneyrehm/plist:dev-master'

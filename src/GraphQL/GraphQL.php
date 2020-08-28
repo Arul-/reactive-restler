@@ -5,9 +5,9 @@ namespace Luracast\Restler\GraphQL;
 
 use Exception;
 use GraphQL\Type\Definition\ObjectType;
-use GraphQL\Type\Definition\Type;
 use GraphQL\Type\Schema;
 use Illuminate\Support\Str;
+use Luracast\Restler\Contracts\DependentTrait;
 use Luracast\Restler\Data\Route;
 use Luracast\Restler\Defaults;
 use Luracast\Restler\Exceptions\HttpException;
@@ -17,11 +17,8 @@ use Luracast\Restler\StaticProperties;
 use Luracast\Restler\Utils\ClassName;
 use Luracast\Restler\Utils\CommentParser;
 use Luracast\Restler\Utils\PassThrough;
-use Math;
-use ratelimited\Authors;
 use ReflectionClass;
 use ReflectionMethod;
-use Say;
 use Throwable;
 
 /**
@@ -29,6 +26,7 @@ use Throwable;
  */
 class GraphQL
 {
+    use DependentTrait;
     const UI_GRAPHQL_PLAYGROUND = 'graphql-playground';
     const UI_GRAPHIQL = 'graphiql';
 
@@ -55,45 +53,12 @@ class GraphQL
     }
 
     /**
-     * loads graphql client
-     * @return \Psr\Http\Message\ResponseInterface
-     * @throws HttpException
-     */
-    public function get()
-    {
-        return PassThrough::file(__DIR__ . '/client/' . static::$UI . '.html');
-    }
-
-
-    /**
-     * runs graphql queries
-     * @param string $query {@from body}
-     * @param array $variables {@from body}
-     *
-     * @return array|mixed[]
-     */
-    public function post(string $query = '', array $variables = [])
-    {
-        $queryType = new ObjectType(['name' => 'Query', 'fields' => static::$queries]);
-        $mutationType = new ObjectType(['name' => 'Mutation', 'fields' => static::$mutations]);
-        $schema = new Schema(['query' => $queryType, 'mutation' => $mutationType]);
-        $root = ['prefix' => 'You said: '];
-        try {
-            $result = \GraphQL\GraphQL::executeQuery($schema, $query, $root, $this->graphQL->context, $variables);
-            return $result->toArray();
-        } catch (Exception $exception) {
-            return [
-                'errors' => [['message' => $exception->getMessage()]]
-            ];
-        }
-    }
-
-    /**
      * @param array $map $className => Resource name or just $className
      * @throws Exception
      */
     public static function mapApiClasses(array $map): void
     {
+        static::checkDependencies();
         try {
             foreach ($map as $className => $name) {
                 if (is_numeric($className)) {
@@ -185,5 +150,47 @@ class GraphQL
     {
         $target = $isMutation ? 'mutations' : 'queries';
         static::$$target[$name] = $route->toGraphQL();
+    }
+
+    /**
+     * @return array {@type associative}
+     *               CLASS_NAME => vendor/project:version
+     */
+    public static function dependencies()
+    {
+        return ['GraphQL\Type\Definition\Type' => 'webonyx/graphql-php'];
+    }
+
+    /**
+     * loads graphql client
+     * @return \Psr\Http\Message\ResponseInterface
+     * @throws HttpException
+     */
+    public function get()
+    {
+        return PassThrough::file(__DIR__ . '/client/' . static::$UI . '.html');
+    }
+
+    /**
+     * runs graphql queries
+     * @param string $query {@from body}
+     * @param array $variables {@from body}
+     *
+     * @return array|mixed[]
+     */
+    public function post(string $query = '', array $variables = [])
+    {
+        $queryType = new ObjectType(['name' => 'Query', 'fields' => static::$queries]);
+        $mutationType = new ObjectType(['name' => 'Mutation', 'fields' => static::$mutations]);
+        $schema = new Schema(['query' => $queryType, 'mutation' => $mutationType]);
+        $root = ['prefix' => 'You said: '];
+        try {
+            $result = \GraphQL\GraphQL::executeQuery($schema, $query, $root, $this->graphQL->context, $variables);
+            return $result->toArray();
+        } catch (Exception $exception) {
+            return [
+                'errors' => [['message' => $exception->getMessage()]]
+            ];
+        }
     }
 }
