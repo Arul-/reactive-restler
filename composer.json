@@ -8,7 +8,7 @@
     "psr/container": "^1.0",
     "guzzlehttp/guzzle": "~7",
     "ralouphie/getallheaders": "^2.0",
-    "logicalsteps/async": "dev-feature/command-handling",
+    "logicalsteps/async": "^2.0",
     "hansott/psr7-cookies": "^2.0",
     "ringcentral/psr7": "^1.2"
   },
