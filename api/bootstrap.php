@@ -6,7 +6,7 @@ use Auth\Client;
 use Auth\Server;
 use GraphQL\Type\Definition\Type as GraphQLType;
 use improved\Authors as ImprovedAuthors;
-use Luracast\Restler\Cache\HumanReadable;
+use Luracast\Restler\Data\ErrorResponse;
 use Luracast\Restler\Defaults;
 use Luracast\Restler\Filters\RateLimiter;
 use Luracast\Restler\GraphQL\GraphQL;
@@ -147,7 +147,7 @@ try {
     GraphQL::addMethod('', new ReflectionMethod(Math::class, 'add'));
 
 } catch (Throwable $t) {
-    die($t->getMessage());
+    die(json_encode((new ErrorResponse($t, true))->jsonSerialize(), JSON_PRETTY_PRINT));
 }
 
 
