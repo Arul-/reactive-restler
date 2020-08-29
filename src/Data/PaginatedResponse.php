@@ -22,13 +22,16 @@ class PaginatedResponse implements GenericResponseInterface
 
     public static function responds(string ...$types): Returns
     {
+        $data = empty($types)
+            ? Returns::__set_state(['type' => 'object', 'scalar' => false])
+            : Returns::fromClass(new ReflectionClass($types[0]));
+        $data->multiple = true;
+        $data->nullable = false;
         return Returns::__set_state([
-            'type' => 'object',
+            'type' => 'PaginatedResponse',
             'properties' => [
                 'current_page' => Returns::__set_state(['type' => 'int']),
-                'data' => empty($types)
-                    ? Returns::__set_state(['type' => 'object', 'scalar' => false])
-                    : Returns::fromClass(new ReflectionClass($types[0])),
+                'data' => $data,
                 'first_page_url' => Returns::__set_state(['type' => 'string']),
                 'from' => Returns::__set_state(['type' => 'int']),
                 'last_page' => Returns::__set_state(['type' => 'int']),
