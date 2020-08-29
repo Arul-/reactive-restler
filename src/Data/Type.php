@@ -5,10 +5,9 @@ namespace Luracast\Restler\Data;
 
 
 use Exception;
-
+use GraphQL\Type\Definition\InputObjectType;
 use GraphQL\Type\Definition\ObjectType;
 use GraphQL\Type\Definition\Type as GraphQLType;
-
 use Luracast\Restler\Contracts\GenericRequestInterface;
 use Luracast\Restler\Contracts\GenericResponseInterface;
 use Luracast\Restler\Contracts\ValueObjectInterface;
@@ -70,39 +69,6 @@ class Type implements ValueObjectInterface
      */
     public $reference = null;
 
-
-    /**
-     * @inheritDoc
-     */
-    public function __toString()
-    {
-        $str = '';
-        if ($this->nullable) $str .= '?';
-        $str .= $this->type;
-        if ($this->multiple) $str .= '[]';
-        $str .= '; // ' . get_called_class();
-        if (!$this->scalar) $str = 'new ' . $str;
-        return $str;
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function jsonSerialize()
-    {
-        return array_filter(get_object_vars($this));
-    }
-
-    public function __debugInfo()
-    {
-        return $this->jsonSerialize();
-    }
-
-    public function __sleep()
-    {
-        return $this->jsonSerialize();
-    }
-
     /**
      * @inheritDoc
      */
@@ -110,6 +76,59 @@ class Type implements ValueObjectInterface
     {
         $instance = new static();
         $instance->applyProperties($properties);
+        return $instance;
+    }
+
+    protected function applyProperties(array $properties, bool $filter = true)
+    {
+        if ($filter) {
+            $vars = get_object_vars($this);
+            $filtered = array_intersect_key($properties, $vars);
+        } else {
+            $filtered = $properties;
+        }
+        foreach ($filtered as $k => $v) {
+            if (!is_null($v)) {
+                $this->{$k} = $v;
+            }
+        }
+    }
+
+    public static function fromProperty(?ReflectionProperty $property, ?array $doc = null, array $scope = [])
+    {
+        if ($doc) {
+            $var = $doc;
+        } else {
+            try {
+                $var = CommentParser::parse($property->getDocComment() ?? '')['var']
+                    ?? ['type' => ['string']];
+            } catch (Exception $e) {
+                //ignore
+            }
+        }
+        return static::from($property, $var, $scope);
+    }
+
+    /**
+     * @param Reflector|null $reflector
+     * @param array $metadata
+     * @param array $scope
+     * @return static
+     */
+    protected static function from(?Reflector $reflector, array $metadata = [], array $scope = [])
+    {
+        $instance = new static();
+        $types = $metadata['type'] ?? [];
+        $itemTypes = $metadata[CommentParser::$embeddedDataName]['type'] ?? [];
+        $instance->description = $metadata['description'] ?? '';
+        $instance->apply(
+            method_exists($reflector, 'hasType') && $reflector->hasType()
+                ? $reflector->getType() : null,
+            $types,
+            $itemTypes,
+            $scope
+        );
+
         return $instance;
     }
 
@@ -160,61 +179,11 @@ class Type implements ValueObjectInterface
         }
     }
 
-    /**
-     * @param Reflector|null $reflector
-     * @param array $metadata
-     * @param array $scope
-     * @return static
-     */
-    protected static function from(?Reflector $reflector, array $metadata = [], array $scope = [])
-    {
-        $instance = new static();
-        $types = $metadata['type'] ?? [];
-        $itemTypes = $metadata[CommentParser::$embeddedDataName]['type'] ?? [];
-        $instance->description = $metadata['description'] ?? '';
-        $instance->apply(
-            method_exists($reflector, 'hasType') && $reflector->hasType()
-                ? $reflector->getType() : null,
-            $types,
-            $itemTypes,
-            $scope
-        );
-
-        return $instance;
-    }
-
-    public static function fromProperty(?ReflectionProperty $property, ?array $doc = null, array $scope = [])
-    {
-        if ($doc) {
-            $var = $doc;
-        } else {
-            try {
-                $var = CommentParser::parse($property->getDocComment() ?? '')['var']
-                    ?? ['type' => ['string']];
-            } catch (Exception $e) {
-                //ignore
-            }
-        }
-        return static::from($property, $var, $scope);
-    }
-
-    public static function fromClass(ReflectionClass $reflectionClass)
-    {
-        $isParameter = Param::class === get_called_class();
-        $interface = $isParameter ? GenericRequestInterface::class : GenericResponseInterface::class;
-        $method = $isParameter ? 'requests' : 'responds';
-        if ($reflectionClass->implementsInterface($interface)) {
-            return call_user_func([$reflectionClass->name, $method]);
-        }
-        $instance = new static;
-        $instance->scalar = false;
-        $instance->type = $reflectionClass->name;
-        $instance->properties = self::propertiesFromClass($reflectionClass);
-        return $instance;
-    }
-
-    protected static function propertiesFromClass(ReflectionClass $reflectionClass, array $selectedProperties = [], array $requiredProperties = [])
-    {
+    protected static function propertiesFromClass(
+        ReflectionClass $reflectionClass,
+        array $selectedProperties = [],
+        array $requiredProperties = []
+    ) {
         $isParameter = Param::class === get_called_class();
         $filter = !empty($selectedProperties);
         $properties = [];
@@ -260,6 +229,21 @@ class Type implements ValueObjectInterface
         return $properties;
     }
 
+    public static function fromClass(ReflectionClass $reflectionClass)
+    {
+        $isParameter = Param::class === get_called_class();
+        $interface = $isParameter ? GenericRequestInterface::class : GenericResponseInterface::class;
+        $method = $isParameter ? 'requests' : 'responds';
+        if ($reflectionClass->implementsInterface($interface)) {
+            return call_user_func([$reflectionClass->name, $method]);
+        }
+        $instance = new static;
+        $instance->scalar = false;
+        $instance->type = $reflectionClass->name;
+        $instance->properties = self::propertiesFromClass($reflectionClass);
+        return $instance;
+    }
+
     public static function fromSampleData(array $data)
     {
         if (empty($data)) {
@@ -299,15 +283,42 @@ class Type implements ValueObjectInterface
         return $instance;
     }
 
-    protected function applyProperties(array $properties, bool $filter = true)
+    /**
+     * @inheritDoc
+     */
+    public function __toString()
     {
-        if ($filter) {
-            $vars = get_object_vars($this);
-            $filtered = array_intersect_key($properties, $vars);
-        } else {
-            $filtered = $properties;
+        $str = '';
+        if ($this->nullable) {
+            $str .= '?';
         }
-        foreach ($filtered as $k => $v) if (!is_null($v)) $this->{$k} = $v;
+        $str .= $this->type;
+        if ($this->multiple) {
+            $str .= '[]';
+        }
+        $str .= '; // ' . get_called_class();
+        if (!$this->scalar) {
+            $str = 'new ' . $str;
+        }
+        return $str;
+    }
+
+    public function __debugInfo()
+    {
+        return $this->jsonSerialize();
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function jsonSerialize()
+    {
+        return array_filter(get_object_vars($this));
+    }
+
+    public function __sleep()
+    {
+        return $this->jsonSerialize();
     }
 
     public function toGraphQL(): GraphQLType
@@ -315,18 +326,26 @@ class Type implements ValueObjectInterface
         $type = null;
         if ($this->scalar) {
             $type = call_user_func([GraphQLType::class, $this->type]);
-        } elseif (isset(GraphQL::$definitions[$this->type])) {
-            $type = GraphQL::$definitions[$this->type];
         } else {
-            $config = ['name' => $this->type, 'fields' => []];
-            if (is_array($this->properties)) {
-                /** @var Type $property */
-                foreach ($this->properties as $name => $property) {
-                    $config['fields'][$name] = $property->toGraphQL();
-                }
+            $class = ClassName::short($this->type);
+            if ($this instanceof Param) {
+                $class .= 'Input';
             }
-            $type = new ObjectType($config);
-            GraphQL::$definitions[$this->type] = $type;
+            if (isset(GraphQL::$definitions[$class])) {
+                $type = GraphQL::$definitions[$class];
+            } else {
+                $config = ['name' => $class, 'fields' => []];
+                if (is_array($this->properties)) {
+                    /** @var Type $property */
+                    foreach ($this->properties as $name => $property) {
+                        $config['fields'][$name] = $property->toGraphQL();
+                    }
+                }
+                $type = $this instanceof Param
+                    ? new InputObjectType($config)
+                    : new ObjectType($config);
+            }
+            GraphQL::$definitions[$class] = $type;
         }
         if (!$this->nullable) {
             $type = GraphQLType::nonNull($type);
