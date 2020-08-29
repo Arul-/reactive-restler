@@ -12,7 +12,7 @@ use Luracast\Restler\Contracts\{RequestMediaTypeInterface,
 use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\GraphQL\Error;
 use Luracast\Restler\Router;
-use Luracast\Restler\Utils\{ClassName, CommentParser, Type, Validator};
+use Luracast\Restler\Utils\{ClassName, CommentParser, Convert, Type, Validator};
 use ReflectionFunctionAbstract;
 use ReflectionMethod;
 use Throwable;
@@ -264,30 +264,92 @@ class Route extends ValueObject
         return $instance;
     }
 
-    public function setRequestMediaTypes(string ...$types): void
+    public function filterParams(bool $include, string $from = Param::FROM_BODY): array
     {
-        Router::_setMediaTypes(
-            RequestMediaTypeInterface::class,
-            $types,
-            $this->requestFormatMap,
-            $this->requestMediaTypes
+        return array_filter(
+            $this->parameters,
+            function ($v) use ($from, $include) {
+                return $include ? $from === $v->from : $from !== $v->from;
+            }
         );
     }
 
-    public function setResponseMediaTypes(string ...$types): void
+    private function setAuthAndFilters(): void
     {
-        Router::_setMediaTypes(
-            ResponseMediaTypeInterface::class,
-            $types,
-            $this->responseFormatMap,
-            $this->responseMediaTypes
-        );
+        foreach (Router::$preAuthFilterClasses as $preFilter) {
+            if (Type::implements($preFilter, SelectivePathsInterface::class)) {
+                if (!$preFilter::isPathSelected($this->path)) {
+                    continue;
+                }
+            }
+            $this->preAuthFilterClasses[] = $preFilter;
+        }
+        foreach (Router::$authClasses as $authClass) {
+            if (Type::implements($authClass, SelectivePathsInterface::class)) {
+                if (!$authClass::isPathSelected($this->path)) {
+                    continue;
+                }
+            }
+            $this->authClasses[] = $authClass;
+        }
+        foreach (Router::$postAuthFilterClasses as $postFilter) {
+            if (Type::implements($postFilter, SelectivePathsInterface::class)) {
+                if (!$postFilter::isPathSelected($this->path)) {
+                    continue;
+                }
+            }
+            $this->postAuthFilterClasses[] = $postFilter;
+        }
     }
 
     public function addParameter(Param $parameter)
     {
         $parameter->index = count($this->parameters);
         $this->parameters[$parameter->name] = $parameter;
+    }
+
+    public function __clone()
+    {
+        $this->parameters = array_map(function ($param) {
+            return clone $param;
+        }, $this->parameters);
+        $this->return = clone $this->return;
+    }
+
+    /**
+     * @return array
+     */
+    public function getArguments(): array
+    {
+        return $this->arguments;
+    }
+
+    public function toGraphQL(): array
+    {
+        $config = [
+            'type' => $this->return->toGraphQL(),
+            'args' => [],
+            'resolve' => function ($root, $args, array $context, ResolveInfo $info) {
+                try {
+                    $context['root'] = $root;
+                    $context['info'] = $info;
+                    /** @var Convert $convert */
+                    $convert = $context['maker'](Convert::class);
+                    return $convert->toArray($this->call($args, true, $context['maker']));
+                } catch (Throwable $throwable) {
+                    $source = strtolower(pathinfo($throwable->getFile(), PATHINFO_FILENAME));
+                    throw new Error($source, $throwable);
+                }
+            }
+        ];
+        /**
+         * @var string $name
+         * @var Type $param
+         */
+        foreach ($this->parameters as $name => $param) {
+            $config['args'][$name] = $param->toGraphQL();
+        }
+        return $config;
     }
 
     public function call(array $arguments, bool $validate = true, callable $maker = null)
@@ -341,14 +403,6 @@ class Route extends ValueObject
         }
     }
 
-    public function __clone()
-    {
-        $this->parameters = array_map(function ($param) {
-            return clone $param;
-        }, $this->parameters);
-        $this->return = clone $this->return;
-    }
-
     public function handle(int $access, callable $maker)
     {
         $action = $this->action;
@@ -372,80 +426,13 @@ class Route extends ValueObject
         }
     }
 
-    public function filterParams(bool $include, string $from = Param::FROM_BODY): array
-    {
-        return array_filter(
-            $this->parameters,
-            function ($v) use ($from, $include) {
-                return $include ? $from === $v->from : $from !== $v->from;
-            }
-        );
-    }
-
-    /**
-     * @return array
-     */
-    public function getArguments(): array
-    {
-        return $this->arguments;
-    }
-
-    public function toGraphQL(): array
-    {
-        $config = [
-            'type' => $this->return->toGraphQL(),
-            'args' => [],
-            'resolve' => function ($root, $args, array $context, ResolveInfo $info) {
-                try {
-                    $context['root'] = $root;
-                    $context['info'] = $info;
-                    return $this->call($args, true, $context['maker']);
-                } catch (Throwable $throwable) {
-                    $source = strtolower(pathinfo($throwable->getFile(), PATHINFO_FILENAME));
-                    throw new Error($source, $throwable);
-                }
-            }
-        ];
-        /**
-         * @var string $name
-         * @var Type $param
-         */
-        foreach ($this->parameters as $name => $param) {
-            $config['args'][$name] = $param->toGraphQL();
-        }
-        return $config;
-    }
-
-    private function setAuthAndFilters(): void
-    {
-        foreach (Router::$preAuthFilterClasses as $preFilter) {
-            if (Type::implements($preFilter, SelectivePathsInterface::class)) {
-                if (!$preFilter::isPathSelected($this->path)) {
-                    continue;
-                }
-            }
-            $this->preAuthFilterClasses[] = $preFilter;
-        }
-        foreach (Router::$authClasses as $authClass) {
-            if (Type::implements($authClass, SelectivePathsInterface::class)) {
-                if (!$authClass::isPathSelected($this->path)) {
-                    continue;
-                }
-            }
-            $this->authClasses[] = $authClass;
-        }
-        foreach (Router::$postAuthFilterClasses as $postFilter) {
-            if (Type::implements($postFilter, SelectivePathsInterface::class)) {
-                if (!$postFilter::isPathSelected($this->path)) {
-                    continue;
-                }
-            }
-            $this->postAuthFilterClasses[] = $postFilter;
-        }
-    }
-
-    private function setAccess(string $name, ?string $access = null, ReflectionFunctionAbstract $function, ?array $metadata = null, array $scope = []): void
-    {
+    private function setAccess(
+        string $name,
+        ?string $access = null,
+        ReflectionFunctionAbstract $function,
+        ?array $metadata = null,
+        array $scope = []
+    ): void {
         if ($function->isProtected()) {
             $this->access = self::ACCESS_PROTECTED_METHOD;
         } elseif (is_string($access)) {
@@ -459,8 +446,13 @@ class Route extends ValueObject
         }
     }
 
-    private function setClassProperties(string $name, ?array $class = null, ReflectionFunctionAbstract $function, ?array $metadata = null, array $scope = []): void
-    {
+    private function setClassProperties(
+        string $name,
+        ?array $class = null,
+        ReflectionFunctionAbstract $function,
+        ?array $metadata = null,
+        array $scope = []
+    ): void {
         $classes = $class ?? [];
         foreach ($classes as $class => $value) {
             $class = ClassName::resolve($class, $scope);
@@ -471,9 +463,16 @@ class Route extends ValueObject
         }
     }
 
-    private function overrideFormats(string $name, ?array $formats = null, ReflectionFunctionAbstract $function, ?array $metadata = null, array $scope = []): void
-    {
-        if (!$formats) return;
+    private function overrideFormats(
+        string $name,
+        ?array $formats = null,
+        ReflectionFunctionAbstract $function,
+        ?array $metadata = null,
+        array $scope = []
+    ): void {
+        if (!$formats) {
+            return;
+        }
         $overrides = [];
         $resolver = function ($value) use ($scope, &$overrides) {
             $value = ClassName::resolve(trim($value), $scope);
@@ -509,5 +508,25 @@ class Route extends ValueObject
                 $this->setResponseMediaTypes(...$formats);
 
         }
+    }
+
+    public function setRequestMediaTypes(string ...$types): void
+    {
+        Router::_setMediaTypes(
+            RequestMediaTypeInterface::class,
+            $types,
+            $this->requestFormatMap,
+            $this->requestMediaTypes
+        );
+    }
+
+    public function setResponseMediaTypes(string ...$types): void
+    {
+        Router::_setMediaTypes(
+            ResponseMediaTypeInterface::class,
+            $types,
+            $this->responseFormatMap,
+            $this->responseMediaTypes
+        );
     }
 }
