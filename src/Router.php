@@ -5,15 +5,13 @@ namespace Luracast\Restler;
 
 use ErrorException;
 use Exception;
-use Luracast\Restler\Contracts\{
-    AccessControlInterface,
+use Luracast\Restler\Contracts\{AccessControlInterface,
     AuthenticationInterface,
     FilterInterface,
     ProvidesMultiVersionApiInterface,
     RequestMediaTypeInterface,
     ResponseMediaTypeInterface,
-    UsesAuthenticationInterface
-};
+    UsesAuthenticationInterface};
 use Luracast\Restler\Data\Param;
 use Luracast\Restler\Data\Route;
 use Luracast\Restler\Exceptions\HttpException;
@@ -105,18 +103,14 @@ class Router
 
     public static $requestMediaTypeOverrides = [];
     public static $responseMediaTypeOverrides = [];
-
-    protected static $routes = [];
     public static $models = [];
-
-    private static $parsedScopes = [];
-
-    private static $basePath;
-
     /**
      * @var null|string class to use for caching purpose, uses Defaults when null
      */
     public static $cacheClass = null;
+    protected static $routes = [];
+    private static $parsedScopes = [];
+    private static $basePath;
 
     public static function getBasePath()
     {
@@ -160,6 +154,53 @@ class Router
             static::$responseFormatMap,
             static::$responseMediaTypes
         );
+    }
+
+    /**
+     * @param string $interface
+     * @param array $types
+     * @param array $formatMap
+     * @param array $mediaTypes
+     * @throws Exception
+     * @internal
+     */
+    public static function _setMediaTypes(
+        string $interface,
+        array $types,
+        array &$formatMap,
+        array &$mediaTypes
+    ): void {
+        if (!count($types)) {
+            return;
+        }
+        $formatMap = [];
+        $mediaTypes = [];
+        $extensions = [];
+        $writable = $interface === ResponseMediaTypeInterface::class;
+        foreach ($types as $type) {
+            if (!Type::implements($type, $interface)) {
+                throw new Exception(
+                    $type . ' is an invalid media type class; it must implement ' .
+                    $interface . ' interface'
+                );
+            }
+            foreach ($type::supportedMediaTypes() as $mime => $extension) {
+                $mediaTypes[] = $mime;
+                if ($writable) {
+                    $extensions[".$extension"] = true;
+                    if (!isset($formatMap[$extension])) {
+                        $formatMap[$extension] = $type;
+                    }
+                }
+                if (!isset($formatMap[$mime])) {
+                    $formatMap[$mime] = $type;
+                }
+            }
+        }
+        $formatMap['default'] = $types[0];
+        if ($writable) {
+            $formatMap['extensions'] = array_keys($extensions);
+        }
     }
 
     /**
@@ -220,54 +261,6 @@ class Router
             static::$responseFormatOverridesMap,
             $ignore
         );
-    }
-
-    /**
-     * @param string $interface
-     * @param array $types
-     * @param array $formatMap
-     * @param array $mediaTypes
-     * @throws Exception
-     * @internal
-     */
-    public static function _setMediaTypes(
-        string $interface,
-        array $types,
-        array &$formatMap,
-        array &$mediaTypes
-    ): void
-    {
-        if (!count($types)) {
-            return;
-        }
-        $formatMap = [];
-        $mediaTypes = [];
-        $extensions = [];
-        $writable = $interface === ResponseMediaTypeInterface::class;
-        foreach ($types as $type) {
-            if (!Type::implements($type, $interface)) {
-                throw new Exception(
-                    $type . ' is an invalid media type class; it must implement ' .
-                    $interface . ' interface'
-                );
-            }
-            foreach ($type::supportedMediaTypes() as $mime => $extension) {
-                $mediaTypes[] = $mime;
-                if ($writable) {
-                    $extensions[".$extension"] = true;
-                    if (!isset($formatMap[$extension])) {
-                        $formatMap[$extension] = $type;
-                    }
-                }
-                if (!isset($formatMap[$mime])) {
-                    $formatMap[$mime] = $type;
-                }
-            }
-        }
-        $formatMap['default'] = $types[0];
-        if ($writable) {
-            $formatMap['extensions'] = array_keys($extensions);
-        }
     }
 
     /**
@@ -367,6 +360,34 @@ class Router
                 $e
             );
         }
+    }
+
+    private static function handleCache(bool $save = false): bool
+    {
+        if (!$save && !empty(static::$routes)) {
+            return true;
+        }
+        $cacheClass = ClassName::get(static::$cacheClass ?? CacheInterface::class);
+        /** @var CacheInterface $cache */
+        $cache = new $cacheClass;
+        if ($save) {
+            return $cache->set('routes', static::$routes);
+        }
+        if (!$routes = $cache->get('routes', false)) {
+            return false;
+        }
+        static::fromArray($routes);
+        return true;
+    }
+
+    /**
+     * Import previously created routes from cache
+     *
+     * @param array $routes
+     */
+    public static function fromArray(array $routes): void
+    {
+        static::$routes = $routes;
     }
 
     /**
@@ -480,14 +501,183 @@ class Router
                 } else {
                     $lastPathParam = end($pathParams);
                 }
+                $prefixed = false;
                 foreach ($pathParams as $p) {
-                    $url .= '/{' . $p->name . '}';
+                    if (!empty($methodUrl) && !$prefixed && in_array($p->name, self::$prefixingParameterNames)) {
+                        $url = preg_replace(
+                            '/' . $methodUrl . '$/',
+                            '{' . $p->name . '}/' . $methodUrl,
+                            $url
+                        );
+                        $prefixed = true;
+                    } else {
+                        $url .= '/{' . $p->name . '}';
+                    }
                     if ($allowAmbiguity || $p === $lastPathParam) {
                         self::addRoute($route->withLink($url, $httpMethod), $version);
                     }
                 }
             }
         }
+    }
+
+    public static function scope(ReflectionClass $class)
+    {
+        if (!isset(self::$parsedScopes[$name = $class->getName()])) {
+            if ($class->isInternal()) {
+                return ['*' => ''];
+            }
+            $code = file_get_contents($class->getFileName());
+            $namespace = $class->getNamespaceName();
+            self::$parsedScopes[$name] = [
+                    '*' => empty($namespace) ? '' : $namespace . '\\',
+                ] +
+                self::parseUseStatements(
+                    $code,
+                    $name
+                );
+        }
+        return self::$parsedScopes[$name];
+    }
+
+    /**
+     * Parses PHP code.
+     *
+     * @param string $code
+     * @param string|null $forClass
+     * @return array of [class => [alias => class, ...]]
+     */
+    protected static function parseUseStatements(string $code, ?string $forClass = null)
+    {
+        $tokens = token_get_all($code);
+        $namespace = $class = $classLevel = $level = null;
+        $res = $uses = [];
+        while ($token = current($tokens)) {
+            next($tokens);
+            switch (is_array($token) ? $token[0] : $token) {
+                case T_NAMESPACE:
+                    $namespace = ltrim(self::fetch($tokens, [T_STRING, T_NS_SEPARATOR]) . '\\', '\\');
+                    $uses = [];
+                    break;
+
+                case T_CLASS:
+                case T_INTERFACE:
+                case T_TRAIT:
+                    if ($name = self::fetch($tokens, T_STRING)) {
+                        $class = $namespace . $name;
+                        $classLevel = $level + 1;
+                        $res[$class] = $uses;
+                        if ($class === $forClass) {
+                            return $res[$class];
+                        }
+                    }
+                    break;
+
+                case T_USE:
+                    while (!$class && ($name = self::fetch($tokens, [T_STRING, T_NS_SEPARATOR]))) {
+                        $name = ltrim($name, '\\');
+                        if (self::fetch($tokens, '{')) {
+                            while ($suffix = self::fetch($tokens, [T_STRING, T_NS_SEPARATOR])) {
+                                if (self::fetch($tokens, T_AS)) {
+                                    $uses[self::fetch($tokens, T_STRING)] = $name . $suffix;
+                                } else {
+                                    $tmp = explode('\\', $suffix);
+                                    $uses[end($tmp)] = $name . $suffix;
+                                }
+                                if (!self::fetch($tokens, ',')) {
+                                    break;
+                                }
+                            }
+                        } elseif (self::fetch($tokens, T_AS)) {
+                            $uses[self::fetch($tokens, T_STRING)] = $name;
+                        } else {
+                            $tmp = explode('\\', $name);
+                            $uses[end($tmp)] = $name;
+                        }
+                        if (!self::fetch($tokens, ',')) {
+                            break;
+                        }
+                    }
+                    break;
+
+                case T_CURLY_OPEN:
+                case T_DOLLAR_OPEN_CURLY_BRACES:
+                case '{':
+                    $level++;
+                    break;
+
+                case '}':
+                    if ($level === $classLevel) {
+                        $class = $classLevel = null;
+                    }
+                    $level--;
+            }
+        }
+
+        return $forClass ? $res[$forClass] : $res;
+    }
+
+    private static function fetch(&$tokens, $take)
+    {
+        $res = null;
+        while ($token = current($tokens)) {
+            list($token, $s) = is_array($token) ? $token : [$token, $token];
+            if (in_array($token, (array)$take, true)) {
+                $res .= $s;
+            } elseif (!in_array($token, [T_DOC_COMMENT, T_WHITESPACE, T_COMMENT], true)) {
+                break;
+            }
+            next($tokens);
+        }
+        return $res;
+    }
+
+    public static function addRoute(Route $route, int $version = 1)
+    {
+        if (empty($route->path)) {
+            //compute from the human readable url to machine computable typed route path
+            $route->path = preg_replace_callback(
+                '/{[^}]+}|:[^\/]+/',
+                function ($matches) use ($route) {
+                    $match = trim($matches[0], '{}:');
+                    $param = $route->parameters[$match];
+                    return '{' . Router::typeChar($param->type) . $param->index . '}';
+                },
+                $route->url
+            );
+        }
+        //check for wildcard routes
+        if (substr($route->path, -1, 1) == '*') {
+            $path = rtrim($route->path, '/*');
+            static::$routes["v$version"]['*'][$path][$route->httpMethod] = $route;
+        } else {
+            static::$routes["v$version"][$route->path][$route->httpMethod] = $route;
+            //create an alias with index if the base name is index
+            if (
+                (is_array($route->action) && 'index' == $route->action[1]) ||
+                (is_string($route->action) && 'index' == $route->action)
+            ) {
+                static::$routes["v$version"][ltrim("$route->path/index", '/')][$route->httpMethod] = $route;
+            }
+        }
+    }
+
+    /**
+     * @access private
+     * @param string|null $type
+     * @return string
+     */
+    public static function typeChar(string $type = null)
+    {
+        if (!$type) {
+            return 's';
+        }
+        switch ($type[0]) {
+            case 'i':
+            case 'f':
+                return 'n';
+        }
+        return 's';
     }
 
     /**
@@ -563,8 +753,7 @@ class Router
         string $httpMethod,
         int $version = 1,
         array $data = []
-    )
-    {
+    ) {
         if (empty(static::$routes)) {
             throw new HttpException(
                 500,
@@ -674,51 +863,79 @@ class Router
     }
 
     /**
+     * Populates the parameter values
+     *
+     * @param Route $route
+     * @param array $data
+     *
+     * @return Route
+     *
      * @access private
-     * @param string|null $type
-     * @return string
      */
-    public static function typeChar(string $type = null)
+    protected static function populate(Route $route, array $data)
     {
-        if (!$type) {
-            return 's';
-        }
-        switch ($type[0]) {
-            case 'i':
-            case 'f':
-                return 'n';
-        }
-        return 's';
-    }
-
-    public static function addRoute(Route $route, int $version = 1)
-    {
-        if (empty($route->path)) {
-            //compute from the human readable url to machine computable typed route path
-            $route->path = preg_replace_callback(
-                '/{[^}]+}|:[^\/]+/',
-                function ($matches) use ($route) {
-                    $match = trim($matches[0], '{}:');
-                    $param = $route->parameters[$match];
-                    return '{' . Router::typeChar($param->type) . $param->index . '}';
-                },
-                $route->url
-            );
-        }
-        //check for wildcard routes
-        if (substr($route->path, -1, 1) == '*') {
-            $path = rtrim($route->path, '/*');
-            static::$routes["v$version"]['*'][$path][$route->httpMethod] = $route;
-        } else {
-            static::$routes["v$version"][$route->path][$route->httpMethod] = $route;
-            //create an alias with index if the base name is index
-            if (
-                (is_array($route->action) && 'index' == $route->action[1]) ||
-                (is_string($route->action) && 'index' == $route->action)
-            ) {
-                static::$routes["v$version"][ltrim("$route->path/index", '/')][$route->httpMethod] = $route;
+        if (Defaults::$smartParameterParsing) {
+            if (count($route->parameters)) {
+                /** @var Param $param */
+                $param = array_values($route->parameters)[0];
+                if (
+                    !array_key_exists($param->name, $data) &&
+                    array_key_exists(Defaults::$fullRequestDataName, $data) &&
+                    !is_null($d = $data[Defaults::$fullRequestDataName]) &&
+                    static::typeMatch($param->type, $d)
+                ) {
+                    $data[$param->name] = $d;
+                } else {
+                    $bodyParams = $route->filterParams(true);
+                    if (1 == count($bodyParams)) {
+                        /** @var Param $param */
+                        $param = array_values($bodyParams)[0];
+                        if (!array_key_exists($param->name, $data) &&
+                            array_key_exists(Defaults::$fullRequestDataName, $data) &&
+                            !is_null($d = $data[Defaults::$fullRequestDataName])) {
+                            $data[$param->name] = $d;
+                        }
+                    }
+                }
             }
         }
+        $route->apply($data);
+        return $route;
+    }
+
+    protected static function typeMatch(string $type, $var): bool
+    {
+        switch ($type) {
+            case 'boolean':
+            case 'bool':
+                return is_bool($var);
+            case 'array':
+            case 'object':
+                return is_array($var);
+            case 'string':
+            case 'int':
+            case 'integer':
+            case 'float':
+            case 'number':
+                return is_scalar($var);
+        }
+        return true;
+    }
+
+    /**
+     * @access private
+     * @param $var
+     * @return string
+     */
+    protected static function pathVarTypeOf($var): string
+    {
+        if (is_numeric($var)) {
+            return 'n';
+        }
+        if ($var === 'true' || $var === 'false') {
+            return 'b';
+        }
+        return 's';
     }
 
     /**
@@ -735,8 +952,7 @@ class Router
         array $excludedPaths = [],
         array $excludedHttpMethods = [],
         int $version = 1
-    )
-    {
+    ) {
         $map = [];
         $all = self::$routes["v$version"];
         $filter = [];
@@ -798,8 +1014,7 @@ class Router
         ServerRequestInterface $request,
         callable $maker,
         array &$verifiedClasses
-    )
-    {
+    ) {
         if ($route->access <= Route::ACCESS_HYBRID) {
             return true;
         }
@@ -838,81 +1053,14 @@ class Router
         return true;
     }
 
-
     /**
-     * Populates the parameter values
+     * Export current routes for cache
      *
-     * @param Route $route
-     * @param array $data
-     *
-     * @return Route
-     *
-     * @access private
+     * @return array
      */
-    protected static function populate(Route $route, array $data)
+    public static function toArray(): array
     {
-        if (Defaults::$smartParameterParsing) {
-            if (count($route->parameters)) {
-                /** @var Param $param */
-                $param = array_values($route->parameters)[0];
-                if (
-                    !array_key_exists($param->name, $data) &&
-                    array_key_exists(Defaults::$fullRequestDataName, $data) &&
-                    !is_null($d = $data[Defaults::$fullRequestDataName]) &&
-                    static::typeMatch($param->type, $d)
-                ) {
-                    $data[$param->name] = $d;
-                } else {
-                    $bodyParams = $route->filterParams(true);
-                    if (1 == count($bodyParams)) {
-                        /** @var Param $param */
-                        $param = array_values($bodyParams)[0];
-                        if (!array_key_exists($param->name, $data) &&
-                            array_key_exists(Defaults::$fullRequestDataName, $data) &&
-                            !is_null($d = $data[Defaults::$fullRequestDataName])) {
-                            $data[$param->name] = $d;
-                        }
-                    }
-                }
-            }
-        }
-        $route->apply($data);
-        return $route;
-    }
-
-    /**
-     * @access private
-     * @param $var
-     * @return string
-     */
-    protected static function pathVarTypeOf($var): string
-    {
-        if (is_numeric($var)) {
-            return 'n';
-        }
-        if ($var === 'true' || $var === 'false') {
-            return 'b';
-        }
-        return 's';
-    }
-
-    protected static function typeMatch(string $type, $var): bool
-    {
-        switch ($type) {
-            case 'boolean':
-            case 'bool':
-                return is_bool($var);
-            case 'array':
-            case 'object':
-                return is_array($var);
-            case 'string':
-            case 'int':
-            case 'integer':
-            case 'float':
-            case 'number':
-                return is_scalar($var);
-        }
-        return true;
+        return static::$routes;
     }
 
     /**
@@ -934,156 +1082,5 @@ class Router
         }
 
         return $r;
-    }
-
-    /**
-     * Import previously created routes from cache
-     *
-     * @param array $routes
-     */
-    public static function fromArray(array $routes): void
-    {
-        static::$routes = $routes;
-    }
-
-    /**
-     * Export current routes for cache
-     *
-     * @return array
-     */
-    public static function toArray(): array
-    {
-        return static::$routes;
-    }
-
-    public static function scope(ReflectionClass $class)
-    {
-        if (!isset(self::$parsedScopes[$name = $class->getName()])) {
-            if ($class->isInternal()) {
-                return ['*' => ''];
-            }
-            $code = file_get_contents($class->getFileName());
-            $namespace = $class->getNamespaceName();
-            self::$parsedScopes[$name] = [
-                    '*' => empty($namespace) ? '' : $namespace . '\\',
-                ] +
-                self::parseUseStatements(
-                    $code,
-                    $name
-                );
-        }
-        return self::$parsedScopes[$name];
-    }
-
-    private static function handleCache(bool $save = false): bool
-    {
-        if (!$save && !empty(static::$routes)) {
-            return true;
-        }
-        $cacheClass = ClassName::get(static::$cacheClass ?? CacheInterface::class);
-        /** @var CacheInterface $cache */
-        $cache = new $cacheClass;
-        if ($save) {
-            return $cache->set('routes', static::$routes);
-        }
-        if (!$routes = $cache->get('routes', false)) {
-            return false;
-        }
-        static::fromArray($routes);
-        return true;
-    }
-
-
-    /**
-     * Parses PHP code.
-     *
-     * @param string $code
-     * @param string|null $forClass
-     * @return array of [class => [alias => class, ...]]
-     */
-    protected static function parseUseStatements(string $code, ?string $forClass = null)
-    {
-        $tokens = token_get_all($code);
-        $namespace = $class = $classLevel = $level = null;
-        $res = $uses = [];
-        while ($token = current($tokens)) {
-            next($tokens);
-            switch (is_array($token) ? $token[0] : $token) {
-                case T_NAMESPACE:
-                    $namespace = ltrim(self::fetch($tokens, [T_STRING, T_NS_SEPARATOR]) . '\\', '\\');
-                    $uses = [];
-                    break;
-
-                case T_CLASS:
-                case T_INTERFACE:
-                case T_TRAIT:
-                    if ($name = self::fetch($tokens, T_STRING)) {
-                        $class = $namespace . $name;
-                        $classLevel = $level + 1;
-                        $res[$class] = $uses;
-                        if ($class === $forClass) {
-                            return $res[$class];
-                        }
-                    }
-                    break;
-
-                case T_USE:
-                    while (!$class && ($name = self::fetch($tokens, [T_STRING, T_NS_SEPARATOR]))) {
-                        $name = ltrim($name, '\\');
-                        if (self::fetch($tokens, '{')) {
-                            while ($suffix = self::fetch($tokens, [T_STRING, T_NS_SEPARATOR])) {
-                                if (self::fetch($tokens, T_AS)) {
-                                    $uses[self::fetch($tokens, T_STRING)] = $name . $suffix;
-                                } else {
-                                    $tmp = explode('\\', $suffix);
-                                    $uses[end($tmp)] = $name . $suffix;
-                                }
-                                if (!self::fetch($tokens, ',')) {
-                                    break;
-                                }
-                            }
-                        } elseif (self::fetch($tokens, T_AS)) {
-                            $uses[self::fetch($tokens, T_STRING)] = $name;
-                        } else {
-                            $tmp = explode('\\', $name);
-                            $uses[end($tmp)] = $name;
-                        }
-                        if (!self::fetch($tokens, ',')) {
-                            break;
-                        }
-                    }
-                    break;
-
-                case T_CURLY_OPEN:
-                case T_DOLLAR_OPEN_CURLY_BRACES:
-                case '{':
-                    $level++;
-                    break;
-
-                case '}':
-                    if ($level === $classLevel) {
-                        $class = $classLevel = null;
-                    }
-                    $level--;
-            }
-        }
-
-        return $forClass ? $res[$forClass] : $res;
-    }
-
-
-    private static function fetch(&$tokens, $take)
-    {
-        $res = null;
-        while ($token = current($tokens)) {
-            list($token, $s) = is_array($token) ? $token : [$token, $token];
-            if (in_array($token, (array)$take, true)) {
-                $res .= $s;
-            } elseif (!in_array($token, [T_DOC_COMMENT, T_WHITESPACE, T_COMMENT], true)) {
-                break;
-            }
-            next($tokens);
-        }
-        return $res;
     }
 }
