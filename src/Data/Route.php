@@ -426,6 +426,21 @@ class Route extends ValueObject
         }
     }
 
+    public function __toString()
+    {
+        if (is_array($this->action)) {
+            $action = $this->action;
+            if (!is_string($action[0])) {
+                $action[0] = get_class($action[0]);
+            }
+            return implode('::', $action) . '()';
+        }
+        if (is_string($this->action)) {
+            return $this->action . '()';
+        }
+        return 'closure()';
+    }
+
     private function setAccess(
         string $name,
         ?string $access = null,
