@@ -53,6 +53,8 @@ class Access
      * @return string
      * @throws HttpException 403 permission denied
      * @throws HttpException 404 document not found
+     *
+     * @url GET documents/{id}
      */
     public function getDocuments(int $id): string
     {
