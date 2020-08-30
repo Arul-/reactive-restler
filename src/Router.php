@@ -649,15 +649,55 @@ class Router
         //check for wildcard routes
         if (substr($route->path, -1, 1) == '*') {
             $path = rtrim($route->path, '/*');
+            /** @var Route|false $existing */
+            if (
+                !Defaults::$productionMode &&
+                $existing = static::$routes["v$version"]['*'][$path][$route->httpMethod] ?? false
+            ) {
+                throw new HttpException(500,
+                    'Ambigous route mappings detected. ' .
+                    $existing . ' is overwritten by ' . $route
+                    , [
+                        'existing' => $existing,
+                        'overwriting' => $route
+                    ]);
+            }
             static::$routes["v$version"]['*'][$path][$route->httpMethod] = $route;
         } else {
+            /** @var Route|false $existing */
+            if (
+                !Defaults::$productionMode &&
+                $existing = static::$routes["v$version"][$route->path][$route->httpMethod] ?? false
+            ) {
+                throw new HttpException(500,
+                    'Ambigous route mappings detected. ' .
+                    $existing . ' is overwritten by ' . $route
+                    , [
+                        'existing' => $existing,
+                        'overwriting' => $route
+                    ]);
+            }
             static::$routes["v$version"][$route->path][$route->httpMethod] = $route;
             //create an alias with index if the base name is index
             if (
                 (is_array($route->action) && 'index' == $route->action[1]) ||
                 (is_string($route->action) && 'index' == $route->action)
             ) {
-                static::$routes["v$version"][ltrim("$route->path/index", '/')][$route->httpMethod] = $route;
+                $path = ltrim("$route->path/index", '/');
+                /** @var Route|false $existing */
+                if (
+                    !Defaults::$productionMode &&
+                    $existing = static::$routes["v$version"][$path][$route->httpMethod] ?? false
+                ) {
+                    throw new HttpException(500,
+                        'Ambigous route mappings detected. ' .
+                        $existing . ' is overwritten by ' . $route
+                        , [
+                            'existing' => $existing,
+                            'overwriting' => $route
+                        ]);
+                }
+                static::$routes["v$version"][$path][$route->httpMethod] = $route;
             }
         }
     }
