@@ -4,7 +4,6 @@
 namespace Luracast\Restler\Data;
 
 
-use Error;
 use Luracast\Restler\Contracts\GenericResponseInterface;
 use Luracast\Restler\Exceptions\HttpException;
 use Throwable;
@@ -30,7 +29,7 @@ class ErrorResponse implements GenericResponseInterface
             }
             $trace = array_slice($innerException->getTrace(), 0, 10);
             $this->response['debug'] = [
-                'source' => $exception instanceof Error ? 'internal' : $exception->getSource(),
+                'source' => !method_exists($exception, 'getSource') ? 'internal' : $exception->getSource(),
                 'trace' => array_map([static::class, 'simplifyTrace'], $trace)
             ];
         }
