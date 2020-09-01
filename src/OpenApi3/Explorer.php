@@ -122,9 +122,9 @@ class Explorer implements ProvidesMultiVersionApiInterface
      */
     public function index()
     {
-        $path = $this->request->getUri()->getPath();
+        $path = $this->request->getUri()->withQuery('')->getPath();
         if (!empty($path) && !Text::endsWith($path, '/')) {
-            throw new Redirect((string)$this->request->getUri() . '/');
+            throw new Redirect((string)$this->request->getUri()->withPath($path . '/'));
         }
         return $this->get('index.html');
     }
