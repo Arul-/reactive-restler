@@ -10,7 +10,7 @@ use Psr\Http\Message\ServerRequestInterface;
 use React\Http\Middleware\LimitConcurrentRequestsMiddleware;
 use React\Http\Middleware\RequestBodyBufferMiddleware;
 use React\Http\Middleware\RequestBodyParserMiddleware;
-use React\Http\StreamingServer;
+use React\Http\Server;
 
 
 $loop = React\EventLoop\Factory::create();
@@ -18,16 +18,15 @@ $loop = React\EventLoop\Factory::create();
 ReactHttpClient::setLoop($loop);
 Defaults::$implementations[HttpClientInterface::class] = [ReactHttpClient::class];
 
-$server = new StreamingServer(
-    [
-        new LimitConcurrentRequestsMiddleware(100), // 100 concurrent buffering handlers
-        new RequestBodyBufferMiddleware(16 * 1024 * 1024), // 16 MiB
-        new RequestBodyParserMiddleware(2 * 1024 * 1024, 1), //allow UPLOAD of only 1 file with max 2MB
-        function (ServerRequestInterface $request) {
-            echo '      ' . $request->getMethod() . ' ' . $request->getUri()->getPath() . PHP_EOL;
-            return (new Restler)->handle($request);
-        }
-    ]
+$server = new Server($loop,
+    new React\Http\Middleware\StreamingRequestMiddleware(),
+    new React\Http\Middleware\LimitConcurrentRequestsMiddleware(100), // 100 concurrent buffering handlers
+    new React\Http\Middleware\RequestBodyBufferMiddleware(16 * 1024 * 1024), // 16 MiB per request
+    new React\Http\Middleware\RequestBodyParserMiddleware(),
+    function (ServerRequestInterface $request) {
+        echo '      ' . $request->getMethod() . ' ' . $request->getUri()->getPath() . PHP_EOL;
+        return (new Restler)->handle($request);
+    }
 );
 
 $server->on(
