@@ -1,8 +1,13 @@
 <?php namespace Luracast\Restler\Data;
 
 use Exception;
+use GraphQL\Type\Definition\InputObjectType;
+use GraphQL\Type\Definition\ObjectType;
+use GraphQL\Type\Definition\Type as GraphQLType;
 use Luracast\Restler\Defaults;
+use Luracast\Restler\GraphQL\GraphQL;
 use Luracast\Restler\Router;
+use Luracast\Restler\Utils\ClassName;
 use Luracast\Restler\Utils\CommentParser;
 use Luracast\Restler\Utils\Text;
 use Luracast\Restler\Utils\Type as TypeUtil;
@@ -176,25 +181,11 @@ class Param extends Type
         return static::fromAbstract($method, $doc, $scope);
     }
 
-    public static function fromFunction(ReflectionFunction $function, ?array $doc = null, array $scope = []): array
-    {
-        if (empty($scope)) {
-            $scope = Router::scope($function->getClosureScopeClass());
-        }
-        return static::fromAbstract($function, $doc, $scope);
-    }
-
-    public static function fromParameter(ReflectionParameter $parameter, ?array $doc, array $scope): self
-    {
-        return static::from($parameter, $doc['param'][$parameter->getPosition()] ?? [], $scope);
-    }
-
     private static function fromAbstract(
         ReflectionFunctionAbstract $function,
         ?array $doc = null,
         array $scope = []
-    ): array
-    {
+    ): array {
         if (is_null($doc)) {
             try {
                 $doc = CommentParser::parse($function->getDocComment());
@@ -210,6 +201,11 @@ class Param extends Type
         return array_column($params, null, 'name');
     }
 
+    public static function fromParameter(ReflectionParameter $parameter, ?array $doc, array $scope): self
+    {
+        return static::from($parameter, $doc['param'][$parameter->getPosition()] ?? [], $scope);
+    }
+
     protected static function from(?Reflector $reflector, array $metadata = [], array $scope = [])
     {
         $instance = new static();
@@ -219,7 +215,8 @@ class Param extends Type
         unset($properties['type']);
         $instance->rules = $properties;
         $instance->description = $metadata['description'] ?? '';
-        if ($reflector && method_exists($reflector, 'isDefaultValueAvailable') && $reflector->isDefaultValueAvailable()) {
+        if ($reflector && method_exists($reflector,
+                'isDefaultValueAvailable') && $reflector->isDefaultValueAvailable()) {
             $default = $reflector->getDefaultValue();
             $instance->default = $default;
             $types[] = TypeUtil::fromValue($default);
@@ -240,7 +237,8 @@ class Param extends Type
             $itemTypes,
             $scope
         );
-        $instance->required = TypeUtil::booleanValue($properties['required'] ?? $reflector && method_exists($reflector, 'isOptional') && !$reflector->isOptional());
+        $instance->required = TypeUtil::booleanValue($properties['required'] ?? $reflector && method_exists($reflector,
+                'isOptional') && !$reflector->isOptional());
         if ($reflector) {
             $instance->name = $reflector->getName();
             if (method_exists($reflector, 'getPosition')) {
@@ -279,10 +277,52 @@ class Param extends Type
         return $instance;
     }
 
+    public static function fromFunction(ReflectionFunction $function, ?array $doc = null, array $scope = []): array
+    {
+        if (empty($scope)) {
+            $scope = Router::scope($function->getClosureScopeClass());
+        }
+        return static::fromAbstract($function, $doc, $scope);
+    }
+
     public static function filterArray(array $data, bool $onlyNumericKeys): array
     {
         $callback = $onlyNumericKeys ? 'is_numeric' : 'is_string';
         return array_filter($data, $callback, ARRAY_FILTER_USE_KEY);
+    }
+
+    public function toGraphQL(): GraphQLType
+    {
+        $type = null;
+        if ($this->scalar) {
+            $type = $this->type !== 'bool' && in_array($this->name, Router::$prefixingParameterNames)
+                ? GraphQLType::id()
+                : call_user_func([GraphQLType::class, $this->type]);
+        } else {
+            $class = ClassName::short($this->type) . 'Input';
+            if (isset(GraphQL::$definitions[$class])) {
+                $type = GraphQL::$definitions[$class];
+            } else {
+                $config = ['name' => $class, 'fields' => []];
+                if (is_array($this->properties)) {
+                    /** @var Type $property */
+                    foreach ($this->properties as $name => $property) {
+                        $config['fields'][$name] = $property->toGraphQL();
+                    }
+                }
+                $type = $this instanceof Param
+                    ? new InputObjectType($config)
+                    : new ObjectType($config);
+            }
+            GraphQL::$definitions[$class] = $type;
+        }
+        if (!$this->nullable) {
+            $type = GraphQLType::nonNull($type);
+        }
+        if ($this->multiple) {
+            $type = GraphQLType::listOf($type);
+        }
+        return $type;
     }
 }
 
