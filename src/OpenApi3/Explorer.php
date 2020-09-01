@@ -15,10 +15,9 @@ use Luracast\Restler\Exceptions\Redirect;
 use Luracast\Restler\OpenApi3\Tags\TagByBasePath;
 use Luracast\Restler\OpenApi3\Tags\Tagger;
 use Luracast\Restler\Router;
-use Luracast\Restler\Utils\{ClassName, Convert, PassThrough, Text, Type as TypeUtil};
+use Luracast\Restler\Utils\{ClassName, PassThrough, Text, Type as TypeUtil};
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use Psr\Http\Message\UploadedFileInterface;
 use ReflectionClass;
 use stdClass;
 
@@ -31,6 +30,20 @@ class Explorer implements ProvidesMultiVersionApiInterface
     public static $hideProtected = false;
     public static $allowScalarValueOnRequestBody = false;
     public static $servers = [];
+    /**
+     * @var array
+     * @link https://swagger.io/docs/open-source-tools/swagger-ui/usage/configuration
+     */
+    public static $uiConfig = [
+        'deepLinking' => false,
+        'displayOperationId' => false,
+        'syntaxHighlight' => [
+            'theme' => 'tomorrow-night', //agate or arta or monokai or nord" or obsidian or tomorrow-night
+        ],
+        'filter' => 'examples', //or a string to filter by
+        'validatorUrl' => null //disables validation change to "https://validator.swagger.io/validator" to enable
+    ];
+
     /**
      * @var array mapping PHP types to JS
      */
@@ -133,6 +146,11 @@ class Explorer implements ProvidesMultiVersionApiInterface
         }
         $file = __DIR__ . '/client/' . $filename;
         return PassThrough::file($file, $this->request->getHeaderLine('If-Modified-Since'));
+    }
+
+    public function config()
+    {
+        return (object)static::$uiConfig;
     }
 
     /**
@@ -324,6 +342,25 @@ class Explorer implements ProvidesMultiVersionApiInterface
         return [$r, $requestBody];
     }
 
+    private function parameter(Param $param, $description = '')
+    {
+        $p = (object)[
+            'name' => $param->name ?? '',
+            'in' => $param->from,
+            'description' => $description,
+            'required' => $param->required,
+            'schema' => new stdClass(),
+        ];
+
+        $this->setProperties($param, $p->schema);
+
+        if (isset($param->rules['example'])) {
+            $p->examples = [1 => ['value' => $param->rules['example']]];
+        }
+
+        return $p;
+    }
+
     private function setProperties(Type $param, stdClass $schema)
     {
         //primitives
@@ -358,25 +395,6 @@ class Explorer implements ProvidesMultiVersionApiInterface
                 }
             }
         }
-    }
-
-    private function parameter(Param $param, $description = '')
-    {
-        $p = (object)[
-            'name' => $param->name ?? '',
-            'in' => $param->from,
-            'description' => $description,
-            'required' => $param->required,
-            'schema' => new stdClass(),
-        ];
-
-        $this->setProperties($param, $p->schema);
-
-        if (isset($param->rules['example'])) {
-            $p->examples = [1 => ['value' => $param->rules['example']]];
-        }
-
-        return $p;
     }
 
     private function scalarProperties(stdClass $s, Type $param)
