@@ -180,9 +180,14 @@ class GraphQL
      */
     public function post(string $query = '', array $variables = [])
     {
-        $queryType = new ObjectType(['name' => 'Query', 'fields' => static::$queries]);
-        $mutationType = new ObjectType(['name' => 'Mutation', 'fields' => static::$mutations]);
-        $schema = new Schema(['query' => $queryType, 'mutation' => $mutationType]);
+        $data = [];
+        if (!empty(self::$queries)) {
+            $data['query'] = new ObjectType(['name' => 'Query', 'fields' => static::$queries]);
+        }
+        if (!empty(self::$mutations)) {
+            $data['mutation'] = new ObjectType(['name' => 'Mutation', 'fields' => static::$mutations]);
+        }
+        $schema = new Schema($data);
         $root = ['prefix' => 'You said: '];
         try {
             $result = \GraphQL\GraphQL::executeQuery($schema, $query, $root, $this->graphQL->context, $variables);
