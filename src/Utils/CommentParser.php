@@ -3,7 +3,6 @@
 namespace Luracast\Restler\Utils;
 
 use Exception;
-use Luracast\Restler\Data\Param;
 use Luracast\Restler\Exceptions\HttpException;
 
 /**
@@ -11,6 +10,18 @@ use Luracast\Restler\Exceptions\HttpException;
  */
 class CommentParser
 {
+    /**
+     * separator for type definitions
+     */
+    const TYPE_SEPARATOR = '|';
+    /**
+     * character sequence used to escape \@
+     */
+    const ESCAPE_SEQUENCE_START = '\\@';
+    /**
+     * character sequence used to escape end of comment
+     */
+    const ESCAPE_SEQUENCE_END = '{@*}';
     /**
      * name for the embedded data
      *
@@ -43,7 +54,6 @@ class CommentParser
      * @var string
      */
     public static $arrayDelimiter = ',';
-
     /**
      * @var array annotations that support array value
      */
@@ -52,27 +62,10 @@ class CommentParser
         'select' => true,
         'properties' => true,
     ];
-
     public static $typeFixes = [
         'integer' => 'int',
         'boolean' => 'bool',
     ];
-
-    /**
-     * separator for type definitions
-     */
-    const TYPE_SEPARATOR = '|';
-
-    /**
-     * character sequence used to escape \@
-     */
-    const ESCAPE_SEQUENCE_START = '\\@';
-
-    /**
-     * character sequence used to escape end of comment
-     */
-    const ESCAPE_SEQUENCE_END = '{@*}';
-
     /**
      * Comment information is parsed and stored in to this array.
      *
@@ -213,107 +206,6 @@ class CommentParser
     }
 
     /**
-     * Parse parameters that begin with (at)
-     *
-     * @param       $param
-     * @param array $value
-     * @param array $embedded
-     */
-    private function parseParam($param, array $value, array $embedded): void
-    {
-        $data = &$this->_data;
-        $allowMultiple = false;
-        switch ($param) {
-            case 'param' :
-            case 'property' :
-            case 'property-read' :
-            case 'property-write' :
-                $value = $this->formatParam($value);
-                $allowMultiple = true;
-                break;
-            case 'var' :
-                $value = $this->formatVar($value);
-                break;
-            case 'return' :
-                $value = $this->formatReturn($value);
-                break;
-            case 'class' :
-                $data = &$data[$param];
-                list ($param, $value) = $this->formatClass($value);
-                break;
-            case 'format':
-            case 'request-format':
-            case 'response-format':
-                $value = explode(',', $value[0]);
-                break;
-            case 'access' :
-                $value = reset($value);
-                break;
-            case 'expires' :
-            case 'status' :
-            case 'throttle' :
-                $value = intval(reset($value));
-                break;
-            case 'throws' :
-                $value = $this->formatThrows($value);
-                $allowMultiple = true;
-                break;
-            case 'author':
-                $value = $this->formatAuthor($value);
-                $allowMultiple = true;
-                break;
-            case 'deprecated':
-                $value = true;
-                break;
-            case 'header' :
-            case 'link':
-            case 'example':
-                /** @noinspection PhpMissingBreakStatementInspection */
-            case 'todo':
-                $allowMultiple = true;
-            //don't break, continue with code for default:
-            default :
-                $value = implode(' ', $value);
-        }
-        if (!empty($embedded)) {
-            if (is_string($value)) {
-                $value = ['description' => $value];
-            }
-            if (!empty($embedded['type'])) {
-                if ('array' === $value['type'][0]) {
-                    $this->typeFix($embedded['type'], 'associative');
-                    if ('associative' === $embedded['type'][0] || 'indexed' === $embedded['type'][0]) {
-                        $embedded['format'] = $embedded['type'][0];
-                        unset($embedded['type']);
-                    }
-                } else {
-                    $embedded['format'] = $embedded['type'][0];
-                    unset($embedded['type']);
-                }
-            }
-            $value[self::$embeddedDataName] = $embedded;
-        }
-        if (empty ($data[$param])) {
-            $data[$param] = $allowMultiple ? [$value] : $value;
-        } elseif ($allowMultiple) {
-            $data[$param][] = $value;
-        } else {
-            if (!is_string($value) && isset($value[self::$embeddedDataName])
-                && isset($data[$param][self::$embeddedDataName])
-            ) {
-                $data[$param][self::$embeddedDataName] =
-                    $value[self::$embeddedDataName] + $data[$param][self::$embeddedDataName];
-            }
-            if (!is_array($data[$param])) {
-                $data[$param] = ['description' => (string)$data[$param]];
-            }
-            if (is_array($value)) {
-                $data[$param] = $value + $data[$param];
-            }
-        }
-    }
-
-    /**
      * Parses the inline php doc comments and embedded data.
      *
      * @param string $subject
@@ -402,6 +294,202 @@ class CommentParser
         return [$subject, $data];
     }
 
+    /**
+     * Parse parameters that begin with (at)
+     *
+     * @param       $param
+     * @param array $value
+     * @param array $embedded
+     */
+    private function parseParam($param, array $value, array $embedded): void
+    {
+        $data = &$this->_data;
+        $allowMultiple = false;
+        switch ($param) {
+            case 'param' :
+            case 'property' :
+            case 'property-read' :
+            case 'property-write' :
+                $value = $this->formatParam($value);
+                $allowMultiple = true;
+                break;
+            case 'var' :
+                $value = $this->formatVar($value);
+                break;
+            case 'return' :
+                $value = $this->formatReturn($value);
+                break;
+            case 'class' :
+                $data = &$data[$param];
+                list ($param, $value) = $this->formatClass($value);
+                break;
+            case 'format':
+            case 'request-format':
+            case 'response-format':
+                $value = explode(',', $value[0]);
+                break;
+            case 'access' :
+                $value = reset($value);
+                break;
+            case 'expires' :
+            case 'status' :
+            case 'throttle' :
+                $value = intval(reset($value));
+                break;
+            case 'throws' :
+                $value = $this->formatThrows($value);
+                $allowMultiple = true;
+                break;
+            case 'author':
+                $value = $this->formatAuthor($value);
+                $allowMultiple = true;
+                break;
+            case 'deprecated':
+                $value = true;
+                break;
+            case 'url':
+            case 'header':
+            case 'link':
+            case 'example':
+                /** @noinspection PhpMissingBreakStatementInspection */
+            case 'todo':
+                $allowMultiple = true;
+            //don't break, continue with code for default:
+            default :
+                $value = implode(' ', $value);
+        }
+        if (!empty($embedded)) {
+            if (is_string($value)) {
+                $value = ['description' => $value];
+            }
+            if (!empty($embedded['type'])) {
+                if ('array' === $value['type'][0]) {
+                    $this->typeFix($embedded['type'], 'associative');
+                    if ('associative' === $embedded['type'][0] || 'indexed' === $embedded['type'][0]) {
+                        $embedded['format'] = $embedded['type'][0];
+                        unset($embedded['type']);
+                    }
+                } else {
+                    $embedded['format'] = $embedded['type'][0];
+                    unset($embedded['type']);
+                }
+            }
+            $value[self::$embeddedDataName] = $embedded;
+        }
+        if (empty ($data[$param])) {
+            $data[$param] = $allowMultiple ? [$value] : $value;
+        } elseif ($allowMultiple) {
+            $data[$param][] = $value;
+        } else {
+            if (!is_string($value) && isset($value[self::$embeddedDataName])
+                && isset($data[$param][self::$embeddedDataName])
+            ) {
+                $data[$param][self::$embeddedDataName] =
+                    $value[self::$embeddedDataName] + $data[$param][self::$embeddedDataName];
+            }
+            if (!is_array($data[$param])) {
+                $data[$param] = ['description' => (string)$data[$param]];
+            }
+            if (is_array($value)) {
+                $data[$param] = $value + $data[$param];
+            }
+        }
+    }
+
+    private function formatParam(array $value): array
+    {
+        $r = [];
+        $data = array_shift($value);
+        if (empty($data)) {
+            $r['type'] = ['mixed'];
+        } elseif ($data[0] == '$') {
+            $r['name'] = substr($data, 1);
+            $r['type'] = ['mixed'];
+        } else {
+            $data = explode(self::TYPE_SEPARATOR, $data);
+            $r['type'] = $data;
+
+            $data = array_shift($value);
+            if (!empty($data) && $data[0] == '$') {
+                $r['name'] = substr($data, 1);
+            }
+        }
+        $this->typeAndDescription($r, $value);
+        return $r;
+    }
+
+    private function typeAndDescription(&$r, array $value, string $default = 'array'): void
+    {
+        if (count($r['type'])) {
+            if (Text::endsWith($r['type'][0], '[]')) {
+                $r[static::$embeddedDataName]['type'] = [substr($r['type'][0], 0, -2)];
+                $r['type'][0] = 'array';
+            } else {
+                $this->typeFix($r['type'], $default);
+            }
+        }
+        if ($value) {
+            $r['description'] = implode(' ', $value);
+        }
+    }
+
+    private function typeFix(array &$type, string $default = 'string')
+    {
+        $length = count($type);
+        $type = str_ireplace(array_keys(static::$typeFixes), array_values(static::$typeFixes), $type);
+        if ($length) {
+            if ('null' === $type[0]) {
+                if (1 == $length) {
+                    array_unshift($type, $default);
+                } else {
+                    array_shift($type);
+                    array_push($type, 'null');
+                }
+            }
+        }
+    }
+
+    private function formatVar(array $value): array
+    {
+        $r = [];
+        $data = array_shift($value);
+        if (empty($data)) {
+            $r['type'] = ['mixed'];
+        } elseif ($data[0] == '$') {
+            $r['name'] = substr($data, 1);
+            $r['type'] = ['mixed'];
+        } else {
+            $data = explode(self::TYPE_SEPARATOR, $data);
+            $r['type'] = $data;
+        }
+        $this->typeAndDescription($r, $value);
+        return $r;
+    }
+
+    private function formatReturn(array $value): array
+    {
+        $data = explode(self::TYPE_SEPARATOR, array_shift($value));
+        $r = [
+            'type' => $data,
+        ];
+        $this->typeAndDescription($r, $value);
+        return $r;
+    }
+
+    private function formatClass(array $value): array
+    {
+        $param = array_shift($value);
+
+        if (empty($param)) {
+            $param = 'Unknown';
+        }
+        $value = implode(' ', $value);
+        return [
+            ltrim($param, '\\'),
+            ['description' => $value],
+        ];
+    }
+
     private function formatThrows(array $value): array
     {
         $code = 500;
@@ -436,20 +524,6 @@ class CommentParser
         return compact('code', 'message', 'exception');
     }
 
-    private function formatClass(array $value): array
-    {
-        $param = array_shift($value);
-
-        if (empty($param)) {
-            $param = 'Unknown';
-        }
-        $value = implode(' ', $value);
-        return [
-            ltrim($param, '\\'),
-            ['description' => $value],
-        ];
-    }
-
     private function formatAuthor(array $value): array
     {
         $r = [];
@@ -461,85 +535,5 @@ class CommentParser
         }
         $r['name'] = implode(' ', $value);
         return $r;
-    }
-
-    private function formatReturn(array $value): array
-    {
-        $data = explode(self::TYPE_SEPARATOR, array_shift($value));
-        $r = [
-            'type' => $data,
-        ];
-        $this->typeAndDescription($r, $value);
-        return $r;
-    }
-
-    private function formatParam(array $value): array
-    {
-        $r = [];
-        $data = array_shift($value);
-        if (empty($data)) {
-            $r['type'] = ['mixed'];
-        } elseif ($data[0] == '$') {
-            $r['name'] = substr($data, 1);
-            $r['type'] = ['mixed'];
-        } else {
-            $data = explode(self::TYPE_SEPARATOR, $data);
-            $r['type'] = $data;
-
-            $data = array_shift($value);
-            if (!empty($data) && $data[0] == '$') {
-                $r['name'] = substr($data, 1);
-            }
-        }
-        $this->typeAndDescription($r, $value);
-        return $r;
-    }
-
-    private function formatVar(array $value): array
-    {
-        $r = [];
-        $data = array_shift($value);
-        if (empty($data)) {
-            $r['type'] = ['mixed'];
-        } elseif ($data[0] == '$') {
-            $r['name'] = substr($data, 1);
-            $r['type'] = ['mixed'];
-        } else {
-            $data = explode(self::TYPE_SEPARATOR, $data);
-            $r['type'] = $data;
-        }
-        $this->typeAndDescription($r, $value);
-        return $r;
-    }
-
-    private function typeFix(array &$type, string $default = 'string')
-    {
-        $length = count($type);
-        $type = str_ireplace(array_keys(static::$typeFixes), array_values(static::$typeFixes), $type);
-        if ($length) {
-            if ('null' === $type[0]) {
-                if (1 == $length) {
-                    array_unshift($type, $default);
-                } else {
-                    array_shift($type);
-                    array_push($type, 'null');
-                }
-            }
-        }
-    }
-
-    private function typeAndDescription(&$r, array $value, string $default = 'array'): void
-    {
-        if (count($r['type'])) {
-            if (Text::endsWith($r['type'][0], '[]')) {
-                $r[static::$embeddedDataName]['type'] = [substr($r['type'][0], 0, -2)];
-                $r['type'][0] = 'array';
-            } else {
-                $this->typeFix($r['type'], $default);
-            }
-        }
-        if ($value) {
-            $r['description'] = implode(' ', $value);
-        }
     }
 }
