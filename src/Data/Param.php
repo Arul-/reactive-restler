@@ -1,6 +1,7 @@
 <?php namespace Luracast\Restler\Data;
 
 use Exception;
+use GraphQL\Type\Definition\EnumType;
 use GraphQL\Type\Definition\InputObjectType;
 use GraphQL\Type\Definition\ObjectType;
 use GraphQL\Type\Definition\Type as GraphQLType;
@@ -262,6 +263,8 @@ class Param extends Type
         }
         $instance->pattern = $properties['pattern'] ?? null;
         $instance->message = $properties['message'] ?? null;
+        $instance->choice = $properties['choice'] ?? null;
+        unset($properties['choice']);
         $instance->fix = $properties['fix'] ?? false;
 
         $instance->from = $properties['from']
@@ -301,8 +304,16 @@ class Param extends Type
         if (GraphQL::$showDescriptions && $this->description) {
             $data['description'] = $this->description;
         }
-        $type = null;
-        if ($this->scalar) {
+        if (!empty($this->choice)) {
+            $keys = $this->rules['select'] ?? $this->choice;
+            if (count($this->choice) !== count($keys)) {
+                throw new HttpException(500, '`@choice` and `@select` items count mismatch');
+            }
+            $type = new EnumType([
+                'name' => ucfirst($this->name) . 'Enum',
+                'values' => array_combine($keys, $this->choice),
+            ]);
+        } elseif ($this->scalar) {
             $type = $this->type !== 'bool' && in_array($this->name, Router::$prefixingParameterNames)
                 ? GraphQLType::id()
                 : call_user_func([GraphQLType::class, $this->type]);

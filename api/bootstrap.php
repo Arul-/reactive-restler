@@ -124,15 +124,6 @@ try {
     //---------------------------- GRAPHQL API ----------------------------
     //
 
-    GraphQL::$queries['echo'] = [
-        'type' => GraphQLType::string(),
-        'args' => [
-            'message' => ['type' => GraphQLType::nonNull(GraphQLType::string()), 'defaultValue' => 'Hello'],
-        ],
-        'resolve' => function ($root, $args) {
-            return $root['prefix'] . $args['message'];
-        }
-    ];
     GraphQL::$mutations['sum'] = [
         'type' => GraphQLType::int(),
         'args' => [
@@ -147,6 +138,15 @@ try {
             return $args['x'] + $args['y'];
         },
     ];
+    GraphQL::$queries['echo'] = [
+        'type' => GraphQLType::string(),
+        'args' => [
+            'message' => ['type' => GraphQLType::nonNull(GraphQLType::string()), 'defaultValue' => 'Hello'],
+        ],
+        'resolve' => function ($root, $args) {
+            return $root['prefix'] . $args['message'];
+        }
+    ];
 
     GraphQL::mapApiClasses([
         RateLimitedAuthors::class,
@@ -155,7 +155,9 @@ try {
         Access::class,
         Tasks::class,
     ]);
-    //GraphQL::addMethod('', new ReflectionMethod(Math::class, 'add'));
+    GraphQL::addMethod(new ReflectionMethod(Math::class, 'add'));
+        
+    GraphQL::addMethod(new ReflectionMethod(Type::class, 'postEnumerator'));
 
 } catch (Throwable $t) {
     die(json_encode((new ErrorResponse($t, true))->jsonSerialize(), JSON_PRETTY_PRINT));

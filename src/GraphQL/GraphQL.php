@@ -131,7 +131,7 @@ class GraphQL
             return static::addRoute($query, $route, false);
         }
         if (!empty($route->url)) {
-            $name = empty($baseName) ? $route->url : lcfirst($baseName) . ucfirst($route->url);
+            $name = empty($baseName) ? lcfirst($route->url) : lcfirst($baseName) . ucfirst($route->url);
         } else {
             $single = empty($baseName) ? '' : Str::singular($baseName);
             switch ($route->httpMethod) {
