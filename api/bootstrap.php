@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Auth\Client;
 use Auth\Server;
+use GraphQL\Type\Definition\EnumType;
 use GraphQL\Type\Definition\Type as GraphQLType;
 use improved\Authors as ImprovedAuthors;
 use Luracast\Restler\Data\ErrorResponse;
@@ -24,6 +25,7 @@ use Luracast\Restler\Utils\Text;
 use ratelimited\Authors as RateLimitedAuthors;
 use SomeVendor\v1\BMI as VendorBMI1;
 use v1\BodyMassIndex as BMI1;
+use v2\BodyMassIndex as BMI2;
 
 define('BASE', dirname(__DIR__));
 include BASE . "/vendor/autoload.php";
@@ -121,10 +123,11 @@ try {
     //
     //---------------------------- GRAPHQL API ----------------------------
     //
+
     GraphQL::$queries['echo'] = [
         'type' => GraphQLType::string(),
         'args' => [
-            'message' => GraphQLType::nonNull(GraphQLType::string()),
+            'message' => ['type' => GraphQLType::nonNull(GraphQLType::string()), 'defaultValue' => 'Hello'],
         ],
         'resolve' => function ($root, $args) {
             return $root['prefix'] . $args['message'];
@@ -133,18 +136,26 @@ try {
     GraphQL::$mutations['sum'] = [
         'type' => GraphQLType::int(),
         'args' => [
-            'x' => ['type' => GraphQLType::int()],
-            'y' => ['type' => GraphQLType::int()],
+            'x' => ['type' => GraphQLType::int(), 'defaultValue' => 5],
+            'y' => new EnumType([
+                'name' => 'SelectedNumbers',
+                'description' => 'selected range of numbers',
+                'values' => ['five' => 5, 'seven' => 7, 'nine' => 9]
+            ]),
         ],
         'resolve' => function ($calc, $args) {
             return $args['x'] + $args['y'];
         },
     ];
+
     GraphQL::mapApiClasses([
         RateLimitedAuthors::class,
         Say::class,
+        BMI2::class,
+        Access::class,
+        Tasks::class,
     ]);
-    GraphQL::addMethod('', new ReflectionMethod(Math::class, 'add'));
+    //GraphQL::addMethod('', new ReflectionMethod(Math::class, 'add'));
 
 } catch (Throwable $t) {
     die(json_encode((new ErrorResponse($t, true))->jsonSerialize(), JSON_PRETTY_PRINT));
