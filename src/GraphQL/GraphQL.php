@@ -36,6 +36,8 @@ class GraphQL
     public static $definitions = [];
     public static $mutations = [];
     public static $queries = [];
+
+    public static $showDescriptions = false;
     /**
      * @var Restler
      */

@@ -8,6 +8,7 @@ use GraphQL\Type\Definition\InputObjectType;
 use GraphQL\Type\Definition\ObjectType;
 use GraphQL\Type\Definition\Type as GraphQLType;
 use Luracast\Restler\GraphQL\GraphQL;
+use Luracast\Restler\Router;
 use Luracast\Restler\Utils\ClassName;
 use Luracast\Restler\Utils\CommentParser;
 use ReflectionNamedType;
@@ -39,7 +40,14 @@ class Returns extends Type
                 if (is_array($this->properties)) {
                     /** @var Type $property */
                     foreach ($this->properties as $name => $property) {
-                        $config['fields'][$name] = $property->toGraphQL();
+                        $subType = $property->type !== 'bool' && in_array($name,
+                            Router::$prefixingParameterNames)
+                            ? GraphQLType::id()
+                            : $property->toGraphQL();
+                        $config['fields'][$name] = ['type' => $subType];
+                        if (GraphQL::$showDescriptions && $property->description) {
+                            $config['fields'][$name]['description'] = $property->description;
+                        }
                     }
                 }
                 $type = $this instanceof Param

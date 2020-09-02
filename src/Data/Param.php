@@ -294,7 +294,7 @@ class Param extends Type
     public function toGraphQL()
     {
         $data = [];
-        if ($this->description) {
+        if (GraphQL::$showDescriptions && $this->description) {
             $data['description'] = $this->description;
         }
         $type = null;
