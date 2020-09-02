@@ -5,6 +5,7 @@ use GraphQL\Type\Definition\InputObjectType;
 use GraphQL\Type\Definition\ObjectType;
 use GraphQL\Type\Definition\Type as GraphQLType;
 use Luracast\Restler\Defaults;
+use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\GraphQL\GraphQL;
 use Luracast\Restler\Router;
 use Luracast\Restler\Utils\ClassName;
@@ -293,6 +294,9 @@ class Param extends Type
 
     public function toGraphQL()
     {
+        if (in_array($this->type, GraphQL::INVALID_TYPES)) {
+            throw new HttpException(500, 'Parameter with data type `' . $this->type . '` is not supported');
+        }
         $data = [];
         if (GraphQL::$showDescriptions && $this->description) {
             $data['description'] = $this->description;

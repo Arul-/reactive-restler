@@ -7,6 +7,7 @@ namespace Luracast\Restler\Data;
 use GraphQL\Type\Definition\InputObjectType;
 use GraphQL\Type\Definition\ObjectType;
 use GraphQL\Type\Definition\Type as GraphQLType;
+use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\GraphQL\GraphQL;
 use Luracast\Restler\Router;
 use Luracast\Restler\Utils\ClassName;
@@ -28,6 +29,9 @@ class Returns extends Type
 
     public function toGraphQL()
     {
+        if (in_array($this->type, GraphQL::INVALID_TYPES)) {
+            throw new HttpException(500, 'Return value with data type `' . $this->type . '` is not supported');
+        }
         $type = null;
         if ($this->scalar) {
             $type = call_user_func([GraphQLType::class, $this->type]);

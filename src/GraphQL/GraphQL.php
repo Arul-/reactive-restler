@@ -29,14 +29,12 @@ class GraphQL
     use DependentTrait;
     const UI_GRAPHQL_PLAYGROUND = 'graphql-playground';
     const UI_GRAPHIQL = 'graphiql';
-
+    public const INVALID_TYPES = ['mixed', 'array'];
     public static $UI = self::UI_GRAPHQL_PLAYGROUND;
-
     public static $context = [];
     public static $definitions = [];
     public static $mutations = [];
     public static $queries = [];
-
     public static $showDescriptions = false;
     /**
      * @var Restler
@@ -110,9 +108,10 @@ class GraphQL
                 }
             }
         } catch (Throwable $e) {
-            throw new Exception(
-                "mapAPIClasses failed. " . $e->getMessage(),
+            throw new HttpException(
                 $e->getCode(),
+                "Failed to map `$className` class to GraphQL. " . $e->getMessage(),
+                [],
                 $e
             );
         }
