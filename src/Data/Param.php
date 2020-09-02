@@ -291,13 +291,20 @@ class Param extends Type
         return array_filter($data, $callback, ARRAY_FILTER_USE_KEY);
     }
 
-    public function toGraphQL(): GraphQLType
+    public function toGraphQL()
     {
+        $data = [];
+        if ($this->description) {
+            $data['description'] = $this->description;
+        }
         $type = null;
         if ($this->scalar) {
             $type = $this->type !== 'bool' && in_array($this->name, Router::$prefixingParameterNames)
                 ? GraphQLType::id()
                 : call_user_func([GraphQLType::class, $this->type]);
+            if (!$this->required && !is_null($this->default)) {
+                $data['defaultValue'] = $this->default;
+            }
         } else {
             $class = ClassName::short($this->type) . 'Input';
             if (isset(GraphQL::$definitions[$class])) {
@@ -322,7 +329,8 @@ class Param extends Type
         if ($this->multiple) {
             $type = GraphQLType::listOf($type);
         }
-        return $type;
+        $data['type'] = $type;
+        return $data;
     }
 }
 

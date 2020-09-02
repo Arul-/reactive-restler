@@ -5,14 +5,10 @@ namespace Luracast\Restler\Data;
 
 
 use Exception;
-use GraphQL\Type\Definition\InputObjectType;
-use GraphQL\Type\Definition\ObjectType;
-use GraphQL\Type\Definition\Type as GraphQLType;
 use Luracast\Restler\Contracts\GenericRequestInterface;
 use Luracast\Restler\Contracts\GenericResponseInterface;
 use Luracast\Restler\Contracts\ValueObjectInterface;
 use Luracast\Restler\Exceptions\Invalid;
-use Luracast\Restler\GraphQL\GraphQL;
 use Luracast\Restler\Router;
 use Luracast\Restler\Utils\ClassName;
 use Luracast\Restler\Utils\CommentParser;
@@ -22,7 +18,7 @@ use ReflectionProperty;
 use ReflectionType;
 use Reflector;
 
-class Type implements ValueObjectInterface
+abstract class Type implements ValueObjectInterface
 {
     /**
      * Data type of the variable being validated.
@@ -283,6 +279,8 @@ class Type implements ValueObjectInterface
         return $instance;
     }
 
+    abstract public function toGraphQL();
+
     /**
      * @inheritDoc
      */
@@ -319,40 +317,5 @@ class Type implements ValueObjectInterface
     public function __sleep()
     {
         return $this->jsonSerialize();
-    }
-
-    public function toGraphQL(): GraphQLType
-    {
-        $type = null;
-        if ($this->scalar) {
-            $type = call_user_func([GraphQLType::class, $this->type]);
-        } else {
-            $class = ClassName::short($this->type);
-            if ($this instanceof Param) {
-                $class .= 'Input';
-            }
-            if (isset(GraphQL::$definitions[$class])) {
-                $type = GraphQL::$definitions[$class];
-            } else {
-                $config = ['name' => $class, 'fields' => []];
-                if (is_array($this->properties)) {
-                    /** @var Type $property */
-                    foreach ($this->properties as $name => $property) {
-                        $config['fields'][$name] = $property->toGraphQL();
-                    }
-                }
-                $type = $this instanceof Param
-                    ? new InputObjectType($config)
-                    : new ObjectType($config);
-            }
-            GraphQL::$definitions[$class] = $type;
-        }
-        if (!$this->nullable) {
-            $type = GraphQLType::nonNull($type);
-        }
-        if ($this->multiple) {
-            $type = GraphQLType::listOf($type);
-        }
-        return $type;
     }
 }
