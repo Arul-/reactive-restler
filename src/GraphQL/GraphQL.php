@@ -82,9 +82,8 @@ class GraphQL
                     if ($method->isStatic()) {
                         continue;
                     }
-                    $methodName = strtolower($method->getName());
                     //method name should not begin with _
-                    if ($methodName[0] == '_') {
+                    if ($method->getName()[0] == '_') {
                         continue;
                     }
                     $metadata = [];
@@ -105,7 +104,7 @@ class GraphQL
                     if (is_null($scope)) {
                         $scope = Router::scope($class);
                     }
-                    static::addMethod($name, $method, $metadata, $scope);
+                    static::addMethod($method, $name, $metadata, $scope);
                 }
             }
         } catch (Throwable $e) {
@@ -117,8 +116,12 @@ class GraphQL
         }
     }
 
-    public static function addMethod(string $name, ReflectionMethod $method, ?array $metadata = null, array $scope = [])
-    {
+    public static function addMethod(
+        ReflectionMethod $method,
+        string $baseName = '',
+        ?array $metadata = null,
+        array $scope = []
+    ) {
         $route = Route::fromMethod($method, $metadata, $scope);
         if ($mutation = $route->mutation ?? false) {
             return static::addRoute($mutation, $route, true);
@@ -126,22 +129,26 @@ class GraphQL
         if ($query = $route->query ?? false) {
             return static::addRoute($query, $route, false);
         }
-        $single = Str::singular($name);
-        switch ($route->httpMethod) {
-            case 'POST':
-                $name = 'make' . $single;
-                break;
-            case 'DELETE':
-                $name = 'remove' . $single;
-                break;
-            case 'PUT':
-            case 'PATCH':
-                $name = 'update' . $single;
-                break;
-            default:
-                $name = isset($route->parameters['id'])
-                    ? 'get' . $single
-                    : lcfirst($name);
+        if (!empty($route->url)) {
+            $name = empty($baseName) ? $route->url : lcfirst($baseName) . ucfirst($route->url);
+        } else {
+            $single = empty($baseName) ? '' : Str::singular($baseName);
+            switch ($route->httpMethod) {
+                case 'POST':
+                    $name = 'make' . $single;
+                    break;
+                case 'DELETE':
+                    $name = 'remove' . $single;
+                    break;
+                case 'PUT':
+                case 'PATCH':
+                    $name = 'update' . $single;
+                    break;
+                default:
+                    $name = isset($route->parameters['id'])
+                        ? 'get' . $single
+                        : lcfirst($baseName);
+            }
         }
         return static::addRoute($name, $route, 'GET' !== $route->httpMethod);
     }
