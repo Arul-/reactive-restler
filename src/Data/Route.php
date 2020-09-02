@@ -187,7 +187,10 @@ class Route extends ValueObject
                 }
             }
         }
-        $methodName = $metadata['url'][0] ?? $method->getName();
+        //$methodName = $metadata['url'][0] ?? $method->getName();
+        //$methodName = Text::slug(strtok($methodName, '/'),'');
+        $methodName = $method->getName();
+
         if (preg_match_all('/^(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS)/i', $methodName, $matches)) {
             $route->httpMethod = strtoupper($matches[0][0]);
             $methodName = substr($methodName, strlen($route->httpMethod));
