@@ -127,11 +127,11 @@ try {
         'type' => GraphQLType::int(),
         'args' => [
             'x' => ['type' => GraphQLType::int(), 'defaultValue' => 5],
-            'y' => GraphQL::enum([
+            'y' => GraphQLType::nonNull(GraphQL::enum([
                 'name' => 'SelectedEnum',
                 'description' => 'selected range of numbers',
                 'values' => ['five' => 5, 'seven' => 7, 'nine' => 9]
-            ]),
+            ])),
         ],
         'resolve' => function ($calc, $args) {
             return $args['x'] + $args['y'];
