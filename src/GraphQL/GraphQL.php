@@ -18,6 +18,7 @@ use Luracast\Restler\StaticProperties;
 use Luracast\Restler\Utils\ClassName;
 use Luracast\Restler\Utils\CommentParser;
 use Luracast\Restler\Utils\PassThrough;
+use Psr\Http\Message\ResponseInterface;
 use ReflectionClass;
 use ReflectionMethod;
 use Throwable;
@@ -188,7 +189,7 @@ class GraphQL
 
     /**
      * loads graphql client
-     * @return \Psr\Http\Message\ResponseInterface
+     * @return ResponseInterface
      * @throws HttpException
      */
     public function get()
@@ -206,9 +207,7 @@ class GraphQL
     public function post(string $query = '', array $variables = [])
     {
         $data = [];
-        if (!empty(self::$queries)) {
-            $data['query'] = new ObjectType(['name' => 'Query', 'fields' => static::$queries]);
-        }
+        $data['query'] = new ObjectType(['name' => 'Query', 'fields' => static::$queries]);
         if (!empty(self::$mutations)) {
             $data['mutation'] = new ObjectType(['name' => 'Mutation', 'fields' => static::$mutations]);
         }
