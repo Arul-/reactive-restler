@@ -197,22 +197,20 @@ class GraphQL
 
     /**
      * loads graphql client
+     * @param string $query
+     * @param array $variables
      * @return ResponseInterface
      * @throws HttpException
      */
-    public function get()
+    public function get(string $query = '', array $variables = [])
     {
+        if (!empty($query)) {
+            return $this->handle();
+        }
         return PassThrough::file(__DIR__ . '/client/' . static::$UI . '.html');
     }
 
-    /**
-     * runs graphql queries
-     * @param string $query {@from body}
-     * @param array $variables {@from body}
-     *
-     * @return array|mixed[]
-     */
-    public function post(string $query = '', array $variables = [])
+    private function handle()
     {
         try {
             $data = [];
@@ -234,5 +232,17 @@ class GraphQL
                 'errors' => [['message' => $exception->getMessage()]]
             ];
         }
+    }
+
+    /**
+     * runs graphql queries
+     * @param string $query {@from body}
+     * @param array $variables {@from body}
+     *
+     * @return array|mixed[]
+     */
+    public function post(string $query = '', array $variables = [])
+    {
+        return $this->handle();
     }
 }
