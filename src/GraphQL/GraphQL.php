@@ -4,6 +4,8 @@
 namespace Luracast\Restler\GraphQL;
 
 use Exception;
+use GraphQL\Server\ServerConfig;
+use GraphQL\Server\StandardServer;
 use GraphQL\Type\Definition\EnumType;
 use GraphQL\Type\Definition\ObjectType;
 use GraphQL\Type\Schema;
@@ -19,6 +21,7 @@ use Luracast\Restler\Utils\ClassName;
 use Luracast\Restler\Utils\CommentParser;
 use Luracast\Restler\Utils\PassThrough;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
 use ReflectionClass;
 use ReflectionMethod;
 use Throwable;
@@ -46,12 +49,17 @@ class GraphQL
      * @var StaticProperties
      */
     private $graphQL;
+    /**
+     * @var ServerRequestInterface
+     */
+    private $request;
 
-    public function __construct(Restler $restler, StaticProperties $graphQL)
+    public function __construct(Restler $restler, StaticProperties $graphQL, ServerRequestInterface $request)
     {
         $this->restler = $restler;
         $graphQL->context['maker'] = [$restler, 'make'];
         $this->graphQL = $graphQL;
+        $this->request = $request;
     }
 
     /**
@@ -206,16 +214,21 @@ class GraphQL
      */
     public function post(string $query = '', array $variables = [])
     {
-        $data = [];
-        $data['query'] = new ObjectType(['name' => 'Query', 'fields' => static::$queries]);
-        if (!empty(self::$mutations)) {
-            $data['mutation'] = new ObjectType(['name' => 'Mutation', 'fields' => static::$mutations]);
-        }
-        $schema = new Schema($data);
-        $root = ['prefix' => 'You said: '];
         try {
-            $result = \GraphQL\GraphQL::executeQuery($schema, $query, $root, $this->graphQL->context, $variables);
-            return $result->toArray();
+            $data = [];
+            $data['query'] = new ObjectType(['name' => 'Query', 'fields' => static::$queries]);
+            if (!empty(self::$mutations)) {
+                $data['mutation'] = new ObjectType(['name' => 'Mutation', 'fields' => static::$mutations]);
+            }
+            $schema = new Schema($data);
+            $config = ServerConfig::create()
+                ->setSchema($schema)
+                ->setRootValue(['prefix' => 'You said: '])
+                ->setContext($this->graphQL->context);
+            $server = new StandardServer($config);
+            return $server->executePsrRequest(
+                $this->request->withParsedBody(json_decode((string)$this->request->getBody(), true))
+            );
         } catch (Exception $exception) {
             return [
                 'errors' => [['message' => $exception->getMessage()]]
