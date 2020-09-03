@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 use Auth\Client;
 use Auth\Server;
-use GraphQL\Type\Definition\EnumType;
 use GraphQL\Type\Definition\Type as GraphQLType;
 use improved\Authors as ImprovedAuthors;
 use Luracast\Restler\Data\ErrorResponse;
@@ -128,8 +127,8 @@ try {
         'type' => GraphQLType::int(),
         'args' => [
             'x' => ['type' => GraphQLType::int(), 'defaultValue' => 5],
-            'y' => new EnumType([
-                'name' => 'SelectedNumbers',
+            'y' => GraphQL::enum([
+                'name' => 'SelectedEnum',
                 'description' => 'selected range of numbers',
                 'values' => ['five' => 5, 'seven' => 7, 'nine' => 9]
             ]),
@@ -156,7 +155,7 @@ try {
         Tasks::class,
     ]);
     GraphQL::addMethod(new ReflectionMethod(Math::class, 'add'));
-        
+
     GraphQL::addMethod(new ReflectionMethod(Type::class, 'postEnumerator'));
 
 } catch (Throwable $t) {

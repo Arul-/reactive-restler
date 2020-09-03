@@ -1,7 +1,6 @@
 <?php namespace Luracast\Restler\Data;
 
 use Exception;
-use GraphQL\Type\Definition\EnumType;
 use GraphQL\Type\Definition\InputObjectType;
 use GraphQL\Type\Definition\ObjectType;
 use GraphQL\Type\Definition\Type as GraphQLType;
@@ -309,7 +308,7 @@ class Param extends Type
             if (count($this->choice) !== count($keys)) {
                 throw new HttpException(500, '`@choice` and `@select` items count mismatch');
             }
-            $type = new EnumType([
+            $type = GraphQL::enum([
                 'name' => ucfirst($this->name) . 'Enum',
                 'values' => array_combine($keys, $this->choice),
             ]);

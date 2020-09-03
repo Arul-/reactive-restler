@@ -4,6 +4,7 @@
 namespace Luracast\Restler\GraphQL;
 
 use Exception;
+use GraphQL\Type\Definition\EnumType;
 use GraphQL\Type\Definition\ObjectType;
 use GraphQL\Type\Schema;
 use Illuminate\Support\Str;
@@ -167,6 +168,22 @@ class GraphQL
     public static function dependencies()
     {
         return ['GraphQL\Type\Definition\Type' => 'webonyx/graphql-php'];
+    }
+
+    /**
+     * Creates enum and makes sure is name is unique to avoid conflicts
+     * @param array $config
+     * @return EnumType
+     */
+    public static function enum(array $config): EnumType
+    {
+        $name = $config['name'] ?? 'enum';
+        $number = 0;
+        while (isset(self::$definitions[$name])) {
+            $config['name'] = $name = $name . (++$number);
+        }
+        self::$definitions[$name] = new EnumType($config);
+        return self::$definitions[$name];
     }
 
     /**
