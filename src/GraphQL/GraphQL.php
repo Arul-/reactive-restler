@@ -10,6 +10,8 @@ use GraphQL\Type\Definition\EnumType;
 use GraphQL\Type\Definition\ObjectType;
 use GraphQL\Type\Schema;
 use Illuminate\Support\Str;
+use Luracast\Restler\Contracts\AccessControlInterface;
+use Luracast\Restler\Contracts\AuthenticationInterface;
 use Luracast\Restler\Contracts\DependentTrait;
 use Luracast\Restler\Data\Route;
 use Luracast\Restler\Defaults;
@@ -48,6 +50,10 @@ class GraphQL
     public static $queries = [];
     public static $showDescriptions = false;
     /**
+     * @var array
+     */
+    private static $authClasses;
+    /**
      * @var Restler
      */
     private $restler;
@@ -63,9 +69,37 @@ class GraphQL
     public function __construct(Restler $restler, StaticProperties $graphQL, ServerRequestInterface $request)
     {
         $this->restler = $restler;
+        $graphQL->context['restler'] = $restler;
         $graphQL->context['maker'] = [$restler, 'make'];
+        $this->request = $graphQL->context['request'] = $request;
         $this->graphQL = $graphQL;
-        $this->request = $request;
+    }
+
+    /**
+     * protected methods will need at least one authentication class to be set
+     * in order to allow that method to be executed
+     *
+     * @param string $className of the authentication class
+     * @throws Exception
+     */
+    public static function addAuthenticator(string $className): void
+    {
+        $implements = class_implements($className);
+        if (!isset($implements[AuthenticationInterface::class])) {
+            throw new Exception(
+                $className .
+                ' is an invalid authenticator class; it must implement ' .
+                'AuthenticationInterface.'
+            );
+        }
+        if (!in_array($className, Defaults::$implementations[AuthenticationInterface::class])) {
+            Defaults::$implementations[AuthenticationInterface::class][] = $className;
+        }
+        if (isset($implements[AccessControlInterface::class]) &&
+            !in_array($className, Defaults::$implementations[AccessControlInterface::class])) {
+            Defaults::$implementations[AccessControlInterface::class][] = $className;
+        }
+        static::$authClasses[] = $className;
     }
 
     /**
@@ -140,6 +174,7 @@ class GraphQL
         array $scope = []
     ) {
         $route = Route::fromMethod($method, $metadata, $scope);
+        $route->authClasses = static::$authClasses;
         if ($mutation = $route->mutation ?? false) {
             return static::addRoute($mutation, $route, true);
         }

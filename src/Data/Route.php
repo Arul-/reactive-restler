@@ -4,12 +4,15 @@
 namespace Luracast\Restler\Data;
 
 
+use Exception;
 use GraphQL\Type\Definition\ResolveInfo;
-use Luracast\Restler\Contracts\{RequestMediaTypeInterface,
+use Luracast\Restler\Contracts\{AuthenticationInterface,
+    RequestMediaTypeInterface,
     ResponseMediaTypeInterface,
     SelectivePathsInterface,
     ValidationInterface};
 use Luracast\Restler\Exceptions\HttpException;
+use Luracast\Restler\Exceptions\InvalidAuthCredentials;
 use Luracast\Restler\GraphQL\Error;
 use Luracast\Restler\Router;
 use Luracast\Restler\Utils\{ClassName, CommentParser, Convert, Type, Validator};
@@ -333,6 +336,35 @@ class Route extends ValueObject
             'args' => [],
             'resolve' => function ($root, $args, array $context, ResolveInfo $info) {
                 try {
+                    if ($this->access > self::ACCESS_HYBRID) {
+                        if (empty($this->authClasses)) {
+                            throw new Exception('access denied. no authentication class is provided');
+                        }
+                        $unauthorized = false;
+                        foreach ($this->authClasses as $i => $authClass) {
+                            try {
+                                /** @var AuthenticationInterface $auth */
+                                $auth = call_user_func($context['maker'], $authClass);
+                                if (!$auth->_isAllowed($context['request'], $context['restler']->responseHeaders)) {
+                                    throw new HttpException(401, null, ['from' => $authClass]);
+                                }
+                                $unauthorized = false;
+                                //make this auth class as the first one
+                                array_splice($this->authClasses, $i, 1);
+                                array_unshift($this->authClasses, $authClass);
+                                break;
+                            } catch (InvalidAuthCredentials $e) { //provided credentials does not authenticate
+                                throw $e;
+                            } catch (HttpException $e) {
+                                if (!$unauthorized) {
+                                    $unauthorized = $e;
+                                }
+                            }
+                        }
+                        if ($unauthorized) {
+                            throw $unauthorized;
+                        }
+                    }
                     $context['root'] = $root;
                     $context['info'] = $info;
                     /** @var Convert $convert */
