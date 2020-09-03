@@ -178,7 +178,7 @@ class GraphQL
     public static function enum(array $config): EnumType
     {
         $name = $config['name'] ?? 'enum';
-        $number = 0;
+        $number = 1;
         while (isset(self::$definitions[$name])) {
             $config['name'] = $name = $name . (++$number);
         }

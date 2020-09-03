@@ -3,10 +3,10 @@
 class Type
 {
     /**
-     * @param string $selected {@choice one,two,three}
-     * @return string
+     * @param int $selected {@select one,two,three}{@choice 1,2,3}
+     * @return int
      */
-    function postEnumerator(string $selected)
+    function postEnumerator(int $selected)
     {
         return $selected;
     }
