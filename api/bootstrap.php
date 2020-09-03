@@ -122,7 +122,7 @@ try {
     //
     //---------------------------- GRAPHQL API ----------------------------
     //
-
+    GraphQL::addAuthenticator(AccessControl::class);
     GraphQL::$mutations['sum'] = [
         'type' => GraphQLType::int(),
         'args' => [

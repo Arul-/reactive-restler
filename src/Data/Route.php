@@ -344,7 +344,7 @@ class Route extends ValueObject
                         foreach ($this->authClasses as $i => $authClass) {
                             try {
                                 /** @var AuthenticationInterface $auth */
-                                $auth = call_user_func($context['maker'], $authClass);
+                                $auth = call_user_func($context['maker'], $authClass, $this);
                                 if (!$auth->_isAllowed($context['request'], $context['restler']->responseHeaders)) {
                                     throw new HttpException(401, null, ['from' => $authClass]);
                                 }
