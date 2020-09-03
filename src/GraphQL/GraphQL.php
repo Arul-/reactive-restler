@@ -36,6 +36,12 @@ class GraphQL
     const UI_GRAPHIQL = 'graphiql';
     public const INVALID_TYPES = ['mixed', 'array'];
     public static $UI = self::UI_GRAPHQL_PLAYGROUND;
+
+    public static $serverConfig = [
+        'rootValue' => ['prefix' => 'You said: '],
+        'queryBatching' => true,
+    ];
+
     public static $context = [];
     public static $definitions = [];
     public static $mutations = [];
@@ -219,10 +225,10 @@ class GraphQL
                 $data['mutation'] = new ObjectType(['name' => 'Mutation', 'fields' => static::$mutations]);
             }
             $schema = new Schema($data);
-            $config = ServerConfig::create()
-                ->setSchema($schema)
-                ->setRootValue(['prefix' => 'You said: '])
-                ->setContext($this->graphQL->context);
+            $config = ServerConfig::create(
+                static::$serverConfig +
+                ['context' => $this->graphQL->context, 'schema' => $schema]
+            );
             $server = new StandardServer($config);
             return $server->executePsrRequest(
                 $this->request->withParsedBody(json_decode((string)$this->request->getBody(), true))
