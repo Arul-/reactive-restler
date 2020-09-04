@@ -40,7 +40,7 @@ class Explorer implements ProvidesMultiVersionApiInterface
         'syntaxHighlight' => [
             'theme' => 'tomorrow-night', //agate or arta or monokai or nord" or obsidian or tomorrow-night
         ],
-        'filter' => 'examples', //or a string to filter by
+        'filter' => true, //null or a string to filter by
         'validatorUrl' => null //disables validation change to "https://validator.swagger.io/validator" to enable
     ];
 
@@ -225,7 +225,7 @@ class Explorer implements ProvidesMultiVersionApiInterface
         $self = explode('/', $this->route->path);
         array_pop($self);
         $self = implode('/', $self);
-        $selfExclude = empty($self) ? ['', '{s0}', 'docs'] : [$self];
+        $selfExclude = empty($self) ? ['', '{s0}', 'docs', 'config'] : [$self];
         $map = Router::findAll(
             $this->request,
             [$this->restler, 'make'],
