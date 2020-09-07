@@ -4,6 +4,7 @@
 namespace Luracast\Restler\GraphQL;
 
 use Exception;
+use GraphQL\Error\DebugFlag;
 use GraphQL\Server\ServerConfig;
 use GraphQL\Server\StandardServer;
 use GraphQL\Type\Definition\EnumType;
@@ -42,6 +43,7 @@ class GraphQL
     public static $serverConfig = [
         'rootValue' => ['prefix' => 'You said: '],
         'queryBatching' => true,
+        'debugFlag' => DebugFlag::NONE,
     ];
 
     public static $context = [];
