@@ -48,6 +48,27 @@ class Type
         return isset(class_implements($class)[$interface]);
     }
 
+
+    public static function subclasses(string $parent): ?array
+    {
+        if (class_exists($parent)) {
+            return array_filter(get_declared_classes(), function ($class) use ($parent) {
+                is_subclass_of($class, $parent);
+            });
+        }
+        return null;
+    }
+
+    public static function implementations(string $interface): ?array
+    {
+        if (interface_exists($interface)) {
+            return array_filter(get_declared_classes(), function ($class) use ($interface) {
+                in_array($interface, class_implements($class));
+            });
+        }
+        return null;
+    }
+
     /**
      * @param string $class
      * @param string $superClass
