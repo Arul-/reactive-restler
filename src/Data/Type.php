@@ -240,7 +240,7 @@ abstract class Type implements ValueObjectInterface
         return $instance;
     }
 
-    public static function fromSampleData(array $data)
+    public static function fromSampleData(array $data, string $name)
     {
         if (empty($data)) {
             throw new Invalid('data can\'t be empty');
@@ -249,31 +249,39 @@ abstract class Type implements ValueObjectInterface
         if (empty($properties)) {
             //array of items
             /** @var Type $value */
-            $value = static::fromSampleData($data[0]);
+            $value = static::fromSampleData($data[0], $name);
             $value->multiple = true;
             return $value;
         }
         /** @var Type $obj */
         $obj = static::fromValue($data);
-        foreach ($properties as $name => $value) {
-            $obj->properties[$name] = static::fromValue($value);
+        foreach ($properties as $key => $value) {
+            $obj->properties[$key] = is_array($value) && !empty($value)
+                ? static::fromSampleData($value, $name . ucfirst($key))
+                : static::fromValue($value, $name . ucfirst($key));
         }
+        $obj->type = $name;
         return $obj;
     }
 
-    public static function fromValue($value): Type
+    public static function fromValue($value, string $name = 'object'): Type
     {
         $instance = new static();
         if (is_scalar($value)) {
             $instance->scalar = true;
             if (is_numeric($value)) {
                 $instance->type = is_float($value) ? 'float' : 'int';
+            } elseif (is_bool($value)) {
+                $instance->type = 'boolean';
+            } elseif (is_null($value)) {
+                $instance->nullable = true;
+                $instance->type = 'string';
             } else {
                 $instance->type = 'string';
             }
         } else {
             $instance->scalar = false;
-            $instance->type = 'object';
+            $instance->type = $name;
 
         }
         return $instance;
