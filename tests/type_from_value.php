@@ -1,6 +1,6 @@
 <?php
 
-use Luracast\Restler\Data\Param;
+use Luracast\Restler\Data\Returns;
 
 include __DIR__ . '/../vendor/autoload.php';
 
@@ -29,8 +29,8 @@ $data = json_decode('
     "total": 1
 }', true);
 
-$type = Param::fromSampleData($data);
+$type = Returns::fromSampleData($data, 'Pagination');
 echo (json_encode($type, JSON_PRETTY_PRINT)) . PHP_EOL;
 print_r($type);
-var_export($type);
+//var_export($type);
 
