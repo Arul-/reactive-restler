@@ -65,31 +65,6 @@ abstract class Type implements ValueObjectInterface
      */
     public $reference = null;
 
-    /**
-     * @inheritDoc
-     */
-    public static function __set_state(array $properties)
-    {
-        $instance = new static();
-        $instance->applyProperties($properties);
-        return $instance;
-    }
-
-    protected function applyProperties(array $properties, bool $filter = true)
-    {
-        if ($filter) {
-            $vars = get_object_vars($this);
-            $filtered = array_intersect_key($properties, $vars);
-        } else {
-            $filtered = $properties;
-        }
-        foreach ($filtered as $k => $v) {
-            if (!is_null($v)) {
-                $this->{$k} = $v;
-            }
-        }
-    }
-
     public static function fromProperty(?ReflectionProperty $property, ?array $doc = null, array $scope = [])
     {
         if ($doc) {
@@ -285,6 +260,38 @@ abstract class Type implements ValueObjectInterface
 
         }
         return $instance;
+    }
+
+    public static function make(string $type, bool $multiple = false, bool $nullable = false)
+    {
+        $instance = static::__set_state(compact('type', 'multiple', 'nullable'));
+        $instance->scalar = TypeUtil::isScalar($type);
+        return $instance;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public static function __set_state(array $properties)
+    {
+        $instance = new static();
+        $instance->applyProperties($properties);
+        return $instance;
+    }
+
+    protected function applyProperties(array $properties, bool $filter = true)
+    {
+        if ($filter) {
+            $vars = get_object_vars($this);
+            $filtered = array_intersect_key($properties, $vars);
+        } else {
+            $filtered = $properties;
+        }
+        foreach ($filtered as $k => $v) {
+            if (!is_null($v)) {
+                $this->{$k} = $v;
+            }
+        }
     }
 
     abstract public function toGraphQL();
