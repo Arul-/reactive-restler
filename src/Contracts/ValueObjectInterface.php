@@ -1,10 +1,12 @@
 <?php namespace Luracast\Restler\Contracts;
 
+use JsonSerializable;
+
 /**
  * Restler is using many ValueObjects across to make it easy for the developers
  * to use them with the help of code hinting etc.,
  */
-interface ValueObjectInterface extends \JsonSerializable
+interface ValueObjectInterface extends JsonSerializable
 {
 
     /**

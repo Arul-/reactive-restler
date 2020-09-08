@@ -9,9 +9,17 @@ use Luracast\Restler\Contracts\ValueObjectInterface;
 class ValueObject implements ValueObjectInterface
 {
 
-    public function __toString()
+    /**
+     * @param array $properties
+     * @return static
+     */
+    public static function __set_state(array $properties)
     {
-        return ' new ' . get_called_class() . '() ';
+        $class = get_called_class();
+        /** @var ValueObject $instance */
+        $instance = new $class ();
+        $instance->applyProperties($properties);
+        return $instance;
     }
 
     protected function applyProperties(array $properties, bool $filter = false)
@@ -26,10 +34,10 @@ class ValueObject implements ValueObjectInterface
                     } else {
                         $method = 'set' . ucfirst($property);
                         if (method_exists($this, $method)) {
-                            call_user_func(array(
+                            call_user_func([
                                 $this,
                                 $method
-                            ), $value);
+                            ], $value);
                         }
                     }
                 }
@@ -41,17 +49,14 @@ class ValueObject implements ValueObjectInterface
         }
     }
 
-    /**
-     * @param array $properties
-     * @return static
-     */
-    public static function __set_state(array $properties)
+    public function __toString()
     {
-        $class = get_called_class();
-        /** @var ValueObject $instance */
-        $instance = new $class ();
-        $instance->applyProperties($properties);
-        return $instance;
+        return ' new ' . get_called_class() . '() ';
+    }
+
+    public function __debugInfo()
+    {
+        return $this->jsonSerialize();
     }
 
     public function jsonSerialize(): array
@@ -65,5 +70,6 @@ class ValueObject implements ValueObjectInterface
         }
         return $r;
     }
+
 }
 
