@@ -4,10 +4,11 @@
 namespace Luracast\Restler\Data;
 
 
+use BadMethodCallException;
+use Error;
 use Exception;
 use Luracast\Restler\Contracts\GenericRequestInterface;
 use Luracast\Restler\Contracts\GenericResponseInterface;
-use Luracast\Restler\Contracts\ValueObjectInterface;
 use Luracast\Restler\Exceptions\Invalid;
 use Luracast\Restler\Router;
 use Luracast\Restler\Utils\ClassName;
@@ -18,8 +19,17 @@ use ReflectionProperty;
 use ReflectionType;
 use Reflector;
 
-abstract class Type implements ValueObjectInterface
+abstract class Type extends ValueObject
 {
+    public const SCALAR = [
+        'int' => 'integer',
+        'integer' => 'integer',
+        'bool' => 'boolean',
+        'boolean' => 'boolean',
+        'float' => 'float',
+        'string' => 'string'
+    ];
+
     /**
      * Data type of the variable being validated.
      * It will be mostly string
@@ -269,29 +279,34 @@ abstract class Type implements ValueObjectInterface
         return $instance;
     }
 
-    /**
-     * @inheritDoc
-     */
-    public static function __set_state(array $properties)
+    public static function __callStatic($name, $arguments)
     {
-        $instance = new static();
-        $instance->applyProperties($properties);
-        return $instance;
-    }
-
-    protected function applyProperties(array $properties, bool $filter = true)
-    {
-        if ($filter) {
-            $vars = get_object_vars($this);
-            $filtered = array_intersect_key($properties, $vars);
+        $parts = array_map('strtolower', preg_split('/(?=[A-Z])/', $name));
+        $type = array_pop($parts);
+        if ('array' == $type) {
+            array_unshift($parts, $type);
+            $type = array_pop($parts);
+        }
+        $data = [];
+        if ('object' === $type && !empty($arguments) && 2 == count($arguments)) {
+            list($name, $properties) = $arguments;
+            $data['type'] = $name;
+            $data['scalar'] = false;
+        } elseif ($type = self::SCALAR[$type] ?? false) {
+            $data['type'] = $type;
+            $data['scalar'] = true;
         } else {
-            $filtered = $properties;
+            throw new \Error(sprintf(
+                "Call to undefined method %s::%s()",
+                static::class,
+                $name
+            ));
         }
-        foreach ($filtered as $k => $v) {
-            if (!is_null($v)) {
-                $this->{$k} = $v;
-            }
-        }
+        $instance = new static();
+        $instance->applyProperties($data, true);
+        $instance->nullable = in_array('nullable', $parts);
+        $instance->multiple = in_array('multiple', $parts) || in_array('array', $parts);
+        return $instance;
     }
 
     abstract public function toGraphQL();
@@ -314,19 +329,6 @@ abstract class Type implements ValueObjectInterface
             $str = 'new ' . $str;
         }
         return $str;
-    }
-
-    public function __debugInfo()
-    {
-        return $this->jsonSerialize();
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function jsonSerialize()
-    {
-        return array_filter(get_object_vars($this));
     }
 
     public function __sleep()
