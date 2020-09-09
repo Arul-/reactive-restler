@@ -41,9 +41,9 @@ var_dump($sample->age);
 
 echo json_encode($sample, JSON_PRETTY_PRINT) . PHP_EOL;
 
-Param::UnSaidUndefined();
+//Param::UnSaidUndefined();
 
 echo Param::multipleNullableFloat() . PHP_EOL;
 echo Param::nullableFloatArray() . PHP_EOL;
-echo Param::nullableObject('Mermaid',['soap'=>'int']) . PHP_EOL;
+echo json_encode(Param::nullableObject('Mermaid', ['soap' => 'int']), JSON_PRETTY_PRINT) . PHP_EOL;
 

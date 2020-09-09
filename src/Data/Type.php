@@ -4,8 +4,6 @@
 namespace Luracast\Restler\Data;
 
 
-use BadMethodCallException;
-use Error;
 use Exception;
 use Luracast\Restler\Contracts\GenericRequestInterface;
 use Luracast\Restler\Contracts\GenericResponseInterface;
@@ -292,6 +290,14 @@ abstract class Type extends ValueObject
             list($name, $properties) = $arguments;
             $data['type'] = $name;
             $data['scalar'] = false;
+            $data['properties'] = [];
+            if (is_array($properties)) {
+                foreach ($properties as $key => $value) {
+                    $var = is_array($value) ? array_shift($value) : $value;
+                    $args = is_array($value) ? $value : [];
+                    $data['properties'][$key] = call_user_func([static::class, __FUNCTION__], $var, $args);
+                }
+            }
         } elseif ($type = self::SCALAR[$type] ?? false) {
             $data['type'] = $type;
             $data['scalar'] = true;
@@ -334,5 +340,10 @@ abstract class Type extends ValueObject
     public function __sleep()
     {
         return $this->jsonSerialize();
+    }
+
+    public function jsonSerialize(): array
+    {
+        return array_filter(parent::jsonSerialize());
     }
 }
