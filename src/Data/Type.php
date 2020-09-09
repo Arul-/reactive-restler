@@ -49,6 +49,10 @@ abstract class Type extends ValueObject
         'string' => 'string'
     ];
 
+    const NULLABLE = 0;
+    const NOT_NULLABLE = 1;
+    const DETECT_NULLABLE = 3;
+
     /**
      * Data type of the variable being validated.
      * It will be mostly string
@@ -244,27 +248,41 @@ abstract class Type extends ValueObject
         return $instance;
     }
 
-    public static function fromSampleData(array $data, string $name)
+    public static function fromSampleData($data, ?string $name = null, int $nullability = self::NOT_NULLABLE)
     {
-        if (empty($data)) {
+        if (is_null($data) || (is_array($data) && empty($data))) {
             throw new Invalid('data can\'t be empty');
-        }
-        $properties = Param::filterArray($data, Param::KEEP_NON_NUMERIC);
-        if (empty($properties)) {
-            //array of items
-            /** @var Type $value */
-            $value = static::fromSampleData($data[0], $name);
-            $value->multiple = true;
-            return $value;
         }
         /** @var Type $obj */
         $obj = static::fromValue($data);
-        foreach ($properties as $key => $value) {
-            $obj->properties[$key] = is_array($value) && !empty($value)
-                ? static::fromSampleData($value, $name . ucfirst($key))
-                : static::fromValue($value, $name . ucfirst($key));
+        if (is_array($data)) {
+            if (empty($name)) {
+                throw new Invalid('name can\'t be empty for object type');
+            }
+            $properties = Param::filterArray($data, Param::KEEP_NON_NUMERIC);
+            if (empty($properties)) {
+                //array of items
+                /** @var Type $value */
+                $value = static::fromSampleData($data[0], $name);
+                $value->multiple = true;
+                return $value;
+            }
+            foreach ($properties as $key => $value) {
+                $obj->properties[$key] = static::fromSampleData($value, $name . ucfirst($key));
+
+            }
+            $obj->type = $name;
         }
-        $obj->type = $name;
+        switch ($nullability) {
+            case self::NULLABLE:
+                $obj->nullable = true;
+                break;
+            case self::NOT_NULLABLE:
+                $obj->nullable = false;
+                break;
+            default:
+                $obj->nullable = !(bool)$data;
+        }
         return $obj;
     }
 
