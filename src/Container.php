@@ -4,7 +4,7 @@ use Exception;
 use Luracast\Restler\Contracts\ContainerInterface;
 use Luracast\Restler\Exceptions\ContainerException;
 use Luracast\Restler\Exceptions\HttpException;
-use Luracast\Restler\Exceptions\NotFoundException;
+use Luracast\Restler\Exceptions\NotFound;
 use Luracast\Restler\Utils\ClassName;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
@@ -79,7 +79,7 @@ class Container implements ContainerInterface
         } catch (\Throwable $t) {
             throw new ContainerException('Error while retrieving the entry `' . $id . '`');
         }
-        throw new NotFoundException(' No entry was found for `' . $id . '`` identifier');
+        throw new NotFound(' No entry was found for `' . $id . '`` identifier');
     }
 
     /**
