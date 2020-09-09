@@ -17,6 +17,27 @@ use ReflectionProperty;
 use ReflectionType;
 use Reflector;
 
+/**
+ * @method static string() creates a string
+ * @method static nullableString() creates a nullable string
+ * @method static stringArray() creates an array of strings
+ * @method static nullableStringArray() creates a nullable array of strings
+ *
+ * @method static int() creates an integer
+ * @method static nullableInt() creates a nullable integer
+ * @method static intArray() creates an array of integers
+ * @method static nullableIntArray() creates a nullable array of integers
+ *
+ * @method static float() creates a floating point number
+ * @method static nullableFloat() creates a nullable floating point number
+ * @method static floatArray() creates an array of floating point numbers
+ * @method static nullableFloatArray() creates a nullable array of floating point numbers
+ *
+ * @method static object(string $className, array $properties) creates an object with properties
+ * @method static nullableObject(string $className, array $properties) creates a nullable object with properties
+ * @method static objectArray(string $className, array $properties) creates an array of objects with given properties
+ * @method static nullableObjectArray(string $className, array $properties) creates a nullable array of objects with given properties
+ */
 abstract class Type extends ValueObject
 {
     public const SCALAR = [
