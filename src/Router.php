@@ -498,6 +498,9 @@ class Router
                     : $route->filterParams(true, Param::FROM_PATH);
                 if (empty($pathParams) || $allowAmbiguity) {
                     self::addRoute($route->withLink($url, $httpMethod), $version);
+                } elseif (end($pathParams)->variadic) {
+                    self::addRoute($route->withLink($url . '/*', $httpMethod), $version);
+                    return;
                 } else {
                     $lastPathParam = end($pathParams);
                 }
