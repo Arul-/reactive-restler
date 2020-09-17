@@ -405,7 +405,8 @@ class Route extends ValueObject
         $p = [];
         foreach ($this->parameters as $parameter) {
             if ($parameter->variadic) {
-                $p[$parameter->index] = array_slice($arguments, $parameter->index);
+                $p[$parameter->index] = $arguments[$parameter->name]
+                    ?? array_slice($arguments, $parameter->index);
             } else {
                 $p[$parameter->index] = $arguments[$parameter->name]
                     ?? $arguments[$parameter->index]
