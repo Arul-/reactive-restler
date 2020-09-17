@@ -439,6 +439,18 @@ class Route extends ValueObject
 
     public function handle(int $access, callable $maker)
     {
+        $arguments = [];
+        if ($this->parameters) {
+            foreach ($this->parameters as $param) {
+                $argument = $this->arguments[$param->index];
+                //expand variadic parameters
+                $param->variadic
+                    ? $arguments = array_merge($arguments, $argument)
+                    : $arguments [] = $argument;
+            }
+        } else {
+            $arguments = $this->arguments;
+        }
         $action = $this->action;
         switch ($access) {
             case self::ACCESS_PROTECTED_METHOD:
@@ -450,13 +462,13 @@ class Route extends ValueObject
                 $reflectionMethod->setAccessible(true);
                 return $reflectionMethod->invokeArgs(
                     $object,
-                    $this->arguments
+                    $arguments
                 );
             default:
                 if (is_array($action) && count($action) && is_string($action[0]) && class_exists($action[0])) {
                     $action[0] = $maker($action[0]);
                 }
-                return call_user_func_array($action, $this->arguments);
+                return call_user_func_array($action, $arguments);
         }
     }
 

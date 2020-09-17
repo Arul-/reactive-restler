@@ -69,6 +69,11 @@ class Param extends Type
     public $from;
 
     /**
+     * @var bool variadic parameter, so needs expansion of array
+     */
+    public $variadic = false;
+
+    /**
      * Should we attempt to fix the value?
      * When set to false validation class should throw
      * an exception or return false for the validate call.
@@ -204,7 +209,12 @@ class Param extends Type
 
     public static function fromParameter(ReflectionParameter $parameter, ?array $doc, array $scope): self
     {
-        return static::from($parameter, $doc['param'][$parameter->getPosition()] ?? [], $scope);
+        $param = static::from($parameter, $doc['param'][$parameter->getPosition()] ?? [], $scope);
+        if ($parameter->isVariadic()) {
+            $param->multiple = true;
+            $param->variadic = true;
+        }
+        return $param;
     }
 
     protected static function from(?Reflector $reflector, array $metadata = [], array $scope = [])
