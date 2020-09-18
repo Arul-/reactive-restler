@@ -23,16 +23,25 @@ class Math
      */
     function multiply($n1, $n2)
     {
-        return array(
+        return [
             'result' => ($n1 * $n2)
-        );
+        ];
     }
 
     /**
      * @url GET sum/*
      */
-    function sum()
+    function _sum()
     {
         return array_sum(func_get_args());
+    }
+
+    /**
+     * @param int ...$numbers {@from path}
+     * @return int
+     */
+    function sum2(int ...$numbers):int
+    {
+        return array_sum($numbers);
     }
 }

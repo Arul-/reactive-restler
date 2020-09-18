@@ -133,8 +133,17 @@ try {
                 'values' => ['five' => 5, 'seven' => 7, 'nine' => 9]
             ])),
         ],
-        'resolve' => function ($calc, $args) {
+        'resolve' => function ($root, $args) {
             return $args['x'] + $args['y'];
+        },
+    ];
+    GraphQL::$mutations['sumUp'] = [
+        'type' => GraphQLType::int(),
+        'args' => [
+            'numbers' => GraphQLType::listOf(GraphQLType::int())
+        ],
+        'resolve' => function ($root, $args) {
+            return array_sum($args['numbers']);
         },
     ];
     GraphQL::$queries['echo'] = [
@@ -155,6 +164,7 @@ try {
         Tasks::class,
     ]);
     GraphQL::addMethod(new ReflectionMethod(Math::class, 'add'));
+    GraphQL::addMethod(new ReflectionMethod(Math::class, 'sum2'));
 
     GraphQL::addMethod(new ReflectionMethod(Type::class, 'postEnumerator'));
 
