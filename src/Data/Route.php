@@ -397,7 +397,7 @@ class Route extends ValueObject
         if ($validate) {
             $this->validate($maker(Validator::class), $maker);
         }
-        return $this->handle(1, $maker);
+        return $this->handle($maker);
     }
 
     public function apply(array $arguments): array
@@ -442,7 +442,7 @@ class Route extends ValueObject
         }
     }
 
-    public function handle(int $access, callable $maker)
+    public function handle(callable $maker)
     {
         $arguments = [];
         if ($this->parameters) {
@@ -457,7 +457,7 @@ class Route extends ValueObject
             $arguments = $this->arguments;
         }
         $action = $this->action;
-        switch ($access) {
+        switch ($this->access) {
             case self::ACCESS_PROTECTED_METHOD:
                 $object = $maker($action[0]);
                 $reflectionMethod = new ReflectionMethod(
