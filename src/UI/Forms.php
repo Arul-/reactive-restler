@@ -45,7 +45,7 @@ class Forms implements FilterInterface, SelectivePathsInterface
      * @var bool should we fill up the form using given data?
      */
     public static $preFill = true;
-    protected $inputTypes = array(
+    protected $inputTypes = [
         'hidden',
         'password',
         'button',
@@ -71,7 +71,7 @@ class Forms implements FilterInterface, SelectivePathsInterface
         'time',
         'url',
         'week',
-    );
+    ];
     protected $fileUpload = false;
     private $key = [];
     /**
@@ -161,12 +161,12 @@ class Forms implements FilterInterface, SelectivePathsInterface
         $r = static::fields($route, $dataOnly);
         if ($method != 'GET' && $method != 'POST') {
             if ($dataOnly) {
-                $r[] = array(
+                $r[] = [
                     'tag' => 'input',
                     'name' => Defaults::$httpMethodOverrideProperty,
                     'type' => 'hidden',
                     'value' => 'method',
-                );
+                ];
             } else {
                 $r[] = T::input()
                     ->name(Defaults::$httpMethodOverrideProperty)
@@ -179,12 +179,12 @@ class Forms implements FilterInterface, SelectivePathsInterface
         if ($this->session->getId() != '') {
             $form_key = $this->key($method, $action);
             if ($dataOnly) {
-                $r[] = array(
+                $r[] = [
                     'tag' => 'input',
                     'name' => static::FORM_KEY,
                     'type' => 'hidden',
                     'value' => 'hidden',
-                );
+                ];
             } else {
                 $key = T::input()
                     ->name(static::FORM_KEY)
@@ -309,7 +309,7 @@ class Forms implements FilterInterface, SelectivePathsInterface
         $type = $p->field ?: static::guessFieldType($p);
         $tag = in_array($type, $this->inputTypes)
             ? 'input' : $type;
-        $options = array();
+        $options = [];
         $name = $p->name;
         $multiple = null;
         if ($p->type == 'array' && $p->contentType != 'associative') {
@@ -318,7 +318,7 @@ class Forms implements FilterInterface, SelectivePathsInterface
         }
         if ($p->choice) {
             foreach ($p->choice as $i => $choice) {
-                $option = array('name' => $name, 'value' => $choice);
+                $option = ['name' => $name, 'value' => $choice];
                 $option['text'] = isset($p->rules['select'][$i])
                     ? $p->rules['select'][$i]
                     : $choice;
@@ -329,30 +329,30 @@ class Forms implements FilterInterface, SelectivePathsInterface
             }
         } elseif ($p->type == 'boolean' || $p->type == 'bool') {
             if (Text::beginsWith($type, 'radio') || Text::beginsWith($type, 'select')) {
-                $options[] = array(
+                $options[] = [
                     'name' => $p->name,
                     'text' => ' Yes ',
                     'value' => 'true'
-                );
-                $options[] = array(
+                ];
+                $options[] = [
                     'name' => $p->name,
                     'text' => ' No ',
                     'value' => 'false'
-                );
-                if ($value || $p->default) {
+                ];
+                if ($value || $p->default[1]) {
                     $options[0]['selected'] = true;
                 }
             } else { //checkbox
-                $r = array(
+                $r = [
                     'tag' => $tag,
                     'name' => $name,
                     'type' => $type,
                     'label' => $p->label,
                     'value' => 'true',
-                    'default' => $p->default,
-                );
+                    'default' => $p->default[1],
+                ];
                 $r['text'] = 'Yes';
-                if ($p->default) {
+                if ($p->default[1]) {
                     $r['selected'] = true;
                 }
                 if (isset($p->rules)) {
@@ -361,16 +361,16 @@ class Forms implements FilterInterface, SelectivePathsInterface
             }
         }
         if (empty($r)) {
-            $r = array(
+            $r = [
                 'tag' => $tag,
                 'name' => $name,
                 'type' => $type,
                 'label' => $p->label,
                 'value' => $value,
-                'default' => $p->default,
+                'default' => $p->default[1],
                 'options' => & $options,
                 'multiple' => $multiple,
-            );
+            ];
             if (isset($p->rules)) {
                 $r += $p->rules;
             }

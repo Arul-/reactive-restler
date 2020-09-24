@@ -33,6 +33,10 @@ class Param extends Type
     const FROM_BODY = 'body';
     const FROM_HEADER = 'header';
 
+    const ACCESS_PUBLIC = 0;
+    const ACCESS_PRIVATE = 1;
+    const ACCESS_PROTECTED = 2;
+
     /**
      * Name of the variable being validated
      *
@@ -53,9 +57,9 @@ class Param extends Type
      */
     public $field;
     /**
-     * @var mixed default value for the parameter
+     * @var array with hasDefault boolean as the first value and default value for the parameter as second
      */
-    public $default;
+    public $default = [false, null];
 
     /**
      * @var bool is it required or not
@@ -170,6 +174,8 @@ class Param extends Type
      */
     public $method;
 
+    public $access = self::ACCESS_PUBLIC;
+
     /**
      * Instance of the API class currently being called. It will be null most of
      * the time. Only when method is defined it will contain an instance.
@@ -219,17 +225,18 @@ class Param extends Type
 
     protected static function from(?Reflector $reflector, array $metadata = [], array $scope = [])
     {
+        $hasDefault = false;
         $instance = new static();
         $types = $metadata['type'] ?? [];
         $properties = $metadata[CommentParser::$embeddedDataName] ?? [];
         $itemTypes = $properties['type'] ?? [];
         unset($properties['type']);
-        $instance->rules = $properties;
         $instance->description = $metadata['description'] ?? '';
         if ($reflector && method_exists($reflector,
                 'isDefaultValueAvailable') && $reflector->isDefaultValueAvailable()) {
             $default = $reflector->getDefaultValue();
-            $instance->default = $default;
+            $instance->default = [true, $default];
+            $hasDefault = true;
             $types[] = TypeUtil::fromValue($default);
         }
         if ($reflector && Defaults::$fullRequestDataName === $reflector->name) {
@@ -287,6 +294,23 @@ class Param extends Type
                 ?? Router::$formatsByName[$instance->name]
                 ?? null;
         }
+        if ($access = $properties['access'] ?? false) {
+            unset($properties['access']);
+            if (!$hasDefault) {
+                if (array_key_exists('default', $properties)) {
+                    $instance->default = [true, $properties['default']];
+                } else {
+                    throw new Exception('Invalid parameter. private or protected parameter requires ' .
+                        'default value either in the function or with {@default value} comment');
+                }
+            }
+            if ('protected' == $access) {
+                $instance->access = self::ACCESS_PROTECTED;
+            } elseif ('private' == $access) {
+                $instance->access = self::ACCESS_PRIVATE;
+            }
+        }
+        $instance->rules = $properties;
         return $instance;
     }
 
@@ -326,8 +350,8 @@ class Param extends Type
             $type = $this->type !== 'bool' && in_array($this->name, Router::$prefixingParameterNames)
                 ? GraphQLType::id()
                 : call_user_func([GraphQLType::class, $this->type]);
-            if (!$this->required && !is_null($this->default)) {
-                $data['defaultValue'] = $this->default;
+            if (!$this->required && $this->default[0]) {
+                $data['defaultValue'] = $this->default[1];
             }
         } else {
             $class = ClassName::short($this->type) . 'Input';

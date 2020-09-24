@@ -14,6 +14,7 @@ use Luracast\Restler\Contracts\{AuthenticationInterface,
 use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\Exceptions\InvalidAuthCredentials;
 use Luracast\Restler\GraphQL\Error;
+use Luracast\Restler\Restler;
 use Luracast\Restler\Router;
 use Luracast\Restler\Utils\{ClassName, CommentParser, Convert, Type, Validator};
 use ReflectionFunctionAbstract;
@@ -336,7 +337,10 @@ class Route extends ValueObject
             'args' => [],
             'resolve' => function ($root, $args, array $context, ResolveInfo $info) {
                 try {
-                    if ($this->access > self::ACCESS_HYBRID) {
+                    /** @var Restler $restler */
+                    $restler = $context['restler'];
+                    $access = max($this->access, $restler->defaults->apiAccessLevel);
+                    if ($access > self::ACCESS_HYBRID) {
                         if (empty($this->authClasses)) {
                             throw new Exception('access denied. no authentication class is provided');
                         }
@@ -345,7 +349,7 @@ class Route extends ValueObject
                             try {
                                 /** @var AuthenticationInterface $auth */
                                 $auth = call_user_func($context['maker'], $authClass, $this);
-                                if (!$auth->_isAllowed($context['request'], $context['restler']->responseHeaders)) {
+                                if (!$auth->_isAllowed($context['request'], $restler->responseHeaders)) {
                                     throw new HttpException(401, null, ['from' => $authClass]);
                                 }
                                 $unauthorized = false;
@@ -404,13 +408,15 @@ class Route extends ValueObject
     {
         $p = [];
         foreach ($this->parameters as $parameter) {
-            if ($parameter->variadic) {
+            if ($parameter->access) {
+                $p[$parameter->index] = $parameter->default[1];
+            } elseif ($parameter->variadic) {
                 $p[$parameter->index] = $arguments[$parameter->name]
                     ?? array_slice($arguments, $parameter->index);
             } else {
                 $p[$parameter->index] = $arguments[$parameter->name]
                     ?? $arguments[$parameter->index]
-                    ?? $parameter->default
+                    ?? $parameter->default[1]
                     ?? null;
             }
         }

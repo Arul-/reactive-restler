@@ -423,8 +423,8 @@ class Explorer implements ProvidesMultiVersionApiInterface
         if (!$param instanceof Param) {
             return;
         }
-        if ($param->default) {
-            $s->default = $param->default;
+        if ($param->default[0]) {
+            $s->default = $param->default[1];
         }
         if ($param->choice) {
             $s->enum = $param->choice;
