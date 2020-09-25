@@ -34,8 +34,14 @@ class Param extends Type
     const FROM_HEADER = 'header';
 
     const ACCESS_PUBLIC = 0;
-    const ACCESS_PRIVATE = 1;
-    const ACCESS_PROTECTED = 2;
+    const ACCESS_PROTECTED = 1;
+    const ACCESS_PRIVATE = 2;
+
+    const ACCESS = [
+        'public' => self::ACCESS_PUBLIC,
+        'protected' => self::ACCESS_PROTECTED,
+        'private' => self::ACCESS_PRIVATE,
+    ];
 
     /**
      * Name of the variable being validated
@@ -294,21 +300,19 @@ class Param extends Type
                 ?? Router::$formatsByName[$instance->name]
                 ?? null;
         }
-        if ($access = $properties['access'] ?? false) {
+        if ($access = self::ACCESS[$properties['access'] ?? ''] ?? false) {
             unset($properties['access']);
             if (!$hasDefault) {
                 if (array_key_exists('default', $properties)) {
                     $instance->default = [true, $properties['default']];
+                } elseif ($instance->nullable) {
+                    $instance->default = [true, null];
                 } else {
                     throw new Exception('Invalid parameter. private or protected parameter requires ' .
                         'default value either in the function or with {@default value} comment');
                 }
             }
-            if ('protected' == $access) {
-                $instance->access = self::ACCESS_PROTECTED;
-            } elseif ('private' == $access) {
-                $instance->access = self::ACCESS_PRIVATE;
-            }
+            $instance->access = $access;
         }
         $instance->rules = $properties;
         return $instance;
