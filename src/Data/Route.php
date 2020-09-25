@@ -28,6 +28,12 @@ class Route extends ValueObject
     const ACCESS_PROTECTED_BY_COMMENT = 2;
     const ACCESS_PROTECTED_METHOD = 3;
 
+    const ACCESS = [
+        'public' => self::ACCESS_PUBLIC,
+        'hybrid' => self::ACCESS_HYBRID,
+        'protected' => self::ACCESS_PROTECTED_BY_COMMENT
+    ];
+
 
     const PROPERTY_TAGS = [
         'query',
@@ -507,12 +513,8 @@ class Route extends ValueObject
     ): void {
         if ($function->isProtected()) {
             $this->access = self::ACCESS_PROTECTED_METHOD;
-        } elseif (is_string($access)) {
-            if ('protected' == $access) {
-                $this->access = self::ACCESS_PROTECTED_BY_COMMENT;
-            } elseif ('hybrid' == $access) {
-                $this->access = self::ACCESS_HYBRID;
-            }
+        } elseif ($access = self::ACCESS[$access ?? ''] ?? null) {
+            $this->access = $access;
         } elseif (isset($metadata['protected'])) {
             $this->access = self::ACCESS_PROTECTED_BY_COMMENT;
         }
