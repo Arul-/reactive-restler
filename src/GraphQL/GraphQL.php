@@ -55,6 +55,17 @@ class GraphQL
      * @var array
      */
     private static $authClasses;
+
+    /**
+     * Access Control - uses Defaults::$apiAccessLevel when set to null
+     *
+     * @var int|null set the default api access mode
+     *      value of 0 = public api
+     *      value of 1 = hybrid api using `@access hybrid` comment
+     *      value of 2 = protected api using `@access protected` comment
+     *      value of 3 = protected api using `protected function` method
+     */
+    public static $apiAccessLevel = null;
     /**
      * @var Restler
      */

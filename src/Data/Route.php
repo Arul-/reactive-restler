@@ -4,19 +4,22 @@
 namespace Luracast\Restler\Data;
 
 
-use Exception;
 use GraphQL\Type\Definition\ResolveInfo;
 use Luracast\Restler\Contracts\{AuthenticationInterface,
     RequestMediaTypeInterface,
     ResponseMediaTypeInterface,
     SelectivePathsInterface,
     ValidationInterface};
+use Luracast\Restler\Defaults;
 use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\Exceptions\InvalidAuthCredentials;
 use Luracast\Restler\GraphQL\Error;
+use Luracast\Restler\GraphQL\GraphQL;
+use Luracast\Restler\ResponseHeaders;
 use Luracast\Restler\Restler;
 use Luracast\Restler\Router;
 use Luracast\Restler\Utils\{ClassName, CommentParser, Convert, Type, Validator};
+use Psr\Http\Message\ServerRequestInterface;
 use ReflectionFunctionAbstract;
 use ReflectionMethod;
 use Throwable;
@@ -345,41 +348,17 @@ class Route extends ValueObject
                 try {
                     /** @var Restler $restler */
                     $restler = $context['restler'];
-                    $access = max($this->access, $restler->defaults->apiAccessLevel);
-                    if ($access > self::ACCESS_HYBRID) {
-                        if (empty($this->authClasses)) {
-                            throw new Exception('access denied. no authentication class is provided');
-                        }
-                        $unauthorized = false;
-                        foreach ($this->authClasses as $i => $authClass) {
-                            try {
-                                /** @var AuthenticationInterface $auth */
-                                $auth = call_user_func($context['maker'], $authClass, $this);
-                                if (!$auth->_isAllowed($context['request'], $restler->responseHeaders)) {
-                                    throw new HttpException(401, null, ['from' => $authClass]);
-                                }
-                                $unauthorized = false;
-                                //make this auth class as the first one
-                                array_splice($this->authClasses, $i, 1);
-                                array_unshift($this->authClasses, $authClass);
-                                break;
-                            } catch (InvalidAuthCredentials $e) { //provided credentials does not authenticate
-                                throw $e;
-                            } catch (HttpException $e) {
-                                if (!$unauthorized) {
-                                    $unauthorized = $e;
-                                }
-                            }
-                        }
-                        if ($unauthorized) {
-                            throw $unauthorized;
-                        }
-                    }
+                    $authenticated = $this->authenticate(
+                        $context['request'],
+                        $restler->responseHeaders,
+                        $context['maker'],
+                        max($this->access, GraphQL::$apiAccessLevel ?? Defaults::$apiAccessLevel)
+                    );
                     $context['root'] = $root;
                     $context['info'] = $info;
                     /** @var Convert $convert */
                     $convert = $context['maker'](Convert::class);
-                    return $convert->toArray($this->call($args, false, true, $context['maker']));
+                    return $convert->toArray($this->call($args, $authenticated, true, $context['maker']));
                 } catch (Throwable $throwable) {
                     $source = strtolower(pathinfo($throwable->getFile(), PATHINFO_FILENAME));
                     throw new Error($source, $throwable);
@@ -394,6 +373,51 @@ class Route extends ValueObject
             $config['args'][$name] = $param->toGraphQL();
         }
         return $config;
+    }
+
+    public function authenticate(
+        ServerRequestInterface $request,
+        ResponseHeaders $responseHeaders,
+        callable $maker,
+        ?int $accessLevel = null
+    ): bool {
+        if (is_null($accessLevel)) {
+            $accessLevel = $this->access;
+        }
+        if (!$accessLevel) {
+            return false;
+        }
+        if ($accessLevel > self::ACCESS_HYBRID && empty($this->authClasses)) {
+            throw new HttpException(
+                403,
+                'access denied. no applicable authentication class.'
+            );
+        }
+        $unauthorized = false;
+        foreach ($this->authClasses as $i => $authClass) {
+            try {
+                /** @var AuthenticationInterface $auth */
+                $auth = call_user_func($maker, $authClass, $this);
+                if (!$auth->_isAllowed($request, $responseHeaders)) {
+                    throw new HttpException(401, null, ['from' => $authClass]);
+                }
+                $unauthorized = false;
+                //make this auth class as the first one
+                array_splice($this->authClasses, $i, 1);
+                array_unshift($this->authClasses, $authClass);
+                break;
+            } catch (InvalidAuthCredentials $e) { //provided credentials does not authenticate
+                throw $e;
+            } catch (HttpException $e) {
+                if (!$unauthorized) {
+                    $unauthorized = $e;
+                }
+            }
+        }
+        if ($accessLevel > self::ACCESS_HYBRID && $unauthorized) {
+            throw $unauthorized;
+        }
+        return $unauthorized ? false : true;
     }
 
     public function call(array $arguments, bool $authenticated = false, bool $validate = true, callable $maker = null)
