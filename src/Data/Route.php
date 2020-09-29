@@ -379,7 +379,7 @@ class Route extends ValueObject
                     $context['info'] = $info;
                     /** @var Convert $convert */
                     $convert = $context['maker'](Convert::class);
-                    return $convert->toArray($this->call($args, true, $context['maker']));
+                    return $convert->toArray($this->call($args, false, true, $context['maker']));
                 } catch (Throwable $throwable) {
                     $source = strtolower(pathinfo($throwable->getFile(), PATHINFO_FILENAME));
                     throw new Error($source, $throwable);
@@ -396,25 +396,28 @@ class Route extends ValueObject
         return $config;
     }
 
-    public function call(array $arguments, bool $validate = true, callable $maker = null)
+    public function call(array $arguments, bool $authenticated = false, bool $validate = true, callable $maker = null)
     {
         if (!$maker) {
             $maker = function ($class) {
                 return new $class;
             };
         }
-        $this->apply($arguments);
+        $this->apply($arguments, $authenticated);
         if ($validate) {
             $this->validate($maker(Validator::class), $maker);
         }
         return $this->handle($maker);
     }
 
-    public function apply(array $arguments): array
+    public function apply(array $arguments, bool $authenticated = false): array
     {
         $p = [];
         foreach ($this->parameters as $parameter) {
-            if ($parameter->access) {
+            if (
+                Param::ACCESS_PRIVATE === $parameter->access ||
+                (!$authenticated && Param::ACCESS_PROTECTED === $parameter->access)
+            ) {
                 $p[$parameter->index] = $parameter->default[1];
             } elseif ($parameter->variadic) {
                 $p[$parameter->index] = $arguments[$parameter->name]

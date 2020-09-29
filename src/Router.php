@@ -834,7 +834,7 @@ class Router
                     $path = substr($path, strlen($key) + 1);
                     /** @var Route $route */
                     $route = $value[$httpMethod];
-                    $route->apply(explode('/', $path));
+                    $route->data = explode('/', $path);
                     return $route;
                 }
             }
@@ -889,7 +889,7 @@ class Router
         }
         if ($status == 404) {
             if ($route = $later[$httpMethod] ?? false) {
-                $route->apply(explode('/', $path));
+                $route->apply(explode('/', $path), false);
                 return $route;
             }
             //check if other methods are allowed
@@ -942,7 +942,7 @@ class Router
                 }
             }
         }
-        $route->apply($data);
+        $route->data = $data;
         return $route;
     }
 
