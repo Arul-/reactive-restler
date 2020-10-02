@@ -9,7 +9,7 @@ class HttpException extends Exception
      *
      * @var array
      */
-    public static $codes = array(
+    public static $codes = [
         100 => 'Continue',
         101 => 'Switching Protocols',
         200 => 'OK',
@@ -52,10 +52,10 @@ class HttpException extends Exception
         503 => 'Service Unavailable',
         504 => 'Gateway Timeout',
         505 => 'HTTP Version Not Supported'
-    );
+    ];
+    public $emptyMessageBody = false;
     private $details = [];
     private $headers = [];
-    public $emptyMessageBody = false;
 
     /**
      * HttpException constructor.
@@ -65,12 +65,11 @@ class HttpException extends Exception
      * @param null $previous
      */
     public function __construct(
-        int $httpStatusCode,
+        int $httpStatusCode = 500,
         ?string $errorMessage = null,
-        array $details = array(),
+        array $details = [],
         $previous = null
-    )
-    {
+    ) {
         $errorMessage = $errorMessage ?? static::$codes[$httpStatusCode] ?? null;
         $this->details = $details;
         parent::__construct($errorMessage, $httpStatusCode, $previous);
