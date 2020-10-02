@@ -57,7 +57,7 @@ class Html extends MediaType implements ResponseMediaTypeInterface
      * @var array global key value pair to be supplied to the templates. All
      * keys added here will be available as a variable inside the template
      */
-    public static $data = array();
+    public static $data = [];
     /**
      * @var string set it to the location of your the view files. Defaults to
      * views folder which is same level as vendor directory.
@@ -66,7 +66,7 @@ class Html extends MediaType implements ResponseMediaTypeInterface
     /**
      * @var array template and its custom extension key value pair
      */
-    public static $customTemplateExtensions = array('blade' => 'blade.php');
+    public static $customTemplateExtensions = ['blade' => 'blade.php'];
     /**
      * @var bool used internally for error handling
      */
@@ -121,35 +121,6 @@ class Html extends MediaType implements ResponseMediaTypeInterface
         $this->container = $container;
         $this->html = $html;
         $this->defaults = $defaults;
-    }
-
-    public function guessViewName($path)
-    {
-        if (empty($path)) {
-            $path = 'index';
-        } elseif (strpos($path, '/')) {
-            $path .= '/index';
-        }
-        $file = $this->html['viewPath'] . '/' . $path . '.' . $this->getViewExtension();
-        $this->html->data['guessedView'] = $file;
-        return $this->html['useSmartViews'] && is_readable($file)
-            ? $path
-            : $this->html->errorView;
-    }
-
-    public function getViewExtension()
-    {
-        return $this->html['customTemplateExtensions'][$this->html['template']] ?? $this->html['template'];
-    }
-
-    public function getViewFile($fullPath = false, $includeExtension = true): string
-    {
-        $v = $fullPath ? $this->html->viewPath . '/' : '';
-        $v .= $this->html->view;
-        if ($includeExtension) {
-            $v .= '.' . $this->getViewExtension();
-        }
-        return $v;
     }
 
     public function encode($data, ResponseHeaders $responseHeaders, bool $humanReadable = false)
@@ -239,6 +210,25 @@ class Html extends MediaType implements ResponseMediaTypeInterface
             $this->reset();
             throw $throwable;
         }
+    }
+
+    public function guessViewName($path)
+    {
+        if (empty($path)) {
+            $path = 'index';
+        } elseif (strpos($path, '/')) {
+            $path .= '/index';
+        }
+        $file = $this->html['viewPath'] . '/' . $path . '.' . $this->getViewExtension();
+        $this->html->data['guessedView'] = $file;
+        return $this->html['useSmartViews'] && is_readable($file)
+            ? $path
+            : $this->html->errorView;
+    }
+
+    public function getViewExtension()
+    {
+        return $this->html['customTemplateExtensions'][$this->html['template']] ?? $this->html['template'];
     }
 
     private function reset()
@@ -339,6 +329,16 @@ class Html extends MediaType implements ResponseMediaTypeInterface
         return is_string($value) ? $value : '';
     }
 
+    public function getViewFile($fullPath = false, $includeExtension = true): string
+    {
+        $v = $fullPath ? $this->html->viewPath . '/' : '';
+        $v .= $this->html->view;
+        if ($includeExtension) {
+            $v .= '.' . $this->getViewExtension();
+        }
+        return $v;
+    }
+
     /**
      * @param ArrayObject $data
      * @param bool $debug
@@ -349,11 +349,11 @@ class Html extends MediaType implements ResponseMediaTypeInterface
     {
         $loader = new FilesystemLoader($this->html->viewPath);
         $twig = new Environment(
-            $loader, array(
-                       'cache' => static::$cacheDirectory ?? false,
-                       'debug' => $debug,
-                       'use_strict_variables' => $debug,
-                   )
+            $loader, [
+                'cache' => static::$cacheDirectory ?? false,
+                'debug' => $debug,
+                'use_strict_variables' => $debug,
+            ]
         );
         if ($debug) {
             $twig->addExtension(new DebugExtension());
@@ -363,7 +363,7 @@ class Html extends MediaType implements ResponseMediaTypeInterface
             new TwigFunction(
                 'form',
                 'Luracast\Restler\UI\Forms::get',
-                array('is_safe' => array('html'))
+                ['is_safe' => ['html']]
             )
         );
         $twig->addFunction(
@@ -408,12 +408,12 @@ class Html extends MediaType implements ResponseMediaTypeInterface
         if (!isset($data['nav'])) {
             //$data['nav'] = array_values(Nav::get()); //TODO get nav to work
         }
-        $options = array(
+        $options = [
             'loader' => new \Mustache_Loader_FilesystemLoader(
                 $this->html->viewPath,
-                array('extension' => $this->getViewExtension())
+                ['extension' => $this->getViewExtension()]
             ),
-            'helpers' => array(
+            'helpers' => [
                 'form' => function ($text, \Mustache_LambdaHelper $m) {
                     $params = explode(',', $m->render($text));
                     return call_user_func_array(
@@ -421,8 +421,8 @@ class Html extends MediaType implements ResponseMediaTypeInterface
                         $params
                     );
                 },
-            )
-        );
+            ]
+        ];
         if (!$debug) {
             $options['cache'] = $this->html->cacheDirectory;
         }
@@ -442,7 +442,7 @@ class Html extends MediaType implements ResponseMediaTypeInterface
                 return $engine;
             }
         );
-        $phpEngine = new PhpEngine();
+        $phpEngine = new PhpEngine($filesystem);
         $resolver->register(
             'php',
             function () use ($phpEngine) {
