@@ -177,6 +177,8 @@ abstract class Type extends ValueObject
                 $type = call_user_func_array([$class->name, $method], $generics);
                 $this->properties = $type->properties;
                 $this->type = $type->type;
+                $this->multiple = $type->multiple;
+                $this->nullable = $type->nullable;
             } else {
                 $this->properties = static::propertiesFromClass($class);
             }
