@@ -492,36 +492,17 @@ class CommentParser
 
     private function formatThrows(array $value): array
     {
-        $code = 500;
-        $exception = 'Exception';
-        if (count($value) > 1) {
-            $v1 = $value[0];
-            $v2 = $value[1];
-            if (is_numeric($v1)) {
-                $code = $v1;
-                $exception = $v2;
-                array_shift($value);
-                array_shift($value);
-            } elseif (is_numeric($v2)) {
-                $code = $v2;
-                $exception = $v1;
-                array_shift($value);
-                array_shift($value);
-            } else {
-                $exception = $v1;
-                array_shift($value);
-            }
-        } elseif (count($value) && is_numeric($value[0])) {
-            $code = $value[0];
-            array_shift($value);
-        }
+        $exception = count($value) && !is_numeric($value)
+            ? array_shift($value)
+            : 'Exception';
+        $code = count($value) && is_numeric($value)
+            ? (HttpException::$codes[array_shift($value)] ?? 500)
+            : 500;
         $message = implode(' ', $value);
-        if (!isset(HttpException::$codes[$code])) {
-            $code = 500;
-        } elseif (empty($message)) {
+        if (empty($message)) {
             $message = HttpException::$codes[$code];
         }
-        return compact('code', 'message', 'exception');
+        return compact('exception', 'code', 'message');
     }
 
     private function formatAuthor(array $value): array
