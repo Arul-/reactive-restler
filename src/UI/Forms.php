@@ -160,6 +160,13 @@ class Forms implements FilterInterface, SelectivePathsInterface
         }
         $r = static::fields($route, $dataOnly);
         if ($method != 'GET' && $method != 'POST') {
+            if (empty(Defaults::$httpMethodOverrideProperty))
+                throw new HttpException(
+                    500,
+                    'Forms require `Defaults::\$httpMethodOverrideProperty`' .
+                    "for supporting HTTP $method"
+                );
+
             if ($dataOnly) {
                 $r[] = [
                     'tag' => 'input',

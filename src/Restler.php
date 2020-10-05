@@ -189,6 +189,19 @@ class Restler extends Core
                         //ignore
                     }
                 }
+                if ($request->hasHeader('X-HTTP-Method-Override')) {
+                    $this->_requestMethod = strtoupper($request->getHeaderLine('X-HTTP-Method-Override'));
+                } elseif ($prop = $this->defaults['httpMethodOverrideProperty'] ?? null) {
+                    $data = $this->body + $this->query;
+                    if (isset($data[$prop])) {
+                        $m = strtoupper($data[$prop]);
+                        if ($m == 'PUT' || $m == 'DELETE' ||
+                            $m == 'POST' || $m == 'PATCH'
+                        ) {
+                            $this->_requestMethod = $m;
+                        }
+                    }
+                }
                 $this->route();
             } catch (Throwable $t) {
                 $this->negotiate();
