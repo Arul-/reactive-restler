@@ -56,6 +56,7 @@ Feature: Testing Documentation Example
     Then the response status code should be 404
     And the response should be JSON
 
+  @explorer
   Scenario: Checking Redirect of Explorer
     When I request "explorer"
     Then the response redirects to "explorer/"

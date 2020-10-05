@@ -11,6 +11,8 @@ default:
 fpm:
   suites:
     default:
+      filters:
+        tags: ~@explorer
       contexts:
         - RestContext:
             - http://localhost
