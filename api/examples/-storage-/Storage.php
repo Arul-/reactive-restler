@@ -111,7 +111,7 @@ class Storage
      *
      * Removes the cache files to begin testing on a clean slate
      */
-    public function delete()
+    public function deleteAll()
     {
         $this->deleteCache();
         $this->deletePackage();

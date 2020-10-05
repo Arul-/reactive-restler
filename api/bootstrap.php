@@ -83,7 +83,7 @@ try {
     Router::mapApiClasses(
         [
             //utility api for running behat tests
-            '-storage-' => Storage::class,
+            'examples/-storage-' => Storage::class,
             //examples
             'examples/_001_helloworld/say' => Say::class,
             'examples/_002_minimal/math' => Math::class,

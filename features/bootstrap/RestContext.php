@@ -57,7 +57,7 @@ class RestContext implements Context
     /**
      * @BeforeSuite
      *
-     * @param BeforeSuiteScope $scope
+     * @param NotBeforeSuiteScope $scope
      */
     public static function prepare(BeforeSuiteScope $scope)
     {
@@ -67,13 +67,13 @@ class RestContext implements Context
         // prepare system for test suite
         // before it runs
         $client = new Client(['base_uri' => $baseUrl]);
-        $result = $client->delete('-storage-');
+        $result = $client->delete('examples/-storage-/all');
     }
 
     /**
      * @AfterSuite
      *
-     * @param AfterSuiteScope $scope
+     * @param NotAfterSuiteScope $scope
      */
     public static function package(AfterSuiteScope $scope)
     {
@@ -85,7 +85,7 @@ class RestContext implements Context
         $client = new Client(['base_uri' => $baseUrl]);
         //load explorer dependencies
         $client->get('explorer/docs.json');
-        $result = $client->get('-storage-/pack');
+        $result = $client->get('examples/-storage-/pack');
     }
 
     /**

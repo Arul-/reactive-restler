@@ -29,7 +29,8 @@
     "box/spout": "^3.1",
     "bref/bref": "^0.5.20",
     "rize/uri-template": "^0.3.2",
-    "webonyx/graphql-php": "^14.1"
+    "webonyx/graphql-php": "^14.1",
+    "gabordemooij/redbean": "^5.5"
   },
   "license": "MIT",
   "authors": [
@@ -49,12 +50,12 @@
   },
   "autoload-dev": {
     "classmap": [
-      "api/tests/",
       "api/tests/param/",
       "api/tests/request_data/",
       "api/tests/upload/",
       "api/tests/storage/",
       "api/common/",
+      "api/examples/-storage-/",
       "api/examples/_001_helloworld/",
       "api/examples/_002_minimal/",
       "api/examples/_003_multiformat/",
@@ -73,7 +74,8 @@
       "api/examples/_013_html",
       "api/examples/_014_oauth2_client",
       "api/examples/_015_oauth2_server",
-      "api/examples/_016_forms"
+      "api/examples/_016_forms",
+      "api/examples/_017_graphql"
     ]
   },
   "config": {

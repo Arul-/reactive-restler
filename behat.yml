@@ -13,4 +13,4 @@ fpm:
     default:
       contexts:
         - RestContext:
-            - http://localhost/restler4/
+            - http://localhost
