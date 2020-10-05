@@ -14,7 +14,7 @@ Defaults::$useUrlBasedVersioning = true;
 
 Router::setApiVersion(2);
 Router::mapApiClasses([
-    BodyMassIndex::class,
+    'bmi' => BodyMassIndex::class,
     Explorer::class
 ]);
 

@@ -15,7 +15,7 @@ Defaults::$useVendorMIMEVersioning = true;
 
 Router::setApiVersion(2);
 Router::mapApiClasses([
-    BMI::class,
+    'bmi' => BMI::class,
     Explorer::class
 ]);
 

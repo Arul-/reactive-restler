@@ -11,7 +11,7 @@ include BASE . "/vendor/autoload.php";
 Router::addAuthenticator(AccessControl::class);
 
 Router::mapApiClasses([
-    Access::class,
+    '' => Access::class,
     Explorer::class
 ]);
 
