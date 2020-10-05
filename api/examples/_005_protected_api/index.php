@@ -8,7 +8,7 @@ require __DIR__ . '/../../../vendor/autoload.php';
 
 Router::addAuthenticator(SimpleAuth::class);
 Router::mapApiClasses([
-    Simple::class,
+    '' => Simple::class,
     Secured::class
 ]);
 
