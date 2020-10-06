@@ -26,6 +26,8 @@ use Luracast\Restler\StaticProperties;
 use Luracast\Restler\UI\Forms;
 use Luracast\Restler\UI\Nav;
 use Luracast\Restler\Utils\Convert;
+use Luracast\Restler\Utils\Text;
+use Psr\Http\Message\ServerRequestInterface;
 use Throwable;
 use Twig\Environment;
 use Twig\Extension\DebugExtension;
@@ -92,11 +94,16 @@ class Html extends MediaType implements ResponseMediaTypeInterface
      * @var SessionInterface
      */
     private $session;
+    /**
+     * @var ServerRequestInterface
+     */
+    private $request;
 
     public function __construct(
         Restler $restler,
         SessionInterface $session,
         ContainerInterface $container,
+        ServerRequestInterface $request,
         StaticProperties $html,
         StaticProperties $defaults,
         Convert $convert
@@ -121,6 +128,7 @@ class Html extends MediaType implements ResponseMediaTypeInterface
         $this->container = $container;
         $this->html = $html;
         $this->defaults = $defaults;
+        $this->request = $request;
     }
 
     public function encode($data, ResponseHeaders $responseHeaders, bool $humanReadable = false)
@@ -142,14 +150,16 @@ class Html extends MediaType implements ResponseMediaTypeInterface
                     'success' => $success,
                     'error' => $error,
                     'restler' => $this->restler,
-                    'container' => $this->container
+                    'container' => $this->container,
+                    'baseUrl' => $this->restler->baseUrl,
+                    'currentPath' => $this->restler->path,
                 ]
             );
-            $data->baseUrl = $this->restler->baseUrl;
+            $rpath = $this->request->getUri()->getPath();
+            $data->resourcePathNormalizer = Text::endsWith($rpath, '/') || Text::endsWith($rpath, 'index.html')
+                ? '../' : './';
             $data->basePath = $data->baseUrl->getPath();
-            $data->currentPath = $this->restler->path;
-            $api = $data->api = $this->restler->route;
-            $metadata = $api;
+            $metadata = $data->api = $this->restler->route;
             $view = $success ? 'view' : 'errorView';
             $value = false;
             if ($this->parseViewMetadata && isset($metadata->{$view})) {
