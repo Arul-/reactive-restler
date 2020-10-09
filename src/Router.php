@@ -463,6 +463,7 @@ class Router
             }
 
             $route = Route::fromMethod($method, $metadata, $scope);
+            $route->resource['path'] = $resourcePath;
             $allowAmbiguity = (isset($metadata['smart-auto-routing']) && $metadata['smart-auto-routing'] != 'true')
                 || !Defaults::$smartAutoRouting;
 
@@ -809,6 +810,7 @@ class Router
                 $version == 1 ? '' : "Version $version is not supported"
             );
         }
+        $path = rtrim($path, '/');
         $status = 404;
         $message = null;
         $methods = [];

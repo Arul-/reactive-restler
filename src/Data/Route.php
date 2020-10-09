@@ -138,7 +138,7 @@ class Route extends ValueObject
     public $deprecated = false;
 
 
-    public $resource = ['summary' => '', 'description' => ''];
+    public $resource = ['path' => '', 'summary' => '', 'description' => ''];
 
     /**
      * @var array
