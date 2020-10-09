@@ -45,7 +45,7 @@ class Client
         $session->start();
         $this->html->data['session_id'] = $session->getId();
         if (!static::$serverUrl) {
-            $path = $restler->baseUrl . $restler->path;
+            $path = rtrim($restler->baseUrl, '/') . '/' . $restler->path;
             $base = explode('_014_oauth2_client', $path)[0];
             static::$serverUrl =
                 $base . '_015_oauth2_server';
