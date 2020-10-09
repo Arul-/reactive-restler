@@ -14,6 +14,7 @@ include BASE . "/vendor/autoload.php";
 Defaults::$cacheDirectory = BASE . '/api/common/store';
 Defaults::$implementations[DataProviderInterface::class] = [SerializedFileDataProvider::class];
 
+RateLimiter::setLimit('hour', 10);
 Router::setFilters(RateLimiter::class);
 Router::addAuthenticator(KeyAuth::class);
 Router::mapApiClasses([
