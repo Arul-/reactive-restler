@@ -18,6 +18,7 @@ use Luracast\Restler\ArrayObject;
 use Luracast\Restler\Contracts\ContainerInterface;
 use Luracast\Restler\Contracts\ResponseMediaTypeInterface;
 use Luracast\Restler\Contracts\SessionInterface;
+use Luracast\Restler\Data\Route;
 use Luracast\Restler\Defaults;
 use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\ResponseHeaders;
@@ -98,9 +99,14 @@ class Html extends MediaType implements ResponseMediaTypeInterface
      * @var ServerRequestInterface
      */
     private $request;
+    /**
+     * @var Route
+     */
+    private $route;
 
     public function __construct(
         Restler $restler,
+        Route $route,
         SessionInterface $session,
         ContainerInterface $container,
         ServerRequestInterface $request,
@@ -124,6 +130,7 @@ class Html extends MediaType implements ResponseMediaTypeInterface
             }
         }
         $this->restler = $restler;
+        $this->route = $route;
         $this->session = $session;
         $this->container = $container;
         $this->html = $html;
@@ -156,9 +163,14 @@ class Html extends MediaType implements ResponseMediaTypeInterface
                 ]
             );
             $rpath = $this->request->getUri()->getPath();
-            $data->resourcePathNormalizer = Text::endsWith($rpath, '/') || Text::endsWith($rpath, 'index.html')
+            $data->resourcePathNormalizer = (!empty($data->currentPath) && Text::endsWith($rpath, '/')) ||
+            ('index' !== $data->currentPath && Text::endsWith($rpath, 'index.html'))
                 ? '../' : './';
             $data->basePath = $data->baseUrl->getPath();
+            $data->path = '/' . trim(
+                    str_replace('//', '/', $data->basePath . $this->route->resource['path']), '/'
+                );
+            //$data->path = '/' . ltrim(explode('index', $data->basePath . $data->currentPath)[0],'/');
             $metadata = $data->api = $this->restler->route;
             $view = $success ? 'view' : 'errorView';
             $value = false;
