@@ -14,6 +14,7 @@ use Luracast\Restler\Utils\Text;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Rize\UriTemplate\UriTemplate;
+use Symfony\Component\Console\Input\ArgvInput;
 
 /**
  * Rest context.
@@ -29,7 +30,7 @@ use Rize\UriTemplate\UriTemplate;
 class RestContext implements Context
 {
     public const COOKIE_FILE = 'behat-guzzle-cookie-data.json';
-
+    protected $baseUrl = '';
     private $_request_debug_stream = null;
     private $_startTime = null;
     private $_restObject = null;
@@ -50,43 +51,6 @@ class RestContext implements Context
     private $_charset = null;
     private $_language = null;
     private $_data = null;
-
-    protected $baseUrl = '';
-
-
-    /**
-     * @BeforeSuite
-     *
-     * @param NotBeforeSuiteScope $scope
-     */
-    public static function prepare(BeforeSuiteScope $scope)
-    {
-        $environment = $scope->getEnvironment();
-        $contexts = $environment->getContextClassesWithArguments();
-        $baseUrl = $contexts[static::class][0];
-        // prepare system for test suite
-        // before it runs
-        $client = new Client(['base_uri' => $baseUrl]);
-        $result = $client->delete('examples/-storage-/all');
-    }
-
-    /**
-     * @AfterSuite
-     *
-     * @param NotAfterSuiteScope $scope
-     */
-    public static function package(AfterSuiteScope $scope)
-    {
-        $environment = $scope->getEnvironment();
-        $contexts = $environment->getContextClassesWithArguments();
-        $baseUrl = $contexts[static::class][0];
-        // package all loaded files in cache folder
-        // after all tests completed
-        $client = new Client(['base_uri' => $baseUrl]);
-        //load explorer dependencies
-        $client->get('explorer/docs.json');
-        $result = $client->get('examples/-storage-/pack');
-    }
 
     /**
      * Initializes context.
@@ -140,6 +104,54 @@ class RestContext implements Context
     }
 
     /**
+     * @BeforeSuite
+     *
+     * @param NotBeforeSuiteScope $scope
+     */
+    public static function prepare(BeforeSuiteScope $scope)
+    {
+        $environment = $scope->getEnvironment();
+        $contexts = $environment->getContextClassesWithArguments();
+        $baseUrl = $contexts[static::class][0];
+        // prepare system for test suite
+        // before it runs
+        $client = new Client(['base_uri' => $baseUrl]);
+        $result = $client->delete('examples/-storage-/all');
+    }
+
+    /**
+     * @AfterSuite
+     *
+     * @param NotAfterSuiteScope $scope
+     */
+    public static function package(AfterSuiteScope $scope)
+    {
+        $input = new ArgvInput($_SERVER['argv']);
+        $profile = $input->getParameterOption(['--profile', '-p']) ?: 'default';
+        if ('default' !== $profile) {
+            return;
+        }
+        $environment = $scope->getEnvironment();
+        $contexts = $environment->getContextClassesWithArguments();
+        $baseUrl = $contexts[static::class][0];
+        // package all loaded files in cache folder
+        // after all tests completed
+        $client = new Client(['base_uri' => $baseUrl]);
+        //load explorer dependencies
+        $client->get('explorer/docs.json');
+        $result = $client->get('examples/-storage-/pack');
+    }
+
+    /**
+     * @Given /^that I send:/
+     * @param PyStringNode $data
+     */
+    public function thatISendPyString(PyStringNode $data)
+    {
+        $this->thatISend($data);
+    }
+
+    /**
      * ============ json array ===================
      * @Given /^that I send (\[[^]]*\])$/
      *
@@ -159,15 +171,6 @@ class RestContext implements Context
     {
         $this->_restObject = json_decode($data);
         $this->_restObjectMethod = 'post';
-    }
-
-    /**
-     * @Given /^that I send:/
-     * @param PyStringNode $data
-     */
-    public function thatISendPyString(PyStringNode $data)
-    {
-        $this->thatISend($data);
     }
 
     /**
@@ -198,6 +201,54 @@ class RestContext implements Context
     }
 
     /**
+     * @Then /^echo last response$/
+     */
+    public function echoLastResponse()
+    {
+        global $argv;
+        $level = 1;
+        if (in_array('-v', $argv) || in_array('--verbose=1', $argv)) {
+            $level = 2;
+        } elseif (in_array('-vv', $argv) || in_array('--verbose=2', $argv)) {
+            $level = 3;
+        } elseif (in_array('-vvv', $argv) || in_array('--verbose=3', $argv)) {
+            $level = 4;
+        }
+        //echo "$this->_request\n$this->_response";
+        if ($level >= 2 && is_resource($this->_request_debug_stream)) {
+            rewind($this->_request_debug_stream);
+            echo stream_get_contents($this->_request_debug_stream) . PHP_EOL . PHP_EOL;
+        }
+        if ($level >= 1) {
+            /** @var RequestInterface $req */
+            $req = $this->_request;
+            echo $req->getMethod() . ' ' . $req->getUri() . ' HTTP/' . $req->getProtocolVersion() . PHP_EOL;
+            foreach ($req->getHeaders() as $k => $v) {
+                echo ucwords($k) . ': ' . implode(', ', $v) . PHP_EOL;
+            }
+            echo PHP_EOL;
+            echo urldecode((string)$req->getBody()) . PHP_EOL . PHP_EOL;
+        }
+        /** @var ResponseInterface $res */
+        $res = $this->_response;
+        echo 'HTTP/' . $res->getProtocolVersion() . ' ' . $res->getStatusCode() . ' ' . $res->getReasonPhrase() . PHP_EOL;
+        foreach ($res->getHeaders() as $k => $v) {
+            echo ucwords($k) . ': ' . implode(', ', $v) . PHP_EOL;
+        }
+        echo PHP_EOL;
+        echo (string)$res->getBody();
+    }
+
+    /**
+     * @Given /^the response equals:/
+     * @param PyStringNode $data
+     */
+    public function theResponseEqualsPyString(PyStringNode $response)
+    {
+        $this->theResponseEquals($response);
+    }
+
+    /**
      * ============ json array ===================
      * @Given /^the response equals (\[[^]]*\])$/
      *
@@ -225,15 +276,6 @@ class RestContext implements Context
     }
 
     /**
-     * @Given /^the response equals:/
-     * @param PyStringNode $data
-     */
-    public function theResponseEqualsPyString(PyStringNode $response)
-    {
-        $this->theResponseEquals($response);
-    }
-
-    /**
      * @Given /^that I want to make a new "([^"]*)"$/
      */
     public function thatIWantToMakeANew($objectType)
@@ -252,7 +294,6 @@ class RestContext implements Context
         $this->_restObjectType = ucwords(strtolower($objectType));
         $this->_restObjectMethod = 'put';
     }
-
 
     /**
      * @Given /^that I want to find a "([^"]*)"$/
@@ -282,7 +323,6 @@ class RestContext implements Context
     {
         $this->_headers[$header] = $value;
     }
-
 
     /**
      * @Given /^that its "([^"]*)" is "([^"]*)"$/
@@ -367,14 +407,14 @@ class RestContext implements Context
 
             $this->_request_debug_stream = fopen('php://temp/', 'r+');
 
-            $options = array(
+            $options = [
                 'headers' => $this->_headers,
                 'http_errors' => false,
                 'decode_content' => false,
                 'debug' => $this->_request_debug_stream,
                 //'curl' => array(CURLOPT_VERBOSE => true),
-            );
-            if (in_array($method, array('POST', 'PUT', 'PATCH'))) {
+            ];
+            if (in_array($method, ['POST', 'PUT', 'PATCH'])) {
                 if (empty($this->_requestBody)) {
                     $postFields = is_object($this->_restObject)
                         ? (array)$this->_restObject
@@ -475,7 +515,6 @@ class RestContext implements Context
         $this->_headers['Accept-Language'] = $language;
     }
 
-
     /**
      * @Then /^the response is JSON$/
      * @Then /^the response should be JSON$/
@@ -533,6 +572,22 @@ class RestContext implements Context
     }
 
     /**
+     * @Then /^the response "Expires" header should be Date\+(\d+) seconds$/
+     */
+    public function theResponseExpiresHeaderShouldBeDatePlusGivenSeconds($seconds)
+    {
+        $server_time = strtotime($this->_response->getHeaderLine('Date')) + $seconds;
+        $expires_time = strtotime($this->_response->getHeaderLine('Expires'));
+        if ($expires_time === $server_time || $expires_time === $server_time + 1) {
+            return;
+        }
+        return $this->theResponseHeaderShouldBe(
+            'Expires',
+            gmdate('D, d M Y H:i:s \G\M\T', $server_time)
+        );
+    }
+
+    /**
      * @Then /^the response "([^"]*)" header should be "([^"]*)"$/
      * @Then /^the response "([^"]*)" header should be '([^']*)'$/
      */
@@ -555,22 +610,6 @@ class RestContext implements Context
     }
 
     /**
-     * @Then /^the response "Expires" header should be Date\+(\d+) seconds$/
-     */
-    public function theResponseExpiresHeaderShouldBeDatePlusGivenSeconds($seconds)
-    {
-        $server_time = strtotime($this->_response->getHeaderLine('Date')) + $seconds;
-        $expires_time = strtotime($this->_response->getHeaderLine('Expires'));
-        if ($expires_time === $server_time || $expires_time === $server_time + 1) {
-            return;
-        }
-        return $this->theResponseHeaderShouldBe(
-            'Expires',
-            gmdate('D, d M Y H:i:s \G\M\T', $server_time)
-        );
-    }
-
-    /**
      * @Then /^the response time should at least be (\d+) milliseconds$/
      */
     public function theResponseTimeShouldAtLeastBeMilliseconds($milliSeconds)
@@ -585,7 +624,6 @@ class RestContext implements Context
             );
         }
     }
-
 
     /**
      * @Given /^the type is "([^"]*)"$/
@@ -640,6 +678,15 @@ class RestContext implements Context
     }
 
     /**
+     * @Given /^the value equals (\d+)$/
+     */
+    public function theNumericValueEquals($value)
+    {
+        $value = is_float($value) ? floatval($value) : intval($value);
+        return $this->theValueEquals($value);
+    }
+
+    /**
      * @Given /^the value equals "([^"]*)"$/
      */
     public function theValueEquals($value)
@@ -656,13 +703,18 @@ class RestContext implements Context
         }
     }
 
-    /**
-     * @Given /^the value equals (\d+)$/
-     */
-    public function theNumericValueEquals($value)
+    private function typeFormat($value): string
     {
-        $value = is_float($value) ? floatval($value) : intval($value);
-        return $this->theValueEquals($value);
+        if (is_null($value)) {
+            return 'null';
+        }
+        if (is_bool($value)) {
+            return $value ? 'true' : 'false';
+        }
+        if (is_array($value) || is_object($value)) {
+            return json_encode($value);
+        }
+        return $value = '"' . $value . '"';
     }
 
     /**
@@ -749,6 +801,16 @@ class RestContext implements Context
     }
 
     /**
+     * @Then /^the "([^"]*)" property equals (\d+)$/
+     */
+    public function thePropertyEqualsNumber($propertyName, $propertyValue)
+    {
+        $propertyValue = is_float($propertyValue)
+            ? floatval($propertyValue) : intval($propertyValue);
+        return $this->thePropertyEquals($propertyName, $propertyValue);
+    }
+
+    /**
      * @Then /^the "([^"]*)" property equals "([^"]*)"$/
      * @Then /^the "([^"]*)" property equals (null)$/
      * @Then /^the "([^"]*)" property is (null)$/
@@ -790,16 +852,6 @@ class RestContext implements Context
                 . $this->_response->getBody(true)
             );
         }
-    }
-
-    /**
-     * @Then /^the "([^"]*)" property equals (\d+)$/
-     */
-    public function thePropertyEqualsNumber($propertyName, $propertyValue)
-    {
-        $propertyValue = is_float($propertyValue)
-            ? floatval($propertyValue) : intval($propertyValue);
-        return $this->thePropertyEquals($propertyName, $propertyValue);
     }
 
     /**
@@ -861,47 +913,6 @@ class RestContext implements Context
     }
 
     /**
-     * @Then /^echo last response$/
-     */
-    public function echoLastResponse()
-    {
-        global $argv;
-        $level = 1;
-        if (in_array('-v', $argv) || in_array('--verbose=1', $argv)) {
-            $level = 2;
-        } elseif (in_array('-vv', $argv) || in_array('--verbose=2', $argv)) {
-            $level = 3;
-        } elseif (in_array('-vvv', $argv) || in_array('--verbose=3', $argv)) {
-            $level = 4;
-        }
-        //echo "$this->_request\n$this->_response";
-        if ($level >= 2 && is_resource($this->_request_debug_stream)) {
-            rewind($this->_request_debug_stream);
-            echo stream_get_contents($this->_request_debug_stream) . PHP_EOL . PHP_EOL;
-        }
-        if ($level >= 1) {
-            /** @var RequestInterface $req */
-            $req = $this->_request;
-            echo $req->getMethod() . ' ' . $req->getUri() . ' HTTP/' . $req->getProtocolVersion() . PHP_EOL;
-            foreach ($req->getHeaders() as $k => $v) {
-                echo ucwords($k) . ': ' . implode(', ', $v) . PHP_EOL;
-            }
-            echo PHP_EOL;
-            echo urldecode((string)$req->getBody()) . PHP_EOL . PHP_EOL;
-        }
-        /** @var ResponseInterface $res */
-        $res = $this->_response;
-        echo 'HTTP/' . $res->getProtocolVersion() . ' ' . $res->getStatusCode() . ' ' . $res->getReasonPhrase(
-            ) . PHP_EOL;
-        foreach ($res->getHeaders() as $k => $v) {
-            echo ucwords($k) . ': ' . implode(', ', $v) . PHP_EOL;
-        }
-        echo PHP_EOL;
-        echo (string)$res->getBody();
-    }
-
-
-    /**
      * @Given /^the value equals "([^"]*)" or "([^"]*)"$/
      */
     public function theValueEqualsOr($value1, $value2)
@@ -937,20 +948,6 @@ class RestContext implements Context
         if ($expectedPath !== $actual) {
             throw new Exception("Redirect did not go to '$expectedPath'\n(actual: '$actual')\n");
         }
-    }
-
-    private function typeFormat($value): string
-    {
-        if (is_null($value)) {
-            return 'null';
-        }
-        if (is_bool($value)) {
-            return $value ? 'true' : 'false';
-        }
-        if (is_array($value) || is_object($value)) {
-            return json_encode($value);
-        }
-        return $value = '"' . $value . '"';
     }
 
 }
