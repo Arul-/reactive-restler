@@ -16,6 +16,9 @@ use ReflectionNamedType;
 
 class Returns extends Type
 {
+    /** @var string */
+    public $label;
+
     public static function fromReturnType(?ReflectionNamedType $reflectionType, ?array $metadata, array $scope): self
     {
         $instance = new static();
@@ -23,6 +26,7 @@ class Returns extends Type
         $itemTypes = $metadata[CommentParser::$embeddedDataName]['type'] ?? ['object'];
         $instance->description = $metadata['description'] ?? '';
         $instance->format = $metadata[CommentParser::$embeddedDataName]['format'] ?? '';
+        $instance->label = $metadata[CommentParser::$embeddedDataName]['label'] ?? null;
         $instance->apply($reflectionType, $types, $itemTypes, $scope);
         return $instance;
     }
