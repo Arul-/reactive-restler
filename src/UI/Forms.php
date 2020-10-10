@@ -139,6 +139,11 @@ class Forms implements FilterInterface, SelectivePathsInterface
             if (is_null($action)) {
                 $action = $this->currentRoute->path;
             }
+            $base = trim($this->restler->baseUrl->getPath(), '/');
+            if (Text::beginsWith($action, $base)) {
+                $action = substr($action, strlen($base));
+            }
+            $action = trim($action, '/');
             $current = $this->currentRoute;
             if ((($method == $current->httpMethod) && ($action == $current->path))) {
                 /** @var Route route */
@@ -160,12 +165,13 @@ class Forms implements FilterInterface, SelectivePathsInterface
         }
         $r = static::fields($route, $dataOnly);
         if ($method != 'GET' && $method != 'POST') {
-            if (empty(Defaults::$httpMethodOverrideProperty))
+            if (empty(Defaults::$httpMethodOverrideProperty)) {
                 throw new HttpException(
                     500,
                     'Forms require `Defaults::\$httpMethodOverrideProperty`' .
                     "for supporting HTTP $method"
                 );
+            }
 
             if ($dataOnly) {
                 $r[] = [
