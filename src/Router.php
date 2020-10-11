@@ -431,10 +431,7 @@ class Router
             throw new HttpException(500, "Error while parsing comments of `$className` class. " . $e->getMessage());
         }
         $classMetadata['scope'] = $scope = static::scope($class);
-        $methods = $class->getMethods(
-            ReflectionMethod::IS_PUBLIC +
-            ReflectionMethod::IS_PROTECTED
-        );
+        $methods = $class->getMethods(ReflectionMethod::IS_PUBLIC | ReflectionMethod::IS_PROTECTED);
         foreach ($methods as $method) {
             if ($method->isStatic()) {
                 continue;
@@ -553,6 +550,9 @@ class Router
      */
     protected static function parseUseStatements(string $code, ?string $forClass = null)
     {
+        if (!defined('T_NAME_QUALIFIED')) {
+            define('T_NAME_QUALIFIED', 314);
+        }
         $tokens = token_get_all($code);
         $namespace = $class = $classLevel = $level = null;
         $res = $uses = [];
@@ -560,7 +560,7 @@ class Router
             next($tokens);
             switch (is_array($token) ? $token[0] : $token) {
                 case T_NAMESPACE:
-                    $namespace = ltrim(self::fetch($tokens, [T_STRING, T_NS_SEPARATOR]) . '\\', '\\');
+                    $namespace = ltrim(self::fetch($tokens, [T_STRING, T_NS_SEPARATOR, T_NAME_QUALIFIED]) . '\\', '\\');
                     $uses = [];
                     break;
 
@@ -578,10 +578,10 @@ class Router
                     break;
 
                 case T_USE:
-                    while (!$class && ($name = self::fetch($tokens, [T_STRING, T_NS_SEPARATOR]))) {
+                    while (!$class && ($name = self::fetch($tokens, [T_STRING, T_NS_SEPARATOR, T_NAME_QUALIFIED]))) {
                         $name = ltrim($name, '\\');
                         if (self::fetch($tokens, '{')) {
-                            while ($suffix = self::fetch($tokens, [T_STRING, T_NS_SEPARATOR])) {
+                            while ($suffix = self::fetch($tokens, [T_STRING, T_NS_SEPARATOR, T_NAME_QUALIFIED])) {
                                 if (self::fetch($tokens, T_AS)) {
                                     $uses[self::fetch($tokens, T_STRING)] = $name . $suffix;
                                 } else {
