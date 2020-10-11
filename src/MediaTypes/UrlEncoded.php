@@ -58,8 +58,6 @@ class UrlEncoded extends MediaType implements RequestMediaTypeInterface, Respons
                 $data[$k] = $v = $v === 'true';
             } elseif (is_array($v)) {
                 $data[$k] = $v = static::decoderTypeFix($v);
-            } elseif (empty($v) && $v != 0) {
-                unset($data[$k]);
             }
         }
         return $data;
