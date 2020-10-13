@@ -13,7 +13,7 @@ if (!function_exists('exceptions')) {
     function exceptions(Restler $r, $path)
     {
         if ($source = $r->exception) {
-            $traces = array();
+            $traces = [];
             do {
                 $traces += $source->getTrace();
             } while ($source = $source->getPrevious());
@@ -72,6 +72,11 @@ $data['render'] = $render = function ($data, $shadow = true) use (&$render) {
                 if (is_bool($value)) {
                     $value = $value ? 'true' : 'false';
                 }
+                if (is_object($value)) {
+                    $value = method_exists($value, '__toString')
+                        ? $value->__toString()
+                        : 'new ' . get_class($value) . '()';
+                }
                 $value = htmlentities($value, ENT_COMPAT, 'UTF-8');
                 if (strpos($value, 'http://') === 0) {
                     $r .= '<a href="' . $value . '">' . $value . '</a>';
@@ -128,13 +133,14 @@ foreach ($restler->responseHeaders as $k => $v) {
     $responseHeaders .= "$k: $v\r\n";
 }
 $version = Restler::VERSION;
+$debugCss = file_get_contents(__DIR__ . '/debug.css');
 return <<<TEMPLATE
 <html>
     <head>
         <title>$title</title>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
         <style>
-            {$_('read', 'debug.css')}
+            $debugCss
         </style>
     </head>
     <body>
