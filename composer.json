@@ -18,19 +18,19 @@
     "behat/behat": "~3",
     "psy/psysh": "@stable",
     "react/event-loop": "@stable",
-    "react/http": "^1.0",
+    "react/http": "^1.1",
     "workerman/workerman": "^4.0",
     "twig/twig": "^3",
     "mustache/mustache": "^2",
     "illuminate/view": "^8 || ^7",
     "bshaffer/oauth2-server-php": "^1.11",
-    "react/http-client": "^0.5.9",
     "swoole/ide-helper": "^4.3",
     "box/spout": "^3.1",
     "bref/bref": "^0.5.20",
     "rize/uri-template": "^0.3.2",
     "webonyx/graphql-php": "^14.1",
-    "gabordemooij/redbean": "^5.5"
+    "gabordemooij/redbean": "^5.5",
+    "rector/rector-prefixed": "^0.8.23"
   },
   "license": "MIT",
   "authors": [
