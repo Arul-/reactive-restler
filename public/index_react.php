@@ -37,7 +37,7 @@ $server->on(
 );
 
 
-$socket = new React\Socket\Server(8080, $loop);
+$socket = new React\Socket\Server('0.0.0.0:8080', $loop);
 $server->listen($socket);
 
 echo "Server running at http://127.0.0.1:8080\n";

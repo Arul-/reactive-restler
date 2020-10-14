@@ -9,6 +9,8 @@ use Swoole\Http\Response;
 
 require __DIR__ . '/../api/bootstrap.php';
 
+Swoole\Runtime::enableCoroutine(true, SWOOLE_HOOK_ALL | SWOOLE_HOOK_CURL);
+
 Defaults::$implementations[HttpClientInterface::class] = [SwooleHttpClient::class];
 
 $http = new swoole_http_server("127.0.0.1", 8080);
