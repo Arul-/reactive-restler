@@ -35,11 +35,6 @@ Defaults::$useVendorMIMEVersioning = true;
 Defaults::$implementations[HttpClientInterface::class] = [SimpleHttpClient::class];
 Router::setApiVersion(2);
 Html::$template = 'blade'; //'handlebar'; //'twig'; //'php';
-if (!Text::endsWith($_SERVER['SCRIPT_NAME'], 'index.php')) {
-    //when serving through apache or nginx, static files will be served direcly by apache / nginx
-    Restler::$middleware[] = new StaticFiles(BASE . '/' . 'public');
-}
-//Restler::$middleware[] = new SessionMiddleware('RESTLERSESSID', new ArrayCache(), [0, '', '', false, false]);
 Restler::$middleware[] = new SessionMiddleware();
 
 try {

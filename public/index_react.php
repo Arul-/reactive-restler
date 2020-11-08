@@ -7,11 +7,10 @@ require __DIR__ . '/../api/bootstrap.php';
 use Luracast\Restler\Defaults;
 use Luracast\Restler\Restler;
 use Psr\Http\Message\ServerRequestInterface;
-use React\Http\Middleware\LimitConcurrentRequestsMiddleware;
-use React\Http\Middleware\RequestBodyBufferMiddleware;
-use React\Http\Middleware\RequestBodyParserMiddleware;
 use React\Http\Server;
 
+//serve static files
+Restler::$middleware[] = new StaticFiles(BASE . '/public');
 
 $loop = React\EventLoop\Factory::create();
 
