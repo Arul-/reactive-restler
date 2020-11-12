@@ -30,7 +30,9 @@
     "rize/uri-template": "^0.3.2",
     "webonyx/graphql-php": "^14.1",
     "gabordemooij/redbean": "^5.5",
-    "rector/rector-prefixed": "^0.8.23"
+    "rector/rector-prefixed": "^0.8.23",
+    "symplify/easy-coding-standard": "^8.3",
+    "firebase/php-jwt": "^5.2"
   },
   "license": "MIT",
   "authors": [

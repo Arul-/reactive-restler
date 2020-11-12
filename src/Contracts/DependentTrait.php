@@ -25,5 +25,5 @@ trait DependentTrait
      * @return array {@type associative}
      *               CLASS_NAME => vendor/project:version
      */
-    abstract public static function dependencies();
+    abstract public static function dependencies(): array;
 }
