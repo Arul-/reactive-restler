@@ -5,6 +5,7 @@ declare(strict_types=1);
 require __DIR__ . '/../api/bootstrap.php';
 
 use Luracast\Restler\Defaults;
+use Luracast\Restler\Middleware\StaticFiles;
 use Luracast\Restler\Restler;
 use Psr\Http\Message\ServerRequestInterface;
 use React\Http\Server;

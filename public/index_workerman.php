@@ -1,5 +1,6 @@
 <?php declare(strict_types=1);
 
+use Luracast\Restler\Middleware\StaticFiles;
 use Luracast\Restler\Restler;
 use Workerman\Worker;
 
