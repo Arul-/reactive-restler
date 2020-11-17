@@ -35,6 +35,7 @@ use Throwable;
 class GraphQL
 {
     use DependentTrait;
+
     const UI_GRAPHQL_PLAYGROUND = 'graphql-playground';
     const UI_GRAPHIQL = 'graphiql';
     public const INVALID_TYPES = ['mixed', 'array'];
@@ -52,11 +53,6 @@ class GraphQL
     public static $queries = [];
     public static $showDescriptions = false;
     /**
-     * @var array
-     */
-    private static $authClasses;
-
-    /**
      * Access Control - uses Defaults::$apiAccessLevel when set to null
      *
      * @var int|null set the default api access mode
@@ -66,6 +62,10 @@ class GraphQL
      *      value of 3 = protected api using `protected function` method
      */
     public static $apiAccessLevel = null;
+    /**
+     * @var array
+     */
+    private static $authClasses;
     /**
      * @var Restler
      */
@@ -228,7 +228,7 @@ class GraphQL
      * @return array {@type associative}
      *               CLASS_NAME => vendor/project:version
      */
-    public static function dependencies()
+    public static function dependencies(): array
     {
         return ['GraphQL\Type\Definition\Type' => 'webonyx/graphql-php'];
     }

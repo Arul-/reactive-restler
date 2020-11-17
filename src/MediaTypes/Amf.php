@@ -15,7 +15,7 @@ class Amf extends Dependent implements RequestMediaTypeInterface, ResponseMediaT
      * @return array {@type associative}
      *               CLASS_NAME => vendor/project:version
      */
-    public static function dependencies()
+    public static function dependencies(): array
     {
         return [
             'ZendAmf\Parser\Amf3\Deserializer' => 'zendframework/zendamf',

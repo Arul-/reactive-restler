@@ -28,7 +28,7 @@ class Spreadsheet extends Dependent implements DownloadableFileMediaTypeInterfac
      * @return array {@type associative}
      *               CLASS_NAME => vendor/project:version
      */
-    public static function dependencies()
+    public static function dependencies(): array
     {
         return [
             'Box\Spout\Common\Entity\Row' => 'box/spout:dev-master'
