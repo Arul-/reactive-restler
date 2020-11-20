@@ -30,18 +30,18 @@ class PaginatedResponse implements GenericResponseInterface
         return Returns::__set_state([
             'type' => 'PaginatedResponse',
             'properties' => [
+                'total' => Returns::__set_state(['type' => 'int']),
+                'per_page' => Returns::__set_state(['type' => 'int']),
                 'current_page' => Returns::__set_state(['type' => 'int']),
-                'data' => $data,
-                'first_page_url' => Returns::__set_state(['type' => 'string']),
-                'from' => Returns::__set_state(['type' => 'int']),
                 'last_page' => Returns::__set_state(['type' => 'int']),
+                'first_page_url' => Returns::__set_state(['type' => 'string']),
                 'last_page_url' => Returns::__set_state(['type' => 'string']),
                 'next_page_url' => Returns::__set_state(['type' => 'string']),
-                'path' => Returns::__set_state(['type' => 'string']),
-                'per_page' => Returns::__set_state(['type' => 'int']),
                 'prev_page_url' => Returns::__set_state(['type' => 'string']),
+                'path' => Returns::__set_state(['type' => 'string']),
+                'from' => Returns::__set_state(['type' => 'int']),
                 'to' => Returns::__set_state(['type' => 'int']),
-                'total' => Returns::__set_state(['type' => 'int']),
+                'data' => $data,
             ]
         ]);
     }
