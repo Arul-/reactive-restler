@@ -381,6 +381,7 @@ class Explorer implements ProvidesMultiVersionApiInterface
                 $schema->type = 'object';
             } else { //'indexed == $param->format
                 $schema->type = 'array';
+                $schema->items = new stdClass;
             }
         } else {
             $target = $schema;
