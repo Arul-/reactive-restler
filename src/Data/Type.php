@@ -4,6 +4,7 @@
 namespace Luracast\Restler\Data;
 
 
+use Error;
 use Exception;
 use Luracast\Restler\Contracts\GenericRequestInterface;
 use Luracast\Restler\Contracts\GenericResponseInterface;
@@ -215,6 +216,9 @@ abstract class Type extends ValueObject
         if (empty($magicProperties)) {
             $reflectionProperties = $reflectionClass->getProperties(ReflectionProperty::IS_PUBLIC);
             foreach ($reflectionProperties as $reflectionProperty) {
+                if ($reflectionProperty->isStatic()) {
+                    continue;
+                }
                 $name = $reflectionProperty->getName();
                 if ($filter && !in_array($name, $selectedProperties)) {
                     continue;
@@ -328,7 +332,7 @@ abstract class Type extends ValueObject
         }
         $data = [];
         if ('object' === $type && !empty($arguments) && 2 == count($arguments)) {
-            list($name, $properties) = $arguments;
+            [$name, $properties] = $arguments;
             $data['type'] = $name;
             $data['scalar'] = false;
             $data['properties'] = [];
@@ -343,7 +347,7 @@ abstract class Type extends ValueObject
             $data['type'] = $type;
             $data['scalar'] = true;
         } else {
-            throw new \Error(sprintf(
+            throw new Error(sprintf(
                 "Call to undefined method %s::%s()",
                 static::class,
                 $name
@@ -361,7 +365,7 @@ abstract class Type extends ValueObject
     /**
      * @inheritDoc
      */
-    public function __toString()
+    public function __toString(): string
     {
         $str = '';
         if ($this->nullable) {
@@ -378,7 +382,7 @@ abstract class Type extends ValueObject
         return $str;
     }
 
-    public function __sleep()
+    public function __sleep(): array
     {
         return $this->jsonSerialize();
     }
