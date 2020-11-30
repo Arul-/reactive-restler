@@ -441,7 +441,7 @@ class RestContext implements Context
         if (strpos($cType, '+') > 0) {
             //look for vendor mime
             //example 'application/vnd.SomeVendor-v1+json','application/vnd.SomeVendor-v2+json'
-            list($app, $vendor, $extension) = [strtok($cType, '/'), strtok('+'), strtok('')];
+            [$app, $vendor, $extension] = [strtok($cType, '/'), strtok('+'), strtok('')];
             $cType = "$app/$extension";
         }
         switch ($cType) {
@@ -478,8 +478,10 @@ class RestContext implements Context
                 break;
             case 'application/xml':
                 $this->_type = 'xml';
-                libxml_use_internal_errors(true);
-                libxml_disable_entity_loader(true);
+                @libxml_use_internal_errors(true);
+                if (\LIBXML_VERSION < 20900) {
+                    libxml_disable_entity_loader(true);
+                }
                 $this->_data = @simplexml_load_string(
                     $this->_response->getBody(true)
                 );
