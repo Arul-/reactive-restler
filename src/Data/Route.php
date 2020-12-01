@@ -9,7 +9,8 @@ use Luracast\Restler\Contracts\{AuthenticationInterface,
     RequestMediaTypeInterface,
     ResponseMediaTypeInterface,
     SelectivePathsInterface,
-    ValidationInterface};
+    ValidationInterface
+};
 use Luracast\Restler\Defaults;
 use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\Exceptions\InvalidAuthCredentials;
@@ -22,6 +23,7 @@ use Luracast\Restler\Utils\{ClassName, CommentParser, Convert, Type, Validator};
 use Psr\Http\Message\ServerRequestInterface;
 use ReflectionFunctionAbstract;
 use ReflectionMethod;
+use ReflectionUnionType;
 use Throwable;
 
 class Route extends ValueObject
@@ -212,8 +214,16 @@ class Route extends ValueObject
         }
         $route->url = str_replace('index', '', $methodName);
         $route->action = [$method->class, $method->getName()];
+        $reflectionType = $method->hasReturnType() ? $method->getReturnType() : null;
+        if ($reflectionType instanceof ReflectionUnionType) {
+            $types = $reflectionType->getTypes();
+            if('null' === end($types)->getName()){
+                $metadata['return']['type'][] = 'null';
+            }
+            $reflectionType = $types[0];
+        }
         $route->return = Returns::fromReturnType(
-            $method->hasReturnType() ? $method->getReturnType() : null,
+            $reflectionType,
             $metadata['return'] ?? ['type' => ['array']],
             $scope
         );
