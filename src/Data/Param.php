@@ -16,6 +16,7 @@ use ReflectionFunction;
 use ReflectionFunctionAbstract;
 use ReflectionMethod;
 use ReflectionParameter;
+use ReflectionUnionType;
 use Reflector;
 
 /**
@@ -254,9 +255,18 @@ class Param extends Type
         } elseif (in_array('array', $types) && empty($itemTypes)) {
             array_unshift($itemTypes, 'string');
         }
+        if (method_exists($reflector, 'hasType') && $reflector->hasType()) {
+            $reflectionType = $reflector->getType();
+            if ($reflectionType instanceof ReflectionUnionType) {
+                $reflectionTypes = $reflectionType->getTypes();
+                if ('null' === end($reflectionTypes)->getName()) {
+                    $metadata['return']['type'][] = 'null';
+                }
+                $reflectionType = $reflectionTypes[0];
+            }
+        }
         $instance->apply(
-            method_exists($reflector, 'hasType') && $reflector->hasType()
-                ? $reflector->getType() : null,
+            $reflectionType ?? null,
             $types,
             $itemTypes,
             $scope
