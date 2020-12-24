@@ -26,6 +26,7 @@ class Convert
         );
         if ($request->get) {
             $instance = $instance->withQueryParams($request->get);
+            $instance = $instance->withUri($instance->getUri()->withQuery(http_build_query($request->get)));
         }
         if ($request->post) {
             $instance = $instance->withParsedBody($request->post);
@@ -37,13 +38,6 @@ class Convert
             $instance = $instance->withUploadedFiles(ServerRequest::normalizeFiles($request->files));
         }
         return $instance;
-    }
-
-    public final static function fromPSR7(ResponseInterface $psr7Response, Response $response): void
-    {
-        $response->status($psr7Response->getStatusCode());
-        static::populateHeaders($psr7Response, $response);
-        $response->end((string)$psr7Response->getBody());
     }
 
     private static function buildServerParams(Request $request)
@@ -87,6 +81,13 @@ class Convert
         $return['REQUEST_TIME_FLOAT'] = $server['request_time_float'] ?? '';
         $return['REQUEST_TIME'] = $server['request_time'] ?? '';
         return $return;
+    }
+
+    public final static function fromPSR7(ResponseInterface $psr7Response, Response $response): void
+    {
+        $response->status($psr7Response->getStatusCode());
+        static::populateHeaders($psr7Response, $response);
+        $response->end((string)$psr7Response->getBody());
     }
 
     private static function populateHeaders(ResponseInterface $psr7Response, Response $response)

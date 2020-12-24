@@ -4,23 +4,19 @@ declare(strict_types=1);
 
 use Auth\Client;
 use Auth\Server;
-use GraphQL\Type\Definition\Type as GraphQLType;
 use improved\Authors as ImprovedAuthors;
-use Luracast\Restler\Cache\HumanReadable;
+use Luracast\Restler\Data\ErrorResponse;
 use Luracast\Restler\Defaults;
 use Luracast\Restler\Filters\RateLimiter;
-use Luracast\Restler\GraphQL\GraphQL;
 use Luracast\Restler\MediaTypes\Html;
 use Luracast\Restler\MediaTypes\Json;
 use Luracast\Restler\MediaTypes\Upload;
 use Luracast\Restler\MediaTypes\Xml;
 use Luracast\Restler\Middleware\SessionMiddleware;
-use Luracast\Restler\Middleware\StaticFiles;
 use Luracast\Restler\OpenApi3\Explorer;
 use Luracast\Restler\Restler;
 use Luracast\Restler\Router;
 use Luracast\Restler\UI\Forms;
-use Luracast\Restler\Utils\Text;
 use ratelimited\Authors as RateLimitedAuthors;
 use SomeVendor\v1\BMI as VendorBMI1;
 use v1\BodyMassIndex as BMI1;
@@ -36,11 +32,6 @@ Defaults::$useVendorMIMEVersioning = true;
 Defaults::$implementations[HttpClientInterface::class] = [SimpleHttpClient::class];
 Router::setApiVersion(2);
 Html::$template = 'blade'; //'handlebar'; //'twig'; //'php';
-if (!Text::endsWith($_SERVER['SCRIPT_NAME'], 'index.php')) {
-    //when serving through apache or nginx, static files will be served direcly by apache / nginx
-    Restler::$middleware[] = new StaticFiles(BASE . '/' . 'public');
-}
-//Restler::$middleware[] = new SessionMiddleware('RESTLERSESSID', new ArrayCache(), [0, '', '', false, false]);
 Restler::$middleware[] = new SessionMiddleware();
 
 try {
@@ -84,7 +75,7 @@ try {
     Router::mapApiClasses(
         [
             //utility api for running behat tests
-            '-storage-' => Storage::class,
+            'examples/-storage-' => Storage::class,
             //examples
             'examples/_001_helloworld/say' => Say::class,
             'examples/_002_minimal/math' => Math::class,
@@ -115,39 +106,13 @@ try {
             //Explorer
             'explorer' => Explorer::class,
             //GraphQL
-            GraphQL::class,
+            //GraphQL::class,
         ]
     );
-    //
-    //---------------------------- GRAPHQL API ----------------------------
-    //
-    GraphQL::$queries['echo'] = [
-        'type' => GraphQLType::string(),
-        'args' => [
-            'message' => GraphQLType::nonNull(GraphQLType::string()),
-        ],
-        'resolve' => function ($root, $args) {
-            return $root['prefix'] . $args['message'];
-        }
-    ];
-    GraphQL::$mutations['sum'] = [
-        'type' => GraphQLType::int(),
-        'args' => [
-            'x' => ['type' => GraphQLType::int()],
-            'y' => ['type' => GraphQLType::int()],
-        ],
-        'resolve' => function ($calc, $args) {
-            return $args['x'] + $args['y'];
-        },
-    ];
-    GraphQL::mapApiClasses([
-        RateLimitedAuthors::class,
-        Say::class,
-    ]);
-    GraphQL::addMethod('', new ReflectionMethod(Math::class, 'add'));
+    require __DIR__ . '/examples/_017_graphql/routes.php';
 
 } catch (Throwable $t) {
-    die($t->getMessage());
+    die(json_encode((new ErrorResponse($t, true))->jsonSerialize(), JSON_PRETTY_PRINT));
 }
 
 

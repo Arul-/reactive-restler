@@ -8,11 +8,10 @@ use Box\Spout\Common\Entity\Style\Color;
 use Box\Spout\Writer\Common\Creator\Style\StyleBuilder;
 use Box\Spout\Writer\Common\Creator\WriterEntityFactory;
 use Luracast\Restler\Contracts\DownloadableFileMediaTypeInterface;
-use Luracast\Restler\Contracts\ResponseMediaTypeInterface;
+use Luracast\Restler\Defaults;
 use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\ResponseHeaders;
 use Luracast\Restler\Utils\Convert;
-use Luracast\Restler\Defaults;
 
 
 class Spreadsheet extends Dependent implements DownloadableFileMediaTypeInterface
@@ -20,20 +19,20 @@ class Spreadsheet extends Dependent implements DownloadableFileMediaTypeInterfac
     const MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
     const EXTENSION = 'xlsx';
 
+    public function __construct(Convert $convert)
+    {
+        parent::__construct($convert);
+    }
+
     /**
      * @return array {@type associative}
      *               CLASS_NAME => vendor/project:version
      */
-    public function dependencies()
+    public static function dependencies(): array
     {
         return [
             'Box\Spout\Common\Entity\Row' => 'box/spout:dev-master'
         ];
-    }
-
-    public function __construct(Convert $convert)
-    {
-        parent::__construct($convert);
     }
 
     /**

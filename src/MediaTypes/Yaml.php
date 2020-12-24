@@ -4,7 +4,6 @@
 use Luracast\Restler\Contracts\RequestMediaTypeInterface;
 use Luracast\Restler\Contracts\ResponseMediaTypeInterface;
 use Luracast\Restler\ResponseHeaders;
-use Luracast\Restler\Utils\Convert;
 use Symfony\Component\Yaml\Yaml as Y;
 
 class Yaml extends Dependent implements RequestMediaTypeInterface, ResponseMediaTypeInterface
@@ -16,9 +15,9 @@ class Yaml extends Dependent implements RequestMediaTypeInterface, ResponseMedia
      * @return array {@type associative}
      *               CLASS_NAME => vendor/project:version
      */
-    public function dependencies()
+    public static function dependencies()
     {
-        return ['Symfony\Component\Yaml\Yaml' => 'symfony/yaml:*'];
+        return ['Symfony\Component\Yaml\Yaml' => 'symfony/yaml'];
     }
 
     public function decode(string $data)

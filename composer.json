@@ -3,7 +3,7 @@
   "description": "Running Restler on ReactPHP",
   "type": "project",
   "require": {
-    "php": "^7.1",
+    "php": "^7.1|^8",
     "ext-json": "*",
     "psr/container": "^1.0",
     "guzzlehttp/guzzle": "~7",
@@ -18,18 +18,21 @@
     "behat/behat": "~3",
     "psy/psysh": "@stable",
     "react/event-loop": "@stable",
-    "react/http": "@stable",
+    "react/http": "^1.1",
     "workerman/workerman": "^4.0",
     "twig/twig": "^3",
     "mustache/mustache": "^2",
     "illuminate/view": "^8 || ^7",
     "bshaffer/oauth2-server-php": "^1.11",
-    "react/http-client": "^0.5.9",
     "swoole/ide-helper": "^4.3",
     "box/spout": "^3.1",
     "bref/bref": "^0.5.20",
     "rize/uri-template": "^0.3.2",
-    "webonyx/graphql-php": "^14.1"
+    "webonyx/graphql-php": "^14.1",
+    "gabordemooij/redbean": "^5.5",
+    "rector/rector-prefixed": "^0.8.23",
+    "symplify/easy-coding-standard": "^8.3",
+    "firebase/php-jwt": "^5.2"
   },
   "license": "MIT",
   "authors": [
@@ -49,12 +52,12 @@
   },
   "autoload-dev": {
     "classmap": [
-      "api/tests/",
       "api/tests/param/",
       "api/tests/request_data/",
       "api/tests/upload/",
       "api/tests/storage/",
       "api/common/",
+      "api/examples/-storage-/",
       "api/examples/_001_helloworld/",
       "api/examples/_002_minimal/",
       "api/examples/_003_multiformat/",
@@ -73,7 +76,8 @@
       "api/examples/_013_html",
       "api/examples/_014_oauth2_client",
       "api/examples/_015_oauth2_server",
-      "api/examples/_016_forms"
+      "api/examples/_016_forms",
+      "api/examples/_017_graphql"
     ]
   },
   "config": {

@@ -4,7 +4,7 @@ use Exception;
 use Luracast\Restler\Contracts\ContainerInterface;
 use Luracast\Restler\Exceptions\ContainerException;
 use Luracast\Restler\Exceptions\HttpException;
-use Luracast\Restler\Exceptions\NotFoundException;
+use Luracast\Restler\Exceptions\NotFound;
 use Luracast\Restler\Utils\ClassName;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
@@ -47,63 +47,6 @@ class Container implements ContainerInterface
     public function make($abstract, array $parameters = [])
     {
         return $this->resolve($abstract, $parameters);
-    }
-
-    public function instance($abstract, $instance)
-    {
-        $this->instances[$abstract] = $instance;
-        try {
-            if ($class = ClassName::get($abstract)) {
-                $this->instances[$class] = $instance;
-            }
-        } catch (HttpException $e) {
-        }
-    }
-
-    /**
-     * Finds an entry of the container by its identifier and returns it.
-     *
-     * @param string $id Identifier of the entry to look for.
-     *
-     * @throws NotFoundExceptionInterface  No entry was found for **this** identifier.
-     * @throws ContainerExceptionInterface Error while retrieving the entry.
-     *
-     * @return mixed Entry.
-     */
-    public function get($id)
-    {
-        try {
-            if ($instance = $this->instances[$id] ?? $this->instances[ClassName::get($id)] ?? false) {
-                return $instance;
-            }
-        } catch (\Throwable $t) {
-            throw new ContainerException('Error while retrieving the entry `' . $id . '`');
-        }
-        throw new NotFoundException(' No entry was found for `' . $id . '`` identifier');
-    }
-
-    /**
-     * Returns true if the container can return an entry for the given identifier.
-     * Returns false otherwise.
-     *
-     * `has($id)` returning true does not mean that `get($id)` will not throw an exception.
-     * It does however mean that `get($id)` will not throw a `NotFoundExceptionInterface`.
-     *
-     * @param string $id Identifier of the entry to look for.
-     *
-     * @return bool
-     */
-    public function has($id)
-    {
-        if (isset($this->instances[$id])) {
-            return true;
-        }
-        try {
-            $class = ClassName::get($id);
-        } catch (\Throwable $t) {
-            return false;
-        }
-        return isset($this->instances[$class]);
     }
 
     /**
@@ -158,7 +101,7 @@ class Container implements ContainerInterface
      */
     public function &getDependencies(array $parameters, array &$arguments = [])
     {
-        $dependencies = array();
+        $dependencies = [];
         /**
          * @var ReflectionParameter $parameter
          */
@@ -172,7 +115,7 @@ class Container implements ContainerInterface
                 $byRef
                     ? $dependencies[] = &$arguments[$index]
                     : $dependencies[] = $arguments[$index];
-            } elseif (is_null($dependency = $parameter->getClass())) {
+            } elseif (is_null($dependency = @$parameter->getClass())) {
                 $byRef
                     ? $dependencies[] = &$this->resolvePrimitive($parameter)
                     : $dependencies[] = $this->resolvePrimitive($parameter);
@@ -190,24 +133,6 @@ class Container implements ContainerInterface
         return $dependencies;
     }
 
-    protected function &resolveStaticProperties(ReflectionParameter $parameter)
-    {
-        if ($value = $this->config[$parameter->name] ?? false) {
-            return $value;
-        }
-        $class = ucfirst($parameter->name);
-        if (class_exists($class) || $class = ClassName::get($class) ?? false) {
-            $value = $this->config[$parameter->name] =  new StaticProperties($class);
-            return $value;
-        }
-        if ($parameter->isDefaultValueAvailable()) {
-            $defaultValue = $parameter->getDefaultValue();
-            return $defaultValue;
-        }
-
-        $this->unresolvablePrimitive($parameter);
-    }
-
     /**
      * @param ReflectionParameter $parameter
      * @return mixed|null|string
@@ -215,7 +140,7 @@ class Container implements ContainerInterface
      */
     protected function &resolvePrimitive(ReflectionParameter $parameter)
     {
-        if ($parameter->isArray()) {
+        if (@$parameter->isArray()) {
             if (($value = $this->config[$parameter->name] ?? false) && is_array($value)) {
                 return $value;
             }
@@ -241,5 +166,80 @@ class Container implements ContainerInterface
         $message =
             "Unresolvable dependency resolving [$parameter] in class {$parameter->getDeclaringClass()->getName()}";
         throw new ContainerException($message);
+    }
+
+    protected function &resolveStaticProperties(ReflectionParameter $parameter)
+    {
+        if ($value = $this->config[$parameter->name] ?? false) {
+            return $value;
+        }
+        $class = ucfirst($parameter->name);
+        if (class_exists($class) || $class = ClassName::get($class) ?? false) {
+            $value = $this->config[$parameter->name] = new StaticProperties($class);
+            return $value;
+        }
+        if ($parameter->isDefaultValueAvailable()) {
+            $defaultValue = $parameter->getDefaultValue();
+            return $defaultValue;
+        }
+
+        $this->unresolvablePrimitive($parameter);
+    }
+
+    public function instance($abstract, $instance)
+    {
+        $this->instances[$abstract] = $instance;
+        try {
+            if ($class = ClassName::get($abstract)) {
+                $this->instances[$class] = $instance;
+            }
+        } catch (HttpException $e) {
+        }
+    }
+
+    /**
+     * Finds an entry of the container by its identifier and returns it.
+     *
+     * @param string $id Identifier of the entry to look for.
+     *
+     * @return mixed Entry.
+     * @throws ContainerExceptionInterface Error while retrieving the entry.
+     *
+     * @throws NotFoundExceptionInterface  No entry was found for **this** identifier.
+     */
+    public function get($id)
+    {
+        try {
+            if ($instance = $this->instances[$id] ?? $this->instances[ClassName::get($id)] ?? false) {
+                return $instance;
+            }
+        } catch (\Throwable $t) {
+            throw new ContainerException('Error while retrieving the entry `' . $id . '`');
+        }
+        throw new NotFound(' No entry was found for `' . $id . '`` identifier');
+    }
+
+    /**
+     * Returns true if the container can return an entry for the given identifier.
+     * Returns false otherwise.
+     *
+     * `has($id)` returning true does not mean that `get($id)` will not throw an exception.
+     * It does however mean that `get($id)` will not throw a `NotFoundExceptionInterface`.
+     *
+     * @param string $id Identifier of the entry to look for.
+     *
+     * @return bool
+     */
+    public function has($id)
+    {
+        if (isset($this->instances[$id])) {
+            return true;
+        }
+        try {
+            $class = ClassName::get($id);
+        } catch (\Throwable $t) {
+            return false;
+        }
+        return isset($this->instances[$class]);
     }
 }

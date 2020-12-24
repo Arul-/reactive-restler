@@ -1,32 +1,15 @@
 <?php namespace Luracast\Restler\MediaTypes;
 
-use Luracast\Restler\Exceptions\HttpException;
+use Luracast\Restler\Contracts\DependentTrait;
 use Luracast\Restler\Utils\Convert;
 
 abstract class Dependent extends MediaType
 {
-    /**
-     * @return array {@type associative}
-     *               CLASS_NAME => vendor/project:version
-     */
-    abstract public function dependencies();
-
-    protected function checkDependencies()
-    {
-        foreach ($this->dependencies() as $className => $package) {
-            if (!class_exists($className, true)) {
-                throw new HttpException(
-                    500,
-                    get_called_class() . ' has external dependency. Please run `composer require ' .
-                    $package . '` from the project root. Read https://getcomposer.org for more info'
-                );
-            }
-        }
-    }
+    use DependentTrait;
 
     public function __construct(Convert $convert)
     {
         parent::__construct($convert);
-        $this->checkDependencies();
+        static::checkDependencies();
     }
 }

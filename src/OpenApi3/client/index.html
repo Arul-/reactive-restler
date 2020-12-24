@@ -4,9 +4,9 @@
   <head>
     <meta charset="UTF-8">
     <title>Api Explorer</title>
-    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/gh/Arul-/reactive-restler@5.9.0/src/OpenApi3/client/swagger-ui.css" >
-    <link rel="icon" type="image/png" href="https://cdn.jsdelivr.net/gh/Arul-/reactive-restler@5.9.0/src/OpenApi3/client/favicon-32x32.png" sizes="32x32" />
-    <link rel="icon" type="image/png" href="https://cdn.jsdelivr.net/gh/Arul-/reactive-restler@5.9.0/src/OpenApi3/client/favicon-16x16.png" sizes="16x16" />
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/gh/Arul-/reactive-restler@6.1.2/src/OpenApi3/client/swagger-ui.css" >
+    <link rel="icon" type="image/png" href="https://cdn.jsdelivr.net/gh/Arul-/reactive-restler@6.1.2/src/OpenApi3/client/favicon-32x32.png" sizes="32x32" />
+    <link rel="icon" type="image/png" href="https://cdn.jsdelivr.net/gh/Arul-/reactive-restler@6.1.2/src/OpenApi3/client/favicon-16x16.png" sizes="16x16" />
     <style>
       html
       {
@@ -33,14 +33,15 @@
   <body>
     <div id="swagger-ui"></div>
 
-    <script src="https://cdn.jsdelivr.net/gh/Arul-/reactive-restler@5.9.0/src/OpenApi3/client/swagger-ui-bundle.js"> </script>
-    <script src="https://cdn.jsdelivr.net/gh/Arul-/reactive-restler@5.9.0/src/OpenApi3/client/swagger-ui-standalone-preset.js"> </script>
+    <script src="https://cdn.jsdelivr.net/gh/Arul-/reactive-restler@6.1.2/src/OpenApi3/client/swagger-ui-bundle.js"> </script>
+    <script src="https://cdn.jsdelivr.net/gh/Arul-/reactive-restler@6.1.2/src/OpenApi3/client/swagger-ui-standalone-preset.js"> </script>
     <script>
     window.onload = function() {
       const basePath = window.location.pathname.replace('index.html','');
       // Begin Swagger UI call region
       const ui = SwaggerUIBundle({
         url: basePath + 'docs.json',
+        configUrl: basePath + 'config.json',
         dom_id: '#swagger-ui',
         deepLinking: true,
         presets: [

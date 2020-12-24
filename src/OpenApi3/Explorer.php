@@ -6,7 +6,8 @@ use Luracast\Restler\Contracts\{AuthenticationInterface,
     ComposerInterface,
     DownloadableFileMediaTypeInterface,
     ExplorableAuthenticationInterface,
-    ProvidesMultiVersionApiInterface};
+    ProvidesMultiVersionApiInterface
+};
 use Luracast\Restler\Core;
 use Luracast\Restler\Data\{Param, Returns, Route, Type};
 use Luracast\Restler\Defaults;
@@ -15,11 +16,12 @@ use Luracast\Restler\Exceptions\Redirect;
 use Luracast\Restler\OpenApi3\Tags\TagByBasePath;
 use Luracast\Restler\OpenApi3\Tags\Tagger;
 use Luracast\Restler\Router;
-use Luracast\Restler\Utils\{ClassName, Convert, PassThrough, Text, Type as TypeUtil};
+use Luracast\Restler\Utils\{ClassName, PassThrough, Text, Type as TypeUtil};
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\UploadedFileInterface;
 use ReflectionClass;
+use ReflectionException;
 use stdClass;
 
 class Explorer implements ProvidesMultiVersionApiInterface
@@ -31,6 +33,20 @@ class Explorer implements ProvidesMultiVersionApiInterface
     public static $hideProtected = false;
     public static $allowScalarValueOnRequestBody = false;
     public static $servers = [];
+    /**
+     * @var array
+     * @link https://swagger.io/docs/open-source-tools/swagger-ui/usage/configuration
+     */
+    public static $uiConfig = [
+        'deepLinking' => false,
+        'displayOperationId' => false,
+        'syntaxHighlight' => [
+            'theme' => 'tomorrow-night', //agate or arta or monokai or nord" or obsidian or tomorrow-night
+        ],
+        'filter' => true, //null or a string to filter by
+        'validatorUrl' => null //disables validation change to "https://validator.swagger.io/validator" to enable
+    ];
+
     /**
      * @var array mapping PHP types to JS
      */
@@ -107,11 +123,11 @@ class Explorer implements ProvidesMultiVersionApiInterface
      * Serve static files for explorer
      * @throws HttpException
      */
-    public function index()
+    public function index(): ResponseInterface
     {
-        $path = $this->request->getUri()->getPath();
+        $path = $this->request->getUri()->withQuery('')->getPath();
         if (!empty($path) && !Text::endsWith($path, '/')) {
-            throw new Redirect((string)$this->request->getUri() . '/');
+            throw new Redirect((string)$this->request->getUri()->withPath($path . '/'));
         }
         return $this->get('index.html');
     }
@@ -123,7 +139,7 @@ class Explorer implements ProvidesMultiVersionApiInterface
      *
      * @url GET {filename}
      */
-    public function get($filename)
+    public function get($filename): ResponseInterface
     {
         $filename = str_replace(['../', './', '\\', '..', '.php'], '', $filename);
         if (empty($filename)) {
@@ -135,10 +151,15 @@ class Explorer implements ProvidesMultiVersionApiInterface
         return PassThrough::file($file, $this->request->getHeaderLine('If-Modified-Since'));
     }
 
+    public function config()
+    {
+        return (object)static::$uiConfig;
+    }
+
     /**
-     * @return stdClass
+     * @return object
      */
-    public function docs()
+    public function docs(): stdClass
     {
         $s = new stdClass();
         $s->openapi = static::OPEN_API_SPEC_VERSION;
@@ -173,7 +194,7 @@ class Explorer implements ProvidesMultiVersionApiInterface
         return $s;
     }
 
-    private function info(int $version)
+    private function info(int $version): array
     {
         $info = array_filter(call_user_func(static::$infoClass . '::format', static::OPEN_API_SPEC_VERSION));
         $info['description'] .= '<p>Api Documentation - [ReDoc](' . dirname(
@@ -186,7 +207,7 @@ class Explorer implements ProvidesMultiVersionApiInterface
     /**
      * @return array
      */
-    private function servers()
+    private function servers(): array
     {
         return empty(static::$servers)
             ? [
@@ -202,12 +223,12 @@ class Explorer implements ProvidesMultiVersionApiInterface
      * @param int $version
      * @return array
      */
-    private function paths(int $version = 1)
+    private function paths(int $version = 1): array
     {
         $self = explode('/', $this->route->path);
         array_pop($self);
         $self = implode('/', $self);
-        $selfExclude = empty($self) ? ['', '{s0}', 'docs'] : [$self];
+        $selfExclude = empty($self) ? ['', '{s0}', 'docs', 'config'] : [$self];
         $map = Router::findAll(
             $this->request,
             [$this->restler, 'make'],
@@ -233,7 +254,7 @@ class Explorer implements ProvidesMultiVersionApiInterface
         return $paths;
     }
 
-    private function operation(Route $route, int $version)
+    private function operation(Route $route, int $version): stdClass
     {
         $r = new stdClass();
         $r->operationId = $this->operationId($route, $version);
@@ -286,7 +307,7 @@ class Explorer implements ProvidesMultiVersionApiInterface
         return $hash[$id][$asClassName];
     }
 
-    private function parameters(Route $route, int $version)
+    private function parameters(Route $route, int $version): array
     {
         $parameters = $route->filterParams(false);
         $body = $route->filterParams(true);
@@ -324,42 +345,6 @@ class Explorer implements ProvidesMultiVersionApiInterface
         return [$r, $requestBody];
     }
 
-    private function setProperties(Type $param, stdClass $schema)
-    {
-        //primitives
-        if ($param->scalar) {
-            if ($param->multiple) {
-                $schema->type = 'array';
-                $schema->items = new stdClass;
-                $this->scalarProperties($schema->items, $param);
-            } else {
-                $this->scalarProperties($schema, $param);
-            }
-            //TODO: $p->items and $p->uniqueItems boolean
-        } elseif ('array' === $param->type) {
-            if ('associative' == $param->format) {
-                $schema->type = 'object';
-            } else { //'indexed == $param->format
-                $schema->type = 'array';
-            }
-        } else {
-            $target = $schema;
-            if ($param->multiple) {
-                $schema->type = 'array';
-                $schema->items = new stdClass;
-                $target = $schema->items;
-            }
-            $target->type = 'object';
-            if (!empty($param->properties)) {
-                $target->properties = new stdClass;
-                foreach ($param->properties as $name => $child) {
-                    $sch = $target->properties->{$name} = new stdClass();
-                    $this->setProperties($child, $sch);
-                }
-            }
-        }
-    }
-
     private function parameter(Param $param, $description = '')
     {
         $p = (object)[
@@ -377,6 +362,48 @@ class Explorer implements ProvidesMultiVersionApiInterface
         }
 
         return $p;
+    }
+
+    private function setProperties(Type $param, stdClass $schema)
+    {
+        //primitives
+        if ($param->scalar) {
+            if ($param->multiple) {
+                $schema->type = 'array';
+                $schema->items = new stdClass;
+                $this->scalarProperties($schema->items, $param);
+            } else {
+                $this->scalarProperties($schema, $param);
+            }
+            //TODO: $p->items and $p->uniqueItems boolean
+        } elseif ('array' === $param->type) {
+            if ('associative' == $param->format) {
+                $schema->type = 'object';
+            } else { //'indexed == $param->format
+                $schema->type = 'array';
+                $schema->items = new stdClass;
+            }
+        } else {
+            $target = $schema;
+            if ($param->multiple) {
+                $schema->type = 'array';
+                $schema->items = new stdClass;
+                $target = $schema->items;
+            }
+            if ($param->type === UploadedFileInterface::class) {
+                $target->type = 'string';
+                $target->format = 'binary';
+                return;
+            }
+            $target->type = 'object';
+            if (!empty($param->properties)) {
+                $target->properties = new stdClass;
+                foreach ($param->properties as $name => $child) {
+                    $sch = $target->properties->{$name} = new stdClass();
+                    $this->setProperties($child, $sch);
+                }
+            }
+        }
     }
 
     private function scalarProperties(stdClass $s, Type $param)
@@ -405,8 +432,8 @@ class Explorer implements ProvidesMultiVersionApiInterface
         if (!$param instanceof Param) {
             return;
         }
-        if ($param->default) {
-            $s->default = $param->default;
+        if ($param->default[0]) {
+            $s->default = $param->default[1];
         }
         if ($param->choice) {
             $s->enum = $param->choice;
@@ -430,12 +457,18 @@ class Explorer implements ProvidesMultiVersionApiInterface
         return (object)['$ref' => "#/components/requestBodies/{$param->type}"];
     }
 
-    private function modelName(Route $route, int $version)
+    private function modelName(Route $route, int $version): string
     {
         return ucfirst($this->operationId($route, $version, true)) . 'Model';
     }
 
-    private function responses(Route $route)
+    /**
+     * @param Route $route
+     * @return array[]
+     * @throws HttpException
+     * @throws ReflectionException
+     */
+    private function responses(Route $route): array
     {
         $code = '200';
         if (isset($route->status)) {
@@ -462,6 +495,7 @@ class Explorer implements ProvidesMultiVersionApiInterface
         }
 
         if (is_array($throws = $route->throws ?? null)) {
+            /** @var ComposerInterface $composer */
             $composer = ClassName::get(ComposerInterface::class);
             foreach ($throws as $throw) {
                 $r[$throw['code']] = ['description' => $throw['message']];

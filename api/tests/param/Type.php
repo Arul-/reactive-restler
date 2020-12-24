@@ -2,6 +2,14 @@
 
 class Type
 {
+    /**
+     * @param int $selected {@select one,two,three}{@choice 1,2,3}
+     * @return int
+     */
+    function postEnumerator(int $selected)
+    {
+        return $selected;
+    }
 
     /**
      * UUID validation

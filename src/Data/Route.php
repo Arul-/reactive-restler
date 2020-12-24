@@ -5,16 +5,25 @@ namespace Luracast\Restler\Data;
 
 
 use GraphQL\Type\Definition\ResolveInfo;
-use Luracast\Restler\Contracts\{RequestMediaTypeInterface,
+use Luracast\Restler\Contracts\{AuthenticationInterface,
+    RequestMediaTypeInterface,
     ResponseMediaTypeInterface,
     SelectivePathsInterface,
-    ValidationInterface};
+    ValidationInterface
+};
+use Luracast\Restler\Defaults;
 use Luracast\Restler\Exceptions\HttpException;
+use Luracast\Restler\Exceptions\InvalidAuthCredentials;
 use Luracast\Restler\GraphQL\Error;
+use Luracast\Restler\GraphQL\GraphQL;
+use Luracast\Restler\ResponseHeaders;
+use Luracast\Restler\Restler;
 use Luracast\Restler\Router;
-use Luracast\Restler\Utils\{ClassName, CommentParser, Type, Validator};
+use Luracast\Restler\Utils\{ClassName, CommentParser, Convert, Type, Validator};
+use Psr\Http\Message\ServerRequestInterface;
 use ReflectionFunctionAbstract;
 use ReflectionMethod;
+use ReflectionUnionType;
 use Throwable;
 
 class Route extends ValueObject
@@ -23,6 +32,12 @@ class Route extends ValueObject
     const ACCESS_HYBRID = 1;
     const ACCESS_PROTECTED_BY_COMMENT = 2;
     const ACCESS_PROTECTED_METHOD = 3;
+
+    const ACCESS = [
+        'public' => self::ACCESS_PUBLIC,
+        'hybrid' => self::ACCESS_HYBRID,
+        'protected' => self::ACCESS_PROTECTED_BY_COMMENT
+    ];
 
 
     const PROPERTY_TAGS = [
@@ -125,7 +140,7 @@ class Route extends ValueObject
     public $deprecated = false;
 
 
-    public $resource = ['summary' => '', 'description' => ''];
+    public $resource = ['path' => '', 'summary' => '', 'description' => ''];
 
     /**
      * @var array
@@ -187,18 +202,28 @@ class Route extends ValueObject
                 }
             }
         }
-        $methodUrl = strtolower($method->getName());
-        if ($url = $metadata['url'][0] ?? false) {
-            $route->httpMethod = strtoupper(strtok($url, ' '));
-        } elseif (preg_match_all('/^(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS)/i', $methodUrl, $matches)) {
+        //$methodName = $metadata['url'][0] ?? $method->getName();
+        //$methodName = Text::slug(strtok($methodName, '/'),'');
+        $methodName = $method->getName();
+
+        if (preg_match_all('/^(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS)/i', $methodName, $matches)) {
             $route->httpMethod = strtoupper($matches[0][0]);
+            $methodName = substr($methodName, strlen($route->httpMethod));
         } else {
             $route->httpMethod = 'GET';
         }
-
+        $route->url = str_replace('index', '', $methodName);
         $route->action = [$method->class, $method->getName()];
+        $reflectionType = $method->hasReturnType() ? $method->getReturnType() : null;
+        if ($reflectionType instanceof ReflectionUnionType) {
+            $types = $reflectionType->getTypes();
+            if('null' === end($types)->getName()){
+                $metadata['return']['type'][] = 'null';
+            }
+            $reflectionType = $types[0];
+        }
         $route->return = Returns::fromReturnType(
-            $method->hasReturnType() ? $method->getReturnType() : null,
+            $reflectionType,
             $metadata['return'] ?? ['type' => ['array']],
             $scope
         );
@@ -264,114 +289,6 @@ class Route extends ValueObject
         return $instance;
     }
 
-    public function setRequestMediaTypes(string ...$types): void
-    {
-        Router::_setMediaTypes(
-            RequestMediaTypeInterface::class,
-            $types,
-            $this->requestFormatMap,
-            $this->requestMediaTypes
-        );
-    }
-
-    public function setResponseMediaTypes(string ...$types): void
-    {
-        Router::_setMediaTypes(
-            ResponseMediaTypeInterface::class,
-            $types,
-            $this->responseFormatMap,
-            $this->responseMediaTypes
-        );
-    }
-
-    public function addParameter(Param $parameter)
-    {
-        $parameter->index = count($this->parameters);
-        $this->parameters[$parameter->name] = $parameter;
-    }
-
-    public function call(array $arguments, bool $validate = true, callable $maker = null)
-    {
-        if (!$maker) {
-            $maker = function ($class) {
-                return new $class;
-            };
-        }
-        $this->apply($arguments);
-        if ($validate) {
-            $this->validate($maker(Validator::class), $maker);
-        }
-        return $this->handle(1, $maker);
-    }
-
-    public function apply(array $arguments): array
-    {
-        $p = [];
-        foreach ($this->parameters as $parameter) {
-            $p[$parameter->index] = $arguments[$parameter->name]
-                ?? $arguments[$parameter->index]
-                ?? $parameter->default
-                ?? null;
-        }
-        if (empty($p) && !empty($arguments)) {
-            $this->arguments = array_values($arguments);
-        } else {
-            $this->arguments = $p;
-        }
-        return $p;
-    }
-
-    public function validate(ValidationInterface $validator, callable $maker)
-    {
-        foreach ($this->parameters as $param) {
-            $i = $param->index;
-            $info = &$param->rules;
-            if (!isset ($info['validate']) || $info['validate'] != false) {
-                if (isset($info['method'])) {
-                    $param->apiClassInstance = $maker($this->action[0]);
-                }
-                $value = $this->arguments[$i];
-                $this->arguments[$i] = null;
-                if (empty(Validator::$exceptions)) {
-                    $info['autofocus'] = true;
-                }
-                $this->arguments[$i] = $validator::validate($value, $param);
-                unset($info['autofocus']);
-            }
-        }
-    }
-
-    public function __clone()
-    {
-        $this->parameters = array_map(function ($param) {
-            return clone $param;
-        }, $this->parameters);
-        $this->return = clone $this->return;
-    }
-
-    public function handle(int $access, callable $maker)
-    {
-        $action = $this->action;
-        switch ($access) {
-            case self::ACCESS_PROTECTED_METHOD:
-                $object = $maker($action[0]);
-                $reflectionMethod = new ReflectionMethod(
-                    $object,
-                    $action[1]
-                );
-                $reflectionMethod->setAccessible(true);
-                return $reflectionMethod->invokeArgs(
-                    $object,
-                    $this->arguments
-                );
-            default:
-                if (is_array($action) && count($action) && is_string($action[0]) && class_exists($action[0])) {
-                    $action[0] = $maker($action[0]);
-                }
-                return call_user_func_array($action, $this->arguments);
-        }
-    }
-
     public function filterParams(bool $include, string $from = Param::FROM_BODY): array
     {
         return array_filter(
@@ -380,40 +297,6 @@ class Route extends ValueObject
                 return $include ? $from === $v->from : $from !== $v->from;
             }
         );
-    }
-
-    /**
-     * @return array
-     */
-    public function getArguments(): array
-    {
-        return $this->arguments;
-    }
-
-    public function toGraphQL(): array
-    {
-        $config = [
-            'type' => $this->return->toGraphQL(),
-            'args' => [],
-            'resolve' => function ($root, $args, array $context, ResolveInfo $info) {
-                try {
-                    $context['root'] = $root;
-                    $context['info'] = $info;
-                    return $this->call($args, true, $context['maker']);
-                } catch (Throwable $throwable) {
-                    $source = strtolower(pathinfo($throwable->getFile(), PATHINFO_FILENAME));
-                    throw new Error($source, $throwable);
-                }
-            }
-        ];
-        /**
-         * @var string $name
-         * @var Type $param
-         */
-        foreach ($this->parameters as $name => $param) {
-            $config['args'][$name] = $param->toGraphQL();
-        }
-        return $config;
     }
 
     private function setAuthAndFilters(): void
@@ -444,23 +327,243 @@ class Route extends ValueObject
         }
     }
 
-    private function setAccess(string $name, ?string $access = null, ReflectionFunctionAbstract $function, ?array $metadata = null, array $scope = []): void
+    public function addParameter(Param $parameter)
     {
+        $parameter->index = count($this->parameters);
+        $this->parameters[$parameter->name] = $parameter;
+    }
+
+    public function __clone()
+    {
+        $this->parameters = array_map(function ($param) {
+            return clone $param;
+        }, $this->parameters);
+        $this->return = clone $this->return;
+    }
+
+    /**
+     * @return array
+     */
+    public function getArguments(): array
+    {
+        return $this->arguments;
+    }
+
+    public function toGraphQL(): array
+    {
+        $config = [
+            'type' => $this->return->toGraphQL(),
+            'args' => [],
+            'resolve' => function ($root, $args, array $context, ResolveInfo $info) {
+                try {
+                    /** @var Restler $restler */
+                    $restler = $context['restler'];
+                    $authenticated = $this->authenticate(
+                        $context['request'],
+                        $restler->responseHeaders,
+                        $context['maker'],
+                        max($this->access, GraphQL::$apiAccessLevel ?? Defaults::$apiAccessLevel)
+                    );
+                    $context['root'] = $root;
+                    $context['info'] = $info;
+                    /** @var Convert $convert */
+                    $convert = $context['maker'](Convert::class);
+                    return $convert->toArray($this->call($args, $authenticated, true, $context['maker']));
+                } catch (Throwable $throwable) {
+                    $source = strtolower(pathinfo($throwable->getFile(), PATHINFO_FILENAME));
+                    throw new Error($source, $throwable);
+                }
+            }
+        ];
+        /**
+         * @var string $name
+         * @var Type $param
+         */
+        foreach ($this->parameters as $name => $param) {
+            $config['args'][$name] = $param->toGraphQL();
+        }
+        return $config;
+    }
+
+    public function authenticate(
+        ServerRequestInterface $request,
+        ResponseHeaders $responseHeaders,
+        callable $maker,
+        ?int $accessLevel = null
+    ): bool {
+        if (is_null($accessLevel)) {
+            $accessLevel = $this->access;
+        }
+        if (!$accessLevel) {
+            return false;
+        }
+        if ($accessLevel > self::ACCESS_HYBRID && empty($this->authClasses)) {
+            throw new HttpException(
+                403,
+                'access denied. no applicable authentication class.'
+            );
+        }
+        $unauthorized = false;
+        foreach ($this->authClasses as $i => $authClass) {
+            try {
+                /** @var AuthenticationInterface $auth */
+                $auth = call_user_func($maker, $authClass, $this);
+                if (!$auth->_isAllowed($request, $responseHeaders)) {
+                    throw new HttpException(401, null, ['from' => $authClass]);
+                }
+                $unauthorized = false;
+                //make this auth class as the first one
+                array_splice($this->authClasses, $i, 1);
+                array_unshift($this->authClasses, $authClass);
+                break;
+            } catch (InvalidAuthCredentials $e) { //provided credentials does not authenticate
+                throw $e;
+            } catch (HttpException $e) {
+                if (!$unauthorized) {
+                    $unauthorized = $e;
+                }
+            }
+        }
+        if ($accessLevel > self::ACCESS_HYBRID && $unauthorized) {
+            throw $unauthorized;
+        }
+        return $unauthorized ? false : true;
+    }
+
+    public function call(array $arguments, bool $authenticated = false, bool $validate = true, callable $maker = null)
+    {
+        if (!$maker) {
+            $maker = function ($class) {
+                return new $class;
+            };
+        }
+        $this->apply($arguments, $authenticated);
+        if ($validate) {
+            $this->validate($maker(Validator::class), $maker);
+        }
+        return $this->handle($maker);
+    }
+
+    public function apply(array $arguments, bool $authenticated = false): array
+    {
+        $p = [];
+        foreach ($this->parameters as $parameter) {
+            if (
+                Param::ACCESS_PRIVATE === $parameter->access ||
+                (!$authenticated && Param::ACCESS_PROTECTED === $parameter->access)
+            ) {
+                $p[$parameter->index] = $parameter->default[1];
+            } elseif ($parameter->variadic) {
+                $p[$parameter->index] = $arguments[$parameter->name]
+                    ?? array_slice($arguments, $parameter->index);
+            } else {
+                $p[$parameter->index] = $arguments[$parameter->name]
+                    ?? $arguments[$parameter->index]
+                    ?? $parameter->default[1]
+                    ?? null;
+            }
+        }
+        if (empty($p) && !empty($arguments)) {
+            $this->arguments = array_values($arguments);
+        } else {
+            $this->arguments = $p;
+        }
+        return $p;
+    }
+
+    public function validate(ValidationInterface $validator, callable $maker)
+    {
+        foreach ($this->parameters as $param) {
+            $i = $param->index;
+            $info = &$param->rules;
+            if (!isset ($info['validate']) || $info['validate'] != false) {
+                if (isset($info['method'])) {
+                    $param->apiClassInstance = $maker($this->action[0]);
+                }
+                $value = $this->arguments[$i];
+                $this->arguments[$i] = null;
+                if (empty(Validator::$exceptions)) {
+                    $info['autofocus'] = true;
+                }
+                $this->arguments[$i] = $validator::validate($value, $param);
+                unset($info['autofocus']);
+            }
+        }
+    }
+
+    public function handle(callable $maker)
+    {
+        $arguments = [];
+        if ($this->parameters) {
+            foreach ($this->parameters as $param) {
+                $argument = $this->arguments[$param->index];
+                //expand variadic parameters
+                $param->variadic
+                    ? $arguments = array_merge($arguments, $argument)
+                    : $arguments [] = $argument;
+            }
+        } else {
+            $arguments = $this->arguments;
+        }
+        $action = $this->action;
+        switch ($this->access) {
+            case self::ACCESS_PROTECTED_METHOD:
+                $object = $maker($action[0]);
+                $reflectionMethod = new ReflectionMethod(
+                    $object,
+                    $action[1]
+                );
+                $reflectionMethod->setAccessible(true);
+                return $reflectionMethod->invokeArgs(
+                    $object,
+                    $arguments
+                );
+            default:
+                if (is_array($action) && count($action) && is_string($action[0]) && class_exists($action[0])) {
+                    $action[0] = $maker($action[0]);
+                }
+                return call_user_func_array($action, $arguments);
+        }
+    }
+
+    public function __toString()
+    {
+        if (is_array($this->action)) {
+            $action = $this->action;
+            if (!is_string($action[0])) {
+                $action[0] = get_class($action[0]);
+            }
+            return implode('::', $action) . '()';
+        }
+        if (is_string($this->action)) {
+            return $this->action . '()';
+        }
+        return 'closure()';
+    }
+
+    private function setAccess(
+        string $name,
+        ?string $access = null,
+        ReflectionFunctionAbstract $function,
+        ?array $metadata = null,
+        array $scope = []
+    ): void {
         if ($function->isProtected()) {
             $this->access = self::ACCESS_PROTECTED_METHOD;
-        } elseif (is_string($access)) {
-            if ('protected' == $access) {
-                $this->access = self::ACCESS_PROTECTED_BY_COMMENT;
-            } elseif ('hybrid' == $access) {
-                $this->access = self::ACCESS_HYBRID;
-            }
+        } elseif ($access = self::ACCESS[$access ?? ''] ?? null) {
+            $this->access = $access;
         } elseif (isset($metadata['protected'])) {
             $this->access = self::ACCESS_PROTECTED_BY_COMMENT;
         }
     }
 
-    private function setClassProperties(string $name, ?array $class = null, ReflectionFunctionAbstract $function, ?array $metadata = null, array $scope = []): void
-    {
+    private function setClassProperties(
+        string $name,
+        ?array $class = null,
+        ReflectionFunctionAbstract $function,
+        ?array $metadata = null,
+        array $scope = []
+    ): void {
         $classes = $class ?? [];
         foreach ($classes as $class => $value) {
             $class = ClassName::resolve($class, $scope);
@@ -471,9 +574,16 @@ class Route extends ValueObject
         }
     }
 
-    private function overrideFormats(string $name, ?array $formats = null, ReflectionFunctionAbstract $function, ?array $metadata = null, array $scope = []): void
-    {
-        if (!$formats) return;
+    private function overrideFormats(
+        string $name,
+        ?array $formats = null,
+        ReflectionFunctionAbstract $function,
+        ?array $metadata = null,
+        array $scope = []
+    ): void {
+        if (!$formats) {
+            return;
+        }
         $overrides = [];
         $resolver = function ($value) use ($scope, &$overrides) {
             $value = ClassName::resolve(trim($value), $scope);
@@ -509,5 +619,25 @@ class Route extends ValueObject
                 $this->setResponseMediaTypes(...$formats);
 
         }
+    }
+
+    public function setRequestMediaTypes(string ...$types): void
+    {
+        Router::_setMediaTypes(
+            RequestMediaTypeInterface::class,
+            $types,
+            $this->requestFormatMap,
+            $this->requestMediaTypes
+        );
+    }
+
+    public function setResponseMediaTypes(string ...$types): void
+    {
+        Router::_setMediaTypes(
+            ResponseMediaTypeInterface::class,
+            $types,
+            $this->responseFormatMap,
+            $this->responseMediaTypes
+        );
     }
 }

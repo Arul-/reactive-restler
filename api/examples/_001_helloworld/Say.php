@@ -5,7 +5,7 @@
  */
 class Say
 {
-    function hello(string $to = 'world'): string
+    function hello($to = 'world'):string
     {
         return "Hello $to!";
     }

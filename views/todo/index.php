@@ -4,7 +4,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-    <base href="{$basePath}/examples/_013_html/"/>
+    <base href="{$path}"/>
     <title>{$title}</title>
 
     <!-- Including the jQuery UI Theme -->

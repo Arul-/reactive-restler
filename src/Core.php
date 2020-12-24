@@ -12,8 +12,7 @@ use Luracast\Restler\Contracts\{AuthenticationInterface,
     ResponseMediaTypeInterface,
     SelectivePathsInterface,
     UsesAuthenticationInterface,
-    ValidationInterface
-};
+    ValidationInterface};
 use Luracast\Restler\Data\{Param, Route};
 use Luracast\Restler\Exceptions\{HttpException, InvalidAuthCredentials};
 use Luracast\Restler\MediaTypes\{Json, UrlEncoded, Xml};
@@ -194,8 +193,9 @@ abstract class Core
             $this->_baseUrl = $uri->withPath('')->withQuery('');
         } else {
             $path = Text::removeCommon($path, ltrim($scriptName, $slash));
+            $base = empty($path) ? $fullPath : substr($fullPath, 0, -strlen($path));
             $this->_baseUrl = $uri
-                ->withPath(rtrim(substr($fullPath, 0, -strlen($path)), $slash))
+                ->withPath($base)
                 ->withQuery('');
         }
         if (Defaults::$useUrlBasedVersioning && strlen($path) && $path[0] == 'v') {
@@ -570,6 +570,7 @@ abstract class Core
      */
     protected function validate()
     {
+        $this->_route->apply($this->_route->data, $this->_authenticated);
         if (!$this->defaults->autoValidationEnabled) {
             return;
         }
@@ -584,8 +585,7 @@ abstract class Core
      */
     public function call(Route $route)
     {
-        $access = max($this->defaults->apiAccessLevel, $route->access);
-        return $route->handle($access, [$this, 'make']);
+        return $route->handle([$this, 'make']);
     }
 
     abstract protected function compose($response = null);

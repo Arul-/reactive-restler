@@ -45,7 +45,8 @@ class Client
         $session->start();
         $this->html->data['session_id'] = $session->getId();
         if (!static::$serverUrl) {
-            $base = (string)$this->restler->baseUrl . '/examples/';
+            $path = rtrim($restler->baseUrl, '/') . '/' . $restler->path;
+            $base = explode('_014_oauth2_client', $path)[0];
             static::$serverUrl =
                 $base . '_015_oauth2_server';
             static::$replyBackUrl = $base . '_014_oauth2_client/authorized';
@@ -78,10 +79,10 @@ class Client
      */
     public function index()
     {
-        return array(
+        return [
             'authorize_url' => static::$authorizeRoute,
             'authorize_redirect_url' => static::$replyBackUrl
-        );
+        ];
     }
 
     /**
@@ -117,16 +118,16 @@ class Client
         // the user denied the authorization request
         if (!$code) {
             $this->html->view = 'oauth2/client/denied.twig';
-            return array('error' => compact('error_description', 'error_uri'));
+            return ['error' => compact('error_description', 'error_uri')];
         }
         // exchange authorization code for access token
-        $query = array(
+        $query = [
             'grant_type' => 'authorization_code',
             'code' => $code,
             'client_id' => static::$clientId,
             'client_secret' => static::$clientSecret,
             'redirect_uri' => static::$replyBackUrl,
-        );
+        ];
         /** @var HttpClientInterface $clientClass */
         $clientClass = ClassName::get(HttpClientInterface::class);
         try {

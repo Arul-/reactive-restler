@@ -15,10 +15,10 @@ class Amf extends Dependent implements RequestMediaTypeInterface, ResponseMediaT
      * @return array {@type associative}
      *               CLASS_NAME => vendor/project:version
      */
-    public function dependencies()
+    public static function dependencies(): array
     {
         return [
-            'ZendAmf\Parser\Amf3\Deserializer' => 'zendframework/zendamf:dev-master',
+            'ZendAmf\Parser\Amf3\Deserializer' => 'zendframework/zendamf',
         ];
     }
 
@@ -32,7 +32,7 @@ class Amf extends Dependent implements RequestMediaTypeInterface, ResponseMediaT
         return $stream->getStream();
     }
 
-    public function decode($data)
+    public function decode(string $data)
     {
         $stream = new InputStream(substr($data, 1));
         $deserializer = new Deserializer($stream);

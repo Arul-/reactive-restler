@@ -56,7 +56,14 @@ Feature: Testing Documentation Example
     Then the response status code should be 404
     And the response should be JSON
 
+  @default
   Scenario: Checking Redirect of Explorer
     When I request "explorer"
     Then the response redirects to "explorer/"
+    And the response should be HTML
+
+  @fpm
+  Scenario: Checking Redirect of Explorer
+    When I request "examples/_008_documentation/explorer"
+    Then the response redirects to "examples/_008_documentation/explorer/"
     And the response should be HTML

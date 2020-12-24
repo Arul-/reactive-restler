@@ -1,8 +1,30 @@
 <?php
+
 namespace v2;
 
+use Luracast\Restler\Data\ValueObject;
 use Luracast\Restler\Exceptions\HttpException;
-use stdClass;
+
+class Unit extends ValueObject
+{
+    public $height = 0.0;
+    public $weight = 0.0;
+}
+
+class Result
+{
+    public $bmi = 0.0;
+    public $message = '';
+    /**
+     * @var Unit
+     */
+    public $metric;
+    /**
+     * @var Unit
+     */
+    public $imperial;
+}
+
 
 class BodyMassIndex
 {
@@ -15,12 +37,12 @@ class BodyMassIndex
      * @param string $height height along with unit
      * @param string $weight weight along with unit
      *
+     * @return Result
      * @throws HttpException 400
-     * @return object
      */
     function index($height = "162.6cm", $weight = "84.0kg")
     {
-        $result = new stdClass();
+        $result = new Result();
 
         //	1 pound = 0.45359237 kilograms
         //	1 meter = 3.2808399  feet
@@ -94,14 +116,14 @@ class BodyMassIndex
         } else {
             $result->message = 'Obesity';
         }
-        $result->metric = array(
+        $result->metric = Unit::__set_state([
             'height' => "$cm centimeters",
             'weight' => "$weight kilograms"
-        );
-        $result->imperial = array(
+        ]);
+        $result->imperial = Unit::__set_state([
             'height' => "$feet feet $inches inches",
             'weight' => "$lb pounds"
-        );
+        ]);
         return $result;
     }
 }

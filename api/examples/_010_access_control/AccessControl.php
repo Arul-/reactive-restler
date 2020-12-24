@@ -9,7 +9,6 @@ use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\OpenApi3\Security\ApiKeyAuth;
 use Luracast\Restler\OpenApi3\Security\Scheme;
 use Luracast\Restler\ResponseHeaders;
-use Luracast\Restler\StaticProperties;
 use Luracast\Restler\Utils\ClassName;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -17,16 +16,25 @@ class AccessControl implements AccessControlInterface, SelectivePathsInterface, 
 {
     use SelectivePathsTrait;
 
-    public $requires = 'user';
-    public $role = 'user';
-    public $id = null;
-
     /** @var string[][] hardcoded to string[password]=>[id,role] for brevity */
     private static $users = [
         '123' => ['a', 'user'],
         '456' => ['b', 'user'],
         '789' => ['c', 'admin']
     ];
+    public $requires = 'user';
+    public $role = 'user';
+    public $id = null;
+
+    public static function getWWWAuthenticateString(): string
+    {
+        return 'Query name="api_key"';
+    }
+
+    public static function scheme(): Scheme
+    {
+        return new ApiKeyAuth('api_key', ApiKeyAuth::IN_QUERY);
+    }
 
     /**
      * @param string $owner
@@ -36,9 +44,15 @@ class AccessControl implements AccessControlInterface, SelectivePathsInterface, 
      */
     public function _verifyPermissionForDocumentOwnedBy(string $owner, bool $throwException = false): bool
     {
-        if ('admin' === $this->role) return true; //comment this line to make it owner only
-        if ($owner === $this->id) return true;
-        if (!$throwException) return false;
+        if ('admin' === $this->role) {
+            return true;
+        } //comment this line to make it owner only
+        if ($owner === $this->id) {
+            return true;
+        }
+        if (!$throwException) {
+            return false;
+        }
         throw new HttpException(403, 'permission denied.');
     }
 
@@ -50,7 +64,7 @@ class AccessControl implements AccessControlInterface, SelectivePathsInterface, 
      */
     public function _isAllowed(ServerRequestInterface $request, ResponseHeaders $responseHeaders): bool
     {
-        if (!$api_key = $request->getQueryParams()['api_key'] ?? false) {
+        if (!$api_key = $request->getQueryParams()['api_key'] ?? $request->getHeaderLine('api_key') ?? false) {
             return false;
         }
         /** @var UserIdentificationInterface $userClass */
@@ -65,15 +79,5 @@ class AccessControl implements AccessControlInterface, SelectivePathsInterface, 
         $this->id = $id;
         //Role-based access control (RBAC)
         return $role === 'admin' || $role === $this->requires;
-    }
-
-    public static function getWWWAuthenticateString(): string
-    {
-        return 'Query name="api_key"';
-    }
-
-    public static function scheme(): Scheme
-    {
-        return new ApiKeyAuth('api_key', ApiKeyAuth::IN_QUERY);
     }
 }

@@ -22,7 +22,7 @@ class Type
      */
     public static function isScalar(string $type): bool
     {
-        return (boolean)strpos(static::SCALAR, strtolower($type));
+        return (boolean)stripos(static::SCALAR, strtolower($type));
     }
 
     /**
@@ -31,7 +31,7 @@ class Type
      */
     public static function isPrimitive(string $type): bool
     {
-        return (boolean)strpos(static::PRIMITIVE, strtolower($type));
+        return (boolean)stripos(static::PRIMITIVE, strtolower($type));
     }
 
     /**
@@ -40,12 +40,33 @@ class Type
      */
     public static function isObject(string $type): bool
     {
-        return !(boolean)strpos(static::SIMPLE, strtolower($type));
+        return !(boolean)stripos(static::SIMPLE, strtolower($type));
     }
 
     public static function implements(string $class, string $interface): bool
     {
         return isset(class_implements($class)[$interface]);
+    }
+
+
+    public static function subclasses(string $parent): ?array
+    {
+        if (class_exists($parent)) {
+            return array_filter(get_declared_classes(), function ($class) use ($parent) {
+                is_subclass_of($class, $parent);
+            });
+        }
+        return null;
+    }
+
+    public static function implementations(string $interface): ?array
+    {
+        if (interface_exists($interface)) {
+            return array_filter(get_declared_classes(), function ($class) use ($interface) {
+                in_array($interface, class_implements($class));
+            });
+        }
+        return null;
     }
 
     /**

@@ -1,8 +1,14 @@
 <?php namespace Luracast\Restler\Data;
 
 use Exception;
+use GraphQL\Type\Definition\InputObjectType;
+use GraphQL\Type\Definition\ObjectType;
+use GraphQL\Type\Definition\Type as GraphQLType;
 use Luracast\Restler\Defaults;
+use Luracast\Restler\Exceptions\HttpException;
+use Luracast\Restler\GraphQL\GraphQL;
 use Luracast\Restler\Router;
+use Luracast\Restler\Utils\ClassName;
 use Luracast\Restler\Utils\CommentParser;
 use Luracast\Restler\Utils\Text;
 use Luracast\Restler\Utils\Type as TypeUtil;
@@ -10,6 +16,7 @@ use ReflectionFunction;
 use ReflectionFunctionAbstract;
 use ReflectionMethod;
 use ReflectionParameter;
+use ReflectionUnionType;
 use Reflector;
 
 /**
@@ -26,6 +33,16 @@ class Param extends Type
     const FROM_QUERY = 'query';
     const FROM_BODY = 'body';
     const FROM_HEADER = 'header';
+
+    const ACCESS_PUBLIC = 0;
+    const ACCESS_PROTECTED = 1;
+    const ACCESS_PRIVATE = 2;
+
+    const ACCESS = [
+        'public' => self::ACCESS_PUBLIC,
+        'protected' => self::ACCESS_PROTECTED,
+        'private' => self::ACCESS_PRIVATE,
+    ];
 
     /**
      * Name of the variable being validated
@@ -47,9 +64,9 @@ class Param extends Type
      */
     public $field;
     /**
-     * @var mixed default value for the parameter
+     * @var array with hasDefault boolean as the first value and default value for the parameter as second
      */
-    public $default;
+    public $default = [false, null];
 
     /**
      * @var bool is it required or not
@@ -61,6 +78,11 @@ class Param extends Type
      *      in the http request
      */
     public $from;
+
+    /**
+     * @var bool variadic parameter, so needs expansion of array
+     */
+    public $variadic = false;
 
     /**
      * Should we attempt to fix the value?
@@ -159,6 +181,8 @@ class Param extends Type
      */
     public $method;
 
+    public $access = self::ACCESS_PUBLIC;
+
     /**
      * Instance of the API class currently being called. It will be null most of
      * the time. Only when method is defined it will contain an instance.
@@ -176,25 +200,11 @@ class Param extends Type
         return static::fromAbstract($method, $doc, $scope);
     }
 
-    public static function fromFunction(ReflectionFunction $function, ?array $doc = null, array $scope = []): array
-    {
-        if (empty($scope)) {
-            $scope = Router::scope($function->getClosureScopeClass());
-        }
-        return static::fromAbstract($function, $doc, $scope);
-    }
-
-    public static function fromParameter(ReflectionParameter $parameter, ?array $doc, array $scope): self
-    {
-        return static::from($parameter, $doc['param'][$parameter->getPosition()] ?? [], $scope);
-    }
-
     private static function fromAbstract(
         ReflectionFunctionAbstract $function,
         ?array $doc = null,
         array $scope = []
-    ): array
-    {
+    ): array {
         if (is_null($doc)) {
             try {
                 $doc = CommentParser::parse($function->getDocComment());
@@ -210,18 +220,30 @@ class Param extends Type
         return array_column($params, null, 'name');
     }
 
+    public static function fromParameter(ReflectionParameter $parameter, ?array $doc, array $scope): self
+    {
+        $param = static::from($parameter, $doc['param'][$parameter->getPosition()] ?? [], $scope);
+        if ($parameter->isVariadic()) {
+            $param->multiple = true;
+            $param->variadic = true;
+        }
+        return $param;
+    }
+
     protected static function from(?Reflector $reflector, array $metadata = [], array $scope = [])
     {
+        $hasDefault = false;
         $instance = new static();
         $types = $metadata['type'] ?? [];
         $properties = $metadata[CommentParser::$embeddedDataName] ?? [];
         $itemTypes = $properties['type'] ?? [];
         unset($properties['type']);
-        $instance->rules = $properties;
         $instance->description = $metadata['description'] ?? '';
-        if ($reflector && method_exists($reflector, 'isDefaultValueAvailable') && $reflector->isDefaultValueAvailable()) {
+        if ($reflector && method_exists($reflector,
+                'isDefaultValueAvailable') && $reflector->isDefaultValueAvailable()) {
             $default = $reflector->getDefaultValue();
-            $instance->default = $default;
+            $instance->default = [true, $default];
+            $hasDefault = true;
             $types[] = TypeUtil::fromValue($default);
         }
         if ($reflector && Defaults::$fullRequestDataName === $reflector->name) {
@@ -233,14 +255,24 @@ class Param extends Type
         } elseif (in_array('array', $types) && empty($itemTypes)) {
             array_unshift($itemTypes, 'string');
         }
+        if (method_exists($reflector, 'hasType') && $reflector->hasType()) {
+            $reflectionType = $reflector->getType();
+            if ($reflectionType instanceof ReflectionUnionType) {
+                $reflectionTypes = $reflectionType->getTypes();
+                if ('null' === end($reflectionTypes)->getName()) {
+                    $metadata['return']['type'][] = 'null';
+                }
+                $reflectionType = $reflectionTypes[0];
+            }
+        }
         $instance->apply(
-            method_exists($reflector, 'hasType') && $reflector->hasType()
-                ? $reflector->getType() : null,
+            $reflectionType ?? null,
             $types,
             $itemTypes,
             $scope
         );
-        $instance->required = TypeUtil::booleanValue($properties['required'] ?? $reflector && method_exists($reflector, 'isOptional') && !$reflector->isOptional());
+        $instance->required = TypeUtil::booleanValue($properties['required'] ?? $reflector && method_exists($reflector,
+                'isOptional') && !$reflector->isOptional());
         if ($reflector) {
             $instance->name = $reflector->getName();
             if (method_exists($reflector, 'getPosition')) {
@@ -263,6 +295,8 @@ class Param extends Type
         }
         $instance->pattern = $properties['pattern'] ?? null;
         $instance->message = $properties['message'] ?? null;
+        $instance->choice = $properties['choice'] ?? null;
+        unset($properties['choice']);
         $instance->fix = $properties['fix'] ?? false;
 
         $instance->from = $properties['from']
@@ -276,13 +310,89 @@ class Param extends Type
                 ?? Router::$formatsByName[$instance->name]
                 ?? null;
         }
+        if ($access = self::ACCESS[$properties['access'] ?? ''] ?? false) {
+            unset($properties['access']);
+            if (!$hasDefault) {
+                if (array_key_exists('default', $properties)) {
+                    $instance->default = [true, $properties['default']];
+                } elseif ($instance->nullable) {
+                    $instance->default = [true, null];
+                } else {
+                    throw new Exception('Invalid parameter. private or protected parameter requires ' .
+                        'default value either in the function or with {@default value} comment');
+                }
+            }
+            $instance->access = $access;
+        }
+        $instance->rules = $properties;
         return $instance;
+    }
+
+    public static function fromFunction(ReflectionFunction $function, ?array $doc = null, array $scope = []): array
+    {
+        if (empty($scope)) {
+            $scope = Router::scope($function->getClosureScopeClass());
+        }
+        return static::fromAbstract($function, $doc, $scope);
     }
 
     public static function filterArray(array $data, bool $onlyNumericKeys): array
     {
         $callback = $onlyNumericKeys ? 'is_numeric' : 'is_string';
         return array_filter($data, $callback, ARRAY_FILTER_USE_KEY);
+    }
+
+    public function toGraphQL()
+    {
+        if (in_array($this->type, GraphQL::INVALID_TYPES)) {
+            throw new HttpException(500, 'Parameter with data type `' . $this->type . '` is not supported');
+        }
+        $data = [];
+        if (GraphQL::$showDescriptions && $this->description) {
+            $data['description'] = $this->description;
+        }
+        if (!empty($this->choice)) {
+            $keys = $this->rules['select'] ?? $this->choice;
+            if (count($this->choice) !== count($keys)) {
+                throw new HttpException(500, '`@choice` and `@select` items count mismatch');
+            }
+            $type = GraphQL::enum([
+                'name' => ucfirst($this->name) . 'Enum',
+                'values' => array_combine($keys, $this->choice),
+            ]);
+        } elseif ($this->scalar) {
+            $type = $this->type !== 'bool' && in_array($this->name, Router::$prefixingParameterNames)
+                ? GraphQLType::id()
+                : call_user_func([GraphQLType::class, $this->type]);
+            if (!$this->required && $this->default[0]) {
+                $data['defaultValue'] = $this->default[1];
+            }
+        } else {
+            $class = ClassName::short($this->type) . 'Input';
+            if (isset(GraphQL::$definitions[$class])) {
+                $type = GraphQL::$definitions[$class];
+            } else {
+                $config = ['name' => $class, 'fields' => []];
+                if (is_array($this->properties)) {
+                    /** @var Type $property */
+                    foreach ($this->properties as $name => $property) {
+                        $config['fields'][$name] = $property->toGraphQL();
+                    }
+                }
+                $type = $this instanceof Param
+                    ? new InputObjectType($config)
+                    : new ObjectType($config);
+            }
+            GraphQL::$definitions[$class] = $type;
+        }
+        if (!$this->nullable) {
+            $type = GraphQLType::nonNull($type);
+        }
+        if ($this->multiple) {
+            $type = GraphQLType::listOf($type);
+        }
+        $data['type'] = $type;
+        return $data;
     }
 }
 

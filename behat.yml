@@ -2,7 +2,7 @@
 default:
   gherkin:
     filters:
-      tags: "~@cookie&&~@session"
+      tags: ~@fpm&&~@cookie&&~@session
   suites:
     default:
       contexts:
@@ -11,6 +11,8 @@ default:
 fpm:
   suites:
     default:
+      filters:
+        tags: ~@default&&~@cookie&&~@session
       contexts:
         - RestContext:
-            - http://localhost/restler4/
+            - http://localhost

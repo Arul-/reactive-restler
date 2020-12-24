@@ -18,7 +18,6 @@ class Currency
         }
 
         // let's format it as US currency
-        $m = new NumberFormatter("en-US", NumberFormatter::CURRENCY);
-        return $m->format($number);
+        return'$' . number_format($number, 2);
     }
 }

@@ -1,5 +1,6 @@
 <?php
 
+use DB\Task;
 use DB\TasksInterface;
 use DB\TasksStore;
 use Luracast\Restler\StaticProperties;
@@ -30,6 +31,7 @@ class Tasks
     }
 
     /**
+     * @return Task[]
      * @view todo/index
      */
     function index()
@@ -42,7 +44,7 @@ class Tasks
      *
      * @param int $id
      *
-     * @return \DB\Task
+     * @return Task
      *
      * @view todo/list  {@value response}
      */
