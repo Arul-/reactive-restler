@@ -20,7 +20,7 @@ class Text extends MediaType implements ResponseMediaTypeInterface
      */
     public function encode($data, ResponseHeaders $responseHeaders, bool $humanReadable = false)
     {
-        if (is_object($data) && !method_exists($data, '__toString')) {
+        if (!is_string($data) || (is_object($data) && !method_exists($data, '__toString'))) {
             $data = json_encode($data);
         }
         return (string)$data;
