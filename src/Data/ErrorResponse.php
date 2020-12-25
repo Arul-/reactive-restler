@@ -4,6 +4,7 @@
 namespace Luracast\Restler\Data;
 
 
+use _HumbugBox58fd4d9e2a25\___PHPSTORM_HELPERS\this;
 use Luracast\Restler\Contracts\GenericResponseInterface;
 use Luracast\Restler\Exceptions\HttpException;
 use Throwable;
@@ -120,6 +121,11 @@ class ErrorResponse implements GenericResponseInterface
     public function jsonSerialize()
     {
         return $this->response;
+    }
+
+    public function __toString()
+    {
+        return json_encode($this->jsonSerialize());
     }
 }
 
