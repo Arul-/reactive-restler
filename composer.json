@@ -9,7 +9,7 @@
     "guzzlehttp/guzzle": "~7",
     "ralouphie/getallheaders": "^2.0",
     "logicalsteps/async": "^2.0",
-    "hansott/psr7-cookies": "^2.0",
+    "hansott/psr7-cookies": "^3.0",
     "ringcentral/psr7": "^1.2"
   },
   "require-dev": {
