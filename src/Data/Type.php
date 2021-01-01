@@ -127,7 +127,7 @@ abstract class Type extends ValueObject
         $itemTypes = $metadata[CommentParser::$embeddedDataName]['type'] ?? [];
         $instance->description = $metadata['description'] ?? '';
         $instance->apply(
-            method_exists($reflector, 'hasType') && $reflector->hasType()
+            $reflector && method_exists($reflector, 'hasType') && $reflector->hasType()
                 ? $reflector->getType() : null,
             $types,
             $itemTypes,

@@ -255,7 +255,7 @@ class Param extends Type
         } elseif (in_array('array', $types) && empty($itemTypes)) {
             array_unshift($itemTypes, 'string');
         }
-        if (method_exists($reflector, 'hasType') && $reflector->hasType()) {
+        if ($reflector && method_exists($reflector, 'hasType') && $reflector->hasType()) {
             $reflectionType = $reflector->getType();
             if ($reflectionType instanceof ReflectionUnionType) {
                 $reflectionTypes = $reflectionType->getTypes();
