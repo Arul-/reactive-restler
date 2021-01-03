@@ -84,10 +84,10 @@ class JsonWebToken implements ExplorableAuthenticationInterface, SelectivePathsI
             if (static::$matchedAuthorizedParty && static::$matchedAuthorizedParty !== ($token->{'azp'} ?? null)) {
                 $this->accessDenied('Invalid Authorized Party.');
             }
-            if (static::$matchedClient && static::$matchedClient !== ($token->{'client_id'} ?? null)) {
+            if (static::$matchedClientIdentifier && static::$matchedClientIdentifier !== ($token->{'client_id'} ?? null)) {
                 $this->accessDenied('Invalid Client Identifier.');
             }
-            if ($id = ($token->{static::$userIdentifierProperty} ?? null)) {
+            if (!($id = ($token->{static::$userIdentifierProperty} ?? null))) {
                 $this->accessDenied('Invalid User Identifier.');
             };
             /** @var UserIdentificationInterface $userClass */
