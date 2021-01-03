@@ -26,7 +26,16 @@ class JsonWebToken implements ExplorableAuthenticationInterface, SelectivePathsI
     use SelectivePathsTrait;
 
     public static $publicKey = '';
-    public static $userIdentifierProperty = 'preferred_username';
+    public static $userIdentifierProperty = 'sub';
+
+    /** @var null|string Issuer */
+    public static $matchedIssuer = null;
+    /** @var null|string Audience */
+    public static $matchedAudience = null;
+    /** @var null|string Authorized party - the party to which the ID Token was issued */
+    public static $matchedAuthorizedParty = null;
+    /** @var null|string Client Identifier */
+    public static $matchedClientIdentifier = null;
 
     public $token;
 
@@ -66,7 +75,21 @@ class JsonWebToken implements ExplorableAuthenticationInterface, SelectivePathsI
             $header = $request->getHeaderLine('authorization');
             $jwt = trim((string)preg_replace('/^(?:\s+)?Bearer\s/', '', $header));
             $this->token = $token = JWT::decode($jwt, static::publicKey(), ['RS256']);
-            $id = $token->{static::$userIdentifierProperty};
+            if (static::$matchedIssuer && static::$matchedIssuer !== ($token->{'iss'} ?? null)) {
+                $this->accessDenied('Invalid Issuer.');
+            }
+            if (static::$matchedAudience && static::$matchedAudience !== ($token->{'aud'} ?? null)) {
+                $this->accessDenied('Invalid Audience.');
+            }
+            if (static::$matchedAuthorizedParty && static::$matchedAuthorizedParty !== ($token->{'azp'} ?? null)) {
+                $this->accessDenied('Invalid Authorized Party.');
+            }
+            if (static::$matchedClient && static::$matchedClient !== ($token->{'client_id'} ?? null)) {
+                $this->accessDenied('Invalid Client Identifier.');
+            }
+            if ($id = ($token->{static::$userIdentifierProperty} ?? null)) {
+                $this->accessDenied('Invalid User Identifier.');
+            };
             /** @var UserIdentificationInterface $userClass */
             $userClass = ClassName::get(UserIdentificationInterface::class);
             $userClass::setUniqueIdentifier($id);
