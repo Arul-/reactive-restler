@@ -12,8 +12,18 @@ use Psr\Http\Message\ServerRequestInterface;
 class JsonWebTokenAccessControl extends JsonWebToken implements AccessControlInterface
 {
     public static $rolesAccessor = ['realm_access', 'roles'];
-    public $requires = 'user';
+    public static $scopeAccessor = ['scope'];
+    public static $permissionsAccessor = ['resource_access', 'account', 'roles'];
+    //
     public $role = 'user';
+    public $roleRequired = null;
+    //
+    public $scope = null;
+    public $scopeRequired = null;
+    //
+    public $permission = null;
+    public $permissionRequired = null;
+    //
     public $id = null;
 
     public function _isAllowed(ServerRequestInterface $request, ResponseHeaders $responseHeaders): bool
@@ -21,28 +31,42 @@ class JsonWebTokenAccessControl extends JsonWebToken implements AccessControlInt
         if (!parent::_isAllowed($request, $responseHeaders)) {
             return false;
         }
-        $roles = $this->roles();
-        if (!in_array($this->requires, $roles)) {
-            $this->role = $roles[0];
-            $this->accessDenied('Insufficient Access Rights');
-        }
-        $this->role = $this->requires;
+        $this->check('role');
+        $this->check('scope');
+        $this->check('permission');
+
         return true;
     }
 
     /**
-     * @return array|null
+     * @param string $name
      * @throws HttpException
      */
-    private function roles(): array
+    private function check(string $name)
     {
         $p = $this->token;
-        foreach (static::$rolesAccessor as $property) {
+        $expected = $this->{$name . 'Required' . $name};
+        if (!$expected) {
+            return;
+        }
+        $accessor = static::${$name . 'sAccessor'};
+        foreach ($accessor as $property) {
             $p = $p->{$property} ?? null;
             if (!$p) {
-                $this->accessDenied('Roles not specified');
+                $this->accessDenied(ucfirst($name) . ' not specified');
             }
         }
-        return $p;
+        if (is_array($p)) {
+            if (!in_array($expected, $p)) {
+                $this->{$name} = $p[0];
+                $this->accessDenied('Insufficient ' . ucfirst($name));
+            }
+            $this->{$name} = $expected;
+        } elseif (is_string($p)) {
+            if (false === strpos($expected, $p)) {
+                $this->accessDenied('Insufficient ' . ucfirst($name));
+            }
+            $this->{$name} = $expected;
+        }
     }
 }
