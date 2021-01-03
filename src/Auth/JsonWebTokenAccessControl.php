@@ -12,7 +12,7 @@ use Psr\Http\Message\ServerRequestInterface;
 class JsonWebTokenAccessControl extends JsonWebToken implements AccessControlInterface
 {
     public static $rolesAccessor = ['realm_access', 'roles'];
-    public static $scopeAccessor = ['scope'];
+    public static $scopesAccessor = ['scope'];
     public static $permissionsAccessor = ['resource_access', 'account', 'roles'];
     //
     public $role = 'user';
@@ -42,10 +42,10 @@ class JsonWebTokenAccessControl extends JsonWebToken implements AccessControlInt
      * @param string $name
      * @throws HttpException
      */
-    private function check(string $name)
+    protected function check(string $name)
     {
         $p = $this->token;
-        $expected = $this->{$name . 'Required' . $name};
+        $expected = $this->{$name . 'Required'};
         if (!$expected) {
             return;
         }
@@ -57,16 +57,17 @@ class JsonWebTokenAccessControl extends JsonWebToken implements AccessControlInt
             }
         }
         if (is_array($p)) {
-            if (!in_array($expected, $p)) {
-                $this->{$name} = $p[0];
-                $this->accessDenied('Insufficient ' . ucfirst($name));
+            if (in_array($expected, $p)) {
+                $this->{$name} = $expected;
+                return;
             }
-            $this->{$name} = $expected;
+            $this->{$name} = $p[0];
         } elseif (is_string($p)) {
-            if (false === strpos($expected, $p)) {
-                $this->accessDenied('Insufficient ' . ucfirst($name));
+            if (false !== strpos($p, $expected)) {
+                $this->{$name} = $expected;
+                return;
             }
-            $this->{$name} = $expected;
         }
+        $this->accessDenied('Insufficient ' . ucfirst($name) . '. `' . $expected . '` ' . $name . ' is required.');
     }
 }
