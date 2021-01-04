@@ -17,7 +17,7 @@ abstract class Base implements CacheInterface
             function ($key) use ($default) {
                 return $this->get($key, $default);
             },
-            $keys
+            (array)$keys
         );
     }
 
@@ -30,7 +30,7 @@ abstract class Base implements CacheInterface
             function ($key, $value) use ($ttl) {
                 return $this->set($key, $value, $ttl);
             },
-            array_keys($values),
+            array_keys((array)$values),
             $values
         );
     }
@@ -40,6 +40,6 @@ abstract class Base implements CacheInterface
      */
     public function deleteMultiple($keys)
     {
-        return array_map([$this, 'delete'], $keys);
+        return array_map([$this, 'delete'], (array)$keys);
     }
 }
