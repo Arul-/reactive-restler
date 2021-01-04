@@ -21,7 +21,7 @@ use BadMethodCallException;
 
 class ArrayObject extends Base
 {
-    public function __construct($input = array())
+    public final function __construct($input = array())
     {
         parent::__construct($input, self::ARRAY_AS_PROPS);
     }
@@ -44,7 +44,7 @@ class ArrayObject extends Base
             // NO MOD functions
             case 'changeKeyCase':
                 $func = 'change_key_case';
-                //don't break;
+            //don't break;
             case 'chunk':
             case 'column':
             case 'slice':
