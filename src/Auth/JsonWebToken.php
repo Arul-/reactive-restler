@@ -99,6 +99,7 @@ class JsonWebToken implements ExplorableAuthenticationInterface, SelectivePathsI
         } catch (Throwable $throwable) {
             $this->accessDenied($throwable->getMessage(), $throwable);
         }
+        return false;
     }
 
     protected static function publicKey(): string
