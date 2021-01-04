@@ -5,6 +5,7 @@ namespace Luracast\Restler\Cache;
 
 
 use DateInterval;
+use DateTime;
 use Luracast\Restler\Defaults;
 
 class HumanReadable extends Base
@@ -30,9 +31,16 @@ class HumanReadable extends Base
         if (!file_exists($file)) {
             return $default;
         }
-        $value;
-        include($file);
-        return $value();
+        $value = include($file);
+        if (($expires = $value['expires'] ?? false)) {
+            if (time() <= $expires) {
+                $this->$this->delete($key);
+            } else {
+                $value['data'] ?? $default;
+            }
+        } else {
+            return $default;
+        }
     }
 
     /**
@@ -40,11 +48,8 @@ class HumanReadable extends Base
      */
     public function set($key, $value, $ttl = null)
     {
-        $timestamp = false;
-        if ($ttl instanceof DateInterval || is_int($ttl)) {
-            $timestamp = $this->timestamp($ttl);
-        }
-        //TODO: implement time to live
+        $timestamp = $this->timestamp($ttl);
+        $value = ['expires' => $timestamp, 'data' => $value];
         if (is_array($value)) {
             $s = '$o = array();' . PHP_EOL . PHP_EOL;
             $s .= '// ** THIS IS AN AUTO GENERATED FILE.'
@@ -75,7 +80,7 @@ class HumanReadable extends Base
             $s = 'return ' . var_export($value, true) . ';';
         }
         $file = $this->_file($key);
-        $r = @file_put_contents($file, '<?php $value=function(){' . PHP_EOL . $s . PHP_EOL . '};');
+        $r = @file_put_contents($file, "<?php $s");
         @chmod($file, 0777);
         if ($r === false) {
             $this->throwException();
@@ -109,11 +114,16 @@ class HumanReadable extends Base
 
     private function timestamp($ttl)
     {
-        $now = (new DateTime('now'))->getTimestamp();
-        if ($ttl instanceof DateInterval) {
-            $ttl = $ttl->getTimestamp() - $now;
+        if (is_null($ttl)) {
+            return false;
         }
-        return $now + $ttl;
+        $now = (new DateTime('now'));
+        if ($ttl instanceof DateInterval) {
+            return $now->add($ttl)->getTimestamp();
+        } elseif (is_int($ttl)) {
+            return $now->getTimestamp() + $ttl;
+        }
+        return 0;
     }
 
     private function _file($name)
