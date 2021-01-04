@@ -15,7 +15,7 @@ class PaginatedResponse implements GenericResponseInterface
     /** @var array */
     private $data;
 
-    private function __construct(array $data)
+    private final function __construct(array $data)
     {
         $this->data = $data;
     }

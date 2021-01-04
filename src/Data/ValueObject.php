@@ -8,6 +8,9 @@ use Luracast\Restler\Contracts\ValueObjectInterface;
  */
 class ValueObject implements ValueObjectInterface
 {
+    public final function __construct()
+    {
+    }
 
     /**
      * @param array $properties
