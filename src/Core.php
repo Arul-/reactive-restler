@@ -12,11 +12,12 @@ use Luracast\Restler\Contracts\{AuthenticationInterface,
     ResponseMediaTypeInterface,
     SelectivePathsInterface,
     UsesAuthenticationInterface,
-    ValidationInterface};
+    ValidationInterface
+};
 use Luracast\Restler\Data\{Param, Route};
 use Luracast\Restler\Exceptions\{HttpException, InvalidAuthCredentials};
 use Luracast\Restler\MediaTypes\{Json, UrlEncoded, Xml};
-use Luracast\Restler\Utils\{ClassName, Header, Text, Type, Validator};
+use Luracast\Restler\Utils\{ClassName, Convert, Header, Text, Type, Validator};
 use Psr\Http\Message\{ResponseInterface, ServerRequestInterface, UriInterface};
 use React\Promise\PromiseInterface;
 use ReflectionException;
@@ -424,8 +425,7 @@ abstract class Core
         string $accessControlRequestMethod = '',
         string $accessControlRequestHeaders = '',
         string $origin = ''
-    ): void
-    {
+    ): void {
         if (!$this->defaults->crossOriginResourceSharing || $requestMethod != 'OPTIONS') {
             return;
         }
@@ -664,7 +664,7 @@ abstract class Core
     protected function message(Throwable $e, string $origin)
     {
         if (!$this->responseFormat) {
-            $this->responseFormat = new Json();
+            $this->responseFormat = $this->container->make(Json::class);
         }
         if (!$e instanceof HttpException) {
             $e = new HttpException(500, $e->getMessage(), [], $e);
