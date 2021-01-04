@@ -14,26 +14,6 @@ trait SelectivePathsTrait
      */
     private static $excludedPaths = [];
 
-    public static function getIncludedPaths(): array
-    {
-        return static::$includedPaths;
-    }
-
-    public static function getExcludedPaths(): array
-    {
-        return static::$excludedPaths;
-    }
-
-    static function setIncludedPaths(string ...$included): void
-    {
-        static::$includedPaths = $included;
-    }
-
-    static function setExcludedPaths(string ...$excluded): void
-    {
-        static::$includedPaths = $excluded;
-    }
-
     static function isPathSelected(string $path): bool
     {
         $notInPath = true;
@@ -55,5 +35,25 @@ trait SelectivePathsTrait
             }
         }
         return true;
+    }
+
+    public static function getIncludedPaths(): array
+    {
+        return static::$includedPaths;
+    }
+
+    static function setIncludedPaths(string ...$included): void
+    {
+        static::$includedPaths = $included;
+    }
+
+    public static function getExcludedPaths(): array
+    {
+        return static::$excludedPaths;
+    }
+
+    static function setExcludedPaths(string ...$excluded): void
+    {
+        static::$excludedPaths = $excluded;
     }
 }
