@@ -15,7 +15,7 @@ class Yaml extends Dependent implements RequestMediaTypeInterface, ResponseMedia
      * @return array {@type associative}
      *               CLASS_NAME => vendor/project:version
      */
-    public static function dependencies()
+    public static function dependencies(): array
     {
         return ['Symfony\Component\Yaml\Yaml' => 'symfony/yaml'];
     }

@@ -15,7 +15,7 @@ class Plist extends Dependent implements RequestMediaTypeInterface, ResponseMedi
      * @return array {@type associative}
      *               CLASS_NAME => vendor/project:version
      */
-    public static function dependencies()
+    public static function dependencies(): array
     {
         return [
             'CFPropertyList\CFPropertyList' => 'rodneyrehm/plist:dev-master'
