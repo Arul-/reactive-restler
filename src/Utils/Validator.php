@@ -2,6 +2,7 @@
 
 namespace Luracast\Restler\Utils;
 
+use Exception;
 use Luracast\Restler\Contracts\ValidationInterface;
 use Luracast\Restler\Contracts\ValueObjectInterface;
 use Luracast\Restler\Data\Param;
@@ -66,6 +67,7 @@ class Validator implements ValidationInterface
             return array_map($func, $input, array_keys($input));
         }
         $name = "`$param->name`";
+        $format = '';
         if (
             isset(static::$preFilters['*']) &&
             is_scalar($input) &&
@@ -312,7 +314,7 @@ class Validator implements ValidationInterface
                             }
                         }
                         return $input;
-                    } elseif (isset($format)) {
+                    } elseif ($format) {
                         $error .= ". Expecting items of type `$format`";
                         break;
                     }
