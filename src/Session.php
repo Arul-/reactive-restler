@@ -192,6 +192,7 @@ class Session implements SessionInterface
         $this->status = PHP_SESSION_NONE;
         $this->id = '';
         $this->contents = [];
+        return true;
     }
 
     public function current()
