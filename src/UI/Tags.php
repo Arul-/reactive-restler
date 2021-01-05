@@ -28,18 +28,18 @@ class Tags implements ArrayAccess, Countable
 {
     public static $humanReadable = true;
     public static $initializer = null;
-    protected static $instances = array();
+    protected static $instances = [];
     public $prefix = '';
     public $indent = '    ';
     public $tag;
-    protected $attributes = array();
-    protected $children = array();
+    protected $attributes = [];
+    protected $children = [];
     protected $_parent;
 
-    public function __construct($name = null, array $children = array())
+    public final function __construct($name = null, array $children = [])
     {
         $this->tag = $name;
-        $c = array();
+        $c = [];
         foreach ($children as $child) {
             is_array($child)
                 ? $c = array_merge($c, $child)
@@ -48,7 +48,26 @@ class Tags implements ArrayAccess, Countable
         $this->markAsChildren($c);
         $this->children = $c;
         if (static::$initializer) {
-            call_user_func_array(static::$initializer, array(& $this));
+            call_user_func_array(static::$initializer, [& $this]);
+        }
+    }
+
+    private function markAsChildren(&$children)
+    {
+        foreach ($children as $i => $child) {
+            if (is_string($child)) {
+                continue;
+            }
+            if (!is_object($child)) {
+                unset($children[$i]);
+                continue;
+            }
+            //echo $child;
+            if (isset($child->_parent) && $child->_parent != $this) {
+                //remove from current parent
+                unset($child->_parent[array_search($child, $child->_parent->children)]);
+            }
+            $child->_parent = $this;
         }
     }
 
@@ -130,10 +149,10 @@ class Tags implements ArrayAccess, Countable
 
     public function toArray()
     {
-        $r = array();
+        $r = [];
         $r['attributes'] = $this->attributes;
         $r['tag'] = $this->tag;
-        $children = array();
+        $children = [];
         foreach ($this->children as $key => $child) {
             $children[$key] = $child instanceof $this
                 ? $child->toArray()
@@ -229,7 +248,7 @@ class Tags implements ArrayAccess, Countable
         if ($index) {
             $this->children[$index] = $value;
         } elseif (is_array($value)) {
-            $c = array();
+            $c = [];
             foreach ($value as $child) {
                 is_array($child)
                     ? $c = array_merge($c, $child)
@@ -238,7 +257,7 @@ class Tags implements ArrayAccess, Countable
             $this->markAsChildren($c);
             $this->children += $c;
         } else {
-            $c = array($value);
+            $c = [$value];
             $this->markAsChildren($c);
             $this->children[] = $value;
         }
@@ -260,24 +279,5 @@ class Tags implements ArrayAccess, Countable
     public function count()
     {
         return count($this->children);
-    }
-
-    private function markAsChildren(& $children)
-    {
-        foreach ($children as $i => $child) {
-            if (is_string($child)) {
-                continue;
-            }
-            if (!is_object($child)) {
-                unset($children[$i]);
-                continue;
-            }
-            //echo $child;
-            if (isset($child->_parent) && $child->_parent != $this) {
-                //remove from current parent
-                unset($child->_parent[array_search($child, $child->_parent->children)]);
-            }
-            $child->_parent = $this;
-        }
     }
 }
