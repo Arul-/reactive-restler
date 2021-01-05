@@ -1,11 +1,10 @@
 <?php namespace Luracast\Restler\MediaTypes;
 
 
+use Exception;
 use Luracast\Restler\Contracts\RequestMediaTypeInterface;
 use Luracast\Restler\Contracts\ResponseMediaTypeInterface;
 use Luracast\Restler\ResponseHeaders;
-use Luracast\Restler\Utils\Convert;
-use Luracast\Restler\Http\Exception;
 use SimpleXMLElement;
 use XMLWriter;
 
@@ -31,17 +30,17 @@ class Xml extends MediaType implements RequestMediaTypeInterface, ResponseMediaT
     // ------------------------------------------------------------------
     public static $useTextNodeProperty = true;
     public static $useNamespaces = true;
-    public static $cdataNames = array();
+    public static $cdataNames = [];
 
     // ==================================================================
     //
     // Common Properties
     //
     // ------------------------------------------------------------------
-    public static $attributeNames = array();
+    public static $attributeNames = [];
     public static $textNodeName = 'text';
-    public static $namespaces = array();
-    public static $namespacedProperties = array();
+    public static $namespaces = [];
+    public static $namespacedProperties = [];
     /**
      * Default name for the root node.
      *
@@ -116,7 +115,7 @@ class Xml extends MediaType implements RequestMediaTypeInterface, ResponseMediaT
 
     public function write(XMLWriter $xml, $data, $parent)
     {
-        $text = array();
+        $text = [];
         if (is_array($data)) {
             if (static::$useTextNodeProperty && isset($data[static::$textNodeName])) {
                 $text [] = $data[static::$textNodeName];
@@ -124,7 +123,7 @@ class Xml extends MediaType implements RequestMediaTypeInterface, ResponseMediaT
             }
             $attributes = array_flip(static::$attributeNames);
             //make sure we deal with attributes first
-            $temp = array();
+            $temp = [];
             foreach ($data as $key => $value) {
                 if (isset($attributes[$key])) {
                     $temp[$key] = $data[$key];
@@ -207,7 +206,7 @@ class Xml extends MediaType implements RequestMediaTypeInterface, ResponseMediaT
     {
         try {
             if ($data == '') {
-                return array();
+                return [];
             }
             libxml_use_internal_errors(true);
             $xml = simplexml_load_string($data,
@@ -219,9 +218,9 @@ class Xml extends MediaType implements RequestMediaTypeInterface, ResponseMediaT
             }
             libxml_clear_errors();
             if (static::$importSettingsFromXml) {
-                static::$attributeNames = array();
-                static::$namespacedProperties = array();
-                static::$namespaces = array();
+                static::$attributeNames = [];
+                static::$namespacedProperties = [];
+                static::$namespaces = [];
                 static::$rootName = $xml->getName();
                 $namespaces = $xml->getNamespaces();
                 if (count($namespaces)) {
@@ -247,7 +246,7 @@ class Xml extends MediaType implements RequestMediaTypeInterface, ResponseMediaT
 
     public function read(SimpleXMLElement $xml, $namespaces = null)
     {
-        $r = array();
+        $r = [];
         $text = (string)$xml;
 
         if (static::$parseAttributes) {
@@ -266,10 +265,10 @@ class Xml extends MediaType implements RequestMediaTypeInterface, ResponseMediaT
             if (isset($r[$key])) {
                 if (is_array($r[$key])) {
                     if ($r[$key] != array_values($r[$key])) {
-                        $r[$key] = array($r[$key]);
+                        $r[$key] = [$r[$key]];
                     }
                 } else {
-                    $r[$key] = array($r[$key]);
+                    $r[$key] = [$r[$key]];
                 }
                 $r[$key][] = $this->read($value, $namespaces);
             } else {
@@ -306,10 +305,10 @@ class Xml extends MediaType implements RequestMediaTypeInterface, ResponseMediaT
                     if (isset($r[$key])) {
                         if (is_array($r[$key])) {
                             if ($r[$key] != array_values($r[$key])) {
-                                $r[$key] = array($r[$key]);
+                                $r[$key] = [$r[$key]];
                             }
                         } else {
-                            $r[$key] = array($r[$key]);
+                            $r[$key] = [$r[$key]];
                         }
                         $r[$key][] = $this->read($value, $namespaces);
                     } else {

@@ -44,8 +44,8 @@ class Plist extends Dependent implements RequestMediaTypeInterface, ResponseMedi
         if (!isset(self::$compact)) {
             self::$compact = !$humanReadable;
         }
-        $plist = new CFPropertyList ();
-        $td = new CFTypeDetector ();
+        $plist = new CFPropertyList (); /** @phpstan-ignore-line */
+        $td = new CFTypeDetector (); /** @phpstan-ignore-line */
         $guessedStructure = $td->toCFType(
             $this->convert->toArray($data)
         );
@@ -58,7 +58,7 @@ class Plist extends Dependent implements RequestMediaTypeInterface, ResponseMedi
 
     public function decode(string $data)
     {
-        $plist = new CFPropertyList ();
+        $plist = new CFPropertyList (); /** @phpstan-ignore-line */
         $plist->parse($data);
 
         return $plist->toArray();

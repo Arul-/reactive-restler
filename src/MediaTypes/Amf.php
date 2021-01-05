@@ -25,8 +25,8 @@ class Amf extends Dependent implements RequestMediaTypeInterface, ResponseMediaT
     public function encode($data, ResponseHeaders $responseHeaders, bool $humanReadable = false)
     {
 
-        $stream = new OutputStream();
-        $serializer = new Serializer($stream);
+        $stream = new OutputStream(); /** @phpstan-ignore-line */
+        $serializer = new Serializer($stream); /** @phpstan-ignore-line */
         $serializer->writeTypeMarker($data);
 
         return $stream->getStream();
@@ -34,8 +34,8 @@ class Amf extends Dependent implements RequestMediaTypeInterface, ResponseMediaT
 
     public function decode(string $data)
     {
-        $stream = new InputStream(substr($data, 1));
-        $deserializer = new Deserializer($stream);
+        $stream = new InputStream(substr($data, 1)); /** @phpstan-ignore-line */
+        $deserializer = new Deserializer($stream); /** @phpstan-ignore-line */
 
         return $deserializer->readTypeMarker();
     }
