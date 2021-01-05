@@ -212,6 +212,7 @@ class Restler extends Core
             $this->authenticate($this->request);
             $this->filter($this->request, true);
             $this->validate();
+            /** @phpstan-ignore-next-line */
             return Async::await($this->call($this->_route))->then(function ($data) {
                 if ($data instanceof ResponseInterface) {
                     $this->composeHeaders(null, $this->request->getHeaderLine('origin'));
