@@ -13,6 +13,7 @@ use Luracast\Restler\Data\{Param, Returns, Route, Type};
 use Luracast\Restler\Defaults;
 use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\Exceptions\Redirect;
+use Luracast\Restler\MediaTypes\Json;
 use Luracast\Restler\OpenApi3\Tags\TagByBasePath;
 use Luracast\Restler\OpenApi3\Tags\Tagger;
 use Luracast\Restler\Router;
@@ -33,6 +34,9 @@ class Explorer implements ProvidesMultiVersionApiInterface
     public static $hideProtected = false;
     public static $allowScalarValueOnRequestBody = false;
     public static $servers = [];
+    public static $defaultErrorCode = 404;
+    public static $defaultErrorMessage = 'Not Found';
+    public static $defaultErrorDescription = 'Unexpected Error';
     /**
      * @var array
      * @link https://swagger.io/docs/open-source-tools/swagger-ui/usage/configuration
@@ -496,22 +500,31 @@ class Explorer implements ProvidesMultiVersionApiInterface
         }
 
         if (is_array($throws = $route->throws ?? null)) {
-            /** @var ComposerInterface $composer */
-            $composer = ClassName::get(ComposerInterface::class);
             foreach ($throws as $throw) {
-                $r[$throw['code']] = ['description' => $throw['message']];
-                $content = [];
-                foreach ($route->requestMediaTypes as $mime) {
-                    $schema = new stdClass();
-                    $class = $composer::errorResponseClass($throw['code'], $mime);
-                    $content[$mime] = ['schema' => $schema];
-                    $this->setProperties(Returns::fromClass(new ReflectionClass($class)), $schema);
-                }
-                $r[$throw['code']]['content'] = $content;
+                $r[$throw['code']] = $this->response($throw['code'], $throw['message'], $route->requestMediaTypes);
             }
         }
-
+        if (self::$defaultErrorCode) {
+            $r['default'] = $this->response(self::$defaultErrorCode, self::$defaultErrorMessage, [Json::MIME]);
+        }
         return $r;
+    }
+
+    private function response($code, string $message, array $mimes)
+    {
+        static $composer = null;
+        if (!$composer) {
+            /** @var ComposerInterface $composer */
+            $composer = ClassName::get(ComposerInterface::class);
+        }
+        $content = [];
+        foreach ($mimes as $mime) {
+            $schema = new stdClass();
+            $class = $composer::errorResponseClass($code, $mime);
+            $content[$mime] = ['schema' => $schema];
+            $this->setProperties(Returns::fromClass(new ReflectionClass($class)), $schema);
+        }
+        return ['description' => $message, 'content' => $content];;
     }
 
     private function components()
