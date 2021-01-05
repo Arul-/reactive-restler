@@ -262,6 +262,7 @@ class Explorer implements ProvidesMultiVersionApiInterface
         $r->tags = array_keys($tags);
         $this->tags = array_merge($tags, $this->tags);
         [$r->parameters, $r->requestBody] = $this->parameters($route, $version);
+        $r->security = [];
 
         if (is_null($r->requestBody)) {
             unset($r->requestBody);
