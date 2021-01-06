@@ -402,6 +402,12 @@ class Explorer implements ProvidesMultiVersionApiInterface
         if ($param->scalar) {
             if ($param->multiple) {
                 $schema->type = 'array';
+                if(!is_null($min = self::$defaultMinimumValues['array'] ?? null)){
+                    $schema->minItems = $min;
+                }
+                if(!is_null($max = self::$defaultMaximumValues['array'] ?? null)){
+                    $schema->maxItems = $max;
+                }
                 $schema->items = new stdClass;
                 $this->scalarProperties($schema->items, $param);
             } else {
@@ -415,6 +421,12 @@ class Explorer implements ProvidesMultiVersionApiInterface
             } else { //'indexed == $param->format
                 $schema->type = 'array';
                 $schema->items = new stdClass;
+                if(!is_null($min = $param->min ?? self::$defaultMinimumValues['array'] ?? null)){
+                    $schema->minItems = $min;
+                }
+                if(!is_null($max = $param->max ?? self::$defaultMaximumValues['array'] ?? null)){
+                    $schema->maxItems = $max;
+                }
             }
         } else {
             $target = $schema;
@@ -422,6 +434,12 @@ class Explorer implements ProvidesMultiVersionApiInterface
                 $schema->type = 'array';
                 $schema->items = new stdClass;
                 $target = $schema->items;
+                if(!is_null($min = self::$defaultMinimumValues['array'] ?? null)){
+                    $schema->minItems = $min;
+                }
+                if(!is_null($max = self::$defaultMaximumValues['array'] ?? null)){
+                    $schema->maxItems = $max;
+                }
             }
             if ($param->type === UploadedFileInterface::class) {
                 $target->type = 'string';
