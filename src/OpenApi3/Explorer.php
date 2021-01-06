@@ -6,8 +6,7 @@ use Luracast\Restler\Contracts\{AuthenticationInterface,
     ComposerInterface,
     DownloadableFileMediaTypeInterface,
     ExplorableAuthenticationInterface,
-    ProvidesMultiVersionApiInterface
-};
+    ProvidesMultiVersionApiInterface};
 use Luracast\Restler\Core;
 use Luracast\Restler\Data\{Param, Returns, Route, Type};
 use Luracast\Restler\Defaults;
@@ -50,7 +49,7 @@ class Explorer implements ProvidesMultiVersionApiInterface
         'validatorUrl' => null //disables validation change to "https://validator.swagger.io/validator" to enable
     ];
 
-    public static $minimumAlias = [
+    public static $minimumAliases = [
         'int' => 'minimum',
         'number' => 'minimum',
         'float' => 'minimum',
@@ -58,7 +57,7 @@ class Explorer implements ProvidesMultiVersionApiInterface
         'array' => 'minItems'
     ];
 
-    public static $maximumAlias = [
+    public static $maximumAliases = [
         'int' => 'maximum',
         'number' => 'maximum',
         'float' => 'maximum',
@@ -375,6 +374,8 @@ class Explorer implements ProvidesMultiVersionApiInterface
             'schema' => new stdClass(),
         ];
 
+        $p->schema->additionalProperties = false;
+
         $this->setProperties($param, $p->schema);
 
         if (isset($param->rules['example'])) {
@@ -402,12 +403,14 @@ class Explorer implements ProvidesMultiVersionApiInterface
             } else { //'indexed == $param->format
                 $schema->type = 'array';
                 $schema->items = new stdClass;
+                $schema->items->additionalProperties = false;
             }
         } else {
             $target = $schema;
             if ($param->multiple) {
                 $schema->type = 'array';
                 $schema->items = new stdClass;
+                $schema->items->additionalProperties = false;
                 $target = $schema->items;
             }
             if ($param->type === UploadedFileInterface::class) {
@@ -453,10 +456,10 @@ class Explorer implements ProvidesMultiVersionApiInterface
             $s->enum = $param->choice;
         }
         if ($param->min) {
-            $s->{(self::$minimumAlias[$param->type] ?? 'minimum')} = $param->min;
+            $s->{(self::$minimumAliases[$param->type] ?? 'minimum')} = $param->min;
         }
         if ($param->max) {
-            $s->{(self::$maximumAlias[$param->type] ?? 'maximum')} = $param->max;
+            $s->{(self::$maximumAliases[$param->type] ?? 'maximum')} = $param->max;
         }
     }
 
@@ -487,6 +490,7 @@ class Explorer implements ProvidesMultiVersionApiInterface
             $code = $route->status;
         }
         $schema = new stdClass();
+        $schema->additionalProperties = false;
         $content = [];
         foreach ($route->responseMediaTypes as $mime) {
             $mediaType = $route->responseFormatMap[$mime];
@@ -527,6 +531,7 @@ class Explorer implements ProvidesMultiVersionApiInterface
         $content = [];
         foreach ($mimes as $mime) {
             $schema = new stdClass();
+            $schema->additionalProperties = false;
             $class = $composer::errorResponseClass($code, $mime);
             $content[$mime] = ['schema' => $schema];
             $this->setProperties(Returns::fromClass(new ReflectionClass($class)), $schema);
