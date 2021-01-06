@@ -6,7 +6,8 @@ use Luracast\Restler\Contracts\{AuthenticationInterface,
     ComposerInterface,
     DownloadableFileMediaTypeInterface,
     ExplorableAuthenticationInterface,
-    ProvidesMultiVersionApiInterface};
+    ProvidesMultiVersionApiInterface
+};
 use Luracast\Restler\Core;
 use Luracast\Restler\Data\{Param, Returns, Route, Type};
 use Luracast\Restler\Defaults;
@@ -63,6 +64,20 @@ class Explorer implements ProvidesMultiVersionApiInterface
         'float' => 'maximum',
         'string' => 'maxLength',
         'array' => 'maxItems'
+    ];
+
+    public static $defaultMinimumValues = [
+        'int' => 0,
+        'number' => PHP_FLOAT_MIN,
+        'string' => 1,
+        'array' => 0
+    ];
+
+    public static $defaultMaximumValues = [
+        'int' => PHP_INT_MAX,
+        'number' => PHP_FLOAT_MAX,
+        'string' => 256,
+        'array' => 10000
     ];
 
     /**
@@ -455,11 +470,11 @@ class Explorer implements ProvidesMultiVersionApiInterface
         if ($param->choice) {
             $s->enum = $param->choice;
         }
-        if ($param->min) {
-            $s->{(self::$minimumAliases[$param->type] ?? 'minimum')} = $param->min;
+        if (null !== ($min = $param->min ?? self::$defaultMinimumValues[$param->type] ?? null)) {
+            $s->{(self::$minimumAliases[$param->type] ?? 'minimum')} = $min;
         }
-        if ($param->max) {
-            $s->{(self::$maximumAliases[$param->type] ?? 'maximum')} = $param->max;
+        if (null !== ($max = $param->max ?? self::$defaultMaximumValues[$param->type] ?? null)) {
+            $s->{(self::$maximumAliases[$param->type] ?? 'maximum')} = $max;
         }
     }
 
