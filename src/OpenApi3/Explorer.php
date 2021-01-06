@@ -22,12 +22,11 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\UploadedFileInterface;
 use ReflectionClass;
-use ReflectionException;
 use stdClass;
 
 class Explorer implements ProvidesMultiVersionApiInterface
 {
-    const OPEN_API_SPEC_VERSION = '3.0.0';
+    const OPEN_API_SPEC_VERSION = '3.0.3';
     public static $infoClass = Info::class;
     public static $excludedPaths = ['_'];
     public static $excludedHttpMethods = ['OPTIONS'];
@@ -49,6 +48,22 @@ class Explorer implements ProvidesMultiVersionApiInterface
         ],
         'filter' => true, //null or a string to filter by
         'validatorUrl' => null //disables validation change to "https://validator.swagger.io/validator" to enable
+    ];
+
+    public static $minimumAlias = [
+        'int' => 'minimum',
+        'number' => 'minimum',
+        'float' => 'minimum',
+        'string' => 'minLength',
+        'array' => 'minItems'
+    ];
+
+    public static $maximumAlias = [
+        'int' => 'maximum',
+        'number' => 'maximum',
+        'float' => 'maximum',
+        'string' => 'maxLength',
+        'array' => 'maxItems'
     ];
 
     /**
@@ -418,12 +433,6 @@ class Explorer implements ProvidesMultiVersionApiInterface
         } else {
             $s->type = $param->type;
         }
-        if (is_array($t)) {
-            $s->type = $t[0];
-            $s->format = $t[1];
-        } elseif (is_string($t)) {
-            $s->type = $t;
-        }
         $has64bit = PHP_INT_MAX > 2147483647;
         if ($s->type == 'integer') {
             $s->format = $has64bit
@@ -444,10 +453,10 @@ class Explorer implements ProvidesMultiVersionApiInterface
             $s->enum = $param->choice;
         }
         if ($param->min) {
-            $s->minimum = $param->min;
+            $s->{(self::$minimumAlias[$param->type] ?? 'minimum')} = $param->min;
         }
         if ($param->max) {
-            $s->maximum = $param->max;
+            $s->{(self::$maximumAlias[$param->type] ?? 'maximum')} = $param->max;
         }
     }
 
@@ -470,8 +479,6 @@ class Explorer implements ProvidesMultiVersionApiInterface
     /**
      * @param Route $route
      * @return array[]
-     * @throws HttpException
-     * @throws ReflectionException
      */
     private function responses(Route $route): array
     {
@@ -510,7 +517,7 @@ class Explorer implements ProvidesMultiVersionApiInterface
         return $r;
     }
 
-    private function response($code, string $message, array $mimes)
+    private function response($code, string $message, array $mimes): array
     {
         static $composer = null;
         if (!$composer) {
@@ -524,7 +531,7 @@ class Explorer implements ProvidesMultiVersionApiInterface
             $content[$mime] = ['schema' => $schema];
             $this->setProperties(Returns::fromClass(new ReflectionClass($class)), $schema);
         }
-        return ['description' => $message, 'content' => $content];;
+        return ['description' => $message, 'content' => $content];
     }
 
     private function components()
