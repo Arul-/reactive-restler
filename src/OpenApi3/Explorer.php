@@ -461,6 +461,12 @@ class Explorer implements ProvidesMultiVersionApiInterface
                 ? 'double'
                 : 'float';
         }
+        if (null !== ($min = $param->min ?? self::$defaultMinimumValues[$param->type] ?? null)) {
+            $s->{(self::$minimumAliases[$param->type] ?? 'minimum')} = $min;
+        }
+        if (null !== ($max = $param->max ?? self::$defaultMaximumValues[$param->type] ?? null)) {
+            $s->{(self::$maximumAliases[$param->type] ?? 'maximum')} = $max;
+        }
         if (!$param instanceof Param) {
             return;
         }
@@ -469,12 +475,6 @@ class Explorer implements ProvidesMultiVersionApiInterface
         }
         if ($param->choice) {
             $s->enum = $param->choice;
-        }
-        if (null !== ($min = $param->min ?? self::$defaultMinimumValues[$param->type] ?? null)) {
-            $s->{(self::$minimumAliases[$param->type] ?? 'minimum')} = $min;
-        }
-        if (null !== ($max = $param->max ?? self::$defaultMaximumValues[$param->type] ?? null)) {
-            $s->{(self::$maximumAliases[$param->type] ?? 'maximum')} = $max;
         }
     }
 
