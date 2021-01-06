@@ -388,11 +388,7 @@ class Explorer implements ProvidesMultiVersionApiInterface
             'required' => $param->required,
             'schema' => new stdClass(),
         ];
-
-        $p->schema->additionalProperties = false;
-
         $this->setProperties($param, $p->schema);
-
         if (isset($param->rules['example'])) {
             $p->examples = [1 => ['value' => $param->rules['example']]];
         }
@@ -415,17 +411,16 @@ class Explorer implements ProvidesMultiVersionApiInterface
         } elseif ('array' === $param->type) {
             if ('associative' == $param->format) {
                 $schema->type = 'object';
+                $schema->additionalProperties = false;
             } else { //'indexed == $param->format
                 $schema->type = 'array';
                 $schema->items = new stdClass;
-                $schema->items->additionalProperties = false;
             }
         } else {
             $target = $schema;
             if ($param->multiple) {
                 $schema->type = 'array';
                 $schema->items = new stdClass;
-                $schema->items->additionalProperties = false;
                 $target = $schema->items;
             }
             if ($param->type === UploadedFileInterface::class) {
@@ -434,6 +429,7 @@ class Explorer implements ProvidesMultiVersionApiInterface
                 return;
             }
             $target->type = 'object';
+            $target->additionalProperties = false;
             if (!empty($param->properties)) {
                 $target->properties = new stdClass;
                 foreach ($param->properties as $name => $child) {
@@ -505,7 +501,6 @@ class Explorer implements ProvidesMultiVersionApiInterface
             $code = $route->status;
         }
         $schema = new stdClass();
-        $schema->additionalProperties = false;
         $content = [];
         foreach ($route->responseMediaTypes as $mime) {
             $mediaType = $route->responseFormatMap[$mime];
@@ -546,7 +541,6 @@ class Explorer implements ProvidesMultiVersionApiInterface
         $content = [];
         foreach ($mimes as $mime) {
             $schema = new stdClass();
-            $schema->additionalProperties = false;
             $class = $composer::errorResponseClass($code, $mime);
             $content[$mime] = ['schema' => $schema];
             $this->setProperties(Returns::fromClass(new ReflectionClass($class)), $schema);
