@@ -57,6 +57,7 @@
       "api/tests/request_data/",
       "api/tests/upload/",
       "api/tests/storage/",
+      "api/tests/overrides/",
       "api/common/",
       "api/examples/-storage-/",
       "api/examples/_001_helloworld/",

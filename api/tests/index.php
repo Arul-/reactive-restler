@@ -23,6 +23,7 @@ Router::mapApiClasses([
     'upload/files' => Files::class,
     'storage/cache' => CacheTest::class,
     'storage/session' => SessionTest::class,
+    'overrides/method' => Method::class,
 ]);
 
 (new Restler())->handle();

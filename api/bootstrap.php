@@ -103,6 +103,7 @@ try {
             'tests/upload/files' => Files::class,
             'tests/storage/cache' => CacheTest::class,
             'tests/storage/session' => SessionTest::class,
+            'tests/overrides/method' => Method::class,
             //Explorer
             'explorer' => Explorer::class,
             //GraphQL
