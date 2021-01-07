@@ -74,7 +74,7 @@ class Restler extends Core
             if (!empty(Defaults::$httpMethodOverrideHeader) && $request->hasHeader(Defaults::$httpMethodOverrideHeader)) {
                 $method = $request->getHeaderLine(Defaults::$httpMethodOverrideHeader);
             } elseif (($prop = Defaults::$httpMethodOverrideProperty ?? null)) {
-                $data = $request->getParsedBody() + $request->getQueryParams();
+                $data = ($request->getParsedBody() ?? []) + $request->getQueryParams();
                 $method = $data[$prop] ?? false;
             }
             if (in_array($method, $target)) {
