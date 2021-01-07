@@ -18,59 +18,95 @@ use function GuzzleHttp\Psr7\stream_for;
 
 class Restler extends Core
 {
+    public static $middleware = [];
     /**
      * @var ServerRequestInterface
      */
     protected $request;
     protected $rawRequestBody = "";
 
-    public static $middleware = [];
-
-
-    /**
-     * @throws HttpException
-     * @throws Exception
-     */
-    protected function get(): void
+    public function handle(ServerRequestInterface $request = null): PromiseInterface
     {
-        $scriptName = $this->request->getServerParams()['SCRIPT_NAME'] ?? '';
-        $this->_path = $this->getPath($this->request->getUri(), $scriptName);
-        $this->query = $this->getQuery($this->request->getQueryParams());
-        $this->requestFormat = $this->getRequestMediaType($this->request->getHeaderLine('content-type'));
-        $this->body = $this->getBody($this->rawRequestBody);
+        if (!$request) {
+            $request = ServerRequest::fromGlobals();
+            if (isset($GLOBALS['HTTP_RAW_REQUEST_DATA'])) {
+                $request = $request->withBody(stream_for($GLOBALS['HTTP_RAW_REQUEST_DATA']));
+            }
+        } elseif (is_null($this->defaults->returnResponse)) {
+            $this->defaults->returnResponse = true;
+        }
+        $request = $this->applyOverrides($request);
+        $middleware = static::$middleware;
+        $middleware[] = [$this, '_handle'];
+        $promise = $this->handleMiddleware($middleware, $request);
+        $promise = $promise->then(
+            function ($result) {
+                if ($result instanceof ResponseInterface) {
+                    return $result;
+                }
+                if ($result instanceof Throwable) {
+                    $result = $this->message($result, '');
+                }
+                return $this->respond($result);
+            },
+            function ($error) {
+                if ($error instanceof Throwable) {
+                    $error = $this->message($error, '');
+                } else {
+                    $error = new HttpException(500, (string)$error);
+                }
+                return $this->respond($error);
+            }
+        );
+        if (true === $this->defaults->returnResponse) {
+            return $promise;
+        }
+        $promise->then(function ($response) {
+            die(Dump::response($response, true, false));
+        });
+        return $promise;
     }
 
-    /**
-     * @throws Exception
-     * @throws HttpException
-     */
-    protected function negotiate(): void
+    protected function applyOverrides(ServerRequestInterface $request): ServerRequestInterface
     {
-        $this->negotiateCORS(
-            $this->_requestMethod,
-            $this->request->getHeaderLine('Access-Control-Request-Method'),
-            $this->request->getHeaderLine('Access-Control-Request-Headers'),
-            $this->request->getHeaderLine('origin')
-        );
-        $this->responseFormat = $this->negotiateResponseMediaType(
-            $this->request->getUri()->getPath(),
-            $this->request->getHeaderLine('accept')
-        );
-        $this->negotiateCharset($this->request->getHeaderLine('accept-charset'));
-        $this->negotiateLanguage($this->request->getHeaderLine('accept-language'));
+        if ($target = Defaults::$httpMethodAllowedOverrides[$request->getMethod()] ?? false) {
+            $method = false;
+            if (!empty(Defaults::$httpMethodOverrideHeader) && $request->hasHeader(Defaults::$httpMethodOverrideHeader)) {
+                $method = $request->getHeaderLine(Defaults::$httpMethodOverrideHeader);
+            } elseif (($prop = Defaults::$httpMethodOverrideProperty ?? null)) {
+                $data = $request->getParsedBody() + $request->getQueryParams();
+                $method = $data[$prop] ?? false;
+            }
+            if (in_array($method, $target)) {
+                $request = $request->withMethod($method);
+            }
+        }
+        return $request;
     }
 
-    protected function compose($response = null)
-    {
-        $this->composeHeaders(
-            $this->_route,
-            $this->request->getHeaderLine('origin')
-        );
-        /** @var ComposerInterface $compose */
-        $compose = $this->make(ComposerInterface::class);
-        return is_null($response) && Defaults::$emptyBodyForNullResponse
-            ? null
-            : $compose->response($response);
+    /** @internal */
+    public function handleMiddleware(
+        array $middleware,
+        ServerRequestInterface $request,
+        $position = 0
+    ): PromiseInterface {
+        // final request handler will be invoked without a next handler
+        if (!isset($middleware[$position + 1])) {
+            $handler = $middleware[$position];
+            return $handler($request);
+        }
+
+        $that = $this;
+        $next = function (ServerRequestInterface $request) use ($that, $middleware, $position) {
+            return $that->handleMiddleware($middleware, $request, $position + 1);
+        };
+
+        // invoke middleware request handler with next handler
+        $handler = $middleware[$position];
+        if (is_object($handler) && $handler instanceof MiddlewareInterface) {
+            return $handler($request, $next, $this->container);
+        }
+        return $handler($request, $next);
     }
 
     /**
@@ -118,47 +154,6 @@ class Restler extends Core
             [$this->_responseCode, $this->_responseHeaders->getArrayCopy(), $data ?? '']);
     }
 
-    public function handle(ServerRequestInterface $request = null): PromiseInterface
-    {
-        if (!$request) {
-            $request = ServerRequest::fromGlobals();
-            if (isset($GLOBALS['HTTP_RAW_REQUEST_DATA'])) {
-                $request = $request->withBody(stream_for($GLOBALS['HTTP_RAW_REQUEST_DATA']));
-            }
-        } elseif (is_null($this->defaults->returnResponse)) {
-            $this->defaults->returnResponse = true;
-        }
-        $middleware = static::$middleware;
-        $middleware[] = [$this, '_handle'];
-        $promise = $this->handleMiddleware($middleware, $request);
-        $promise = $promise->then(
-            function ($result) {
-                if ($result instanceof ResponseInterface) {
-                    return $result;
-                }
-                if ($result instanceof Throwable) {
-                    $result = $this->message($result, '');
-                }
-                return $this->respond($result);
-            },
-            function ($error) {
-                if ($error instanceof Throwable) {
-                    $error = $this->message($error, '');
-                } else {
-                    $error = new HttpException(500, (string)$error);
-                }
-                return $this->respond($error);
-            }
-        );
-        if (true === $this->defaults->returnResponse) {
-            return $promise;
-        }
-        $promise->then(function ($response) {
-            die(Dump::response($response, true, false));
-        });
-        return $promise;
-    }
-
     /**
      * @param ServerRequestInterface $request
      * @return PromiseInterface
@@ -187,19 +182,6 @@ class Restler extends Core
                         );
                     } catch (Throwable $t) {
                         //ignore
-                    }
-                }
-                if ($request->hasHeader('X-HTTP-Method-Override')) {
-                    $this->_requestMethod = strtoupper($request->getHeaderLine('X-HTTP-Method-Override'));
-                } elseif ($prop = $this->defaults['httpMethodOverrideProperty'] ?? null) {
-                    $data = $this->body + $this->query;
-                    if (isset($data[$prop])) {
-                        $m = strtoupper($data[$prop]);
-                        if ($m == 'PUT' || $m == 'DELETE' ||
-                            $m == 'POST' || $m == 'PATCH'
-                        ) {
-                            $this->_requestMethod = $m;
-                        }
                     }
                 }
                 $this->route();
@@ -244,30 +226,50 @@ class Restler extends Core
         }
     }
 
-    /** @internal */
-    public function handleMiddleware(
-        array $middleware,
-        ServerRequestInterface $request,
-        $position = 0
-    ): PromiseInterface
+    /**
+     * @throws HttpException
+     * @throws Exception
+     */
+    protected function get(): void
     {
-        // final request handler will be invoked without a next handler
-        if (!isset($middleware[$position + 1])) {
-            $handler = $middleware[$position];
-            return $handler($request);
-        }
+        $scriptName = $this->request->getServerParams()['SCRIPT_NAME'] ?? '';
+        $this->_path = $this->getPath($this->request->getUri(), $scriptName);
+        $this->query = $this->getQuery($this->request->getQueryParams());
+        $this->requestFormat = $this->getRequestMediaType($this->request->getHeaderLine('content-type'));
+        $this->body = $this->getBody($this->rawRequestBody);
+    }
 
-        $that = $this;
-        $next = function (ServerRequestInterface $request) use ($that, $middleware, $position) {
-            return $that->handleMiddleware($middleware, $request, $position + 1);
-        };
+    /**
+     * @throws Exception
+     * @throws HttpException
+     */
+    protected function negotiate(): void
+    {
+        $this->negotiateCORS(
+            $this->_requestMethod,
+            $this->request->getHeaderLine('Access-Control-Request-Method'),
+            $this->request->getHeaderLine('Access-Control-Request-Headers'),
+            $this->request->getHeaderLine('origin')
+        );
+        $this->responseFormat = $this->negotiateResponseMediaType(
+            $this->request->getUri()->getPath(),
+            $this->request->getHeaderLine('accept')
+        );
+        $this->negotiateCharset($this->request->getHeaderLine('accept-charset'));
+        $this->negotiateLanguage($this->request->getHeaderLine('accept-language'));
+    }
 
-        // invoke middleware request handler with next handler
-        $handler = $middleware[$position];
-        if (is_object($handler) && $handler instanceof MiddlewareInterface) {
-            return $handler($request, $next, $this->container);
-        }
-        return $handler($request, $next);
+    protected function compose($response = null)
+    {
+        $this->composeHeaders(
+            $this->_route,
+            $this->request->getHeaderLine('origin')
+        );
+        /** @var ComposerInterface $compose */
+        $compose = $this->make(ComposerInterface::class);
+        return is_null($response) && Defaults::$emptyBodyForNullResponse
+            ? null
+            : $compose->response($response);
     }
 
 }

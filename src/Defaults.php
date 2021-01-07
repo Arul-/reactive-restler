@@ -120,7 +120,19 @@ class Defaults
      *             blank string to disable http method override through request
      *             parameters.
      */
-    public static $httpMethodOverrideProperty = 'http_method';
+    public static $httpMethodOverrideProperty = '_method';
+
+    /**
+     * @var string name of the header that can be set to override the http
+     *             method of the request. Set it to null or blank string to
+     *             disable http method override through request
+     *             parameters.
+     */
+    public static $httpMethodOverrideHeader = 'X-HTTP-Method-Override';
+
+    public static $httpMethodAllowedOverrides = [
+        'POST' => ['PUT', 'PATCH', "DELETE"]
+    ];
 
     /**
      * @var bool should auto validating api parameters should be enabled by
@@ -145,8 +157,8 @@ class Defaults
      */
     public static $suppressResponseCode = false;
 
-    public static $supportedCharsets = array('utf-8', 'iso-8859-1');
-    public static $supportedLanguages = array('en', 'en-US');
+    public static $supportedCharsets = ['utf-8', 'iso-8859-1'];
+    public static $supportedLanguages = ['en', 'en-US'];
 
     public static $charset = 'utf-8';
     public static $language = 'en';
@@ -187,7 +199,7 @@ class Defaults
      * value specified. When only one value is specified it will be used for
      * both cases
      */
-    public static $headerCacheControl = array(
+    public static $headerCacheControl = [
         'no-cache, must-revalidate',
 
         /* "public, " or "private, " will be prepended based on api method
@@ -195,7 +207,7 @@ class Defaults
          */
         'max-age={expires}, must-revalidate',
 
-    );
+    ];
 
     /**
      * @var int sets the content to expire immediately when set to zero
