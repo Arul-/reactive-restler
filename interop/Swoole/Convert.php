@@ -40,7 +40,7 @@ class Convert
         return $instance;
     }
 
-    private static function buildServerParams(Request $request)
+    private static function buildServerParams(Request $request): array
     {
         $server = $request->server ?? [];
         $header = $request->header ?? [];
@@ -90,7 +90,7 @@ class Convert
         $response->end((string)$psr7Response->getBody());
     }
 
-    private static function populateHeaders(ResponseInterface $psr7Response, Response $response)
+    private static function populateHeaders(ResponseInterface $psr7Response, Response $response): void
     {
         $headers = $psr7Response->getHeaders();
         foreach ($headers as $name => $values) {
