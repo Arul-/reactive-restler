@@ -69,17 +69,18 @@ class Restler extends Core
 
     protected function applyOverrides(ServerRequestInterface $request): ServerRequestInterface
     {
-        if ($target = Defaults::$httpMethodAllowedOverrides[$request->getMethod()] ?? false) {
-            $method = false;
-            if (!empty(Defaults::$httpMethodOverrideHeader) && $request->hasHeader(Defaults::$httpMethodOverrideHeader)) {
-                $method = $request->getHeaderLine(Defaults::$httpMethodOverrideHeader);
-            } elseif (($prop = Defaults::$httpMethodOverrideProperty ?? null)) {
-                $data = ($request->getParsedBody() ?? []) + $request->getQueryParams();
-                $method = $data[$prop] ?? false;
-            }
-            if (in_array($method, $target)) {
-                $request = $request->withMethod($method);
-            }
+        $method = false;
+        if (!empty(Defaults::$httpMethodOverrideHeader) && $request->hasHeader(Defaults::$httpMethodOverrideHeader)) {
+            $method = $request->getHeaderLine(Defaults::$httpMethodOverrideHeader);
+        } elseif (!empty(Defaults::$httpMethodOverrideProperty)) {
+            $method = $request->getQueryParams()[Defaults::$httpMethodOverrideProperty] ?? false;
+        }
+        if (
+            $method &&
+            ($target = Defaults::$httpMethodAllowedOverrides[$request->getMethod()] ?? false) &&
+            in_array($method, $target)
+        ) {
+            $request = $request->withMethod($method);
         }
         return $request;
     }
