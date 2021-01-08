@@ -26,7 +26,7 @@ class Validator implements ValidationInterface
     public static $holdException = false;
     public static $exceptions = [];
 
-    public static function validate($input, Param $param)
+    public static function validate($input, ?Param $param)
     {
         if ('mixed' == $param->type) {
             return $input;
@@ -374,14 +374,14 @@ class Validator implements ValidationInterface
      *
      * Check that given value contains only alphabetic characters.
      *
-     * @param                $input
-     * @param Param $param
+     * @param            $input
+     * @param Param|null $param
      *
      * @return string
      *
      * @throws Invalid
      */
-    public static function alpha($input, Param $param = null)
+    public static function alpha($input, ?Param $param = null): string
     {
         if (ctype_alpha($input)) {
             return $input;
@@ -398,14 +398,14 @@ class Validator implements ValidationInterface
      *
      * Check that given value contains only digits.
      *
-     * @param                $input
-     * @param Param $param
+     * @param            $input
+     * @param Param|null $param
      *
      * @return string
      *
      * @throws Invalid
      */
-    public static function numeric($input, Param $param = null)
+    public static function numeric($input, ?Param $param = null): string
     {
         if (ctype_digit($input)) {
             return $input;
@@ -422,14 +422,14 @@ class Validator implements ValidationInterface
      *
      * Check that given value contains only alpha numeric characters and the length is 36 chars.
      *
-     * @param                $input
-     * @param Param $param
+     * @param            $input
+     * @param Param|null $param
      *
      * @return string
      *
      * @throws Invalid
      */
-    public static function uuid($input, Param $param = null)
+    public static function uuid($input, ?Param $param = null): string
     {
         if (is_string($input) && preg_match(
                 '/^\{?[0-9a-f]{8}\-?[0-9a-f]{4}\-?[0-9a-f]{4}\-?[0-9a-f]{4}\-?[0-9a-f]{12}\}?$/i',
@@ -445,14 +445,14 @@ class Validator implements ValidationInterface
      *
      * Check that given value contains only alpha numeric characters.
      *
-     * @param                $input
-     * @param Param $param
+     * @param            $input
+     * @param Param|null $param
      *
      * @return string
      *
      * @throws Invalid
      */
-    public static function alphanumeric($input, Param $param = null)
+    public static function alphanumeric($input, ?Param $param = null): string
     {
         if (ctype_alnum($input)) {
             return $input;
@@ -469,14 +469,14 @@ class Validator implements ValidationInterface
      *
      * Check that given value contains only printable characters.
      *
-     * @param                $input
-     * @param Param $param
+     * @param            $input
+     * @param Param|null $param
      *
      * @return string
      *
      * @throws Invalid
      */
-    public static function printable($input, Param $param = null)
+    public static function printable($input, ?Param $param = null): string
     {
         if (ctype_print($input)) {
             return $input;
@@ -493,14 +493,14 @@ class Validator implements ValidationInterface
      *
      * Check that given value contains only hexadecimal digits.
      *
-     * @param                $input
-     * @param Param $param
+     * @param            $input
+     * @param Param|null $param
      *
      * @return string
      *
      * @throws Invalid
      */
-    public static function hex($input, Param $param = null)
+    public static function hex($input, ?Param $param = null): string
     {
         if (ctype_xdigit($input)) {
             return $input;
@@ -513,13 +513,13 @@ class Validator implements ValidationInterface
      *
      * Check that given value contains only color.
      *
-     * @param                     $input
+     * @param            $input
      * @param Param|null $param
      *
      * @return string
      * @throws Invalid
      */
-    public static function color($input, Param $param = null)
+    public static function color($input, ?Param $param = null): string
     {
         if (preg_match('/^#[a-f0-9]{6}$/i', $input)) {
             return $input;
@@ -532,14 +532,14 @@ class Validator implements ValidationInterface
      *
      * Check if the given value is numeric with or without a `+` prefix
      *
-     * @param                $input
-     * @param Param $param
+     * @param            $input
+     * @param Param|null $param
      *
      * @return string
      *
      * @throws Invalid
      */
-    public static function tel($input, Param $param = null)
+    public static function tel($input, ?Param $param = null)
     {
         if (is_numeric($input) && '-' != substr($input, 0, 1)) {
             return $input;
@@ -555,13 +555,13 @@ class Validator implements ValidationInterface
      *
      * Check if the given string is a valid email
      *
-     * @param String $input
-     * @param Param $param
+     * @param mixed $input
+     * @param Param|null $param
      *
      * @return string
      * @throws Invalid
      */
-    public static function email($input, Param $param = null)
+    public static function email($input, ?Param $param = null): string
     {
         $r = filter_var($input, FILTER_VALIDATE_EMAIL);
         if ($r) {
@@ -578,13 +578,13 @@ class Validator implements ValidationInterface
      *
      * Check if the given string is a valid ip address
      *
-     * @param String $input
-     * @param Param $param
+     * @param mixed $input
+     * @param Param|null $param
      *
      * @return string
      * @throws Invalid
      */
-    public static function ip($input, Param $param = null)
+    public static function ip($input, ?Param $param = null): string
     {
         $r = filter_var($input, FILTER_VALIDATE_IP);
         if ($r) {
@@ -599,13 +599,13 @@ class Validator implements ValidationInterface
      *
      * Check if the given string is a valid url
      *
-     * @param String $input
-     * @param Param $param
+     * @param mixed $input
+     * @param Param|null $param
      *
      * @return string
      * @throws Invalid
      */
-    public static function url($input, Param $param = null)
+    public static function url($input, ?Param $param = null): string
     {
         $r = filter_var($input, FILTER_VALIDATE_URL);
         if ($r) {
@@ -622,13 +622,13 @@ class Validator implements ValidationInterface
      *
      * Check if the given string is a valid date in YYYY-MM-DD format
      *
-     * @param String $input
-     * @param Param $param
+     * @param mixed $input
+     * @param Param|null $param
      *
      * @return string
      * @throws Invalid
      */
-    public static function date($input, Param $param = null)
+    public static function date($input, ?Param $param = null): string
     {
         if (
             preg_match(
@@ -651,13 +651,13 @@ class Validator implements ValidationInterface
      *
      * Check if the given string is a valid date and time in YYY-MM-DD HH:MM:SS format
      *
-     * @param String $input
-     * @param Param $param
+     * @param mixed $input
+     * @param Param|null $param
      *
      * @return string
      * @throws Invalid
      */
-    public static function datetime($input, Param $param = null)
+    public static function datetime($input, ?Param $param = null): string
     {
         if (
             preg_match(
@@ -682,13 +682,13 @@ class Validator implements ValidationInterface
      *
      * Check if the given string is a valid time in HH:MM:SS format
      *
-     * @param String $input
-     * @param Param $param
+     * @param mixed $input
+     * @param Param|null $param
      *
      * @return string
      * @throws Invalid
      */
-    public static function time24($input, Param $param = null)
+    public static function time24($input, ?Param $param = null): string
     {
         return static::time($input, $param);
     }
@@ -698,13 +698,13 @@ class Validator implements ValidationInterface
      *
      * Check if the given string is a valid time in HH:MM:SS format
      *
-     * @param String $input
-     * @param Param $param
+     * @param mixed $input
+     * @param Param|null $param
      *
      * @return string
      * @throws Invalid
      */
-    public static function time($input, Param $param = null)
+    public static function time($input, ?Param $param = null): string
     {
         if (preg_match('/^([01]?[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$/', $input)) {
             return $input;
@@ -720,13 +720,13 @@ class Validator implements ValidationInterface
      *
      * Check if the given string is a valid time 12 hour format
      *
-     * @param String $input
-     * @param Param $param
+     * @param mixed $input
+     * @param Param|null $param
      *
      * @return string
      * @throws Invalid
      */
-    public static function time12($input, Param $param = null)
+    public static function time12($input, ?Param $param = null): string
     {
         if (preg_match(
             '/^([1-9]|1[0-2]|0[1-9]){1}(:[0-5][0-9])?\s?([aApP][mM]{1})?$/',
@@ -745,13 +745,13 @@ class Validator implements ValidationInterface
      *
      * Check if the given value is a valid timestamp
      *
-     * @param String $input
-     * @param Param $param
+     * @param mixed $input
+     * @param Param|null $param
      *
      * @return int
      * @throws Invalid
      */
-    public static function timestamp($input, Param $param = null)
+    public static function timestamp($input, ?Param $param = null): int
     {
         if ((string)(int)$input == $input
             && ($input <= PHP_INT_MAX)
