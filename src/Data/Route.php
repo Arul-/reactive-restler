@@ -217,7 +217,7 @@ class Route extends ValueObject
         $reflectionType = $method->hasReturnType() ? $method->getReturnType() : null;
         if ($reflectionType instanceof ReflectionUnionType) {
             $types = $reflectionType->getTypes();
-            if('null' === end($types)->getName()){
+            if ('null' === end($types)->getName()) {
                 $metadata['return']['type'][] = 'null';
             }
             $reflectionType = $types[0];
@@ -294,7 +294,9 @@ class Route extends ValueObject
         return array_filter(
             $this->parameters,
             function ($v) use ($from, $include) {
-                return $include ? $from === $v->from : $from !== $v->from;
+                return $include
+                    ? $from === $v->from
+                    : $from !== $v->from && Param::FROM_HEADER !== $v->from;
             }
         );
     }

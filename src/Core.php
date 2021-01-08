@@ -289,16 +289,16 @@ abstract class Core
     }
 
     /**
+     * @param ServerRequestInterface $request
      * @throws HttpException
-     * @throws Exception
      */
-    protected function route(): void
+    protected function route(ServerRequestInterface $request): void
     {
         $this->_route = $o = Router::find(
             $this->_path,
             $this->_requestMethod,
-            $this->requestedApiVersion,
-            $this->body + $this->query
+            $request,
+            $this->requestedApiVersion, $this->body + $this->query
         );
         $this->container->instance(Route::class, $o);
         //set defaults based on api method comments

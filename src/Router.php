@@ -11,7 +11,8 @@ use Luracast\Restler\Contracts\{AccessControlInterface,
     ProvidesMultiVersionApiInterface,
     RequestMediaTypeInterface,
     ResponseMediaTypeInterface,
-    UsesAuthenticationInterface};
+    UsesAuthenticationInterface
+};
 use Luracast\Restler\Data\Param;
 use Luracast\Restler\Data\Route;
 use Luracast\Restler\Exceptions\HttpException;
@@ -625,7 +626,7 @@ class Router
     {
         $res = null;
         while ($token = current($tokens)) {
-            list($token, $s) = is_array($token) ? $token : [$token, $token];
+            [$token, $s] = is_array($token) ? $token : [$token, $token];
             if (in_array($token, (array)$take, true)) {
                 $res .= $s;
             } elseif (!in_array($token, [T_DOC_COMMENT, T_WHITESPACE, T_COMMENT], true)) {
@@ -694,7 +695,7 @@ class Router
                     $existing = static::$routes["v$version"][$path][$route->httpMethod] ?? false
                 ) {
                     throw new HttpException(500,
-                        'Ambigous route mappings detected. ' .
+                        'Ambiguous route mappings detected. ' .
                         $existing . ' is overwritten by ' . $route
                         , [
                             'existing' => $existing,
@@ -787,6 +788,7 @@ class Router
     /**
      * @param string $path
      * @param string $httpMethod
+     * @param ServerRequestInterface $request
      * @param int $version
      * @param array $data
      * @return Route
@@ -795,6 +797,7 @@ class Router
     public static function find(
         string $path,
         string $httpMethod,
+        ServerRequestInterface $request,
         int $version = 1,
         array $data = []
     ) {
@@ -817,7 +820,7 @@ class Router
         $later = [];
         if (isset($p[$path][$httpMethod])) {
             //================== static routes ==========================
-            return static::populate($p[$path][$httpMethod], $data);
+            return static::populate($p[$path][$httpMethod], $data, $request);
         } elseif (isset($p['*'])) {
             //================== wildcard routes ========================
             uksort(
@@ -885,7 +888,7 @@ class Router
                     }
                 }
                 if ($found) {
-                    return static::populate($route, $data);
+                    return static::populate($route, $data, $request);
                 }
             }
         }
@@ -912,12 +915,12 @@ class Router
      *
      * @param Route $route
      * @param array $data
-     *
+     * @param ServerRequestInterface|null $request
      * @return Route
      *
      * @access private
      */
-    protected static function populate(Route $route, array $data)
+    protected static function populate(Route $route, array $data, ?ServerRequestInterface $request=null): Route
     {
         if (Defaults::$smartParameterParsing) {
             if (count($route->parameters)) {
@@ -940,6 +943,12 @@ class Router
                             !is_null($d = $data[Defaults::$fullRequestDataName])) {
                             $data[$param->name] = $d;
                         }
+                    }
+                }
+                $headerParams = $route->filterParams(true, Param::FROM_HEADER);
+                foreach ($headerParams as $param) {
+                    if ($request->hasHeader($param->name)) {
+                        $data[$param->name] = $request->getHeaderLine($param->name);
                     }
                 }
             }

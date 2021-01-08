@@ -185,7 +185,7 @@ class Restler extends Core
                         //ignore
                     }
                 }
-                $this->route();
+                $this->route($request);
             } catch (Throwable $t) {
                 $this->negotiate();
                 throw $t;
