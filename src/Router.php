@@ -920,7 +920,7 @@ class Router
      *
      * @access private
      */
-    protected static function populate(Route $route, array $data, ?ServerRequestInterface $request=null): Route
+    protected static function populate(Route $route, array $data, ?ServerRequestInterface $request = null): Route
     {
         if (Defaults::$smartParameterParsing) {
             if (count($route->parameters)) {
@@ -949,6 +949,8 @@ class Router
                 foreach ($headerParams as $param) {
                     if ($request->hasHeader($param->name)) {
                         $data[$param->name] = $request->getHeaderLine($param->name);
+                    } else {
+                        unset($data[$param->name]);
                     }
                 }
             }
