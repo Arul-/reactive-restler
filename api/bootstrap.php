@@ -98,6 +98,7 @@ try {
             'tests/param/minmax' => MinMax::class,
             'tests/param/minmaxfix' => MinMaxFix::class,
             'tests/param/type' => Type::class,
+            'tests/param/header' => Header::class,
             'tests/param/validation' => Validation::class,
             'tests/request_data' => Data::class,
             'tests/upload/files' => Files::class,

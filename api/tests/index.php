@@ -17,6 +17,7 @@ Router::setOverridingResponseMediaTypes(Html::class);
 Router::mapApiClasses([
     'param/minmax' => MinMax::class,
     'param/minmaxfix' => MinMaxFix::class,
+    'param/header' => Header::class,
     'param/type' => Type::class,
     'param/validation' => Validation::class,
     'request_data' => Data::class,
