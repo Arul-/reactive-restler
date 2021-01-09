@@ -12,6 +12,8 @@ use ReflectionParameter;
 
 class Container implements ContainerInterface
 {
+    /** @var callable|null */
+    private $initiateProperties = null;
     /**
      * @var array
      */
@@ -26,7 +28,7 @@ class Container implements ContainerInterface
         $this->init($config);
     }
 
-    public function init(&$config)
+    public function init(&$config): void
     {
         $this->instances = [];
         $this->config = &$config;
@@ -36,6 +38,11 @@ class Container implements ContainerInterface
     public function config(string $name)
     {
         return $this->config[$name] ?? false;
+    }
+
+    public function setPropertyInitializer(callable $function): void
+    {
+        $this->initiateProperties = $function;
     }
 
     /**
@@ -69,7 +76,6 @@ class Container implements ContainerInterface
         if ($class && $instance = $this->instances[$class] ?? false) {
             return $instance;
         }
-
         $reflector = new \ReflectionClass($class);
         if (!$reflector->isInstantiable()) {
             throw new ContainerException("[$class] is not instantiable");
@@ -87,6 +93,9 @@ class Container implements ContainerInterface
             if ($class) {
                 $this->instances[$class] = $instance;
             }
+        }
+        if ($this->initiateProperties) {
+            call_user_func($this->initiateProperties, $instance);
         }
         return $instance;
     }

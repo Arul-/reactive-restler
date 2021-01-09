@@ -17,7 +17,7 @@ use Luracast\Restler\Contracts\{AuthenticationInterface,
 use Luracast\Restler\Data\{Param, Route};
 use Luracast\Restler\Exceptions\{HttpException, InvalidAuthCredentials};
 use Luracast\Restler\MediaTypes\{Json, UrlEncoded, Xml};
-use Luracast\Restler\Utils\{ClassName, Convert, Header, Text, Type, Validator};
+use Luracast\Restler\Utils\{ClassName, Header, Text, Type, Validator};
 use Psr\Http\Message\{ResponseInterface, ServerRequestInterface, UriInterface};
 use React\Promise\PromiseInterface;
 use ReflectionException;
@@ -39,14 +39,20 @@ use TypeError;
 abstract class Core
 {
     const VERSION = '4.0.0';
-
-    protected $_authenticated = false;
-    protected $_authVerified = false;
     /**
      * @var int
      */
     public $requestedApiVersion = 1;
-
+    /**
+     * @var ResponseMediaTypeInterface
+     */
+    public $responseFormat;
+    /**
+     * @var RequestMediaTypeInterface
+     */
+    public $requestFormat;
+    protected $_authenticated = false;
+    protected $_authVerified = false;
     protected $_requestMethod = 'GET';
     /**
      * @var bool
@@ -56,15 +62,7 @@ abstract class Core
      * @var Route
      */
     protected $_route;
-    /**
-     * @var ResponseMediaTypeInterface
-     */
-    public $responseFormat;
     protected $_path = '';
-    /**
-     * @var RequestMediaTypeInterface
-     */
-    public $requestFormat;
     protected $body = [];
     protected $query = [];
 
@@ -93,19 +91,21 @@ abstract class Core
      * @var int for calculating execution time
      */
     protected $startTime;
-    /** @var UriInterface */
-    private $_baseUrl;
     /** @var HttpException */
     protected $_exception;
+    /** @var UriInterface */
+    private $_baseUrl;
 
     /**
      * Core constructor.
-     * @param ContainerInterface $container
+     * @param ContainerInterface|null $container
      * @param array|ArrayAccess $config
-     * @throws TypeError
      */
     public function __construct(ContainerInterface $container = null, &$config = [])
     {
+        if (is_null($config)) {
+            $config = new ArrayObject();
+        }
         if (!is_array($config) && !$config instanceof ArrayAccess) {
             throw new TypeError(
                 'Argument 2 passed to ' . __CLASS__
@@ -115,10 +115,6 @@ abstract class Core
 
         $this->startTime = time();
         $this->_responseHeaders = new ResponseHeaders();
-
-        if (is_null($config)) {
-            $config = new ArrayObject();
-        }
         $this->config = &$config;
 
         $this->config['defaults'] = $this->defaults = new StaticProperties(Defaults::class);
@@ -129,6 +125,7 @@ abstract class Core
         } else {
             $container = new Container($config);
         }
+        $container->setPropertyInitializer([$this, 'initiateProperties']);
         $container->instance(Core::class, $this);
         $container->instance(static::class, $this);
         $container->instance(ContainerInterface::class, $container);
@@ -137,23 +134,46 @@ abstract class Core
         $this->container = $container;
     }
 
-
-    public function make($className, Route $route = null, bool $recreate = false)
+    private static function isPathSelected(string $class, string $path): bool
     {
-        $fullName = $className;
-        if (!$route) {
-            $route = $this->_route;
+        if (!Type::implements($class, SelectivePathsInterface::class)) {
+            return true;
         }
-        if ($recreate) {
-            //delete existing instance if any
-            $this->container->instance($className, null);
-        }
+        return $class::isPathSelected($path);
+    }
 
-        $instance = $this->container->make($className);
+    public function getRequestData(): array
+    {
+        return $this->body + $this->query;
+    }
+
+    /**
+     * @param Route $route
+     * @return mixed
+     * @throws ReflectionException
+     */
+    public function call(Route $route)
+    {
+        return $route->handle([$this, 'make']);
+    }
+
+    abstract public function handle(ServerRequestInterface $request = null): PromiseInterface;
+
+    public function __get($name)
+    {
+        if (property_exists($this, '_' . $name)) {
+            return $this->{'_' . $name};
+        }
+        return null;
+    }
+
+    public function &initiateProperties(object $instance): object
+    {
+        $fullName = get_class($instance);
         $shortName = ClassName::short($fullName);
-        if ($route && !empty($properties = $route->set[$fullName] ?? $route->set[$shortName] ?? [])) {
+        if ($this->_route && !empty($properties = $this->_route->set[$fullName] ?? $this->_route->set[$shortName] ?? [])) {
             $objectVars = get_object_vars($instance);
-            $classVars = get_class_vars($className);
+            $classVars = get_class_vars($fullName);
             $staticVars = array_diff_key($classVars, $objectVars);
             $instanceVars = array_intersect_key($classVars, $objectVars);
             $name = lcfirst($shortName);
@@ -171,7 +191,6 @@ abstract class Core
         if ($instance instanceof UsesAuthenticationInterface) {
             $instance->_setAuthenticationStatus($this->_authenticated, $this->_authVerified);
         }
-
         return $instance;
     }
 
@@ -230,6 +249,29 @@ abstract class Core
     }
 
     /**
+     * Change app property from a query string or comments
+     *
+     * @param $property
+     * @param $value
+     *
+     * @return bool
+     *
+     * @throws Exception
+     */
+    private function changeAppProperty($property, $value)
+    {
+        if (!property_exists(Defaults::class, $property)) {
+            return false;
+        }
+        if ($detail = Defaults::$propertyValidations[$property] ?? false) {
+            /** @noinspection PhpParamsInspection */
+            $value = Validator::validate($value, Param::__set_state($detail));
+        }
+        $this->defaults->{$property} = $value;
+        return true;
+    }
+
+    /**
      * @param string $contentType
      * @return RequestMediaTypeInterface
      * @throws HttpException
@@ -267,6 +309,19 @@ abstract class Core
         return $format;
     }
 
+    public function make($className, Route $route = null, bool $recreate = false)
+    {
+        $fullName = $className;
+        if (!$route) {
+            $route = $this->_route;
+        }
+        if ($recreate) {
+            //delete existing instance if any
+            $this->container->instance($className, null);
+        }
+        return $this->container->make($className);
+    }
+
     protected function getBody(string $raw = ''): array
     {
         $r = [];
@@ -281,11 +336,6 @@ abstract class Core
                 : [$this->defaults->fullRequestDataName => $r];
         }
         return $r;
-    }
-
-    public function getRequestData(): array
-    {
-        return $this->body + $this->query;
     }
 
     /**
@@ -578,18 +628,29 @@ abstract class Core
         $this->_route->validate($validator, [$this, 'make']);
     }
 
-    /**
-     * @param Route $route
-     * @return mixed
-     * @throws ReflectionException
-     */
-    public function call(Route $route)
-    {
-        return $route->handle([$this, 'make']);
-    }
-
     abstract protected function compose($response = null);
 
+    protected function message(Throwable $e, string $origin)
+    {
+        if (!$this->responseFormat) {
+            $this->responseFormat = $this->container->make(Json::class);
+        }
+        if (!$e instanceof HttpException) {
+            $e = new HttpException(500, $e->getMessage(), [], $e);
+        }
+        $this->_responseCode = $e->getCode();
+        $this->composeHeaders(
+            $this->_route,
+            $origin,
+            $e
+        );
+        if ($e->emptyMessageBody) {
+            return null;
+        }
+        /** @var ComposerInterface $compose */
+        $compose = $this->make(ComposerInterface::class, null);
+        return $compose->message($e);
+    }
 
     /**
      * @param Route|null $route
@@ -661,70 +722,7 @@ abstract class Core
         }
     }
 
-    protected function message(Throwable $e, string $origin)
-    {
-        if (!$this->responseFormat) {
-            $this->responseFormat = $this->container->make(Json::class);
-        }
-        if (!$e instanceof HttpException) {
-            $e = new HttpException(500, $e->getMessage(), [], $e);
-        }
-        $this->_responseCode = $e->getCode();
-        $this->composeHeaders(
-            $this->_route,
-            $origin,
-            $e
-        );
-        if ($e->emptyMessageBody) {
-            return null;
-        }
-        /** @var ComposerInterface $compose */
-        $compose = $this->make(ComposerInterface::class, null);
-        return $compose->message($e);
-    }
-
     abstract protected function respond($response = []): ResponseInterface;
 
     abstract protected function stream($data): ResponseInterface;
-
-    abstract public function handle(ServerRequestInterface $request = null): PromiseInterface;
-
-    private static function isPathSelected(string $class, string $path): bool
-    {
-        if (!Type::implements($class, SelectivePathsInterface::class)) {
-            return true;
-        }
-        return $class::isPathSelected($path);
-    }
-
-    public function __get($name)
-    {
-        if (property_exists($this, '_' . $name)) {
-            return $this->{'_' . $name};
-        }
-        return null;
-    }
-
-    /**
-     * Change app property from a query string or comments
-     *
-     * @param $property
-     * @param $value
-     *
-     * @return bool
-     *
-     * @throws Exception
-     */
-    private function changeAppProperty($property, $value)
-    {
-        if (!property_exists(Defaults::class, $property)) {
-            return false;
-        }
-        if ($detail = Defaults::$propertyValidations[$property] ?? false) {
-            /** @noinspection PhpParamsInspection */
-            $value = Validator::validate($value, Param::__set_state($detail));
-        }
-        $this->defaults->{$property} = $value;
-        return true;
-    }
 }
