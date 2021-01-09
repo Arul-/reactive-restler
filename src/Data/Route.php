@@ -294,9 +294,7 @@ class Route extends ValueObject
         return array_filter(
             $this->parameters,
             function ($v) use ($from, $include) {
-                return $include
-                    ? $from === $v->from
-                    : $from !== $v->from && Param::FROM_HEADER !== $v->from;
+                return $include ? $from === $v->from : $from !== $v->from;
             }
         );
     }
