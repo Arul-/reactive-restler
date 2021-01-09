@@ -151,9 +151,8 @@ class Forms implements FilterInterface, SelectivePathsInterface
             } else {
                 $this->route = $route = Router::find(
                     trim($action, '/'),
-                    $method,
-                    $this->restler->requestedApiVersion,
-                    []
+                    $method, null,
+                    $this->restler->requestedApiVersion, []
                 );
             }
         } catch (HttpException $e) {

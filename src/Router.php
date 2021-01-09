@@ -797,7 +797,7 @@ class Router
     public static function find(
         string $path,
         string $httpMethod,
-        ServerRequestInterface $request,
+        ?ServerRequestInterface $request = null,
         int $version = 1,
         array $data = []
     ) {
@@ -947,7 +947,7 @@ class Router
                 }
                 $headerParams = $route->filterParams(true, Param::FROM_HEADER);
                 foreach ($headerParams as $param) {
-                    if ($request->hasHeader($param->name)) {
+                    if ($request && $request->hasHeader($param->name)) {
                         $data[$param->name] = $request->getHeaderLine($param->name);
                     } else {
                         unset($data[$param->name]);
