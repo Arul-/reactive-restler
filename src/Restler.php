@@ -85,7 +85,13 @@ class Restler extends Core
         return $request;
     }
 
-    /** @internal */
+    /**
+     * @param array $middleware
+     * @param ServerRequestInterface $request
+     * @param int $position
+     * @return PromiseInterface
+     * @internal
+     */
     public function handleMiddleware(
         array $middleware,
         ServerRequestInterface $request,

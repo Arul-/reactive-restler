@@ -122,12 +122,16 @@ class Convert
         return $object;
     }
 
+    /**
+     * @param $value
+     * @return float|int
+     */
     public static function toNumber($value)
     {
-        return ( int )$value == $value ? ( int )$value : floatval($value);
+        return ( int )$value == $value ? (int)$value : floatval($value);
     }
 
-    public static function toBool($value)
+    public static function toBool($value): bool
     {
         return is_bool($value) ? $value : $value !== 'false';
     }
