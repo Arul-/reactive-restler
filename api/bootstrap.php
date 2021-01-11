@@ -105,6 +105,7 @@ try {
             'tests/storage/cache' => CacheTest::class,
             'tests/storage/session' => SessionTest::class,
             'tests/overrides/method' => Method::class,
+            'tests/overrides/property' => Property::class,
             //Explorer
             'explorer' => Explorer::class,
             //GraphQL

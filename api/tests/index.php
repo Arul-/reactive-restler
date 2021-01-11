@@ -25,6 +25,7 @@ Router::mapApiClasses([
     'storage/cache' => CacheTest::class,
     'storage/session' => SessionTest::class,
     'overrides/method' => Method::class,
+    'overrides/property' => Property::class,
 ]);
 
 (new Restler())->handle();
