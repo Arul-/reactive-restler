@@ -4,7 +4,8 @@ namespace Luracast\Restler;
 
 use ArrayAccess;
 use Exception;
-use Luracast\Restler\Contracts\{AuthenticationInterface,
+use Luracast\Restler\Contracts\{
+    AuthenticationInterface,
     ComposerInterface,
     ContainerInterface,
     FilterInterface,
@@ -95,6 +96,7 @@ abstract class Core
     protected $_exception;
     /** @var UriInterface */
     private $_baseUrl;
+    private $initPendingObjects = [];
 
     /**
      * Core constructor.
@@ -136,6 +138,7 @@ abstract class Core
 
     private static function isPathSelected(string $class, string $path): bool
     {
+        /** @var $class SelectivePathsInterface */
         if (!Type::implements($class, SelectivePathsInterface::class)) {
             return true;
         }
@@ -167,11 +170,18 @@ abstract class Core
         return null;
     }
 
-    public function &initiateProperties(object $instance): object
+    public function initiateProperties($instance): void
     {
+        if (!$this->_route) {
+            $this->initPendingObjects[] = $instance;
+            return;
+        }
+        if (!empty($this->initPendingObjects)) {
+            $this->initiateProperties(array_pop($this->initPendingObjects));
+        }
         $fullName = get_class($instance);
         $shortName = ClassName::short($fullName);
-        if ($this->_route && !empty($properties = $this->_route->set[$fullName] ?? $this->_route->set[$shortName] ?? [])) {
+        if (!empty($properties = $this->_route->set[$fullName] ?? $this->_route->set[$shortName] ?? [])) {
             $objectVars = get_object_vars($instance);
             $classVars = get_class_vars($fullName);
             $staticVars = array_diff_key($classVars, $objectVars);
@@ -191,7 +201,6 @@ abstract class Core
         if ($instance instanceof UsesAuthenticationInterface) {
             $instance->_setAuthenticationStatus($this->_authenticated, $this->_authVerified);
         }
-        return $instance;
     }
 
     abstract protected function get(): void;
