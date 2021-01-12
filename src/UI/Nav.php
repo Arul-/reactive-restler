@@ -126,7 +126,19 @@ class Nav
         if ($dataOnly) {
             return $tree;
         }
-        //return Emmet::make('ul.nav.nav-tabs>li>a[href=$href#]', $tree);
+        $tags = Emmet::make('ul.nav.nav-tabs');
+        foreach ($tree as $branch) {
+            if (empty($branch['children'])) {
+                $tags[] = Emmet::make('li[role=presentation]>a[href=$href#]{$text#}', $branch);
+            } else {
+                $tag = Emmet::make(
+                    'li.dropdown[role=presentation]>a.dropdown-toggle[data-toggle=dropdown href=$href# role=button aria-haspopup=true aria-expanded=false]{$text# }>span.caret^ul.dropdown-menu>li*children>a[href=$href#]{$text#}',
+                    $branch
+                );
+                $tags[] = $tag;
+            }
+        }
+        return $tags;
     }
 
     public static function addUrls(array $urls)
@@ -179,7 +191,7 @@ class Nav
                 $label = Text::title(static::$root);
                 $url = static::$url;
             } else {
-                $url = static::$url . ltrim($url, '/');
+                $url = static::$url . '/' . $url;
             }
         }
         if (is_null($label)) {
