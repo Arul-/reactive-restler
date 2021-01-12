@@ -80,7 +80,7 @@ class Tags implements ArrayAccess, Countable
      *
      * @return Tags|null
      */
-    public static function byId($id)
+    public static function byId(string $id): ?Tags
     {
         return static::$instances[$id] ?? null;
     }
@@ -91,19 +91,19 @@ class Tags implements ArrayAccess, Countable
      *
      * @return Tags
      */
-    public static function __callStatic($name, array $children)
+    public static function __callStatic($name, array $children): Tags
     {
         return new static($name, $children);
     }
 
-    public function toString($prefix = '', $indent = '    ')
+    public function toString($prefix = '', $indent = '    '): string
     {
         $this->prefix = $prefix;
         $this->indent = $indent;
         return $this->__toString();
     }
 
-    public function __toString()
+    public function __toString(): string
     {
         $children = '';
         if (static::$humanReadable) {
@@ -147,7 +147,7 @@ class Tags implements ArrayAccess, Countable
         return "$this->prefix<{$this->tag}{$attributes}/>";
     }
 
-    public function toArray()
+    public function toArray(): array
     {
         $r = [];
         $r['attributes'] = $this->attributes;
@@ -165,11 +165,11 @@ class Tags implements ArrayAccess, Countable
     /**
      * Set the id attribute of the current tag
      *
-     * @param string $value
+     * @param string|null $value
      *
      * @return string
      */
-    public function id($value)
+    public function id(?string $value): string
     {
         if (!empty($value) && is_string($value)) {
             $this->attributes['id'] = $value;
@@ -201,7 +201,7 @@ class Tags implements ArrayAccess, Countable
         }
     }
 
-    public function __isset($name)
+    public function __isset($name): bool
     {
         return isset($this->attributes[$name]);
     }
@@ -210,9 +210,9 @@ class Tags implements ArrayAccess, Countable
      * @param $attribute
      * @param $value
      *
-     * @return Tags
+     * @return Tags|null
      */
-    public function __call($attribute, $value)
+    public function __call($attribute, $value): ?Tags
     {
         if (is_null($value)) {
             return isset($this->attributes[$attribute])
@@ -230,23 +230,23 @@ class Tags implements ArrayAccess, Countable
         return $this;
     }
 
-    public function offsetGet($index)
+    public function offsetGet($offset)
     {
-        if ($this->offsetExists($index)) {
-            return $this->children[$index];
+        if ($this->offsetExists($offset)) {
+            return $this->children[$offset];
         }
         return false;
     }
 
-    public function offsetExists($index)
+    public function offsetExists($offset): bool
     {
-        return isset($this->children[$index]);
+        return isset($this->children[$offset]);
     }
 
-    public function offsetSet($index, $value)
+    public function offsetSet($offset, $value): bool
     {
-        if ($index) {
-            $this->children[$index] = $value;
+        if ($offset) {
+            $this->children[$offset] = $value;
         } elseif (is_array($value)) {
             $c = [];
             foreach ($value as $child) {
@@ -264,19 +264,19 @@ class Tags implements ArrayAccess, Countable
         return true;
     }
 
-    public function offsetUnset($index)
+    public function offsetUnset($offset): bool
     {
-        $this->children[$index]->_parent = null;
-        unset($this->children[$index]);
+        $this->children[$offset]->_parent = null;
+        unset($this->children[$offset]);
         return true;
     }
 
-    public function getContents()
+    public function getContents(): array
     {
         return $this->children;
     }
 
-    public function count()
+    public function count(): int
     {
         return count($this->children);
     }

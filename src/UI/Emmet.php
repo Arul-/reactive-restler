@@ -16,14 +16,14 @@ class Emmet
      *
      * @param string $string
      *
-     * @param array|string $data
+     * @param array|string|null $data
      *
      * @return array|T
      */
-    public static function make($string, $data = null)
+    public static function make(string $string, $data = null)
     {
         if (!strlen($string)) {
-            return array();
+            return [];
         }
 
         $implicitTag =
@@ -70,7 +70,7 @@ class Emmet
             ) {
                 $digits = 0;
                 if ($delimiter == null) {
-                    $delimiter = array(
+                    $delimiter = [
                         '.' => true,
                         '#' => true,
                         '*' => true,
@@ -80,7 +80,7 @@ class Emmet
                         '[' => true,
                         ']' => true,
                         '=' => true,
-                    );
+                    ];
                 }
                 while (!empty($tokens) &&
                     !isset($delimiter[$t = array_shift($tokens)])) {
@@ -137,7 +137,7 @@ class Emmet
             };
 
         $parseAttributes =
-            function (Callable $self, $round, $total, $data)
+            function (callable $self, $round, $total, $data)
             use (& $tokens, & $tag, $parseText) {
                 $a = $parseText(
                     '', $round, $total, $data
@@ -151,14 +151,14 @@ class Emmet
                         $text = '';
                         $tag->$a($parseText(
                             $text, $round, $total, $data,
-                            array('"' => true)
+                            ['"' => true]
                         ));
                     } else {
                         array_unshift($tokens, $v);
                         $text = '';
                         $tag->$a($parseText(
                             $text, $round, $total, $data,
-                            array(' ' => true, ']' => true)
+                            [' ' => true, ']' => true]
                         ));
                     }
                     if (' ' == ($v = array_shift($tokens))) {
@@ -180,7 +180,7 @@ class Emmet
 
         $parse =
             function (
-                Callable $self,
+                callable $self,
                 $round = 1,
                 $total = 1
             )
@@ -231,7 +231,7 @@ class Emmet
                         case '{':
                             $text = '';
                             $tag[] = $parseText(
-                                $text, $round, $total, $data, array('}' => true)
+                                $text, $round, $total, $data, ['}' => true]
                             );
                             break;
                         case '>':
@@ -256,7 +256,7 @@ class Emmet
                         case '+':
                             $offsetTokens = null;
                             if (!$isInChild && $round != $total) {
-                                $tokens = array();
+                                $tokens = [];
                                 break;
                             }
                             if ('{' == ($t = array_shift($tokens))) {
@@ -275,7 +275,7 @@ class Emmet
                         //sibling of parent
                         case '^':
                             if ($round != $total) {
-                                $tokens = array();
+                                $tokens = [];
                                 break;
                             }
                             $tag = $tag->parent;
@@ -295,7 +295,7 @@ class Emmet
                         case '*':
                             $times = array_shift($tokens);
                             $removeCount = 2;
-                            $delimiter = array(
+                            $delimiter = [
                                 '.' => true,
                                 '#' => true,
                                 '*' => true,
@@ -305,19 +305,19 @@ class Emmet
                                 '[' => true,
                                 ']' => true,
                                 '=' => true,
-                            );
+                            ];
                             if (!is_numeric($times)) {
                                 if (is_string($times)) {
                                     if (!isset($delimiter[$times])) {
                                         $data = $data[$times] ?? $data;
                                     } else {
-                                        array_unshift($tokens, $times);
                                         $removeCount = 1;
                                     }
                                 }
-                                $indexed = array_values($data);
-                                $times = is_array($data) && $indexed == $data
-                                    ? count($data) : 0;
+                                if (is_array($data)) {
+                                    $data = array_values($data);
+                                    $times = count($data) ?? 0;
+                                }
                             }
                             $source = $tag;
                             if (!empty($offsetTokens)) {
@@ -351,7 +351,7 @@ class Emmet
                             $round = 1;
                             $offsetTokens = null;
                             $tag = $source;
-                            $tokens = array(); //$remainingTokens;
+                            $tokens = []; //$remainingTokens;
                             break;
                     }
                 }
@@ -362,13 +362,13 @@ class Emmet
 
     public static function tokenize($string)
     {
-        $r = array();
+        $r = [];
         $f = strtok($string, static::DELIMITERS);
         $pos = 0;
         do {
             $start = $pos;
             $pos = strpos($string, $f, $start);
-            $tokens = array();
+            $tokens = [];
             for ($i = $start; $i < $pos; $i++) {
                 $token = $string[$i];
                 if (('#' == $token || '.' == $token) &&
