@@ -259,7 +259,7 @@ class Html extends MediaType implements ResponseMediaTypeInterface
         $this->html->template = 'php';
     }
 
-    public function php(ArrayObject $data, $debug = true)
+    public function php(ArrayObject $data, $debug = true): string
     {
         if ($this->html->view == 'debug') {
             $this->html->viewPath = dirname(__DIR__) . '/views';
@@ -274,25 +274,22 @@ class Html extends MediaType implements ResponseMediaTypeInterface
         }
         $path = $this->html->viewPath . DIRECTORY_SEPARATOR;
         $template = function ($view) use ($data, $path) {
-            $form = function () {
-                return call_user_func_array(
-                    'Luracast\Restler\UI\Forms::get',
-                    func_get_args()
-                );
-            };
             if (!isset($data['form'])) {
-                $data['form'] = $form;
+                $data['form'] = function () {
+                    return call_user_func_array(
+                        [$this->container->make(Forms::class), 'get'],
+                        func_get_args()
+                    );
+                };
             }
-            $nav = function () {
-                return call_user_func_array(
-                    'Luracast\Restler\UI\Nav::get',
-                    func_get_args()
-                );
-            };
             if (!isset($data['nav'])) {
-                $data['nav'] = $nav;
+                $data['nav'] = function () {
+                    return call_user_func_array(
+                        [$this->container->make(Nav::class), 'get'],
+                        func_get_args()
+                    );
+                };
             }
-
             $_ = function () use ($data, $path) {
                 extract($data->getArrayCopy());
                 $args = func_get_args();
@@ -384,20 +381,20 @@ class Html extends MediaType implements ResponseMediaTypeInterface
         $twig->addFunction(
             new TwigFunction(
                 'form',
-                'Luracast\Restler\UI\Forms::get',
+                [$this->container->make(Forms::class), 'get'],
                 ['is_safe' => ['html']]
             )
         );
         $twig->addFunction(
             new TwigFunction(
                 'form_key',
-                'Luracast\Restler\UI\Forms::key'
+                [$this->container->make(Forms::class), 'key']
             )
         );
         $twig->addFunction(
             new TwigFunction(
                 'nav',
-                'Luracast\Restler\UI\Nav::get'
+                [$this->container->make(Nav::class), 'get']
             )
         );
 
@@ -420,16 +417,13 @@ class Html extends MediaType implements ResponseMediaTypeInterface
         return $template->render($data) ?? '';
     }
 
-    public function handlebar(ArrayObject $data, $debug = true)
+    public function handlebar(ArrayObject $data, $debug = true): string
     {
         return $this->mustache($data, $debug);
     }
 
-    public function mustache(ArrayObject $data, $debug = true)
+    public function mustache(ArrayObject $data, $debug = true): string
     {
-        if (!isset($data['nav'])) {
-            //$data['nav'] = array_values(Nav::get()); //TODO get nav to work
-        }
         $options = [
             'loader' => new \Mustache_Loader_FilesystemLoader(
                 $this->html->viewPath,
@@ -439,10 +433,21 @@ class Html extends MediaType implements ResponseMediaTypeInterface
                 'form' => function ($text, \Mustache_LambdaHelper $m) {
                     $params = explode(',', $m->render($text));
                     return call_user_func_array(
-                        'Luracast\Restler\UI\Forms::get',
+                        [$this->container->make(Forms::class), 'get'],
                         $params
                     );
                 },
+                'nav' => function ($text, \Mustache_LambdaHelper $m) {
+                    $params = explode(',', $m->render($text));
+                    return call_user_func_array(
+                        [$this->container->make(Nav::class), 'get'],
+                        $params
+                    );
+                },
+                'title'=>function ($text, \Mustache_LambdaHelper $m) {
+                    return Text::title($m->render($text));
+                },
+
             ]
         ];
         if (!$debug) {
@@ -472,7 +477,6 @@ class Html extends MediaType implements ResponseMediaTypeInterface
             }
         );
 
-        /** @var Restler $restler */
         $restler = $this->restler;
 
         //Lets expose shortcuts for our classes
