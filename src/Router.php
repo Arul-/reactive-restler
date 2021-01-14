@@ -549,7 +549,7 @@ class Router
      * @param string|null $forClass
      * @return array of [class => [alias => class, ...]]
      */
-    protected static function parseUseStatements(string $code, ?string $forClass = null)
+    protected static function parseUseStatements(string $code, ?string $forClass = null): array
     {
         if (!defined('T_NAME_QUALIFIED')) {
             define('T_NAME_QUALIFIED', 314);
@@ -622,7 +622,7 @@ class Router
         return $forClass ? $res[$forClass] : $res;
     }
 
-    private static function fetch(&$tokens, $take)
+    private static function fetch(&$tokens, $take): ?string
     {
         $res = null;
         while ($token = current($tokens)) {
@@ -1008,7 +1008,7 @@ class Router
         array $excludedPaths = [],
         array $excludedHttpMethods = [],
         int $version = 1
-    ) {
+    ): array {
         $map = [];
         $all = self::$routes["v$version"];
         $filter = [];
@@ -1070,7 +1070,7 @@ class Router
         ServerRequestInterface $request,
         callable $maker,
         array &$verifiedClasses
-    ) {
+    ): bool {
         if ($route->access <= Route::ACCESS_HYBRID) {
             return true;
         }

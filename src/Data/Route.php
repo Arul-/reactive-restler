@@ -181,6 +181,10 @@ class Route extends ValueObject
      * @var array
      */
     protected $arguments = [];
+    /**
+     * @var array|mixed|string[]
+     */
+    public $scope;
 
 
     public static function fromMethod(ReflectionMethod $method, ?array $metadata = null, array $scope = []): self
@@ -247,6 +251,7 @@ class Route extends ValueObject
         } elseif (empty($route->responseFormatMap['default'])) {
             $route->responseFormatMap['default'] = array_values($route->responseFormatMap)[0];
         }
+        $route->scope = $scope;
 
         return $route;
     }
