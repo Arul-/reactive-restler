@@ -7,7 +7,7 @@
     <meta name="description" content="">
     <meta name="author" content="">
 
-    <title>Forms Example - Twitter Bootsrap 3 - {{ Text::title($theme) }}</title>
+    <title>Forms Example - Twitter Bootstrap 3 - {{ Text::title($theme) }}</title>
 
     <!-- Bootstrap core CSS -->
     <link href="http://bootswatch.com/3/{{ $theme }}/bootstrap.min.css" rel="stylesheet">
@@ -25,7 +25,7 @@
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
             </button>
-            <a class="navbar-brand" href="#">Twitter Bootsrap 3 - {{ Text::title($theme) }}</a>
+            <a class="navbar-brand" href="#">Twitter Bootstrap 3 - {{ Text::title($theme) }}</a>
         </div>
         <div class="navbar-collapse collapse">
             <ul class="nav navbar-nav navbar-right">
@@ -47,7 +47,7 @@
 
                     <div class="dropdown-menu" style="padding: 15px; padding-bottom: 0px;">
                         <!-- Login form here -->
-                        {!! $forms->get('POST', 'examples/_016_forms/users/signin') !!}
+                        {!! $form('POST', 'examples/_016_forms/users/signin') !!}
                         <p>&nbsp;</p>
                     </div>
                 </li>
@@ -68,7 +68,7 @@
             </div>
             <div class="col-md-8">
                 <h3>Sign Up</h3>
-                {!! $forms->get('POST', 'examples/_016_forms/users/signup') !!}
+                {!! $form('POST', 'examples/_016_forms/users/signup') !!}
             </div>
         </div>
     </div>

@@ -444,7 +444,7 @@ class Html extends MediaType implements ResponseMediaTypeInterface
                         $params
                     );
                 },
-                'title'=>function ($text, \Mustache_LambdaHelper $m) {
+                'title' => function ($text, \Mustache_LambdaHelper $m) {
                     return Text::title($m->render($text));
                 },
 
@@ -476,14 +476,12 @@ class Html extends MediaType implements ResponseMediaTypeInterface
                 return $phpEngine;
             }
         );
-
         $restler = $this->restler;
-
         //Lets expose shortcuts for our classes
         spl_autoload_register(
             function ($className) use ($restler) {
-                if (isset($restler->apiMethodInfo->metadata['scope'][$className])) {
-                    return class_alias($restler->apiMethodInfo->metadata['scope'][$className], $className);
+                if ($found = $this->route->scope[$className] ?? null) {
+                    return class_alias($found, $className);
                 }
                 if (isset(Defaults::$aliases[$className])) {
                     return class_alias(Defaults::$aliases[$className], $className);
@@ -497,8 +495,14 @@ class Html extends MediaType implements ResponseMediaTypeInterface
         $viewFinder = new FileViewFinder($filesystem, [$this->html->viewPath]);
         $factory = new Factory($resolver, $viewFinder, new Dispatcher());
         $path = $viewFinder->find($this->html->view);
-        $data->forms = $this->container->make(Forms::class);
-        $data->nav = $this->container->make(Nav::class);
+        $data->form = function () {
+            return call_user_func_array(
+                [$this->container->make(Forms::class), 'get'], func_get_args());
+        };
+        $data->nav = function () {
+            return call_user_func_array(
+                [$this->container->make(Nav::class), 'get'], func_get_args());
+        };
         $view = new View($factory, $engine, $this->html->view, $path, $data);
         $factory->callCreator($view);
         return $view->render();

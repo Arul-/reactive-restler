@@ -43,7 +43,7 @@
                     <ul class="dropdown">
                         <li class="has-form">
                             <div class="row" style="min-width: 140px">
-                                {!! $forms->get('POST', 'examples/_016_forms/users/signin') !!}
+                                {!! $form('POST', 'examples/_016_forms/users/signin') !!}
                             </div>
                             <p></p>
                         </li>
@@ -63,7 +63,7 @@
         </div>
         <div class="large-8 columns">
             <h3>Sign Up</h3>
-            {!! $forms->get('POST', 'examples/_016_forms/users/signup') !!}
+            {!! $form('POST', 'examples/_016_forms/users/signup') !!}
         </div>
     </div>
 
