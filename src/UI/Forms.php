@@ -292,7 +292,7 @@ class Forms implements FilterInterface, SelectivePathsInterface
             (is_object($value) && $param->type == get_class($value));
     }
 
-    public function style(string $name, ?Type $param, ?string $default = null)
+    public function style(string $name, ?Type $param, ?string $default = null): ?string
     {
         if ($param) {
             if (isset($param->{$name})) {
@@ -419,7 +419,7 @@ class Forms implements FilterInterface, SelectivePathsInterface
         return $t;
     }
 
-    protected function guessFieldType(Param $p, $type = 'type')
+    protected function guessFieldType(Param $p, $type = 'type'): string
     {
         if (in_array($p->$type, $this->inputTypes)) {
             return $p->$type;
@@ -454,7 +454,7 @@ class Forms implements FilterInterface, SelectivePathsInterface
      *
      * @return string generated form key
      */
-    public function key($method = 'POST', $action = null)
+    public function key($method = 'POST', $action = null): string
     {
         if (is_null($action)) {
             $action = $this->restler->path;
@@ -481,10 +481,12 @@ class Forms implements FilterInterface, SelectivePathsInterface
      */
     public function _isAllowed(ServerRequestInterface $request, ResponseHeaders $responseHeaders): bool
     {
+        if ('GET' === $request->getMethod()) {
+            return true;
+        }
         if ($this->session->getId() == '') {
             $this->session->start();
         }
-        /** @var Restler $restler */
         $restler = $this->restler;
         $url = $restler->path;
         $check = static::$filterFormRequestsOnly
