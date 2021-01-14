@@ -60,6 +60,8 @@ class Users
         $html->data['theme'] = $theme;
         $html->data['themes'] = $bootstrap3;
         $html->data['style'] = $style;
+        $html->data['bootstrap3'] = $style === 'bootstrap3';
+        $html->data['foundation5'] = $theme === 'foundation5';
         $forms->style = FormStyles::$$style;
     }
 
@@ -69,9 +71,11 @@ class Users
     }
 
     /**
+     * @param string $email
+     * @param string $password
      * @return array {@label <span class="glyphicon glyphicon-user"></span> Sign In}
      */
-    function postSignIn($email, $password)
+    function postSignIn(string $email, string $password): array
     {
         return func_get_args();
     }
@@ -87,7 +91,7 @@ class Users
      *
      * @view users
      */
-    function postSignUp($firstName, $lastName, $email, $password, $address)
+    function postSignUp(string $firstName, string $lastName, string $email, string $password, Address $address): array
     {
         return func_get_args();
     }
