@@ -1,6 +1,5 @@
 <?php
 
-use Luracast\Restler\ArrayObject;
 use Luracast\Restler\StaticProperties;
 use Luracast\Restler\UI\FormStyles;
 use Psr\Http\Message\ServerRequestInterface;
@@ -36,7 +35,6 @@ class Users
             'united',
             'yeti',
         ];
-        //bootstarp 3
         $bootstrap3 = [
             'cerulean',
             'cosmo',
@@ -55,13 +53,14 @@ class Users
             'united',
             'yeti',
         ];
-        $theme = $request->getQueryParams()['theme'] ?? $bootstrap3[array_rand($bootstrap3, 1)];
-        $style = $theme == 'foundation5' ? 'foundation5' : 'bootstrap3';
+        $theme = $request->getQueryParams()['theme'] ?? 'bootstrap4-' . $bootstrap4[array_rand($bootstrap4, 1)];
+        [$style, $theme] = explode('-',$theme,2);
         $html->data['theme'] = $theme;
-        $html->data['themes'] = $bootstrap3;
+        $html->data['themes'] = compact('bootstrap3', 'bootstrap4');
+        $html->data['bootstrap4'] = $bootstrap4;
         $html->data['style'] = $style;
-        $html->data['bootstrap3'] = $style === 'bootstrap3';
-        $html->data['foundation5'] = $theme === 'foundation5';
+        $html->data['isBootstrap4'] = $style === 'bootstrap4';
+        $html->data['isFoundation5'] = $theme === 'foundation5';
         $forms->style = FormStyles::$$style;
     }
 

@@ -27,15 +27,19 @@
         </ul>
         <section class="top-bar-section">
             <ul class="alignment right">
+                @foreach ($themes as $name => $values)
                 <li class="has-dropdown">
-                    <a href="#">Choose Your Style</a>
+                    <a href="#">{{ Text::title($name) }}</a>
                     <ul class="dropdown">
-                        <li><a href="?theme=foundation5">Foundation</a></li>
-                        <li><label>Bootstrap Themes</label></li>
-                        @foreach ($themes as $option)
-                        <li><a href="?theme={{ $option }}">{{ Text::title($option) }}</a></li>
+                        @foreach ($values as $option)
+                        <li><a href="?theme={{ $name }}-{{ $option }}">{{ Text::title($option) }}</a></li>
                         @endforeach
                     </ul>
+                </li>
+                <li class="divider"></li>
+                @endforeach
+                <li>
+                    <a href="?theme=foundation5-foundation5">Foundation</a>
                 </li>
                 <li class="divider"></li>
                 <li class="has-dropdown">

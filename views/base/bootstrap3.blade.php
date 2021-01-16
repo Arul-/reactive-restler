@@ -29,17 +29,19 @@
         </div>
         <div class="navbar-collapse collapse">
             <ul class="nav navbar-nav navbar-right">
-                <li class="dropdown">
-                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">Choose Your Style<b
-                                class="caret"></b></a>
-                    <ul class="dropdown-menu">
-                        <li><a href="?theme=foundation5">Foundation</a></li>
-                        <li class="dropdown-header">Bootstrap Themes</li>
-                        @foreach ($themes as $option)
-                            <li><a href="?theme={{ $option }}">{{ Text::title($option) }}</a></li>
-                        @endforeach
-                    </ul>
-                </li>
+                @foreach ($themes as $name => $values)
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">{{ Text::title($name) }}<b
+                                    class="caret"></b></a>
+                        <ul class="dropdown-menu">
+                            @foreach ($values as $option)
+                                <li><a href="?theme={{ $name }}-{{ $option }}">{{ Text::title($option) }}</a></li>
+                            @endforeach
+                        </ul>
+                    </li>
+                @endforeach
+                <li class="divider-vertical"></li>
+                <li><a href="?theme=foundation5-foundation5">Foundation</a></li>
                 <li class="divider-vertical"></li>
                 <li class="dropdown">
                     <a class="dropdown-toggle" href="#" data-toggle="dropdown">
