@@ -1,7 +1,10 @@
-{{#bootstrap3}}
+{{#isBootstrap4}}
+    {{> partials/bootstrap4 }}
+{{/isBootstrap4}}
+{{#isBootstrap3}}
     {{> partials/bootstrap3 }}
-{{/bootstrap3}}
-{{#foundation5}}
+{{/isBootstrap3}}
+{{#isFoundation5}}
     {{> partials/foundation5 }}
-{{/foundation5}}
+{{/isFoundation5}}
 

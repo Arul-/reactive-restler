@@ -27,18 +27,23 @@
                 </div>
                 <div class="navbar-collapse collapse">
                     <ul class="nav navbar-nav navbar-right">
-                        <li class="dropdown">
-                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">Choose Your Style<b
-                                        class="caret"></b></a>
-                            <ul class="dropdown-menu">
-                                <li><a href="?theme=foundation5">Foundation</a></li>
-                                <li class="dropdown-header">Bootstrap Themes</li>
-                              {{#themes}}
-                                 <li><a href="?theme={{.}}">{{#title}}{{.}}{{/title}}</a></li>
-                              {{/themes}}
-                            </ul>
-                        </li>
-                        <li class="divider-vertical"></li>
+                        {{#themes}}
+                            {{^items}}
+                                <li><a href="?theme={{ name }}-{{ name }}">{{#title}}{{ name }}{{/title}}</a></li>
+                            {{/items}}
+                            {{^noitems}}
+                            <li class="dropdown">
+                                <a href="#" class="dropdown-toggle" data-toggle="dropdown">{{#title}}{{ name }}{{/title}}<b
+                                            class="caret"></b></a>
+                                <ul class="dropdown-menu">
+                                    {{#items}}
+                                        <li><a href="?theme={{ name }}-{{ . }}">{{#title}}{{ . }}{{/title}}</a></li>
+                                    {{/items}}
+                                </ul>
+                            </li>
+                            <li class="divider-vertical"></li>
+                            {{/noitems}}
+                        {{/themes}}
                         <li class="dropdown">
                             <a class="dropdown-toggle" href="#" data-toggle="dropdown">
                                 Sign In <strong class="caret"></strong></a>

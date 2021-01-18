@@ -54,11 +54,17 @@ class Users
             'yeti',
         ];
         $theme = $request->getQueryParams()['theme'] ?? 'bootstrap4-' . $bootstrap4[array_rand($bootstrap4, 1)];
-        [$style, $theme] = explode('-',$theme,2);
+        [$style, $theme] = explode('-', $theme, 2);
         $html->data['theme'] = $theme;
-        $html->data['themes'] = compact('bootstrap3', 'bootstrap4');
+        $html->data['themes'] = [
+            ['name' => 'bootstrap3', 'items' => $bootstrap3],
+            ['name' => 'bootstrap4', 'items' => $bootstrap4],
+            ['name' => 'foundation5', 'noitems' => true],
+        ];
+        $html->data['bootstrap3'] = $bootstrap3;
         $html->data['bootstrap4'] = $bootstrap4;
         $html->data['style'] = $style;
+        $html->data['isBootstrap3'] = $style === 'bootstrap3';
         $html->data['isBootstrap4'] = $style === 'bootstrap4';
         $html->data['isFoundation5'] = $theme === 'foundation5';
         $forms->style = FormStyles::$$style;

@@ -27,16 +27,21 @@
             </ul>
             <section class="top-bar-section">
                 <ul class="alignment right">
-                    <li class="has-dropdown">
-                        <a href="#">Choose Your Style</a>
-                        <ul class="dropdown">
-                            <li><a href="?theme=foundation5">Foundation</a></li>
-                            <li><label>Bootstrap Themes</label></li>
-                            {{#themes}}
-                                 <li><a href="?theme={{.}}">{{#title}}{{.}}{{/title}}</a></li>
-                            {{/themes}}
-                        </ul>
-                    </li>
+                {{#themes}}
+                    {{^items}}
+                        <li><a href="?theme={{ name }}-{{ name }}">{{#title}}{{ name }}{{/title}}</a></li>
+                    {{/items}}
+                    {{^noitems}}
+                        <li class="has-dropdown">
+                            <a href="#">{{#title}}{{ name }}{{/title}}</a>
+                            <ul class="dropdown">
+                                {{#items}}
+                                    <li><a href="?theme={{ name }}-{{ . }}">{{#title}}{{ . }}{{/title}}</a></li>
+                                {{/items}}
+                            </ul>
+                        </li>
+                    {{/noitems}}
+                {{/themes}}
                     <li class="divider"></li>
                     <li class="has-dropdown">
                         <a href="#">Sign In</a>
