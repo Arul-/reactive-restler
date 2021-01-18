@@ -17,31 +17,36 @@
 <nav class="navbar navbar-expand-lg fixed-top navbar-dark bg-primary">
     <div class="container">
         <a href="#" class="navbar-brand">Twitter Bootstrap 4 - {{ Text::title($theme) }}</a>
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarResponsive"
+                aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarResponsive">
             <ul class="navbar-nav">
-                <span class="navbar-text">
-                    choose a theme >
-                </span>
-                @foreach ($themes as $name => $values)
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" id="themes">{{ Text::title($name) }}<span class="caret"></span></a>
-                    <div class="dropdown-menu" aria-labelledby="themes">
-                        @foreach ($values as $option)
-                            <a class="dropdown-item"  href="?theme={{ $name }}-{{ $option }}">{{ Text::title($option) }}</a>
-                        @endforeach
-                    </div>
-                </li>
+                @foreach ($themes as $detail)
+                    @if(empty($detail->items))
+                        <li class="nav-item">
+                            <a class="nav-link"
+                               href="?theme={{ $detail->name }}-{{ $detail->name }}">{{ Text::title($detail->name) }}</a>
+                        </li>
+                    @else
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#"
+                               id="themes">{{ Text::title($detail->name) }}<span class="caret"></span></a>
+                            <div class="dropdown-menu" aria-labelledby="themes">
+                                @foreach ($detail->items as $option)
+                                    <a class="dropdown-item"
+                                       href="?theme={{ $detail->name }}-{{ $option }}">{{ Text::title($option) }}</a>
+                                @endforeach
+                            </div>
+                        </li>
+                    @endif
                 @endforeach
-                <li class="nav-item">
-                    <a class="nav-link" href="?theme=foundation5-foundation5">Foundation</a>
-                </li>
             </ul>
             <ul class="nav navbar-nav ml-auto">
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" id="signin">Sign In <span class="caret"></span></a>
+                    <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" id="signin">Sign In <span
+                                class="caret"></span></a>
                     <div class="dropdown-menu" aria-labelledby="signin">
                         {!! $form('POST', 'examples/_016_forms/users/signin') !!}
                     </div>
@@ -110,6 +115,11 @@
     </div>
 </div>
 <!-- /container -->
-<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ho+j7jyWK8fNQe+A12Hb8AhRq26LrZ/JpcUGGOn+Y7RsweNrtN/tE3MoK7ZeZDyx" crossorigin="anonymous"></script></body>
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"
+        integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj"
+        crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-ho+j7jyWK8fNQe+A12Hb8AhRq26LrZ/JpcUGGOn+Y7RsweNrtN/tE3MoK7ZeZDyx"
+        crossorigin="anonymous"></script>
+</body>
 </html>

@@ -27,20 +27,24 @@
         </ul>
         <section class="top-bar-section">
             <ul class="alignment right">
-                @foreach ($themes as $name => $values)
-                <li class="has-dropdown">
-                    <a href="#">{{ Text::title($name) }}</a>
-                    <ul class="dropdown">
-                        @foreach ($values as $option)
-                        <li><a href="?theme={{ $name }}-{{ $option }}">{{ Text::title($option) }}</a></li>
-                        @endforeach
-                    </ul>
-                </li>
-                <li class="divider"></li>
+                @foreach ($themes as $detail)
+                    @if(empty($detail->items))
+                        <li>
+                            <a href="?theme={{ $detail->name }}-{{ $detail->name }}">{{ Text::title($detail->name) }}</a>
+                        </li>
+                    @else
+                        <li class="has-dropdown">
+                            <a href="#">{{ Text::title($detail->name) }}</a>
+                            <ul class="dropdown">
+                                @foreach ($detail->items as $option)
+                                    <li>
+                                        <a href="?theme={{ $detail->name }}-{{ $option }}">{{ Text::title($option) }}</a>
+                                    </li>
+                                @endforeach
+                            </ul>
+                        </li>
+                    @endif
                 @endforeach
-                <li>
-                    <a href="?theme=foundation5-foundation5">Foundation</a>
-                </li>
                 <li class="divider"></li>
                 <li class="has-dropdown">
                     <a href="#">Sign In</a>

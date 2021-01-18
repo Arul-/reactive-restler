@@ -29,19 +29,21 @@
         </div>
         <div class="navbar-collapse collapse">
             <ul class="nav navbar-nav navbar-right">
-                @foreach ($themes as $name => $values)
+                @foreach ($themes as $detail)
+                    @if(empty($detail->items))
+                        <li><a href="?theme={{ $detail->name }}--{{ $detail->name }}">{{ Text::title( $detail->name) }}</a></li>
+                    @else
                     <li class="dropdown">
-                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">{{ Text::title($name) }}<b
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">{{ Text::title($detail->name) }}<b
                                     class="caret"></b></a>
                         <ul class="dropdown-menu">
-                            @foreach ($values as $option)
-                                <li><a href="?theme={{ $name }}-{{ $option }}">{{ Text::title($option) }}</a></li>
+                            @foreach ($detail->items as $option)
+                                <li><a href="?theme={{ $detail->name }}-{{ $option }}">{{ Text::title($option) }}</a></li>
                             @endforeach
                         </ul>
                     </li>
+                    @endif
                 @endforeach
-                <li class="divider-vertical"></li>
-                <li><a href="?theme=foundation5-foundation5">Foundation</a></li>
                 <li class="divider-vertical"></li>
                 <li class="dropdown">
                     <a class="dropdown-toggle" href="#" data-toggle="dropdown">
