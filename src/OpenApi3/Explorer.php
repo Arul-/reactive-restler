@@ -484,6 +484,9 @@ class Explorer implements ProvidesMultiVersionApiInterface
         if (!$param instanceof Param) {
             return;
         }
+        if('string'===$param->type && $param->pattern){
+            $s->pattern = $param->pattern;
+        }
         if ($param->default[0]) {
             $s->default = $param->default[1];
         }
