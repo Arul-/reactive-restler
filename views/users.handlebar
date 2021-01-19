@@ -7,4 +7,3 @@
 {{#isFoundation5}}
     {{> partials/foundation5 }}
 {{/isFoundation5}}
-
