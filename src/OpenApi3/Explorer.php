@@ -402,10 +402,10 @@ class Explorer implements ProvidesMultiVersionApiInterface
         if ($param->scalar) {
             if ($param->multiple) {
                 $schema->type = 'array';
-                if(!is_null($min = self::$defaultMinimumValues['array'] ?? null)){
+                if (!is_null($min = self::$defaultMinimumValues['array'] ?? null)) {
                     $schema->minItems = $min;
                 }
-                if(!is_null($max = self::$defaultMaximumValues['array'] ?? null)){
+                if (!is_null($max = self::$defaultMaximumValues['array'] ?? null)) {
                     $schema->maxItems = $max;
                 }
                 $schema->items = new stdClass;
@@ -421,10 +421,10 @@ class Explorer implements ProvidesMultiVersionApiInterface
             } else { //'indexed == $param->format
                 $schema->type = 'array';
                 $schema->items = new stdClass;
-                if(!is_null($min = $param->min ?? self::$defaultMinimumValues['array'] ?? null)){
+                if (!is_null($min = $param->min ?? self::$defaultMinimumValues['array'] ?? null)) {
                     $schema->minItems = $min;
                 }
-                if(!is_null($max = $param->max ?? self::$defaultMaximumValues['array'] ?? null)){
+                if (!is_null($max = $param->max ?? self::$defaultMaximumValues['array'] ?? null)) {
                     $schema->maxItems = $max;
                 }
             }
@@ -434,10 +434,10 @@ class Explorer implements ProvidesMultiVersionApiInterface
                 $schema->type = 'array';
                 $schema->items = new stdClass;
                 $target = $schema->items;
-                if(!is_null($min = self::$defaultMinimumValues['array'] ?? null)){
+                if (!is_null($min = self::$defaultMinimumValues['array'] ?? null)) {
                     $schema->minItems = $min;
                 }
-                if(!is_null($max = self::$defaultMaximumValues['array'] ?? null)){
+                if (!is_null($max = self::$defaultMaximumValues['array'] ?? null)) {
                     $schema->maxItems = $max;
                 }
             }
@@ -481,11 +481,11 @@ class Explorer implements ProvidesMultiVersionApiInterface
         if (null !== ($max = $param->max ?? self::$defaultMaximumValues[$param->type] ?? null)) {
             $s->{(self::$maximumAliases[$param->type] ?? 'maximum')} = $max;
         }
+        if ('string' === $param->type && $param->pattern) {
+            $s->pattern = $param->pattern;
+        }
         if (!$param instanceof Param) {
             return;
-        }
-        if('string'===$param->type && $param->pattern){
-            $s->pattern = $param->pattern;
         }
         if ($param->default[0]) {
             $s->default = $param->default[1];

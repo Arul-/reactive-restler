@@ -98,6 +98,17 @@ abstract class Type extends ValueObject
      * @var string|null
      */
     public $reference = null;
+    // ==================================================================
+    //
+    // REGEX VALIDATION
+    //
+    // ------------------------------------------------------------------
+    /**
+     * RegEx pattern to match the value
+     *
+     * @var string regular expression
+     */
+    public $pattern;
 
     public static function fromProperty(?ReflectionProperty $property, ?array $doc = null, array $scope = [])
     {
@@ -124,7 +135,8 @@ abstract class Type extends ValueObject
     {
         $instance = new static();
         $types = $metadata['type'] ?? [];
-        $itemTypes = $metadata[CommentParser::$embeddedDataName]['type'] ?? [];
+        $properties = $metadata[CommentParser::$embeddedDataName] ?? [];
+        $itemTypes = $properties['type'] ?? [];
         $instance->description = $metadata['description'] ?? '';
         $instance->apply(
             $reflector && method_exists($reflector, 'hasType') && $reflector->hasType()
@@ -133,7 +145,7 @@ abstract class Type extends ValueObject
             $itemTypes,
             $scope
         );
-
+        $instance->pattern = $properties['pattern'] ?? null;
         return $instance;
     }
 
