@@ -4,7 +4,6 @@
 namespace Luracast\Restler\Data;
 
 
-use _HumbugBox58fd4d9e2a25\___PHPSTORM_HELPERS\this;
 use Luracast\Restler\Contracts\GenericResponseInterface;
 use Luracast\Restler\Exceptions\HttpException;
 use Throwable;
@@ -49,7 +48,10 @@ class ErrorResponse implements GenericResponseInterface
                         'properties' =>
                             [
                                 'code' => Returns::__set_state(['type' => 'int']),
-                                'message' => Returns::__set_state(['type' => 'string']),
+                                'message' => Returns::__set_state([
+                                    'type' => 'string',
+                                    'pattern' => '/^[a-zA-Z0-9?><;,{}[\]\-_+=!@#$%\^&*|\']*$/',
+                                ]),
                             ],
                     ]),
                     'debug' => Returns::__set_state([
@@ -58,7 +60,7 @@ class ErrorResponse implements GenericResponseInterface
                         'description' => '',
                         'properties' =>
                             [
-                                'source' => Returns::__set_state(['type' => 'string']),
+                                'source' => Returns::__set_state(['type' => 'string', 'pattern' => '/[\s\S]*/']),
                                 'trace' => Returns::__set_state([
                                     'type' => 'Trace',
                                     'scalar' => false,
@@ -66,18 +68,21 @@ class ErrorResponse implements GenericResponseInterface
                                         [
                                             'file' => Returns::__set_state([
                                                 'type' => 'string',
+                                                'pattern' => '/[\s\S]*/',
                                                 'multiple' => false,
                                                 'nullable' => false,
                                                 'scalar' => true
                                             ]),
                                             'function' => Returns::__set_state([
                                                 'type' => 'string',
+                                                'pattern' => '/[\s\S]*/',
                                                 'multiple' => false,
                                                 'nullable' => false,
                                                 'scalar' => true
                                             ]),
                                             'args' => Returns::__set_state([
                                                 'type' => 'string',
+                                                'pattern' => '/[\s\S]*/',
                                                 'multiple' => true,
                                                 'nullable' => false,
                                                 'scalar' => true
@@ -118,14 +123,14 @@ class ErrorResponse implements GenericResponseInterface
         return $argument;
     }
 
-    public function jsonSerialize()
-    {
-        return $this->response;
-    }
-
     public function __toString()
     {
         return json_encode($this->jsonSerialize());
+    }
+
+    public function jsonSerialize()
+    {
+        return $this->response;
     }
 }
 
