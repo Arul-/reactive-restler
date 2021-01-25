@@ -48,6 +48,7 @@ class Html extends MediaType implements ResponseMediaTypeInterface
 
     public static $view;
     public static $errorView = 'debug.php';
+    /** @var string Choose manual if you want to compute the html in your api method */
     public static $template = 'php';
     public static $handleSession = true;
     public static $convertResponseToArray = false;
@@ -140,6 +141,9 @@ class Html extends MediaType implements ResponseMediaTypeInterface
 
     public function encode($data, ResponseHeaders $responseHeaders, bool $humanReadable = false)
     {
+        if ('manual' === $this->html['template'] && is_string($data)) {
+            return $data;
+        }
         try {
             if (!is_readable($this->html->viewPath)) {
                 throw new HttpException(
