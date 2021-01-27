@@ -461,6 +461,7 @@ class Router
             }
 
             $route = Route::fromMethod($method, $metadata, $scope);
+            $route->action[0] = $className;
             $route->resource['path'] = $resourcePath;
             $allowAmbiguity = (isset($metadata['smart-auto-routing']) && $metadata['smart-auto-routing'] != 'true')
                 || !Defaults::$smartAutoRouting;
