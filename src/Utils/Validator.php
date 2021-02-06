@@ -521,7 +521,7 @@ class Validator implements ValidationInterface
      */
     public static function color($input, ?Param $param = null): string
     {
-        if (preg_match('/^#[a-f0-9]{6}$/i', $input)) {
+        if (preg_match('/^#(?:[0-9a-fA-F]{3}){1,2}$/', $input)) {
             return $input;
         }
         throw new Invalid('Expecting color as hexadecimal digits.');
