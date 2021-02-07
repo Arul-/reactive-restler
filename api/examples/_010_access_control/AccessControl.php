@@ -9,7 +9,6 @@ use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\OpenApi3\Security\ApiKeyAuth;
 use Luracast\Restler\OpenApi3\Security\Scheme;
 use Luracast\Restler\ResponseHeaders;
-use Luracast\Restler\Utils\ClassName;
 use Psr\Http\Message\ServerRequestInterface;
 
 class AccessControl implements AccessControlInterface, SelectivePathsInterface, ExplorableAuthenticationInterface
@@ -25,6 +24,15 @@ class AccessControl implements AccessControlInterface, SelectivePathsInterface, 
     public $requires = 'user';
     public $role = 'user';
     public $id = null;
+    /**
+     * @var UserIdentificationInterface
+     */
+    private $user;
+
+    public function __construct(UserIdentificationInterface $user)
+    {
+        $this->user = $user;
+    }
 
     public static function getWWWAuthenticateString(): string
     {
@@ -67,14 +75,12 @@ class AccessControl implements AccessControlInterface, SelectivePathsInterface, 
         if (!$api_key = $request->getQueryParams()['api_key'] ?? $request->getHeaderLine('api_key') ?? false) {
             return false;
         }
-        /** @var UserIdentificationInterface $userClass */
-        $userClass = ClassName::get(UserIdentificationInterface::class);
-        if (!$user = self::$users[$api_key] ?? null) {
-            $userClass::setCacheIdentifier($api_key);
+        if (!$user = (self::$users[$api_key] ?? null)) {
+            $this->user->setCacheIdentifier($api_key);
             return false;
         }
         [$id, $role] = $user;
-        $userClass::setCacheIdentifier($id);
+        $this->user->setCacheIdentifier($id);
         $this->role = $role;
         $this->id = $id;
         //Role-based access control (RBAC)

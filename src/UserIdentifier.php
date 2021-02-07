@@ -1,57 +1,97 @@
 <?php namespace Luracast\Restler;
 
 use Luracast\Restler\Contracts\UserIdentificationInterface;
+use Psr\Http\Message\ServerRequestInterface;
 
 class UserIdentifier implements UserIdentificationInterface
 {
-    private static $initialized = false;
-    public static $id = null;
-    public static $cacheId = null;
-    public static $ip;
-    public static $browser = '';
-    public static $platform = '';
+    public const HEADERS_NGINX = [
+        'x-real-ip',
+        'forwarded',
+        'x-forwarded-for',
+        'x-forwarded',
+        'x-cluster-client-ip',
+        'client-ip',
+    ];
+    public const HEADERS_CLOUDFLARE = [
+        'cf-connecting-ip',
+        'true-client-ip',
+        'forwarded',
+        'x-forwarded-for',
+        'x-forwarded',
+        'x-cluster-client-ip',
+        'client-ip',
+    ];
 
-    public static function init()
-    {
-        static::$initialized = true;
-        static::$ip = static::getIpAddress();
-    }
+    public const HEADERS_COMMON = [
+        'client-ip',
+        'x-forwarded-for',
+        'x-forwarded',
+        'x-cluster-client-ip',
+        'cf-connecting-ip',
+    ];
 
-    public static function getUniqueIdentifier($includePlatform = false)
+    public static $headersToInspect = self::HEADERS_COMMON;
+    public static $attributesToInspect = ['client_ip', 'ip'];
+    protected $id = null;
+    protected $cacheId = null;
+    protected $ip;
+    protected $browser = '';
+    protected $platform = '';
+    /**
+     * @var ServerRequestInterface
+     */
+    private $request;
+
+    public function __construct(ServerRequestInterface $request)
     {
-        if (!static::$initialized) {
-            static::init();
+        $this->request = $request;
+        $this->ip = $this->getIpAddress();
+        if ($agent = $this->request->getHeaderLine('user_agent')) {
+            if ($details = get_browser($agent)) {
+                $this->browser = $details->parent;
+                $this->platform = $details->platform;
+            }
         }
-        return static::$id ?: base64_encode('ip:' . ($includePlatform
-                ? static::$ip . '-' . static::$platform
-                : static::$ip
-            ));
     }
 
-    public static function getIpAddress($ignoreProxies = false)
+    public function getIpAddress(bool $ignoreProxies = false): string
     {
-        foreach (array(
-                     'HTTP_CLIENT_IP',
-                     'HTTP_X_FORWARDED_FOR',
-                     'HTTP_X_FORWARDED',
-                     'HTTP_X_CLUSTER_CLIENT_IP',
-                     'HTTP_FORWARDED_FOR',
-                     'HTTP_FORWARDED',
-                     'REMOTE_ADDR'
-                 ) as $key) {
-            if (array_key_exists($key, $_SERVER) === true) {
-                foreach (explode(',', $_SERVER[$key]) as $ip) {
-                    $ip = trim($ip); // just to be safe
-
-                    if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4
-                            | FILTER_FLAG_NO_PRIV_RANGE
-                            | FILTER_FLAG_NO_RES_RANGE) !== false
-                    ) {
+        foreach (static::$attributesToInspect as $attribute) {
+            if ($ip = $this->request->getAttribute($attribute, false)) {
+                return $ip;
+            }
+        }
+        if (!$ignoreProxies) {
+            foreach (static::$headersToInspect as $header) {
+                if ($ips = $this->request->getHeaderLine($header)) {
+                    if ($ip = $this->filterIP($ips)) {
                         return $ip;
                     }
                 }
             }
         }
+        $server = $this->request->getServerParams();
+        if ($ips = $server['REMOTE_ADDR']) {
+            if ($ip = $this->filterIP($ips)) {
+                return $ip;
+            }
+        }
+        return '127.0.0.1';
+    }
+
+    private function filterIP(string $ips): string
+    {
+        foreach (explode(',', $ips) as $ip) {
+            $ip = trim($ip); // just to be safe
+            if (false !== ($result = filter_var($ip, FILTER_VALIDATE_IP,
+                    FILTER_FLAG_IPV4 |
+                    FILTER_FLAG_NO_PRIV_RANGE |
+                    FILTER_FLAG_NO_RES_RANGE))) {
+                return $ip;
+            }
+        }
+        return '';
     }
 
     /**
@@ -61,9 +101,9 @@ class UserIdentifier implements UserIdentificationInterface
      *
      * @return void
      */
-    public static function setUniqueIdentifier($id)
+    public function setUniqueIdentifier(string $id)
     {
-        static::$id = $id;
+        $this->id = $id;
     }
 
     /**
@@ -75,9 +115,17 @@ class UserIdentifier implements UserIdentificationInterface
      *
      * @return string
      */
-    public static function getCacheIdentifier()
+    public function getCacheIdentifier(): string
     {
-        return static::$cacheId ?: static::$id;
+        return $this->cacheId ?: $this->getUniqueIdentifier();
+    }
+
+    public function getUniqueIdentifier(bool $includePlatform = false): string
+    {
+        return $this->id ?: base64_encode('ip:' . ($includePlatform
+                ? $this->ip . '-' . $this->platform
+                : $this->ip
+            ));
     }
 
     /**
@@ -89,8 +137,8 @@ class UserIdentifier implements UserIdentificationInterface
      *
      * @return void
      */
-    public static function setCacheIdentifier($id)
+    public function setCacheIdentifier(string $id)
     {
-        static::$cacheId = $id;
+        $this->cacheId = $id;
     }
 }

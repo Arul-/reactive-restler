@@ -19,7 +19,7 @@ interface UserIdentificationInterface
      *
      * @return string
      */
-    public static function getUniqueIdentifier($includePlatform = false);
+    public function getUniqueIdentifier(bool $includePlatform = false): string;
 
     /**
      * User identity to be used for caching purpose
@@ -30,7 +30,7 @@ interface UserIdentificationInterface
      *
      * @return string
      */
-    public static function getCacheIdentifier();
+    public function getCacheIdentifier(): string;
 
     /**
      * Authentication classes should call this method
@@ -39,7 +39,7 @@ interface UserIdentificationInterface
      *
      * @return void
      */
-    public static function setUniqueIdentifier($id);
+    public function setUniqueIdentifier(string $id);
 
     /**
      * User identity for caching purpose
@@ -50,5 +50,5 @@ interface UserIdentificationInterface
      *
      * @return void
      */
-    public static function setCacheIdentifier($id);
+    public function setCacheIdentifier(string $id);
 }

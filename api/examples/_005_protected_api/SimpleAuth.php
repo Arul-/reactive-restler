@@ -1,6 +1,5 @@
 <?php
 
-use Luracast\Restler\Contracts\AuthenticationInterface;
 use Luracast\Restler\Contracts\ExplorableAuthenticationInterface;
 use Luracast\Restler\Contracts\SelectivePathsInterface;
 use Luracast\Restler\Contracts\SelectivePathsTrait;
@@ -14,17 +13,6 @@ class SimpleAuth implements ExplorableAuthenticationInterface, SelectivePathsInt
     use SelectivePathsTrait;
 
     const KEY = 'rEsTlEr4';
-
-    function key()
-    {
-        return SimpleAuth::KEY;
-    }
-
-    public function _isAllowed(ServerRequestInterface $request, ResponseHeaders $responseHeaders): bool
-    {
-        $query = $request->getQueryParams();
-        return isset($query['key']) && $query['key'] == SimpleAuth::KEY ? true : false;
-    }
 
     /**
      * @return string string to be used with WWW-Authenticate header
@@ -40,5 +28,16 @@ class SimpleAuth implements ExplorableAuthenticationInterface, SelectivePathsInt
     public static function scheme(): Scheme
     {
         return new ApiKeyAuth('key', ApiKeyAuth::IN_QUERY);
+    }
+
+    function key()
+    {
+        return SimpleAuth::KEY;
+    }
+
+    public function _isAllowed(ServerRequestInterface $request, ResponseHeaders $responseHeaders): bool
+    {
+        $query = $request->getQueryParams();
+        return SimpleAuth::KEY === ($query['key'] ?? '');
     }
 }

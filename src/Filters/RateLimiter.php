@@ -1,23 +1,24 @@
 <?php namespace Luracast\Restler\Filters;
 
 
+use InvalidArgumentException;
 use Luracast\Restler\Contracts\FilterInterface;
 use Luracast\Restler\Contracts\SelectivePathsInterface;
 use Luracast\Restler\Contracts\SelectivePathsTrait;
+use Luracast\Restler\Contracts\UserIdentificationInterface;
 use Luracast\Restler\Contracts\UsesAuthenticationInterface;
 use Luracast\Restler\Exceptions\HttpException;
-use Psr\SimpleCache\CacheInterface;
-use Luracast\Restler\Contracts\UserIdentificationInterface;
 use Luracast\Restler\ResponseHeaders;
 use Luracast\Restler\StaticProperties;
 use Luracast\Restler\Utils\ClassName;
 use Psr\Http\Message\ServerRequestInterface;
+use Psr\SimpleCache\CacheInterface;
 
 class RateLimiter implements FilterInterface, SelectivePathsInterface, UsesAuthenticationInterface
 {
     use SelectivePathsTrait;
 
-    /** @var string class that implements CacheInterface*/
+    /** @var string class that implements CacheInterface */
     public static $cacheClass = null;
 
     /**
@@ -37,16 +38,14 @@ class RateLimiter implements FilterInterface, SelectivePathsInterface, UsesAuthe
      */
     public static $group = 'common';
 
-    protected static $units = array(
+    protected static $units = [
         'second' => 1,
         'minute' => 60,
         'hour' => 3600, // 60*60 seconds
         'day' => 86400, // 60*60*24 seconds
         'week' => 604800, // 60*60*24*7 seconds
         'month' => 2592000, // 60*60*24*30 seconds
-    );
-    private $runtimeValues;
-
+    ];
     /**
      * @var CacheInterface
      */
@@ -55,10 +54,16 @@ class RateLimiter implements FilterInterface, SelectivePathsInterface, UsesAuthe
      * @var bool current auth status
      */
     protected $authenticated = false;
+    private $runtimeValues;
+    /**
+     * @var UserIdentificationInterface
+     */
+    private $user;
 
-    public function __construct(StaticProperties $rateLimiter)
+    public function __construct(StaticProperties $rateLimiter, UserIdentificationInterface $user)
     {
         $this->runtimeValues = $rateLimiter;
+        $this->user = $user;
         $class = ClassName::get($rateLimiter->cacheClass ?? CacheInterface::class);
         /** @var CacheInterface cache */
         $this->cache = new $class;
@@ -67,17 +72,22 @@ class RateLimiter implements FilterInterface, SelectivePathsInterface, UsesAuthe
     /**
      * @param string $unit
      * @param int $usagePerUnit
-     * @param int $authenticatedUsagePerUnit set it to false to give unlimited access
+     * @param int|null $authenticatedUsagePerUnit set it to false to give unlimited access
      *
      * @return void
-     * @throws \InvalidArgumentException
+     * @throws InvalidArgumentException
      */
-    public static function setLimit($unit, $usagePerUnit, $authenticatedUsagePerUnit = null)
+    public static function setLimit(string $unit, int $usagePerUnit, ?int $authenticatedUsagePerUnit = null)
     {
         static::$unit = $unit;
         static::$usagePerUnit = $usagePerUnit;
         static::$authenticatedUsagePerUnit =
             is_null($authenticatedUsagePerUnit) ? $usagePerUnit : $authenticatedUsagePerUnit;
+    }
+
+    public static function getExcludedPaths(): array
+    {
+        return empty(static::$excludedPaths) ? ['explorer'] : static::$excludedPaths;
     }
 
     /**
@@ -90,7 +100,7 @@ class RateLimiter implements FilterInterface, SelectivePathsInterface, UsesAuthe
     public function _isAllowed(ServerRequestInterface $request, ResponseHeaders $responseHeaders): bool
     {
         $authenticated = $this->authenticated;
-        $responseHeaders['X-Auth-Status'] = ($authenticated ? 'true' : 'false');
+        $responseHeaders['X-Auth-Status'] = $authenticated ? 'true' : 'false';
         $unit = $this->runtimeValues->unit;
         $group = $this->runtimeValues->group;
         static::validate($unit);
@@ -99,16 +109,13 @@ class RateLimiter implements FilterInterface, SelectivePathsInterface, UsesAuthe
             ? $this->runtimeValues->authenticatedUsagePerUnit
             : $this->runtimeValues->usagePerUnit;
         if ($maxPerUnit) {
-            /** @var UserIdentificationInterface $user */
-            $user = ClassName::get(UserIdentificationInterface::class);
             $id = "RateLimit_" . $maxPerUnit . '_per_' . $unit
                 . '_for_' . $group
-                . '_' . $user::getUniqueIdentifier();
+                . '_' . $this->user->getUniqueIdentifier();
             $lastRequest = $this->cache->get($id, ['time' => 0, 'used' => 0]);
             $time = $lastRequest['time'];
             $diff = time() - $time; # in seconds
             $used = $lastRequest['used'];
-
             $responseHeaders['X-RateLimit-Limit'] = "$maxPerUnit per " . $unit;
             if ($diff >= $timeUnit) {
                 $used = 1;
@@ -128,40 +135,32 @@ class RateLimiter implements FilterInterface, SelectivePathsInterface, UsesAuthe
             }
             $remainingPerUnit = $maxPerUnit - $used;
             $responseHeaders['X-RateLimit-Remaining'] = $remainingPerUnit;
-            $this->cache->set(
-                $id,
-                array('time' => $time, 'used' => $used)
-            );
+            $this->cache->set($id, ['time' => $time, 'used' => $used]);
         }
         return true;
-    }
-
-    public function _setAuthenticationStatus(bool $isAuthenticated = false, bool $isAuthFinished = false)
-    {
-        $this->authenticated = $isAuthenticated;
     }
 
     private static function validate($unit)
     {
         if (!isset(static::$units[$unit])) {
-            throw new \InvalidArgumentException(
+            throw new InvalidArgumentException(
                 'Rate Limit time unit should be '
                 . implode('|', array_keys(static::$units)) . '.'
             );
         }
     }
 
-    private function duration($secs)
+    private function duration($secs): string
     {
-        $units = array(
+        $units = [
             'week' => (int)($secs / 86400 / 7),
             'day' => $secs / 86400 % 7,
             'hour' => $secs / 3600 % 24,
             'minute' => $secs / 60 % 60,
             'second' => $secs % 60
-        );
+        ];
 
-        $ret = array();
+        $ret = [];
 
         //$unit = 'days';
         foreach ($units as $k => $v) {
@@ -177,8 +176,8 @@ class RateLimiter implements FilterInterface, SelectivePathsInterface, UsesAuthe
         return implode(' ', $ret);
     }
 
-    public static function getExcludedPaths(): array
+    public function _setAuthenticationStatus(bool $isAuthenticated = false, bool $isAuthFinished = false)
     {
-        return empty(static::$excludedPaths) ? ['explorer'] : static::$excludedPaths;
+        $this->authenticated = $isAuthenticated;
     }
 }
