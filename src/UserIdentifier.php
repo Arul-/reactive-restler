@@ -72,7 +72,7 @@ class UserIdentifier implements UserIdentificationInterface
             }
         }
         $server = $this->request->getServerParams();
-        if ($ips = $server['REMOTE_ADDR']) {
+        if ($ips = $server['REMOTE_ADDR'] ?? []) {
             if ($ip = $this->filterIP($ips)) {
                 return $ip;
             }
