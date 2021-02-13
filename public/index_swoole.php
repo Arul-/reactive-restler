@@ -15,7 +15,7 @@ Swoole\Runtime::enableCoroutine(true, SWOOLE_HOOK_ALL );
 
 Defaults::$implementations[HttpClientInterface::class] = [SwooleHttpClient::class];
 
-$http = new Server("127.0.0.1", 8080);
+$http = new Server("0.0.0.0", 8080);
 
 $http->set([
     C::OPTION_WORKER_NUM => 1, // The number of worker processes
