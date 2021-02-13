@@ -112,7 +112,7 @@ try {
             //GraphQL::class,
         ]
     );
-    require __DIR__ . '/examples/_017_graphql/routes.php';
+    require __DIR__ . '/examples/_018_graphql/routes.php';
 
 } catch (Throwable $t) {
     die(json_encode((new ErrorResponse($t, true))->jsonSerialize(), JSON_PRETTY_PRINT));
