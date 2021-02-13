@@ -21,6 +21,7 @@ use Psr\Http\Message\ServerRequestInterface;
 class Nav
 {
     public static $root = 'home';
+    public static $style;
     /**
      * @var array all paths beginning with any of the following will be excluded
      * from documentation. if an empty string is given it will exclude the root
@@ -66,7 +67,7 @@ class Nav
         $this->route = $route;
     }
 
-    public function get($for = '', $activeTrail = null, $dataOnly = true)
+    public function get($for = '', $activeTrail = null, $dataOnly = false)
     {
         if (empty(static::$tree)) {
             if (static::$addExtension) {
@@ -141,7 +142,7 @@ class Nav
         return $tags;
     }
 
-    public static function addUrls(array $urls)
+    public static function addUrls(array $urls): array
     {
         foreach ($urls as $url => $label) {
             $trail = null;
@@ -191,7 +192,7 @@ class Nav
                 $label = Text::title(static::$root);
                 $url = static::$url;
             } else {
-                $url = static::$url . '/' . $url;
+                $url = trim(static::$url,'/') . '/' . $url;
             }
         }
         if (is_null($label)) {
@@ -229,7 +230,7 @@ class Nav
         }
     }
 
-    protected static function &nested(array &$tree, array $parts)
+    protected static function &nested(array &$tree, array $parts): ?array
     {
         if (!empty($parts)) {
             $part = array_shift($parts);
