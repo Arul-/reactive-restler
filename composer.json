@@ -49,7 +49,10 @@
       "Swoole\\Http\\": "interop/Swoole",
       "OAuth2\\": "interop/OAuth2",
       "Lambda\\": "interop/Lambda"
-    }
+    },
+    "files": [
+      "src/helpers.php"
+    ]
   },
   "autoload-dev": {
     "classmap": [
@@ -79,7 +82,8 @@
       "api/examples/_014_oauth2_client",
       "api/examples/_015_oauth2_server",
       "api/examples/_016_forms",
-      "api/examples/_017_graphql"
+      "api/examples/_017_navigation",
+      "api/examples/_018_graphql"
     ]
   },
   "config": {
@@ -88,7 +92,7 @@
   },
   "scripts": {
     "test": "behat --stop-on-failure --profile=default --colors",
-    "serve": "php -S localhost:8080 -t public server.php",
+    "serve": "php -S 0.0.0.0:8080 -t public server.php",
     "react-server": "php public/index_react.php",
     "swoole-server": "php public/index_swoole.php",
     "workerman-server": "php public/index_workerman.php start",

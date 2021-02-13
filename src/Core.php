@@ -4,8 +4,7 @@ namespace Luracast\Restler;
 
 use ArrayAccess;
 use Exception;
-use Luracast\Restler\Contracts\{
-    AuthenticationInterface,
+use Luracast\Restler\Contracts\{AuthenticationInterface,
     ComposerInterface,
     ContainerInterface,
     FilterInterface,
@@ -125,7 +124,7 @@ abstract class Core
         if ($container) {
             $container->init($config);
         } else {
-            $container = new Container($config);
+            $container = app(ContainerInterface::class, [&$config]);
         }
         $container->setPropertyInitializer([$this, 'initiateProperties']);
         $container->instance(Core::class, $this);
