@@ -45,7 +45,7 @@ if (!function_exists('base_path')) {
     {
         /** @var UriInterface $url */
         $url = app(Core::class)->baseUrl;
-        return (string)($path ? '/' . $url->withPath($path) : $url);
+        return (string)($path ? $url->withPath($path) : $url);
     }
 }
 
