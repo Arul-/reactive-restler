@@ -57,6 +57,7 @@
   "autoload-dev": {
     "classmap": [
       "api/tests/param/",
+      "api/tests/helper/",
       "api/tests/request_data/",
       "api/tests/upload/",
       "api/tests/storage/",

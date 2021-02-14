@@ -95,6 +95,7 @@ try {
             'examples/_015_oauth2_server' => Server::class,
             'examples/_016_forms/users' => Users::class,
             //tests
+            'tests/helper/functions' => Functions::class,
             'tests/param/minmax' => MinMax::class,
             'tests/param/minmaxfix' => MinMaxFix::class,
             'tests/param/type' => Type::class,
