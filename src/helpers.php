@@ -3,8 +3,10 @@
 use Luracast\Restler\Contracts\ContainerInterface;
 use Luracast\Restler\Contracts\UserIdentificationInterface;
 use Luracast\Restler\Core;
+use Luracast\Restler\Exceptions\Redirect;
 use Luracast\Restler\Utils\ClassName;
 use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Message\UriInterface;
 
 if (!function_exists('app')) {
     /**
@@ -102,5 +104,19 @@ if (!function_exists('user')) {
     function user(): ?UserIdentificationInterface
     {
         return app(UserIdentificationInterface::class);
+    }
+}
+
+if (!function_exists('redirect')) {
+    /**
+     * Throws redirect exception
+     *
+     * @param string|UriInterface $to
+     * @param int $status
+     * @param array $headers
+     */
+    function redirect($to = '/', $status = 302, $headers = [])
+    {
+        throw new Redirect((string)$to, $status, $headers);
     }
 }

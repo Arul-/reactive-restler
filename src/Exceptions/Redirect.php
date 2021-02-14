@@ -6,11 +6,11 @@ use Luracast\Restler\Utils\Text;
 
 class Redirect extends HttpException
 {
-    public function __construct(string $location, array $queryParams = [], int $httpStatusCode = 302)
+    public function __construct(string $location, int $httpStatusCode = 302, array $headers = [])
     {
         parent::__construct($httpStatusCode);
-        if (!empty($queryParams)) {
-            $location .= '?' . http_build_query($queryParams);
+        foreach ($headers as $header => $value) {
+            $this->setHeader($header, $value);
         }
         if (!Text::beginsWith($location, 'http') && !Text::beginsWith($location, '/')) {
             $location = Router::getBasePath() . '/' . $location;
