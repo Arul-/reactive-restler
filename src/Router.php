@@ -111,24 +111,6 @@ class Router
     public static $cacheClass = null;
     protected static $routes = [];
     private static $parsedScopes = [];
-    private static $basePath;
-
-    public static function getBasePath()
-    {
-        if (empty(static::$basePath)) {
-            static::$basePath = '/';
-            if ($scriptName = $_SERVER['SCRIPT_NAME'] ?? false) {
-                $path = $_SERVER['REQUEST_URI'] ?? '';
-                static::$basePath .= Text::common(ltrim($path, '/'), ltrim($scriptName, '/'));
-            }
-        }
-        return static::$basePath;
-    }
-
-    public static function setBasePath(string $path)
-    {
-        static::$basePath = $path;
-    }
 
     public static function setApiVersion(int $maximum = 1, int $minimum = 1)
     {
