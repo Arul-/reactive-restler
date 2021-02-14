@@ -1,7 +1,6 @@
 <?php namespace Luracast\Restler\Exceptions;
 
 
-use Luracast\Restler\Router;
 use Luracast\Restler\Utils\Text;
 
 class Redirect extends HttpException
@@ -13,7 +12,7 @@ class Redirect extends HttpException
             $this->setHeader($header, $value);
         }
         if (!Text::beginsWith($location, 'http') && !Text::beginsWith($location, '/')) {
-            $location = Router::getBasePath() . '/' . $location;
+            $location = base_path($location);
         }
         $this->setHeader('Location', $location);
     }

@@ -34,6 +34,21 @@ if (!function_exists('app')) {
     }
 }
 
+if (!function_exists('base_path')) {
+    /**
+     * Get the path to the base of the install.
+     *
+     * @param string $path
+     * @return string
+     */
+    function base_path($path = '')
+    {
+        /** @var UriInterface $url */
+        $url = app(Core::class)->baseUrl;
+        return (string)($path ? '/' . $url->withPath($path) : $url);
+    }
+}
+
 if (!function_exists('nested')) {
     /**
      * Get the value deeply nested inside an array / object
