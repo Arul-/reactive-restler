@@ -73,21 +73,22 @@ class UserIdentifier implements UserIdentificationInterface
         }
         $server = $this->request->getServerParams();
         if ($ips = $server['REMOTE_ADDR'] ?? []) {
-            if ($ip = $this->filterIP($ips)) {
+            if ($ip = $this->filterIP($ips, false)) {
                 return $ip;
             }
         }
-        return '127.0.0.1';
+        return 'x127.0.0.1';
     }
 
-    private function filterIP(string $ips): string
+    private function filterIP(string $ips, bool $denyPrivateAndLocal = true): string
     {
+        $options = FILTER_FLAG_IPV4 | FILTER_FLAG_IPV6;
+        if ($denyPrivateAndLocal) {
+            $options |= FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE;
+        }
         foreach (explode(',', $ips) as $ip) {
             $ip = trim($ip); // just to be safe
-            if (false !== ($result = filter_var($ip, FILTER_VALIDATE_IP,
-                    FILTER_FLAG_IPV4 |
-                    FILTER_FLAG_NO_PRIV_RANGE |
-                    FILTER_FLAG_NO_RES_RANGE))) {
+            if (false !== ($result = filter_var($ip, FILTER_VALIDATE_IP, $options))) {
                 return $ip;
             }
         }
