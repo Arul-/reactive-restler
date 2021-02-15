@@ -31,13 +31,41 @@ class UserIdentifier implements UserIdentificationInterface
         'cf-connecting-ip',
     ];
 
+    public const BROWSERS = [
+        'MSIE' => 'Internet Explorer',
+        'Trident' => 'Internet Explorer',
+        'Edge' => 'Microsoft Edge',
+        'EdgA' => 'Microsoft Edge',
+        'Firefox' => 'Firefox',
+        'Opera Mini' => 'Opera Mini',
+        'Opera' => 'Opera',
+        'OPR' => 'Opera',
+        'Chrome' => 'Chrome',
+        'CriOS' => 'Chrome',
+        'Mobile Safari' => 'Mobile Safari',
+        'Safari' => 'Safari',
+        'Googlebot' => 'Googlebot',
+    ];
+
+    public const PLATFORMS = [
+        'Intel Mac' => 'Intel Mac',
+        'Macintosh' => 'Macintosh',
+        'iPhone' => 'iPhone',
+        'iPad' => 'iPad',
+        'Android' => 'Android',
+        'Linux' => 'Linux',
+        'Windows' => 'Windows',
+        'CrOS' => 'Chrome OS',
+        'Googlebot' => 'Googlebot',
+    ];
+
     public static $headersToInspect = self::HEADERS_COMMON;
     public static $attributesToInspect = ['client_ip', 'ip'];
     protected $id = null;
     protected $cacheId = null;
     protected $ip;
-    protected $browser = '';
-    protected $platform = '';
+    protected $browser = 'Unknown';
+    protected $platform = 'Unknown';
     /**
      * @var ServerRequestInterface
      */
@@ -47,10 +75,18 @@ class UserIdentifier implements UserIdentificationInterface
     {
         $this->request = $request;
         $this->ip = $this->getIpAddress();
-        if ($agent = $this->request->getHeaderLine('user_agent')) {
-            if ($details = get_browser($agent)) {
-                $this->browser = $details->parent;
-                $this->platform = $details->platform;
+        if ($agent = $this->request->getHeaderLine('user-agent')) {
+            foreach (self::BROWSERS as $name => $value) {
+                if (false !== strpos($agent, $name)) {
+                    $this->browser = $value;
+                    break;
+                }
+            }
+            foreach (self::PLATFORMS as $name => $value) {
+                if (false !== strpos($agent, $name)) {
+                    $this->platform = $value;
+                    break;
+                }
             }
         }
     }
@@ -123,10 +159,7 @@ class UserIdentifier implements UserIdentificationInterface
 
     public function getUniqueIdentifier(bool $includePlatform = false): string
     {
-        return $this->id ?: base64_encode('ip:' . ($includePlatform
-                ? $this->ip . '-' . $this->platform
-                : $this->ip
-            ));
+        return $this->id ?: base64_encode('ip:' . $this->ip . ($includePlatform ? '-' . $this->platform : ''));
     }
 
     /**
