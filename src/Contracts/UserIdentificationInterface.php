@@ -51,4 +51,10 @@ interface UserIdentificationInterface
      * @return void
      */
     public function setCacheIdentifier(string $id);
+
+    public function getPlatform(): ?string;
+
+    public function getBrowser(): ?string;
+
+    public function getIpAddress(bool $ignoreProxies = false): string;
 }

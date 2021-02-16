@@ -1,9 +1,10 @@
 <?php namespace Luracast\Restler;
 
+use JsonSerializable;
 use Luracast\Restler\Contracts\UserIdentificationInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
-class UserIdentifier implements UserIdentificationInterface
+class UserIdentifier implements UserIdentificationInterface, JsonSerializable
 {
     public const HEADERS_NGINX = [
         'x-real-ip',
@@ -113,7 +114,7 @@ class UserIdentifier implements UserIdentificationInterface
                 return $ip;
             }
         }
-        return 'x127.0.0.1';
+        return '127.0.0.1';
     }
 
     private function filterIP(string $ips, bool $denyPrivateAndLocal = true): string
@@ -174,5 +175,22 @@ class UserIdentifier implements UserIdentificationInterface
     public function setCacheIdentifier(string $id)
     {
         $this->cacheId = $id;
+    }
+
+    public function getPlatform(): ?string
+    {
+        return $this->platform;
+    }
+
+    public function getBrowser(): ?string
+    {
+        $this->browser;
+    }
+
+    public function jsonSerialize()
+    {
+        $arr = get_object_vars($this);
+        unset($arr['request']);
+        return $arr;
     }
 }
