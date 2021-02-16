@@ -64,7 +64,7 @@ class UserIdentifier implements UserIdentificationInterface, JsonSerializable
     public static $attributesToInspect = ['client_ip', 'ip'];
     protected $id = null;
     protected $cacheId = null;
-    protected $ip;
+    protected $ipAddress;
     protected $browser = 'Unknown';
     protected $platform = 'Unknown';
     /**
@@ -75,7 +75,7 @@ class UserIdentifier implements UserIdentificationInterface, JsonSerializable
     public function __construct(ServerRequestInterface $request)
     {
         $this->request = $request;
-        $this->ip = $this->getIpAddress();
+        $this->ipAddress = $this->getIpAddress();
         if ($agent = $this->request->getHeaderLine('user-agent')) {
             foreach (self::BROWSERS as $name => $value) {
                 if (false !== strpos($agent, $name)) {
@@ -160,7 +160,7 @@ class UserIdentifier implements UserIdentificationInterface, JsonSerializable
 
     public function getUniqueIdentifier(bool $includePlatform = false): string
     {
-        return $this->id ?: base64_encode('ip:' . $this->ip . ($includePlatform ? '-' . $this->platform : ''));
+        return $this->id ?: base64_encode('ip:' . $this->ipAddress . ($includePlatform ? '-' . $this->platform : ''));
     }
 
     /**
@@ -190,6 +190,12 @@ class UserIdentifier implements UserIdentificationInterface, JsonSerializable
     public function jsonSerialize()
     {
         $arr = get_object_vars($this);
+        if (empty($arr['id'])) {
+            $arr['id'] = $this->getUniqueIdentifier();
+        }
+        if (empty($arr['cacheId'])) {
+            $arr['cacheId'] = $arr['id'];
+        }
         unset($arr['request']);
         return $arr;
     }
