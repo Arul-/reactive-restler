@@ -3,23 +3,33 @@
 
 class Functions
 {
-    function server()
+    function server(): array
     {
         return request()->getServerParams();
     }
 
-    function query()
+    function header(): array
+    {
+        return array_map('current', request()->getHeaders());
+    }
+
+    function query(): array
     {
         return request()->getQueryParams();
     }
 
-    function base_path($path = '')
+    function base_path($path = ''): string
     {
         return base_path($path);
     }
 
-    function redirect($path = '')
+    function redirect($path = ''): void
     {
-        return redirect($path);
+        redirect($path);
+    }
+
+    function user()
+    {
+        return user();
     }
 }
