@@ -463,7 +463,7 @@ class Router
                 //if auto route enabled, do so
             } elseif (Defaults::$autoRoutingEnabled) {
                 // no configuration found so use convention
-                if (preg_match_all('/^(GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS)/i', $methodUrl, $matches)) {
+                if (preg_match_all('/^(GET|POST|PUT|PATCH|DELETE|OPTIONS)/i', $methodUrl, $matches)) {
                     $httpMethod = strtoupper($matches[0][0]);
                     $methodUrl = substr($methodUrl, strlen($httpMethod));
                 } else {
@@ -771,7 +771,7 @@ class Router
     /**
      * @param string $path
      * @param string $httpMethod
-     * @param ServerRequestInterface $request
+     * @param ServerRequestInterface|null $request
      * @param int $version
      * @param array $data
      * @return Route
