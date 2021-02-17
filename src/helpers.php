@@ -24,7 +24,8 @@ if (!function_exists('app')) {
             return $container;
         }
         if (ContainerInterface::class === $make) {
-            $container = new (ClassName::get(ContainerInterface::class))(...$parameters);
+            $class = ClassName::get(ContainerInterface::class);
+            $container = new $class(...$parameters);
             return $container;
         }
         if (!$container) {
