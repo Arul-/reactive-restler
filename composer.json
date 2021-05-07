@@ -5,7 +5,7 @@
   "require": {
     "php": "^7.4|^8",
     "ext-json": "*",
-    "psr/container": "^2.0",
+    "psr/container": "^2.0 || ^1.1",
     "guzzlehttp/guzzle": "~7",
     "ralouphie/getallheaders": "^3.0",
     "logicalsteps/async": "^2.0",
