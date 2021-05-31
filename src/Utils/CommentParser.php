@@ -24,25 +24,19 @@ class CommentParser
     public const ESCAPE_SEQUENCE_END = '{@*}';
     /**
      * name for the embedded data
-     *
-     * @var string
      */
-    public static $embeddedDataName = 'properties';
+    public static string $embeddedDataName = 'properties';
     /**
      * Regular Expression pattern for finding the embedded data and extract
      * the inner information. It is used with preg_match.
-     *
-     * @var string
      */
-    public static $embeddedDataPattern
+    public static string $embeddedDataPattern
         = '/```(\w*)[\s]*(([^`]*`{0,2}[^`]+)*)```/ms';
     /**
      * Pattern will have groups for the inner details of embedded data
      * this index is used to locate the data portion.
-     *
-     * @var int
      */
-    public static $embeddedDataIndex = 2;
+    public static int $embeddedDataIndex = 2;
     /**
      * Delimiter used to split the array data.
      *
@@ -50,28 +44,24 @@ class CommentParser
      * will be used and if URLEncodedFormat is detected as the data format
      * the character specified will be used as the delimiter to find split
      * array data.
-     *
-     * @var string
      */
-    public static $arrayDelimiter = ',';
+    public static string $arrayDelimiter = ',';
     /**
      * @var array annotations that support array value
      */
-    public static $allowsArrayValue = [
+    public static array $allowsArrayValue = [
         'choice' => true,
         'select' => true,
         'properties' => true,
     ];
-    public static $typeFixes = [
+    public static array $typeFixes = [
         'integer' => 'int',
         'boolean' => 'bool',
     ];
     /**
      * Comment information is parsed and stored in to this array.
-     *
-     * @var array
      */
-    private $_data = [];
+    private array $_data = [];
 
     /**
      * Parse the comment and extract the data.
@@ -282,7 +272,7 @@ class CommentParser
                     }
                     if (is_string($val)) {
                         if ($val == 'true' || $val == 'false') {
-                            $d[$key] = $val == 'true' ? true : false;
+                            $d[$key] = $val == 'true';
                         } else {
                             $val = explode(self::$arrayDelimiter, $val);
                             if (count($val) > 1) {
@@ -361,6 +351,7 @@ class CommentParser
             case 'header':
             case 'link':
             case 'example':
+            case 'cache':
                 /** @noinspection PhpMissingBreakStatementInspection */
             case 'todo':
                 $allowMultiple = true;
