@@ -87,7 +87,7 @@ class HttpException extends Exception
         $this->headers[$name] = $value;
     }
 
-    public function getDetails()
+    public function getDetails(): array
     {
         return $this->details;
     }

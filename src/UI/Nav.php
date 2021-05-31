@@ -196,7 +196,7 @@ class Nav
         return $r;
     }
 
-    public static function build(array $r)
+    public static function build(array $r): void
     {
         $p = &static::$tree;
         $parts = $r['parts'];

@@ -35,7 +35,7 @@ class Composer implements ComposerInterface
      *
      * @return ErrorResponse
      */
-    public function message(HttpException $exception)
+    public function message(HttpException $exception): ErrorResponse
     {
         return new ErrorResponse($exception, !Defaults::$productionMode && self::$includeDebugInfo);
     }

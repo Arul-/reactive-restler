@@ -82,10 +82,7 @@ class Html extends MediaType implements ResponseMediaTypeInterface
      * /**
      */
     private \Luracast\Restler\Restler $restler;
-    /**
-     * @var StaticProperties
-     */
-    private $html;
+    private \Luracast\Restler\StaticProperties $html;
     private \Luracast\Restler\StaticProperties $defaults;
     private \Luracast\Restler\Contracts\ContainerInterface $container;
     private \Luracast\Restler\Contracts\SessionInterface $session;
@@ -245,7 +242,7 @@ class Html extends MediaType implements ResponseMediaTypeInterface
         return $this->html['customTemplateExtensions'][$this->html['template']] ?? $this->html['template'];
     }
 
-    private function reset()
+    private function reset(): void
     {
         $this->html->view = 'debug';
         $this->html->template = 'php';
@@ -461,7 +458,7 @@ class Html extends MediaType implements ResponseMediaTypeInterface
         $restler = $this->restler;
         //Lets expose shortcuts for our classes
         spl_autoload_register(
-            function ($className) use ($restler) {
+            function ($className) use ($restler): bool {
                 if ($found = $this->route->scope[$className] ?? null) {
                     return class_alias($found, $className);
                 }

@@ -99,7 +99,7 @@ class HumanReadable extends Base
     /**
      * @inheritDoc
      */
-    public function clear()
+    public function clear(): void
     {
         array_map('unlink', array_filter((array)glob(static::$cacheDirectory . '/*.php')));
     }

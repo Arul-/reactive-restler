@@ -42,7 +42,7 @@ class JsonWebTokenAccessControl extends JsonWebToken implements AccessControlInt
      * @param string $name
      * @throws HttpException
      */
-    protected function check(string $name)
+    protected function check(string $name): void
     {
         $p = $this->token;
         $expected = $this->{$name . 'Required'};

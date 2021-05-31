@@ -27,7 +27,7 @@ class Emmet
         }
 
         $implicitTag =
-            function () use (& $tag) {
+            function () use (& $tag): void {
                 if (empty($tag->tag)) {
                     switch ($tag->parent->tag) {
                         case 'ul':
@@ -138,7 +138,7 @@ class Emmet
 
         $parseAttributes =
             function (callable $self, $round, $total, $data)
-            use (& $tokens, & $tag, $parseText) {
+            use (& $tokens, & $tag, $parseText): void {
                 $a = $parseText(
                     '',
                     $round,
@@ -205,7 +205,7 @@ class Emmet
                 $parseAttributes,
                 $implicitTag,
                 $parseText
-            ) {
+            ): void {
                 $offsetTokens = null;
                 $parent[] = $tag;
                 $isInChild = false;

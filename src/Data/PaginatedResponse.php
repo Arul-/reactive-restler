@@ -12,8 +12,7 @@ use ReflectionException;
 
 class PaginatedResponse implements GenericResponseInterface
 {
-    /** @var array */
-    private $data;
+    private array $data;
 
     final private function __construct(array $data)
     {
@@ -42,7 +41,7 @@ class PaginatedResponse implements GenericResponseInterface
         $last_page = ceil($total / $per_page);
         parse_str($baseUrl->getQuery(), $params);
         $uri = $baseUrl->withQuery('');
-        $url = function (int $page) use ($params, $uri) {
+        $url = function (int $page) use ($params, $uri): string {
             $params['page'] = $page;
             return (string)$uri->withQuery(http_build_query($params));
         };

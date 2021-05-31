@@ -50,7 +50,7 @@ class UploadedFile implements UploadedFileInterface
         return $this->proxy->getClientMediaType();
     }
 
-    public function setError(int $error)
+    public function setError(int $error): void
     {
         $this->error = $error;
     }

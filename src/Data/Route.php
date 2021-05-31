@@ -239,7 +239,7 @@ class Route extends ValueObject
         //compute from the human readable url to machine computable typed route path
         $instance->path = preg_replace_callback(
             '/{[^}]+}|:[^\/]+/',
-            function ($matches) use (&$pathParams, $instance) {
+            function ($matches) use (&$pathParams, $instance): string {
                 $match = trim($matches[0], '{}:');
                 $param = $instance->parameters[$match];
                 $param->from = Param::FROM_PATH;
@@ -303,7 +303,7 @@ class Route extends ValueObject
         }
     }
 
-    public function addParameter(Param $parameter)
+    public function addParameter(Param $parameter): void
     {
         $parameter->index = count($this->parameters);
         $this->parameters[$parameter->name] = $parameter;
@@ -446,7 +446,7 @@ class Route extends ValueObject
         return $p;
     }
 
-    public function validate(ValidationInterface $validator, callable $maker)
+    public function validate(ValidationInterface $validator, callable $maker): void
     {
         foreach ($this->parameters as $param) {
             $i = $param->index;

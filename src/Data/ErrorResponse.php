@@ -146,7 +146,7 @@ class ErrorResponse implements GenericResponseInterface
         return json_encode($this->jsonSerialize());
     }
 
-    public function jsonSerialize()
+    public function jsonSerialize(): array
     {
         return $this->response;
     }

@@ -143,7 +143,7 @@ abstract class Type extends ValueObject
         return $instance;
     }
 
-    protected function apply(?ReflectionType $reflectionType, array $types, array $subTypes, array $scope = [])
+    protected function apply(?ReflectionType $reflectionType, array $types, array $subTypes, array $scope = []): void
     {
         $name = $types[0];
         if ($reflectionType && ($n = $reflectionType->getName()) && $n !== 'Generator') {

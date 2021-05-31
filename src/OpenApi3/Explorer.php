@@ -385,7 +385,7 @@ class Explorer implements ProvidesMultiVersionApiInterface
         return $p;
     }
 
-    private function setProperties(Type $param, stdClass $schema)
+    private function setProperties(Type $param, stdClass $schema): void
     {
         //primitives
         if ($param->scalar) {
@@ -447,7 +447,7 @@ class Explorer implements ProvidesMultiVersionApiInterface
         }
     }
 
-    private function scalarProperties(stdClass $s, Type $param)
+    private function scalarProperties(stdClass $s, Type $param): void
     {
         if ($t = static::$dataTypeAlias[$param->type] ?? null) {
             is_array($t) ? [$s->type, $s->format] = $t : $s->type = $t;

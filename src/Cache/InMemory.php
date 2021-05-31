@@ -13,17 +13,17 @@ class InMemory extends Base
         return $this->store[$key] ?? $default;
     }
 
-    public function set($key, $value, $ttl = null)
+    public function set($key, $value, $ttl = null): void
     {
         $this->store[$key] = $value;
     }
 
-    public function delete($key)
+    public function delete($key): void
     {
         unset($this->store[$key]);
     }
 
-    public function clear()
+    public function clear(): void
     {
         $this->store = [];
     }

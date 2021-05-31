@@ -103,7 +103,7 @@ class Router
     protected static array $routes = [];
     private static array $parsedScopes = [];
 
-    public static function setApiVersion(int $maximum = 1, int $minimum = 1)
+    public static function setApiVersion(int $maximum = 1, int $minimum = 1): void
     {
         static::$maximumVersion = $maximum;
         static::$minimumVersion = $minimum;
@@ -619,7 +619,7 @@ class Router
             //compute from the human readable url to machine computable typed route path
             $route->path = preg_replace_callback(
                 '/{[^}]+}|:[^\/]+/',
-                function ($matches) use ($route) {
+                function ($matches) use ($route): string {
                     $match = trim($matches[0], '{}:');
                     $param = $route->parameters[$match];
                     return '{' . Router::typeChar($param->type) . $param->index . '}';

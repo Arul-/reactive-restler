@@ -20,7 +20,7 @@ class AuthorizationCode extends OAuth2Flow
     {
         $this->authorizationUrl = $authorizationUrl;
         $this->refreshUrl = $refreshUrl;
-        $this->scopes = (object)$scopes;
+        $this->scopes = $scopes;
         $this->tokenUrl = $tokenUrl;
     }
 }

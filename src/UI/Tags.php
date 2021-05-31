@@ -52,7 +52,7 @@ class Tags implements ArrayAccess, Countable
         }
     }
 
-    private function markAsChildren(&$children)
+    private function markAsChildren(&$children): void
     {
         foreach ($children as $i => $child) {
             if (is_string($child)) {
@@ -96,7 +96,7 @@ class Tags implements ArrayAccess, Countable
         return new static($name, $children);
     }
 
-    public function toString($prefix = '', $indent = '    '): string
+    public function toString(string $prefix = '', string $indent = '    '): string
     {
         $this->prefix = $prefix;
         $this->indent = $indent;

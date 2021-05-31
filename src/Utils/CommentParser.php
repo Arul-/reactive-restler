@@ -434,7 +434,7 @@ class CommentParser
         }
     }
 
-    private function typeFix(array &$type, string $default = 'string')
+    private function typeFix(array &$type, string $default = 'string'): void
     {
         $length = count($type);
         $type = str_ireplace(array_keys(static::$typeFixes), array_values(static::$typeFixes), $type);

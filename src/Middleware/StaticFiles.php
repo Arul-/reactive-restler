@@ -25,7 +25,7 @@ class StaticFiles implements MiddlewareInterface
         $this->webRoot = rtrim($webRoot, DIRECTORY_SEPARATOR);
     }
 
-    public static function setBasePath(string $path)
+    public static function setBasePath(string $path): void
     {
         static::$basePath = $path;
     }

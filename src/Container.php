@@ -193,7 +193,7 @@ class Container implements ContainerInterface
         $this->unresolvablePrimitive($parameter);
     }
 
-    public function instance($abstract, $instance)
+    public function instance($abstract, $instance): void
     {
         $this->instances[$abstract] = $instance;
         try {

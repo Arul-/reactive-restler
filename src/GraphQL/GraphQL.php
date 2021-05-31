@@ -207,7 +207,7 @@ class GraphQL
         return static::addRoute($name, $route, 'GET' !== $route->httpMethod);
     }
 
-    public static function addRoute(string $name, Route $route, bool $isMutation = false)
+    public static function addRoute(string $name, Route $route, bool $isMutation = false): void
     {
         $target = $isMutation ? 'mutations' : 'queries';
         static::$$target[$name] = $route->toGraphQL();

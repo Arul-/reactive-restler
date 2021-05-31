@@ -205,7 +205,7 @@ class Session implements SessionInterface
         return key($this->contents) !== null;
     }
 
-    public function rewind()
+    public function rewind(): void
     {
         reset($this->contents);
     }

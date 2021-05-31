@@ -113,7 +113,7 @@ class Xml extends MediaType implements RequestMediaTypeInterface, ResponseMediaT
         return $xml->outputMemory();
     }
 
-    public function write(XMLWriter $xml, $data, $parent)
+    public function write(XMLWriter $xml, $data, $parent): void
     {
         $text = [];
         if (is_array($data)) {

@@ -39,7 +39,7 @@ class Error extends Exception implements ClientAware
      *
      * @api
      */
-    public function getCategory()
+    public function getCategory(): string
     {
         return $this->category;
     }

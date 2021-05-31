@@ -613,7 +613,7 @@ abstract class Core
     /**
      *
      */
-    protected function validate()
+    protected function validate(): void
     {
         $this->_route->apply($this->_route->data, $this->_authenticated);
         if (!$this->defaults->autoValidationEnabled) {

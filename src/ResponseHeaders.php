@@ -24,7 +24,7 @@ class ResponseHeaders implements ArrayAccess
         $this->container[$name] = $value;
     }
 
-    public function offsetSet($offset, $value)
+    public function offsetSet($offset, $value): void
     {
         if (is_null($offset)) {
             $this->container[] = $value;
@@ -38,7 +38,7 @@ class ResponseHeaders implements ArrayAccess
         return isset($this->container[$offset]);
     }
 
-    public function offsetUnset($offset)
+    public function offsetUnset($offset): void
     {
         unset($this->container[$offset]);
     }

@@ -138,7 +138,7 @@ class UserIdentifier implements UserIdentificationInterface, JsonSerializable
      *
      * @return void
      */
-    public function setUniqueIdentifier(string $id)
+    public function setUniqueIdentifier(string $id): void
     {
         $this->id = $id;
     }
@@ -171,7 +171,7 @@ class UserIdentifier implements UserIdentificationInterface, JsonSerializable
      *
      * @return void
      */
-    public function setCacheIdentifier(string $id)
+    public function setCacheIdentifier(string $id): void
     {
         $this->cacheId = $id;
     }

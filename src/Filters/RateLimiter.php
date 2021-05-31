@@ -66,7 +66,7 @@ class RateLimiter implements FilterInterface, SelectivePathsInterface, UsesAuthe
      * @return void
      * @throws InvalidArgumentException
      */
-    public static function setLimit(string $unit, int $usagePerUnit, ?int $authenticatedUsagePerUnit = null)
+    public static function setLimit(string $unit, int $usagePerUnit, ?int $authenticatedUsagePerUnit = null): void
     {
         static::$unit = $unit;
         static::$usagePerUnit = $usagePerUnit;
@@ -166,7 +166,7 @@ class RateLimiter implements FilterInterface, SelectivePathsInterface, UsesAuthe
         return implode(' ', $ret);
     }
 
-    public function _setAuthenticationStatus(bool $isAuthenticated = false, bool $isAuthFinished = false)
+    public function _setAuthenticationStatus(bool $isAuthenticated = false, bool $isAuthFinished = false): void
     {
         $this->authenticated = $isAuthenticated;
     }

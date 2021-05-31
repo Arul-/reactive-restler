@@ -33,11 +33,11 @@ class SessionMiddleware implements MiddlewareInterface
     /**
      * @var SessionHandlerInterface
      */
-    private $handler;
+    private ?\SessionHandlerInterface $handler;
     /**
      * @var SessionIdInterface
      */
-    private $sessionId;
+    private ?\SessionIdInterface $sessionId;
 
     /**
      * SessionMiddleware constructor.
@@ -74,7 +74,7 @@ class SessionMiddleware implements MiddlewareInterface
             $request = $request->withAttribute('session', $session);
         }
         return resolve($next($request))->then(
-            function ($response) use ($session) {
+            function ($response) use ($session): \Psr\Http\Message\ResponseInterface {
                 $cookieParams = static::$cookieParameters;
                 // Only set time when expires is set in the future
                 if ($cookieParams[0] > 0) {

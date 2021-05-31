@@ -18,11 +18,11 @@ class Restler extends Psr7
      * @return void
      * @throws HttpException
      */
-    public static function decode($recv_buffer, TcpConnection $connection)
+    public static function decode($recv_buffer, TcpConnection $connection): void
     {
         $request = parent::decode($recv_buffer, $connection);
         (new Server())->handle($request)->then(
-            function (ResponseInterface $response) use ($connection) {
+            function (ResponseInterface $response) use ($connection): void {
                 $data = Dump::response($response, false);
                 $data_size = strlen($data);
                 //send headers alone first

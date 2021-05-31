@@ -26,7 +26,7 @@ class ValueObject implements ValueObjectInterface
         return $instance;
     }
 
-    protected function applyProperties(array $properties, bool $filter = false)
+    protected function applyProperties(array $properties, bool $filter = false): void
     {
         if ($filter) {
             $vars = get_object_vars($this);

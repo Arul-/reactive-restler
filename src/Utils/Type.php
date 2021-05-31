@@ -54,7 +54,7 @@ class Type
         if (class_exists($parent)) {
             return array_filter(
                 get_declared_classes(),
-                function ($class) use ($parent) {
+                function ($class) use ($parent): void {
                     is_subclass_of($class, $parent);
                 }
             );
@@ -67,7 +67,7 @@ class Type
         if (interface_exists($interface)) {
             return array_filter(
                 get_declared_classes(),
-                function ($class) use ($interface) {
+                function ($class) use ($interface): void {
                     in_array($interface, class_implements($class));
                 }
             );

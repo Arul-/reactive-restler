@@ -39,7 +39,7 @@ class Restler extends Core
         $middleware[] = [$this, '_handle'];
         $promise = $this->handleMiddleware($middleware, $request);
         $promise = $promise->then(
-            function ($result) {
+            function ($result): \Psr\Http\Message\ResponseInterface {
                 if ($result instanceof ResponseInterface) {
                     return $result;
                 }
@@ -48,7 +48,7 @@ class Restler extends Core
                 }
                 return $this->respond($result);
             },
-            function ($error) {
+            function ($error): \Psr\Http\Message\ResponseInterface {
                 if ($error instanceof Throwable) {
                     $error = $this->message($error, '');
                 } else {
@@ -61,7 +61,7 @@ class Restler extends Core
             return $promise;
         }
         $promise->then(
-            function ($response) {
+            function ($response): void {
                 die(Dump::response($response, true, false));
             }
         );

@@ -26,15 +26,16 @@ class Validator implements ValidationInterface
     public static bool $holdException = false;
     public static array $exceptions = [];
 
+    /**
+     * @throws HttpException
+     */
     public static function validate($input, ?Param $param)
     {
         if ('mixed' == $param->type) {
             return $input;
         }
         if ($param->multiple) {
-            $error = isset ($param->message)
-                ? $param->message
-                : "Invalid value specified for $param->name";
+            $error = $param->message ?? "Invalid value specified for $param->name";
             $func = function ($input, $index) use ($param) {
                 $clone = clone $param;
                 $clone->multiple = false;
@@ -92,9 +93,7 @@ class Validator implements ValidationInterface
                 }
                 return null;
             }
-            $error = isset ($param->message)
-                ? $param->message
-                : "Invalid value specified for $name";
+            $error = $param->message ?? "Invalid value specified for $name";
 
             //if a validation method is specified
             if (!empty($param->method)) {
