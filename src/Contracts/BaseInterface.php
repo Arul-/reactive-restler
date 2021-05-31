@@ -1,4 +1,5 @@
 <?php
+
 namespace Luracast\Restler\Contracts;
 
 use Luracast\Restler\Data\Route;
@@ -16,58 +17,58 @@ use Throwable;
  */
 interface BaseInterface
 {
-    function get(): void;
+    public function get(): void;
 
-    function getPath(string $path): string;
+    public function getPath(string $path): string;
 
-    function getQuery(array $get = []): array;
+    public function getQuery(array $get = []): array;
 
-    function getRequestMediaType(string $contentType): RequestMediaTypeInterface;
+    public function getRequestMediaType(string $contentType): RequestMediaTypeInterface;
 
-    function getBody(string $raw = ''): array;
-
-
-    function route(): void;
+    public function getBody(string $raw = ''): array;
 
 
-    function negotiate(): void;
+    public function route(): void;
 
-    function negotiateResponseMediaType(string $path, string $acceptHeader = ''): ResponseMediaTypeInterface;
 
-    function negotiateCORS(
+    public function negotiate(): void;
+
+    public function negotiateResponseMediaType(string $path, string $acceptHeader = ''): ResponseMediaTypeInterface;
+
+    public function negotiateCORS(
         string $requestMethod,
         string $accessControlRequestMethod = '',
         string $accessControlRequestHeaders = '',
         string $origin = ''
     ): void;
 
-    function negotiateCharset(string $acceptCharset = '*'): void;
+    public function negotiateCharset(string $acceptCharset = '*'): void;
 
-    function negotiateLanguage(string $acceptLanguage = ''): void;
-
-
-    function authenticate();
+    public function negotiateLanguage(string $acceptLanguage = ''): void;
 
 
-    function validate();
+    public function authenticate();
 
 
-    function call();
+    public function validate();
 
 
-    function compose($response = null);
-
-    function composeHeaders(?Route $info, string $origin = '', HttpException $e = null): void;
-
-    function message(Throwable $e);
+    public function call();
 
 
-    function respond($response = []): ResponseInterface;
+    public function compose($response = null);
 
-    function stream($data): ResponseInterface;
+    public function composeHeaders(?Route $info, string $origin = '', HttpException $e = null): void;
+
+    public function message(Throwable $e);
 
 
-    function handle(
+    public function respond($response = []): ResponseInterface;
+
+    public function stream($data): ResponseInterface;
+
+
+    public function handle(
         ServerRequestInterface $request,
         ResponseInterface $response,
         string $rawRequestBody = ''

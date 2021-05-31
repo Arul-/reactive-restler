@@ -1,4 +1,5 @@
-<?php namespace Luracast\Restler\Data;
+<?php
+namespace Luracast\Restler\Data;
 
 use Exception;
 use GraphQL\Type\Definition\InputObjectType;
@@ -26,19 +27,19 @@ use Reflector;
  */
 class Param extends Type
 {
-    const KEEP_NON_NUMERIC = false;
-    const KEEP_NUMERIC = true;
+    public const KEEP_NON_NUMERIC = false;
+    public const KEEP_NUMERIC = true;
 
-    const FROM_PATH = 'path';
-    const FROM_QUERY = 'query';
-    const FROM_BODY = 'body';
-    const FROM_HEADER = 'header';
+    public const FROM_PATH = 'path';
+    public const FROM_QUERY = 'query';
+    public const FROM_BODY = 'body';
+    public const FROM_HEADER = 'header';
 
-    const ACCESS_PUBLIC = 0;
-    const ACCESS_PROTECTED = 1;
-    const ACCESS_PRIVATE = 2;
+    public const ACCESS_PUBLIC = 0;
+    public const ACCESS_PROTECTED = 1;
+    public const ACCESS_PRIVATE = 2;
 
-    const ACCESS = [
+    public const ACCESS = [
         'public' => self::ACCESS_PUBLIC,
         'protected' => self::ACCESS_PROTECTED,
         'private' => self::ACCESS_PRIVATE,
@@ -91,7 +92,7 @@ class Param extends Type
      * When set to true it will attempt to fix the value if possible
      * or throw an exception or return false when it cant be fixed.
      *
-     * @var boolean true or false
+     * @var bool true or false
      */
     public $fix = false;
 
@@ -202,7 +203,6 @@ class Param extends Type
         }
         $params = [];
         foreach ($function->getParameters() as $reflectionParameter) {
-
             $params[] = static::fromParameter($reflectionParameter, $doc, $scope);
         }
         return array_column($params, null, 'name');
@@ -227,8 +227,10 @@ class Param extends Type
         $itemTypes = $properties['type'] ?? [];
         unset($properties['type']);
         $instance->description = $metadata['description'] ?? '';
-        if ($reflector && method_exists($reflector,
-                'isDefaultValueAvailable') && $reflector->isDefaultValueAvailable()) {
+        if ($reflector && method_exists(
+                $reflector,
+                'isDefaultValueAvailable'
+            ) && $reflector->isDefaultValueAvailable()) {
             $default = $reflector->getDefaultValue();
             $instance->default = [true, $default];
             $hasDefault = true;
@@ -259,8 +261,12 @@ class Param extends Type
             $itemTypes,
             $scope
         );
-        $instance->required = TypeUtil::booleanValue($properties['required'] ?? $reflector && method_exists($reflector,
-                'isOptional') && !$reflector->isOptional());
+        $instance->required = TypeUtil::booleanValue(
+            $properties['required'] ?? $reflector && method_exists(
+                $reflector,
+                'isOptional'
+            ) && !$reflector->isOptional()
+        );
         if ($reflector) {
             $instance->name = $reflector->getName();
             if (method_exists($reflector, 'getPosition')) {
@@ -306,8 +312,10 @@ class Param extends Type
                 } elseif ($instance->nullable) {
                     $instance->default = [true, null];
                 } else {
-                    throw new Exception('Invalid parameter. private or protected parameter requires ' .
-                        'default value either in the function or with {@default value} comment');
+                    throw new Exception(
+                        'Invalid parameter. private or protected parameter requires ' .
+                        'default value either in the function or with {@default value} comment'
+                    );
                 }
             }
             $instance->access = $access;
@@ -344,10 +352,12 @@ class Param extends Type
             if (count($this->choice) !== count($keys)) {
                 throw new HttpException(500, '`@choice` and `@select` items count mismatch');
             }
-            $type = GraphQL::enum([
-                'name' => ucfirst($this->name) . 'Enum',
-                'values' => array_combine($keys, $this->choice),
-            ]);
+            $type = GraphQL::enum(
+                [
+                    'name' => ucfirst($this->name) . 'Enum',
+                    'values' => array_combine($keys, $this->choice),
+                ]
+            );
         } elseif ($this->scalar) {
             $type = $this->type !== 'bool' && in_array($this->name, Router::$prefixingParameterNames)
                 ? GraphQLType::id()

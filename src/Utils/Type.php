@@ -7,9 +7,9 @@ use Luracast\Restler\Data\Param;
 
 class Type
 {
-    const SCALAR = '|bool|boolean|int|integer|float|string';
-    const PRIMITIVE = '|array' . self::SCALAR;
-    const SIMPLE = '|resource|mixed' . self::PRIMITIVE;
+    public const SCALAR = '|bool|boolean|int|integer|float|string';
+    public const PRIMITIVE = '|array' . self::SCALAR;
+    public const SIMPLE = '|resource|mixed' . self::PRIMITIVE;
 
     public static function isAssociative(array $value): bool
     {
@@ -18,7 +18,7 @@ class Type
 
     /**
      * @param string $type
-     * @return boolean
+     * @return bool
      */
     public static function isScalar(string $type): bool
     {
@@ -27,7 +27,7 @@ class Type
 
     /**
      * @param string $type
-     * @return boolean
+     * @return bool
      */
     public static function isPrimitive(string $type): bool
     {
@@ -36,7 +36,7 @@ class Type
 
     /**
      * @param string $type
-     * @return boolean
+     * @return bool
      */
     public static function isObject(string $type): bool
     {
@@ -52,9 +52,12 @@ class Type
     public static function subclasses(string $parent): ?array
     {
         if (class_exists($parent)) {
-            return array_filter(get_declared_classes(), function ($class) use ($parent) {
-                is_subclass_of($class, $parent);
-            });
+            return array_filter(
+                get_declared_classes(),
+                function ($class) use ($parent) {
+                    is_subclass_of($class, $parent);
+                }
+            );
         }
         return null;
     }
@@ -62,9 +65,12 @@ class Type
     public static function implementations(string $interface): ?array
     {
         if (interface_exists($interface)) {
-            return array_filter(get_declared_classes(), function ($class) use ($interface) {
-                in_array($interface, class_implements($class));
-            });
+            return array_filter(
+                get_declared_classes(),
+                function ($class) use ($interface) {
+                    in_array($interface, class_implements($class));
+                }
+            );
         }
         return null;
     }

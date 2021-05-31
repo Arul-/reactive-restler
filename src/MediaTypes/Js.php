@@ -1,14 +1,14 @@
-<?php namespace Luracast\Restler\MediaTypes;
+<?php
+namespace Luracast\Restler\MediaTypes;
 
 use Luracast\Restler\Contracts\ResponseMediaTypeInterface;
 use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\ResponseHeaders;
-use Luracast\Restler\Utils\Convert;
 
 class Js extends MediaType implements ResponseMediaTypeInterface
 {
-    const MIME = 'text/javascript';
-    const EXTENSION = 'js';
+    public const MIME = 'text/javascript';
+    public const EXTENSION = 'js';
 
     public static $encodeOptions = 0;
     public static $callbackMethodName = 'parseResponse';

@@ -37,64 +37,82 @@ class ErrorResponse implements GenericResponseInterface
 
     public static function responds(string ...$types): Returns
     {
-        return Returns::__set_state([
-            'type' => 'ErrorResponse',
-            'scalar' => false,
-            'properties' =>
-                [
-                    'error' => Returns::__set_state([
-                        'type' => 'Error',
-                        'scalar' => false,
-                        'properties' =>
+        return Returns::__set_state(
+            [
+                'type' => 'ErrorResponse',
+                'scalar' => false,
+                'properties' =>
+                    [
+                        'error' => Returns::__set_state(
                             [
-                                'code' => Returns::__set_state(['type' => 'int']),
-                                'message' => Returns::__set_state([
-                                    'type' => 'string',
-                                    'pattern' => '/^[a-zA-Z0-9?><;,{}[\]\-_+=!@#$%\^&*|\']*$/',
-                                ]),
-                            ],
-                    ]),
-                    'debug' => Returns::__set_state([
-                        'type' => 'Debug',
-                        'scalar' => false,
-                        'description' => '',
-                        'properties' =>
+                                'type' => 'Error',
+                                'scalar' => false,
+                                'properties' =>
+                                    [
+                                        'code' => Returns::__set_state(['type' => 'int']),
+                                        'message' => Returns::__set_state(
+                                            [
+                                                'type' => 'string',
+                                                'pattern' => '/^[a-zA-Z0-9?><;,{}[\]\-_+=!@#$%\^&*|\']*$/',
+                                            ]
+                                        ),
+                                    ],
+                            ]
+                        ),
+                        'debug' => Returns::__set_state(
                             [
-                                'source' => Returns::__set_state(['type' => 'string', 'pattern' => '/[\s\S]*/']),
-                                'trace' => Returns::__set_state([
-                                    'type' => 'Trace',
-                                    'scalar' => false,
-                                    'properties' =>
-                                        [
-                                            'file' => Returns::__set_state([
-                                                'type' => 'string',
-                                                'pattern' => '/[\s\S]*/',
-                                                'multiple' => false,
-                                                'nullable' => false,
-                                                'scalar' => true
-                                            ]),
-                                            'function' => Returns::__set_state([
-                                                'type' => 'string',
-                                                'pattern' => '/[\s\S]*/',
-                                                'multiple' => false,
-                                                'nullable' => false,
-                                                'scalar' => true
-                                            ]),
-                                            'args' => Returns::__set_state([
-                                                'type' => 'string',
-                                                'pattern' => '/[\s\S]*/',
-                                                'multiple' => true,
-                                                'nullable' => false,
-                                                'scalar' => true
-                                            ]),
-                                        ],
-                                ]),
-                            ],
+                                'type' => 'Debug',
+                                'scalar' => false,
+                                'description' => '',
+                                'properties' =>
+                                    [
+                                        'source' => Returns::__set_state(
+                                            ['type' => 'string', 'pattern' => '/[\s\S]*/']
+                                        ),
+                                        'trace' => Returns::__set_state(
+                                            [
+                                                'type' => 'Trace',
+                                                'scalar' => false,
+                                                'properties' =>
+                                                    [
+                                                        'file' => Returns::__set_state(
+                                                            [
+                                                                'type' => 'string',
+                                                                'pattern' => '/[\s\S]*/',
+                                                                'multiple' => false,
+                                                                'nullable' => false,
+                                                                'scalar' => true
+                                                            ]
+                                                        ),
+                                                        'function' => Returns::__set_state(
+                                                            [
+                                                                'type' => 'string',
+                                                                'pattern' => '/[\s\S]*/',
+                                                                'multiple' => false,
+                                                                'nullable' => false,
+                                                                'scalar' => true
+                                                            ]
+                                                        ),
+                                                        'args' => Returns::__set_state(
+                                                            [
+                                                                'type' => 'string',
+                                                                'pattern' => '/[\s\S]*/',
+                                                                'multiple' => true,
+                                                                'nullable' => false,
+                                                                'scalar' => true
+                                                            ]
+                                                        ),
+                                                    ],
+                                            ]
+                                        ),
+                                    ],
 
 
-                    ]),
-                ],
-        ]);
+                            ]
+                        ),
+                    ],
+            ]
+        );
     }
 
     private static function simplifyTrace(array $trace): array

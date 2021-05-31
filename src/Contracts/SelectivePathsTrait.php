@@ -1,4 +1,5 @@
-<?php namespace Luracast\Restler\Contracts;
+<?php
+namespace Luracast\Restler\Contracts;
 
 
 trait SelectivePathsTrait
@@ -14,7 +15,7 @@ trait SelectivePathsTrait
      */
     private static $excludedPaths = [];
 
-    static function isPathSelected(string $path): bool
+    public static function isPathSelected(string $path): bool
     {
         $notInPath = true;
         /** @var SelectivePathsInterface $class */
@@ -42,7 +43,7 @@ trait SelectivePathsTrait
         return static::$includedPaths;
     }
 
-    static function setIncludedPaths(string ...$included): void
+    public static function setIncludedPaths(string ...$included): void
     {
         static::$includedPaths = $included;
     }
@@ -52,7 +53,7 @@ trait SelectivePathsTrait
         return static::$excludedPaths;
     }
 
-    static function setExcludedPaths(string ...$excluded): void
+    public static function setExcludedPaths(string ...$excluded): void
     {
         static::$excludedPaths = $excluded;
     }

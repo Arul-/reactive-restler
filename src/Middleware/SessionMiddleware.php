@@ -15,7 +15,9 @@ use Luracast\Restler\Session\FileSessionHandler;
 use Psr\Http\Message\ServerRequestInterface;
 use SessionHandlerInterface;
 use SessionIdInterface;
+
 use function React\Promise\resolve;
+use function time;
 
 class SessionMiddleware implements MiddlewareInterface
 {
@@ -57,7 +59,6 @@ class SessionMiddleware implements MiddlewareInterface
         } else {
             throw new Exception("SessionIdInterface is needed.");
         }
-
     }
 
     public function __invoke(
@@ -72,21 +73,23 @@ class SessionMiddleware implements MiddlewareInterface
         } else {
             $request = $request->withAttribute('session', $session);
         }
-        return resolve($next($request))->then(function ($response) use ($session) {
-            $cookieParams = static::$cookieParameters;
-            // Only set time when expires is set in the future
-            if ($cookieParams[0] > 0) {
-                $cookieParams[0] += \time();
-            }
-            if ($session->status() == PHP_SESSION_ACTIVE) {
-                $cookie = new SetCookie(static::$cookieName, $session->getId(), ...$cookieParams);
-                $session->commit();
+        return resolve($next($request))->then(
+            function ($response) use ($session) {
+                $cookieParams = static::$cookieParameters;
+                // Only set time when expires is set in the future
+                if ($cookieParams[0] > 0) {
+                    $cookieParams[0] += time();
+                }
+                if ($session->status() == PHP_SESSION_ACTIVE) {
+                    $cookie = new SetCookie(static::$cookieName, $session->getId(), ...$cookieParams);
+                    $session->commit();
+                    return $cookie->addToResponse($response);
+                }
+                array_shift($cookieParams);
+                $cookie = SetCookie::thatDeletesCookie(static::$cookieName, ...$cookieParams);
+                $session->destroy();
                 return $cookie->addToResponse($response);
             }
-            array_shift($cookieParams);
-            $cookie = SetCookie::thatDeletesCookie(static::$cookieName, ...$cookieParams);
-            $session->destroy();
-            return $cookie->addToResponse($response);
-        });
+        );
     }
 }

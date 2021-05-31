@@ -17,6 +17,7 @@ use Luracast\Restler\ResponseHeaders;
 use Luracast\Restler\Utils\ClassName;
 use Psr\Http\Message\ServerRequestInterface;
 use Throwable;
+
 use function preg_replace;
 use function trim;
 
@@ -89,7 +90,7 @@ class JsonWebToken implements ExplorableAuthenticationInterface, SelectivePathsI
             }
             if (!($id = ($token->{static::$userIdentifierProperty} ?? null))) {
                 $this->accessDenied('Invalid User Identifier.');
-            };
+            }
             /** @var UserIdentificationInterface $userClass */
             $userClass = ClassName::get(UserIdentificationInterface::class);
             $userClass::setUniqueIdentifier($id);
@@ -111,12 +112,16 @@ class JsonWebToken implements ExplorableAuthenticationInterface, SelectivePathsI
         if (0 === strpos(static::$publicKey, $start)) {
             return static::$publicKey;
         }
-        return sprintf("%s%s\n-----END PUBLIC KEY-----", $start, wordwrap(
-            static::$publicKey,
-            64,
-            "\n",
-            true
-        ));
+        return sprintf(
+            "%s%s\n-----END PUBLIC KEY-----",
+            $start,
+            wordwrap(
+                static::$publicKey,
+                64,
+                "\n",
+                true
+            )
+        );
     }
 
     /**

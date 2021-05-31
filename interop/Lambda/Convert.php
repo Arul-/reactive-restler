@@ -1,4 +1,5 @@
-<?php /** @noinspection PhpInternalEntityUsedInspection */
+<?php
+/** @noinspection PhpInternalEntityUsedInspection */
 
 
 namespace Lambda;
@@ -6,13 +7,13 @@ namespace Lambda;
 
 use Bref\Context\Context;
 use Bref\Event\Http\HttpRequestEvent;
-use Bref\Event\Http\HttpResponse;
-use GuzzleHttp\Psr7\UploadedFile;
 use GuzzleHttp\Psr7\ServerRequest;
+use GuzzleHttp\Psr7\UploadedFile;
 use Luracast\Restler\Utils\Text;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Riverline\MultiPartParser\Part;
+use stdClass;
 
 class Convert
 {
@@ -22,7 +23,7 @@ class Convert
         'image/gif',
     ];
 
-    public final static function toPSR7(array $payload, array $headers): ServerRequestInterface
+    final public static function toPSR7(array $payload, array $headers): ServerRequestInterface
     {
         $event = new HttpRequestEvent($payload);
         $context = new Context(
@@ -79,7 +80,7 @@ class Convert
             ->withAttribute('lambda-context', $context);
     }
 
-    public final static function fromPSR7(ResponseInterface $psr7Response, bool $multiHeaders = false): array
+    final public static function fromPSR7(ResponseInterface $psr7Response, bool $multiHeaders = false): array
     {
         $base64Encoding = in_array(
             $psr7Response->getHeaderLine('Content-Type'),
@@ -106,7 +107,7 @@ class Convert
 
         // The headers must be a JSON object. If the PHP array is empty it is
         // serialized to `[]` (we want `{}`) so we force it to an empty object.
-        $headers = empty($headers) ? new \stdClass : $headers;
+        $headers = empty($headers) ? new stdClass() : $headers;
 
         // Support for multi-value headers
         $headersKey = $multiHeaders ? 'multiValueHeaders' : 'headers';
@@ -141,7 +142,13 @@ class Convert
                                 throw new RuntimeException('Unable to create a temporary directory');
                             }
                             file_put_contents($tmpPath, $part->getBody());
-                            $file = new UploadedFile($tmpPath, filesize($tmpPath), UPLOAD_ERR_OK, $part->getFileName(), $part->getMimeType());
+                            $file = new UploadedFile(
+                                $tmpPath,
+                                filesize($tmpPath),
+                                UPLOAD_ERR_OK,
+                                $part->getFileName(),
+                                $part->getMimeType()
+                            );
 
                             self::parseKeyAndInsertValueInArray($files, $part->getName(), $file);
                         } else {

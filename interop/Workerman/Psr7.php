@@ -26,14 +26,16 @@ class Psr7 extends Http
         $r = parent::decode($recv_buffer, $connection);
         $class = ClassName::get(ServerRequestInterface::class);
         /** @var ServerRequestInterface $request */
-        $request = new $class($r->method(), $r->uri(), $r->header(), $r->rawBody(), null, [
+        $request = new $class(
+            $r->method(), $r->uri(), $r->header(), $r->rawBody(), null, [
             'REQUEST_TIME' => time(),
             'REQUEST_TIME_FLOAT' => microtime(true),
             'REMOTE_ADDR' => $connection->getRemoteIp(),
             'REMOTE_PORT' => $connection->getRemotePort(),
             'SERVER_ADDR' => $connection->getLocalIp(),
             'SERVER_PORT' => $connection->getLocalPort(),
-        ]);
+        ]
+        );
 
         $request = $request
             ->withQueryParams($r->get())

@@ -1,4 +1,5 @@
-<?php namespace Luracast\Restler\Contracts;
+<?php
+namespace Luracast\Restler\Contracts;
 
 /**
  * Interface to identify the user

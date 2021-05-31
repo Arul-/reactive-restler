@@ -1,4 +1,5 @@
-<?php namespace Luracast\Restler\Contracts;
+<?php
+namespace Luracast\Restler\Contracts;
 
 use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\ResponseHeaders;
@@ -22,7 +23,7 @@ interface FilterInterface
      * @param ServerRequestInterface $request
      *
      * @param ResponseHeaders $responseHeaders
-     * @return boolean true when api access is allowed false otherwise
+     * @return bool true when api access is allowed false otherwise
      *
      * @throws HttpException
      */

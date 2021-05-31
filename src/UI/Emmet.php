@@ -9,7 +9,7 @@ use Luracast\Restler\UI\Tags as T;
  */
 class Emmet
 {
-    const DELIMITERS = '.#*>+^[=" ]{$@-#}';
+    public const DELIMITERS = '.#*>+^[=" ]{$@-#}';
 
     /**
      * Create the needed tag hierarchy from emmet string
@@ -140,7 +140,10 @@ class Emmet
             function (callable $self, $round, $total, $data)
             use (& $tokens, & $tag, $parseText) {
                 $a = $parseText(
-                    '', $round, $total, $data
+                    '',
+                    $round,
+                    $total,
+                    $data
                 );
                 if (is_null($a)) {
                     return;
@@ -149,17 +152,27 @@ class Emmet
                     //value
                     if ('"' == ($v = array_shift($tokens))) {
                         $text = '';
-                        $tag->$a($parseText(
-                            $text, $round, $total, $data,
-                            ['"' => true]
-                        ));
+                        $tag->$a(
+                            $parseText(
+                                $text,
+                                $round,
+                                $total,
+                                $data,
+                                ['"' => true]
+                            )
+                        );
                     } else {
                         array_unshift($tokens, $v);
                         $text = '';
-                        $tag->$a($parseText(
-                            $text, $round, $total, $data,
-                            [' ' => true, ']' => true]
-                        ));
+                        $tag->$a(
+                            $parseText(
+                                $text,
+                                $round,
+                                $total,
+                                $data,
+                                [' ' => true, ']' => true]
+                            )
+                        );
                     }
                     if (' ' == ($v = array_shift($tokens))) {
                         $self($self, $round, $total, $data);
@@ -176,7 +189,7 @@ class Emmet
 
         $tokens = static::tokenize($string);
         $tag = new T(array_shift($tokens));
-        $parent = $root = new T;
+        $parent = $root = new T();
 
         $parse =
             function (
@@ -214,7 +227,10 @@ class Emmet
                             $implicitTag();
                             $tag->id(
                                 $parseText(
-                                    array_shift($tokens), $round, $total, $data
+                                    array_shift($tokens),
+                                    $round,
+                                    $total,
+                                    $data
                                 )
                             );
                             break;
@@ -224,14 +240,21 @@ class Emmet
                             array_unshift($offsetTokens, '[');
                             $implicitTag();
                             $parseAttributes(
-                                $parseAttributes, $round, $total, $data
+                                $parseAttributes,
+                                $round,
+                                $total,
+                                $data
                             );
                             break;
                         //child
                         case '{':
                             $text = '';
                             $tag[] = $parseText(
-                                $text, $round, $total, $data, ['}' => true]
+                                $text,
+                                $round,
+                                $total,
+                                $data,
+                                ['}' => true]
                             );
                             break;
                         case '>':

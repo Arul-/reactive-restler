@@ -1,4 +1,5 @@
-<?php namespace Luracast\Restler\Utils;
+<?php
+namespace Luracast\Restler\Utils;
 
 /**
  * Convenience class for String manipulation

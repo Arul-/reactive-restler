@@ -37,7 +37,7 @@ class Forms implements FilterInterface, SelectivePathsInterface
 {
     use SelectivePathsTrait;
 
-    const FORM_KEY = 'form_key';
+    public const FORM_KEY = 'form_key';
 
     public static $filterFormRequestsOnly = false;
     public static $style;
@@ -151,8 +151,10 @@ class Forms implements FilterInterface, SelectivePathsInterface
             } else {
                 $this->route = $route = Router::find(
                     trim($action, '/'),
-                    $method, null,
-                    $this->restler->requestedApiVersion, []
+                    $method,
+                    null,
+                    $this->restler->requestedApiVersion,
+                    []
                 );
             }
         } catch (HttpException $e) {
@@ -475,7 +477,7 @@ class Forms implements FilterInterface, SelectivePathsInterface
      * @param ServerRequestInterface $request
      * @param ResponseHeaders $responseHeaders
      *
-     * @return boolean true when api access is allowed false otherwise
+     * @return bool true when api access is allowed false otherwise
      *
      * @throws HttpException 403 security violation
      */

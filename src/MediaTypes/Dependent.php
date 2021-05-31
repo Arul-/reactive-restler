@@ -1,4 +1,5 @@
-<?php namespace Luracast\Restler\MediaTypes;
+<?php
+namespace Luracast\Restler\MediaTypes;
 
 use Luracast\Restler\Contracts\DependentTrait;
 use Luracast\Restler\Utils\Convert;

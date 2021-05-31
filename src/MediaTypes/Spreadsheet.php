@@ -16,8 +16,8 @@ use Luracast\Restler\Utils\Convert;
 
 class Spreadsheet extends Dependent implements DownloadableFileMediaTypeInterface
 {
-    const MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
-    const EXTENSION = 'xlsx';
+    public const MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+    public const EXTENSION = 'xlsx';
 
     public function __construct(Convert $convert)
     {
@@ -50,7 +50,7 @@ class Spreadsheet extends Dependent implements DownloadableFileMediaTypeInterfac
             $writer = WriterEntityFactory::createWriter($this->extension());
             $writer->openToFile($file);
             $row = array_shift($data);
-            $style = (new StyleBuilder)->setFontBold()->setBackgroundColor(Color::rgb(230, 230, 230))->build();
+            $style = (new StyleBuilder())->setFontBold()->setBackgroundColor(Color::rgb(230, 230, 230))->build();
             if (array_values($row) == $row) {
                 //write header with first row values
                 $writer->addRow(WriterEntityFactory::createRowFromArray(array_values($row), $style));

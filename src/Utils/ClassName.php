@@ -1,4 +1,5 @@
 <?php
+
 namespace Luracast\Restler\Utils;
 
 
@@ -9,7 +10,7 @@ use Luracast\Restler\MediaTypes\{Amf, Html, Plist, Yaml};
 class ClassName
 {
 
-    const NAMESPACE_SEPARATOR = '\\';
+    public const NAMESPACE_SEPARATOR = '\\';
 
     /**
      * @var array class => [ package, used by class ]
@@ -125,7 +126,7 @@ class ClassName
      * @param string $name
      * @param array $scope local scope
      *
-     * @return string|boolean returns the class name or false
+     * @return string|bool returns the class name or false
      */
     public static function resolve(string $name, array $scope)
     {

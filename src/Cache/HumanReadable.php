@@ -39,7 +39,7 @@ class HumanReadable extends Base
                 $value['data'] ?? $default;
             }
         } else {
-            return $value['data'] ?? $default;;
+            return $value['data'] ?? $default;
         }
     }
 

@@ -12,8 +12,8 @@ use Psr\Http\Message\UploadedFileInterface;
 
 class Upload extends MediaType implements RequestMediaTypeInterface
 {
-    const MIME = 'multipart/form-data';
-    const EXTENSION = 'post';
+    public const MIME = 'multipart/form-data';
+    public const EXTENSION = 'post';
     public static $errors = [
         UPLOAD_ERR_OK => false,
         UPLOAD_ERR_INI_SIZE => 'The uploaded file exceeds the maximum allowed size',

@@ -9,6 +9,9 @@ use Luracast\Restler\Utils\ClassName;
 use Luracast\Restler\Utils\PassThrough;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+
+use Throwable;
+
 use function React\Promise\resolve;
 
 class StaticFiles implements MiddlewareInterface
@@ -37,8 +40,7 @@ class StaticFiles implements MiddlewareInterface
         ServerRequestInterface $request,
         callable $next = null,
         ContainerInterface $container = null
-    )
-    {
+    ) {
         $path = $request->getUri()->getPath();
         if (!empty(static::$basePath)) {
             $array = explode(static::$basePath, $path, 2);
@@ -51,7 +53,7 @@ class StaticFiles implements MiddlewareInterface
                 try {
                     $response = PassThrough::file($path);
                     return resolve($response);
-                } catch (\Throwable $throwable) {
+                } catch (Throwable $throwable) {
                     //ignore
                 }
             }
@@ -60,7 +62,9 @@ class StaticFiles implements MiddlewareInterface
             return resolve($next($request));
         }
         $class = ClassName::get(ResponseInterface::class);
-        return resolve(new $class(404, ['Content-Type' => 'text/html'], '<!DOCTYPE html>
+        return resolve(
+            new $class(
+                404, ['Content-Type' => 'text/html'], '<!DOCTYPE html>
 <html lang="en">
     <head>
         <meta charset="utf-8">
@@ -72,6 +76,8 @@ class StaticFiles implements MiddlewareInterface
         <h1 id="http-error-heading">404 Not Found</h1>
         <p>Sorry! Page not found</p>
     </body>
-</html>'));
+</html>'
+            )
+        );
     }
 }

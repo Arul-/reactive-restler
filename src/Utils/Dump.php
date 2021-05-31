@@ -1,11 +1,12 @@
-<?php namespace Luracast\Restler\Utils;
+<?php
+namespace Luracast\Restler\Utils;
 
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
 class Dump
 {
-    const CRLF = "\r\n";
+    public const CRLF = "\r\n";
 
     public static function request(ServerRequestInterface $request): string
     {
@@ -41,7 +42,8 @@ class Dump
      */
     public static function responseHeaders(ResponseInterface $response, bool $headerAsString): string
     {
-        $http = sprintf('HTTP/%s %s %s',
+        $http = sprintf(
+            'HTTP/%s %s %s',
             $response->getProtocolVersion(),
             $response->getStatusCode(),
             $response->getReasonPhrase()

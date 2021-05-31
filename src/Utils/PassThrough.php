@@ -1,7 +1,8 @@
-<?php namespace Luracast\Restler\Utils;
+<?php
+namespace Luracast\Restler\Utils;
 
-use Luracast\Restler\Defaults;
 use Luracast\Restler\Core;
+use Luracast\Restler\Defaults;
 use Luracast\Restler\Exceptions\HttpException;
 use Psr\Http\Message\ResponseInterface;
 

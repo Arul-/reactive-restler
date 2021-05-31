@@ -1,15 +1,15 @@
-<?php namespace Luracast\Restler\MediaTypes;
+<?php
+namespace Luracast\Restler\MediaTypes;
 
 use Luracast\Restler\Contracts\ResponseMediaTypeInterface;
 use Luracast\Restler\Contracts\StreamingRequestMediaTypeInterface;
 use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\ResponseHeaders;
-use Luracast\Restler\Utils\Convert;
 
 class Csv extends MediaType implements StreamingRequestMediaTypeInterface, ResponseMediaTypeInterface
 {
-    const MIME = 'text/csv';
-    const EXTENSION = 'csv';
+    public const MIME = 'text/csv';
+    public const EXTENSION = 'csv';
     public static $delimiter = ',';
     public static $enclosure = '"';
     public static $escape = '\\';

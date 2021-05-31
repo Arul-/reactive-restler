@@ -12,8 +12,8 @@ use Psr\Http\Message\ServerRequestInterface;
 class UrlEncoded extends MediaType implements RequestMediaTypeInterface, ResponseMediaTypeInterface
 {
 
-    const MIME = 'application/x-www-form-urlencoded';
-    const EXTENSION = 'post';
+    public const MIME = 'application/x-www-form-urlencoded';
+    public const EXTENSION = 'post';
     /**
      * @var ServerRequestInterface
      */

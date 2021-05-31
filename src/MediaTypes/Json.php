@@ -1,16 +1,16 @@
-<?php namespace Luracast\Restler\MediaTypes;
+<?php
+namespace Luracast\Restler\MediaTypes;
 
 
 use Luracast\Restler\Contracts\RequestMediaTypeInterface;
 use Luracast\Restler\Contracts\ResponseMediaTypeInterface;
 use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\ResponseHeaders;
-use Luracast\Restler\Utils\Convert;
 
 class Json extends MediaType implements RequestMediaTypeInterface, ResponseMediaTypeInterface
 {
-    const MIME = 'application/json';
-    const EXTENSION = 'json';
+    public const MIME = 'application/json';
+    public const EXTENSION = 'json';
 
     public static $encodeOptions = JSON_UNESCAPED_SLASHES;
     public static $decodeOptions = JSON_BIGINT_AS_STRING;

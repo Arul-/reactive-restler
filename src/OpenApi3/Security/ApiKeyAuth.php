@@ -8,9 +8,9 @@ use InvalidArgumentException;
 
 class ApiKeyAuth extends Scheme
 {
-    const IN_HEADER = 'header';
-    const IN_QUERY = 'query';
-    const IN_COOKIE = 'cookie';
+    public const IN_HEADER = 'header';
+    public const IN_QUERY = 'query';
+    public const IN_COOKIE = 'cookie';
 
     protected $type = Scheme::TYPE_API_KEY;
     /**

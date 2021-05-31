@@ -1,4 +1,6 @@
-<?php namespace Luracast\Restler;
+<?php
+
+namespace Luracast\Restler;
 
 use JsonSerializable;
 use Luracast\Restler\Contracts\UserIdentificationInterface;

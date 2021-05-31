@@ -13,15 +13,15 @@ class CommentParser
     /**
      * separator for type definitions
      */
-    const TYPE_SEPARATOR = '|';
+    public const TYPE_SEPARATOR = '|';
     /**
      * character sequence used to escape \@
      */
-    const ESCAPE_SEQUENCE_START = '\\@';
+    public const ESCAPE_SEQUENCE_START = '\\@';
     /**
      * character sequence used to escape end of comment
      */
-    const ESCAPE_SEQUENCE_END = '{@*}';
+    public const ESCAPE_SEQUENCE_END = '{@*}';
     /**
      * name for the embedded data
      *
@@ -97,7 +97,6 @@ class CommentParser
 
         $p->extractData($comment);
         return $p->_data;
-
     }
 
     /**
@@ -130,7 +129,8 @@ class CommentParser
         $comment = str_replace(
             [self::ESCAPE_SEQUENCE_END, self::ESCAPE_SEQUENCE_START],
             ['*/', '@'],
-            $comment);
+            $comment
+        );
 
         $summary = [];
         $description = [];
@@ -186,9 +186,13 @@ class CommentParser
         $description = implode(' ', $description);
         $summary = preg_replace('/\s+/msu', ' ', $summary);
         $description = preg_replace('/\s+/msu', ' ', $description);
-        list($summary, $d1)
+        list(
+            $summary, $d1
+            )
             = $this->parseEmbeddedData($summary);
-        list($description, $d2)
+        list(
+            $description, $d2
+            )
             = $this->parseEmbeddedData($description);
         $this->_data = compact('summary', 'description');
         $d2 += $d1;
@@ -227,7 +231,9 @@ class CommentParser
             $key = $matches[1];
             $val = $matches[2];
             if ($key == 'pattern') {
-                throw new Exception('Inline pattern tag should follow {@pattern /REGEX_PATTERN_HERE/} format and can optionally include PCRE modifiers following the ending `/`');
+                throw new Exception(
+                    'Inline pattern tag should follow {@pattern /REGEX_PATTERN_HERE/} format and can optionally include PCRE modifiers following the ending `/`'
+                );
             } elseif (isset(static::$allowsArrayValue[$key])) {
                 $val = explode(static::$arrayDelimiter, $val);
             } elseif ($val == 'true' || $val == 'false') {
@@ -257,8 +263,10 @@ class CommentParser
             if ($str[0] == '{') {
                 $d = json_decode($str, true);
                 if (json_last_error() != JSON_ERROR_NONE) {
-                    throw new Exception('Error parsing embedded JSON data'
-                        . " $str");
+                    throw new Exception(
+                        'Error parsing embedded JSON data'
+                        . " $str"
+                    );
                 }
                 $data = $d + $data;
             } else {
@@ -281,15 +289,17 @@ class CommentParser
                                 $d[$key] = $val;
                             } else {
                                 $d[$key] =
-                                    preg_replace('/\s+/msu', ' ',
-                                        $d[$key]);
+                                    preg_replace(
+                                        '/\s+/msu',
+                                        ' ',
+                                        $d[$key]
+                                    );
                             }
                         }
                     }
                 }
                 $data = $d + $data;
             }
-
         }
         return [$subject, $data];
     }

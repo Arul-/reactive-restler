@@ -1,4 +1,5 @@
-<?php namespace Luracast\Restler\Data;
+<?php
+namespace Luracast\Restler\Data;
 
 use Luracast\Restler\Contracts\ValueObjectInterface;
 
@@ -8,7 +9,7 @@ use Luracast\Restler\Contracts\ValueObjectInterface;
  */
 class ValueObject implements ValueObjectInterface
 {
-    public final function __construct()
+    final public function __construct()
     {
     }
 
@@ -37,10 +38,13 @@ class ValueObject implements ValueObjectInterface
                     } else {
                         $method = 'set' . ucfirst($property);
                         if (method_exists($this, $method)) {
-                            call_user_func([
-                                $this,
-                                $method
-                            ], $value);
+                            call_user_func(
+                                [
+                                    $this,
+                                    $method
+                                ],
+                                $value
+                            );
                         }
                     }
                 }

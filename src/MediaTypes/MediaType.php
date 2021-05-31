@@ -1,23 +1,25 @@
-<?php namespace Luracast\Restler\MediaTypes;
+<?php
+namespace Luracast\Restler\MediaTypes;
 
 use Luracast\Restler\Contracts\MediaTypeInterface;
 use Luracast\Restler\Contracts\SelectivePathsInterface;
 use Luracast\Restler\Contracts\SelectivePathsTrait;
+use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\Utils\Convert;
 use Luracast\Restler\Utils\Text;
-use Luracast\Restler\Exceptions\HttpException;
 
 abstract class MediaType implements MediaTypeInterface, SelectivePathsInterface
 {
     use SelectivePathsTrait;
+
     /**
      * override in the extending class
      */
-    const MIME = 'text/plain';
+    public const MIME = 'text/plain';
     /**
      * override in the extending class
      */
-    const EXTENSION = 'txt';
+    public const EXTENSION = 'txt';
 
     protected $mime;
     protected $extension;

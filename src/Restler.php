@@ -1,4 +1,5 @@
-<?php namespace Luracast\Restler;
+<?php
+namespace Luracast\Restler;
 
 use Exception;
 use GuzzleHttp\Psr7\ServerRequest;
@@ -14,6 +15,7 @@ use Psr\Http\Message\StreamInterface;
 use React\Promise\FulfilledPromise;
 use React\Promise\PromiseInterface;
 use Throwable;
+
 use function GuzzleHttp\Psr7\stream_for;
 
 class Restler extends Core
@@ -61,9 +63,11 @@ class Restler extends Core
         if (true === $this->defaults->returnResponse) {
             return $promise;
         }
-        $promise->then(function ($response) {
-            die(Dump::response($response, true, false));
-        });
+        $promise->then(
+            function ($response) {
+                die(Dump::response($response, true, false));
+            }
+        );
         return $promise;
     }
 
@@ -127,7 +131,9 @@ class Restler extends Core
             $body = is_null($response)
                 ? ''
                 : $this->responseFormat->encode(
-                    $response, $this->_responseHeaders, !Defaults::$productionMode
+                    $response,
+                    $this->_responseHeaders,
+                    !Defaults::$productionMode
                 );
             if ($body instanceof StreamInterface) {
                 return $this->stream($body->detach());
@@ -151,14 +157,18 @@ class Restler extends Core
                 : 'Unknown';
             $this->_responseHeaders['WWW-Authenticate'] = $authString;
         }
-        return $this->container->make(ResponseInterface::class,
-            [$this->_responseCode, $this->_responseHeaders->getArrayCopy(), (string)$body]);
+        return $this->container->make(
+            ResponseInterface::class,
+            [$this->_responseCode, $this->_responseHeaders->getArrayCopy(), (string)$body]
+        );
     }
 
     protected function stream($data): ResponseInterface
     {
-        return $this->container->make(ResponseInterface::class,
-            [$this->_responseCode, $this->_responseHeaders->getArrayCopy(), $data ?? '']);
+        return $this->container->make(
+            ResponseInterface::class,
+            [$this->_responseCode, $this->_responseHeaders->getArrayCopy(), $data ?? '']
+        );
     }
 
     /**
@@ -202,34 +212,40 @@ class Restler extends Core
             $this->filter($this->request, true);
             $this->validate();
             /** @phpstan-ignore-next-line */
-            return Async::await($this->call($this->_route))->then(function ($data) {
-                if ($data instanceof ResponseInterface) {
-                    $this->composeHeaders(null, $this->request->getHeaderLine('origin'));
-                    $headers = $data->getHeaders() + $this->_responseHeaders->getArrayCopy();
-                    $data = $this->container->make(ResponseInterface::class,
-                        [$data->getStatusCode(), $headers, $data->getBody()]);
-                    return $data;
+            return Async::await($this->call($this->_route))->then(
+                function ($data) {
+                    if ($data instanceof ResponseInterface) {
+                        $this->composeHeaders(null, $this->request->getHeaderLine('origin'));
+                        $headers = $data->getHeaders() + $this->_responseHeaders->getArrayCopy();
+                        $data = $this->container->make(
+                            ResponseInterface::class,
+                            [$data->getStatusCode(), $headers, $data->getBody()]
+                        );
+                        return $data;
+                    }
+                    if ($data instanceof StreamInterface) {
+                        return $this->stream($data->detach());
+                    }
+                    if (is_resource($data) && get_resource_type($data) == 'stream') {
+                        return $this->stream($data);
+                    }
+                    $data = $this->compose($data);
+                    return $this->respond($data);
                 }
-                if ($data instanceof StreamInterface) {
-                    return $this->stream($data->detach());
-                }
-                if (is_resource($data) && get_resource_type($data) == 'stream') {
-                    return $this->stream($data);
-                }
-                $data = $this->compose($data);
-                return $this->respond($data);
-            });
+            );
         } catch (Throwable $error) {
             $this->_exception = $error;
             if (!$this->responseFormat) {
                 $this->responseFormat = $this->container->make(Json::class);
             }
-            return new FulfilledPromise($this->respond(
-                $this->message(
-                    $error,
-                    $this->request->getHeaderLine('origin')
+            return new FulfilledPromise(
+                $this->respond(
+                    $this->message(
+                        $error,
+                        $this->request->getHeaderLine('origin')
+                    )
                 )
-            ));
+            );
         }
     }
 

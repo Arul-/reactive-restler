@@ -6,13 +6,13 @@ namespace Luracast\Restler\OpenApi3\Security;
 
 abstract class Scheme
 {
-    const TYPE_API_KEY = 'apiKey';
-    const TYPE_HTTP = 'http';
-    const TYPE_OAUTH2 = 'oauth2';
-    const TYPE_OPEN_ID_CONNECT = 'openIdConnect';
+    public const TYPE_API_KEY = 'apiKey';
+    public const TYPE_HTTP = 'http';
+    public const TYPE_OAUTH2 = 'oauth2';
+    public const TYPE_OPEN_ID_CONNECT = 'openIdConnect';
 
-    const HTTP_SCHEME_BASIC = 'basic';
-    const HTTP_SCHEME_BEARER = 'bearer';
+    public const HTTP_SCHEME_BASIC = 'basic';
+    public const HTTP_SCHEME_BEARER = 'bearer';
 
     protected $type;
     protected $description;

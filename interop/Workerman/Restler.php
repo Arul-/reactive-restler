@@ -21,17 +21,18 @@ class Restler extends Psr7
     public static function decode($recv_buffer, TcpConnection $connection)
     {
         $request = parent::decode($recv_buffer, $connection);
-        (new Server())->handle($request)->then(function (ResponseInterface $response) use ($connection) {
-            $data = Dump::response($response, false);
-            $data_size = strlen($data);
-            //send headers alone first
-            $connection->send(
-                Dump::responseHeaders($response->withHeader('Content-Length', $data_size), true),
-                true
-            );
-            //send body content
-            $connection->send($data, true);
-        });
-
+        (new Server())->handle($request)->then(
+            function (ResponseInterface $response) use ($connection) {
+                $data = Dump::response($response, false);
+                $data_size = strlen($data);
+                //send headers alone first
+                $connection->send(
+                    Dump::responseHeaders($response->withHeader('Content-Length', $data_size), true),
+                    true
+                );
+                //send body content
+                $connection->send($data, true);
+            }
+        );
     }
 }

@@ -1,4 +1,5 @@
-<?php namespace Luracast\Restler\Contracts;
+<?php
+namespace Luracast\Restler\Contracts;
 
 use Luracast\Restler\ResponseHeaders;
 use Psr\Http\Message\StreamInterface;

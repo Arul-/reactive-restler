@@ -1,7 +1,7 @@
-<?php namespace Luracast\Restler\Exceptions;
+<?php
+namespace Luracast\Restler\Exceptions;
 
 
-use Luracast\Restler\Exceptions\HttpException;
 use Psr\Container\NotFoundExceptionInterface;
 
 class NotFound extends HttpException implements NotFoundExceptionInterface

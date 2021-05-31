@@ -1,4 +1,5 @@
-<?php namespace Luracast\Restler\Utils;
+<?php
+namespace Luracast\Restler\Utils;
 
 
 use JsonSerializable;
@@ -69,8 +70,10 @@ class Convert
                 $properties = $object->__sleep();
                 $array = [];
                 foreach ($properties as $key) {
-                    $value = $this->toArray($object->{$key},
-                        $forceObjectTypeWhenEmpty);
+                    $value = $this->toArray(
+                        $object->{$key},
+                        $forceObjectTypeWhenEmpty
+                    );
                     if ($this->convert->stringEncoderFunction && is_string($value)) {
                         $value = $this->convert->stringEncoderFunction($value);
                     } elseif ($this->convert->numberEncoderFunction && is_numeric($value)) {

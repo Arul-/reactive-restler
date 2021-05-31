@@ -1,4 +1,5 @@
-<?php namespace Luracast\Restler;
+<?php
+namespace Luracast\Restler;
 
 use Exception;
 use Luracast\Restler\Contracts\ContainerInterface;
@@ -8,7 +9,10 @@ use Luracast\Restler\Exceptions\NotFound;
 use Luracast\Restler\Utils\ClassName;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
+use ReflectionClass;
+use ReflectionException;
 use ReflectionParameter;
+use Throwable;
 
 class Container implements ContainerInterface
 {
@@ -65,7 +69,7 @@ class Container implements ContainerInterface
      *
      * @throws Exception
      * @throws HttpException
-     * @throws \ReflectionException
+     * @throws ReflectionException
      */
     public function &resolve(string $abstract, array &$arguments = [])
     {
@@ -76,13 +80,13 @@ class Container implements ContainerInterface
         if ($class && $instance = $this->instances[$class] ?? false) {
             return $instance;
         }
-        $reflector = new \ReflectionClass($class);
+        $reflector = new ReflectionClass($class);
         if (!$reflector->isInstantiable()) {
             throw new ContainerException("[$class] is not instantiable");
         }
         $constructor = $reflector->getConstructor();
         if (is_null($constructor)) {
-            $instance = new $class;
+            $instance = new $class();
         } else {
             $parameters = $constructor->getParameters();
             $dependencies = &$this->getDependencies($parameters, $arguments);
@@ -222,7 +226,7 @@ class Container implements ContainerInterface
             if ($instance = $this->instances[$id] ?? $this->instances[ClassName::get($id)] ?? false) {
                 return $instance;
             }
-        } catch (\Throwable $t) {
+        } catch (Throwable $t) {
             throw new ContainerException('Error while retrieving the entry `' . $id . '`');
         }
         throw new NotFound(' No entry was found for `' . $id . '`` identifier');
@@ -246,7 +250,7 @@ class Container implements ContainerInterface
         }
         try {
             $class = ClassName::get($id);
-        } catch (\Throwable $t) {
+        } catch (Throwable $t) {
             return false;
         }
         return isset($this->instances[$class]);

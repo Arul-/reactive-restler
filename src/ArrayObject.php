@@ -21,7 +21,7 @@ use BadMethodCallException;
 
 class ArrayObject extends Base
 {
-    public final function __construct($input = array())
+    final public function __construct($input = array())
     {
         parent::__construct($input, self::ARRAY_AS_PROPS);
     }

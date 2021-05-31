@@ -1,4 +1,5 @@
-<?php namespace Luracast\Restler\MediaTypes;
+<?php
+namespace Luracast\Restler\MediaTypes;
 
 
 use Luracast\Restler\Contracts\RequestMediaTypeInterface;
@@ -8,8 +9,8 @@ use Symfony\Component\Yaml\Yaml as Y;
 
 class Yaml extends Dependent implements RequestMediaTypeInterface, ResponseMediaTypeInterface
 {
-    const MIME = 'text/plain';
-    const EXTENSION = 'yaml';
+    public const MIME = 'text/plain';
+    public const EXTENSION = 'yaml';
 
     /**
      * @return array {@type associative}

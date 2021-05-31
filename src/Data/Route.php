@@ -9,8 +9,7 @@ use Luracast\Restler\Contracts\{AuthenticationInterface,
     RequestMediaTypeInterface,
     ResponseMediaTypeInterface,
     SelectivePathsInterface,
-    ValidationInterface
-};
+    ValidationInterface};
 use Luracast\Restler\Defaults;
 use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\Exceptions\InvalidAuthCredentials;
@@ -28,19 +27,19 @@ use Throwable;
 
 class Route extends ValueObject
 {
-    const ACCESS_PUBLIC = 0;
-    const ACCESS_HYBRID = 1;
-    const ACCESS_PROTECTED_BY_COMMENT = 2;
-    const ACCESS_PROTECTED_METHOD = 3;
+    public const ACCESS_PUBLIC = 0;
+    public const ACCESS_HYBRID = 1;
+    public const ACCESS_PROTECTED_BY_COMMENT = 2;
+    public const ACCESS_PROTECTED_METHOD = 3;
 
-    const ACCESS = [
+    public const ACCESS = [
         'public' => self::ACCESS_PUBLIC,
         'hybrid' => self::ACCESS_HYBRID,
         'protected' => self::ACCESS_PROTECTED_BY_COMMENT
     ];
 
 
-    const PROPERTY_TAGS = [
+    public const PROPERTY_TAGS = [
         'query',
         'mutation',
         'summary',
@@ -57,12 +56,12 @@ class Route extends ValueObject
         'resource'
     ];
 
-    const INTERNAL_TAGS = [
+    public const INTERNAL_TAGS = [
         'param',
         'return',
     ];
 
-    const METHOD_TAGS = [
+    public const METHOD_TAGS = [
         'access' => 'setAccess',
         'class' => 'setClassProperties',
         'format' => 'overrideFormats',
@@ -340,9 +339,12 @@ class Route extends ValueObject
 
     public function __clone()
     {
-        $this->parameters = array_map(function ($param) {
-            return clone $param;
-        }, $this->parameters);
+        $this->parameters = array_map(
+            function ($param) {
+                return clone $param;
+            },
+            $this->parameters
+        );
         $this->return = clone $this->return;
     }
 
@@ -439,7 +441,7 @@ class Route extends ValueObject
     {
         if (!$maker) {
             $maker = function ($class) {
-                return new $class;
+                return new $class();
             };
         }
         $this->apply($arguments, $authenticated);
@@ -622,7 +624,6 @@ class Route extends ValueObject
                 $formats = array_map($resolver, $formats);
                 $this->setRequestMediaTypes(...$formats);
                 $this->setResponseMediaTypes(...$formats);
-
         }
     }
 

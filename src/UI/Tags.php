@@ -36,7 +36,7 @@ class Tags implements ArrayAccess, Countable
     protected $children = [];
     protected $_parent;
 
-    public final function __construct($name = null, array $children = [])
+    final public function __construct($name = null, array $children = [])
     {
         $this->tag = $name;
         $c = [];

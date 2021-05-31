@@ -11,8 +11,7 @@ use Luracast\Restler\Contracts\{AccessControlInterface,
     ProvidesMultiVersionApiInterface,
     RequestMediaTypeInterface,
     ResponseMediaTypeInterface,
-    UsesAuthenticationInterface
-};
+    UsesAuthenticationInterface};
 use Luracast\Restler\Data\Param;
 use Luracast\Restler\Data\Route;
 use Luracast\Restler\Exceptions\HttpException;
@@ -352,7 +351,7 @@ class Router
         }
         $cacheClass = ClassName::get(static::$cacheClass ?? CacheInterface::class);
         /** @var CacheInterface $cache */
-        $cache = new $cacheClass;
+        $cache = new $cacheClass();
         if ($save) {
             return $cache->set('routes', static::$routes);
         }
@@ -430,7 +429,8 @@ class Router
                 } catch (Exception $e) {
                     throw new HttpException(
                         500,
-                        "Error while parsing comments of `{$className}::{$method->getName()}` method. " . $e->getMessage()
+                        "Error while parsing comments of `{$className}::{$method->getName()}` method. " . $e->getMessage(
+                        )
                     );
                 }
             } else {
@@ -474,9 +474,12 @@ class Router
                 }
                 $url = empty($methodUrl) ? rtrim($resourcePath, '/') : $resourcePath . $methodUrl;
                 $pathParams = $allowAmbiguity
-                    ? array_filter($route->parameters, function (Param $p) {
-                        return $p->scalar && !$p->multiple;
-                    })
+                    ? array_filter(
+                        $route->parameters,
+                        function (Param $p) {
+                            return $p->scalar && !$p->multiple;
+                        }
+                    )
                     : $route->filterParams(true, Param::FROM_PATH);
                 if (empty($pathParams) || $allowAmbiguity) {
                     self::addRoute($route->withLink($url, $httpMethod), $version);
@@ -642,13 +645,15 @@ class Router
                 !Defaults::$productionMode &&
                 $existing = static::$routes["v$version"]['*'][$path][$route->httpMethod] ?? false
             ) {
-                throw new HttpException(500,
+                throw new HttpException(
+                    500,
                     'Ambigous route mappings detected. ' .
                     $existing . ' is overwritten by ' . $route
                     , [
                         'existing' => $existing,
                         'overwriting' => $route
-                    ]);
+                    ]
+                );
             }
             static::$routes["v$version"]['*'][$path][$route->httpMethod] = $route;
         } else {
@@ -657,13 +662,15 @@ class Router
                 !Defaults::$productionMode &&
                 $existing = static::$routes["v$version"][$route->path][$route->httpMethod] ?? false
             ) {
-                throw new HttpException(500,
+                throw new HttpException(
+                    500,
                     'Ambigous route mappings detected. ' .
                     $existing . ' is overwritten by ' . $route
                     , [
                         'existing' => $existing,
                         'overwriting' => $route
-                    ]);
+                    ]
+                );
             }
             static::$routes["v$version"][$route->path][$route->httpMethod] = $route;
             //create an alias with index if the base name is index
@@ -677,13 +684,15 @@ class Router
                     !Defaults::$productionMode &&
                     $existing = static::$routes["v$version"][$path][$route->httpMethod] ?? false
                 ) {
-                    throw new HttpException(500,
+                    throw new HttpException(
+                        500,
                         'Ambiguous route mappings detected. ' .
                         $existing . ' is overwritten by ' . $route
                         , [
                             'existing' => $existing,
                             'overwriting' => $route
-                        ]);
+                        ]
+                    );
                 }
                 static::$routes["v$version"][$path][$route->httpMethod] = $route;
             }

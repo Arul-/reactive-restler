@@ -28,6 +28,9 @@ use Luracast\Restler\UI\Forms;
 use Luracast\Restler\UI\Nav;
 use Luracast\Restler\Utils\Convert;
 use Luracast\Restler\Utils\Text;
+use Mustache_Engine;
+use Mustache_LambdaHelper;
+use Mustache_Loader_FilesystemLoader;
 use Psr\Http\Message\ServerRequestInterface;
 use Throwable;
 use Twig\Environment;
@@ -37,10 +40,10 @@ use Twig\TwigFunction;
 
 class Html extends MediaType implements ResponseMediaTypeInterface
 {
-    const MIME = 'text/html';
-    const EXTENSION = 'html';
+    public const MIME = 'text/html';
+    public const EXTENSION = 'html';
 
-    const DEPENDENCIES = [
+    public const DEPENDENCIES = [
         'blade' => ['Illuminate\View\View', 'illuminate/view:^8 || ^7'],
         'twig' => ['Twig\Environment', 'twig/twig:^3'],
         'mustache' => ['Mustache_Engine', 'mustache/mustache:^2"'],
@@ -172,7 +175,8 @@ class Html extends MediaType implements ResponseMediaTypeInterface
                 ? '../' : './';
             $data->basePath = $data->baseUrl->getPath();
             $data->path = '/' . trim(
-                    str_replace('//', '/', $data->basePath . $this->route->resource['path']), '/'
+                    str_replace('//', '/', $data->basePath . $this->route->resource['path']),
+                    '/'
                 );
             //$data->path = '/' . ltrim(explode('index', $data->basePath . $data->currentPath)[0],'/');
             $metadata = $data->api = $this->restler->route;
@@ -373,10 +377,10 @@ class Html extends MediaType implements ResponseMediaTypeInterface
         $loader = new FilesystemLoader($this->html->viewPath);
         $twig = new Environment(
             $loader, [
-                'cache' => static::$cacheDirectory ?? false,
-                'debug' => $debug,
-                'use_strict_variables' => $debug,
-            ]
+                       'cache' => static::$cacheDirectory ?? false,
+                       'debug' => $debug,
+                       'use_strict_variables' => $debug,
+                   ]
         );
         if ($debug) {
             $twig->addExtension(new DebugExtension());
@@ -429,26 +433,26 @@ class Html extends MediaType implements ResponseMediaTypeInterface
     public function mustache(ArrayObject $data, $debug = true): string
     {
         $options = [
-            'loader' => new \Mustache_Loader_FilesystemLoader(
+            'loader' => new Mustache_Loader_FilesystemLoader(
                 $this->html->viewPath,
                 ['extension' => $this->getViewExtension()]
             ),
             'helpers' => [
-                'form' => function ($text, \Mustache_LambdaHelper $m) {
+                'form' => function ($text, Mustache_LambdaHelper $m) {
                     $params = explode(',', $m->render($text));
                     return call_user_func_array(
                         [$this->container->make(Forms::class), 'get'],
                         $params
                     );
                 },
-                'nav' => function ($text, \Mustache_LambdaHelper $m) {
+                'nav' => function ($text, Mustache_LambdaHelper $m) {
                     $params = explode(',', $m->render($text));
                     return call_user_func_array(
                         [$this->container->make(Nav::class), 'get'],
                         $params
                     );
                 },
-                'title' => function ($text, \Mustache_LambdaHelper $m) {
+                'title' => function ($text, Mustache_LambdaHelper $m) {
                     return Text::title($m->render($text));
                 },
 
@@ -457,7 +461,7 @@ class Html extends MediaType implements ResponseMediaTypeInterface
         if (!$debug) {
             $options['cache'] = $this->html->cacheDirectory;
         }
-        $m = new \Mustache_Engine($options);
+        $m = new Mustache_Engine($options);
         return $m->render($this->getViewFile(), $data);
     }
 
@@ -501,11 +505,15 @@ class Html extends MediaType implements ResponseMediaTypeInterface
         $path = $viewFinder->find($this->html->view);
         $data->form = function () {
             return call_user_func_array(
-                [$this->container->make(Forms::class), 'get'], func_get_args());
+                [$this->container->make(Forms::class), 'get'],
+                func_get_args()
+            );
         };
         $data->nav = function () {
             return call_user_func_array(
-                [$this->container->make(Nav::class), 'get'], func_get_args());
+                [$this->container->make(Nav::class), 'get'],
+                func_get_args()
+            );
         };
         $view = new View($factory, $engine, $this->html->view, $path, $data);
         $factory->callCreator($view);

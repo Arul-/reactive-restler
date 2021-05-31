@@ -12,8 +12,7 @@ use Luracast\Restler\Contracts\{AccessControlInterface,
     ResponseMediaTypeInterface,
     SessionInterface,
     UserIdentificationInterface,
-    ValidationInterface
-};
+    ValidationInterface};
 use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\Filters\RateLimiter;
 use Luracast\Restler\GraphQL\GraphQL;
@@ -24,11 +23,10 @@ use Luracast\Restler\UI\Nav;
 use Luracast\Restler\Utils\Convert;
 use Luracast\Restler\Utils\Text;
 use Luracast\Restler\Utils\Validator;
-use Psr\{Http\Message\RequestInterface,
-    Http\Message\ResponseInterface,
-    Http\Message\ServerRequestInterface,
-    SimpleCache\CacheInterface
-};
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\RequestInterface;
+use Psr\{SimpleCache\CacheInterface};
 use RingCentral\Psr7\Response;
 use RingCentral\Psr7\ServerRequest;
 
@@ -57,7 +55,7 @@ class Defaults
     public static $autoRoutingEnabled = true;
 
     /**
-     * @var boolean avoids creating multiple routes that can increase the
+     * @var bool avoids creating multiple routes that can increase the
      * ambiguity when set to true. when a method parameter is optional it is
      * not mapped to the url and should only be used in request body or as
      * query string `/resource?id=value`. When a parameter is required and is
@@ -66,7 +64,7 @@ class Defaults
     public static $smartAutoRouting = true;
 
     /**
-     * @var boolean enables more ways of finding the parameter data in the request.
+     * @var bool enables more ways of finding the parameter data in the request.
      * If you need backward compatibility with Restler 2 or below turn this off
      */
     public static $smartParameterParsing = true;

@@ -12,8 +12,7 @@ use Luracast\Restler\Contracts\{AuthenticationInterface,
     ResponseMediaTypeInterface,
     SelectivePathsInterface,
     UsesAuthenticationInterface,
-    ValidationInterface
-};
+    ValidationInterface};
 use Luracast\Restler\Data\{Param, Route};
 use Luracast\Restler\Exceptions\{HttpException, InvalidAuthCredentials};
 use Luracast\Restler\MediaTypes\{Json, UrlEncoded, Xml};
@@ -38,7 +37,7 @@ use TypeError;
  */
 abstract class Core
 {
-    const VERSION = '4.0.0';
+    public const VERSION = '4.0.0';
     /**
      * @var int
      */
@@ -356,7 +355,8 @@ abstract class Core
             $this->_path,
             $this->_requestMethod,
             $request,
-            $this->requestedApiVersion, $this->body + $this->query
+            $this->requestedApiVersion,
+            $this->body + $this->query
         );
         $this->container->instance(Route::class, $o);
         //set defaults based on api method comments

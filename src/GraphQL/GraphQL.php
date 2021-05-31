@@ -36,8 +36,8 @@ class GraphQL
 {
     use DependentTrait;
 
-    const UI_GRAPHQL_PLAYGROUND = 'graphql-playground';
-    const UI_GRAPHIQL = 'graphiql';
+    public const UI_GRAPHQL_PLAYGROUND = 'graphql-playground';
+    public const UI_GRAPHIQL = 'graphiql';
     public const INVALID_TYPES = ['mixed', 'array'];
     public static $UI = self::UI_GRAPHQL_PLAYGROUND;
 
@@ -156,7 +156,8 @@ class GraphQL
                         } catch (Exception $e) {
                             throw new HttpException(
                                 500,
-                                "Error while parsing comments of `{$className}::{$method->getName()}` method. " . $e->getMessage()
+                                "Error while parsing comments of `{$className}::{$method->getName()}` method. " . $e->getMessage(
+                                )
                             );
                         }
                         //@access should not be private

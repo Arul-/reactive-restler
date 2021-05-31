@@ -1,4 +1,5 @@
 <?php
+
 namespace Luracast\Restler\Contracts;
 
 
@@ -10,7 +11,7 @@ interface SelectivePathsInterface
      * @return void
      * @private
      */
-    static function setIncludedPaths(string ...$included): void;
+    public static function setIncludedPaths(string ...$included): void;
 
     /**
      * Paths to be excluded from the process
@@ -18,19 +19,19 @@ interface SelectivePathsInterface
      * @return void
      * @private
      */
-    static function setExcludedPaths(string ...$excluded): void;
+    public static function setExcludedPaths(string ...$excluded): void;
 
     /**
      * @return array
      * @private
      */
-    static function getIncludedPaths(): array;
+    public static function getIncludedPaths(): array;
 
     /**
      * @return array
      * @private
      */
-    static function getExcludedPaths(): array;
+    public static function getExcludedPaths(): array;
 
-    static function isPathSelected(string $path): bool;
+    public static function isPathSelected(string $path): bool;
 }

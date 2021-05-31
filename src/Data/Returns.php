@@ -48,8 +48,10 @@ class Returns extends Type
                 if (is_array($this->properties)) {
                     /** @var Type $property */
                     foreach ($this->properties as $name => $property) {
-                        $subType = $property->type !== 'bool' && in_array($name,
-                            Router::$prefixingParameterNames)
+                        $subType = $property->type !== 'bool' && in_array(
+                            $name,
+                            Router::$prefixingParameterNames
+                        )
                             ? GraphQLType::id()
                             : $property->toGraphQL();
                         $config['fields'][$name] = ['type' => $subType];

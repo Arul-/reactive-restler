@@ -50,9 +50,9 @@ abstract class Type extends ValueObject
         'string' => 'string'
     ];
 
-    const NULLABLE = 0;
-    const NOT_NULLABLE = 1;
-    const DETECT_NULLABLE = 3;
+    public const NULLABLE = 0;
+    public const NOT_NULLABLE = 1;
+    public const DETECT_NULLABLE = 3;
 
     /**
      * Data type of the variable being validated.
@@ -217,7 +217,9 @@ abstract class Type extends ValueObject
             }
             foreach ($magicProperties as $magicProperty) {
                 if (!$name = $magicProperty['name'] ?? false) {
-                    throw new Exception('@property comment is not properly defined in ' . $reflectionClass->getName() . ' class');
+                    throw new Exception(
+                        '@property comment is not properly defined in ' . $reflectionClass->getName() . ' class'
+                    );
                 }
                 if ($filter && !in_array($name, $selectedProperties)) {
                     continue;
@@ -259,7 +261,7 @@ abstract class Type extends ValueObject
         if ($reflectionClass->implementsInterface($interface)) {
             return call_user_func([$reflectionClass->name, $method]);
         }
-        $instance = new static;
+        $instance = new static();
         $instance->scalar = false;
         $instance->type = $reflectionClass->name;
         $instance->properties = self::propertiesFromClass($reflectionClass);
@@ -287,7 +289,6 @@ abstract class Type extends ValueObject
             }
             foreach ($properties as $key => $value) {
                 $obj->properties[$key] = static::fromSampleData($value, $name . ucfirst($key));
-
             }
             $obj->type = $name;
         }
@@ -322,7 +323,6 @@ abstract class Type extends ValueObject
         } else {
             $instance->scalar = false;
             $instance->type = $name;
-
         }
         return $instance;
     }
@@ -359,11 +359,13 @@ abstract class Type extends ValueObject
             $data['type'] = $type;
             $data['scalar'] = true;
         } else {
-            throw new Error(sprintf(
-                "Call to undefined method %s::%s()",
-                static::class,
-                $name
-            ));
+            throw new Error(
+                sprintf(
+                    "Call to undefined method %s::%s()",
+                    static::class,
+                    $name
+                )
+            );
         }
         $instance = new static();
         $instance->applyProperties($data, true);

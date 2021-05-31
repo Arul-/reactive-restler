@@ -157,7 +157,6 @@ class Nav
                     $url = current(array_keys($label));
                     $label = current($label);
                 }
-
             }
             if (is_numeric($url)) {
                 $url = $label;
@@ -192,7 +191,7 @@ class Nav
                 $label = Text::title(static::$root);
                 $url = static::$url;
             } else {
-                $url = trim(static::$url,'/') . '/' . $url;
+                $url = trim(static::$url, '/') . '/' . $url;
             }
         }
         if (is_null($label)) {

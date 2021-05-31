@@ -1,17 +1,19 @@
-<?php namespace Luracast\Restler\MediaTypes;
+<?php
+namespace Luracast\Restler\MediaTypes;
 
 
 use Exception;
 use Luracast\Restler\Contracts\RequestMediaTypeInterface;
 use Luracast\Restler\Contracts\ResponseMediaTypeInterface;
 use Luracast\Restler\ResponseHeaders;
+use RuntimeException;
 use SimpleXMLElement;
 use XMLWriter;
 
 class Xml extends MediaType implements RequestMediaTypeInterface, ResponseMediaTypeInterface
 {
-    const MIME = 'application/xml';
-    const EXTENSION = 'xml';
+    public const MIME = 'application/xml';
+    public const EXTENSION = 'xml';
 
     // ==================================================================
     //
@@ -209,12 +211,17 @@ class Xml extends MediaType implements RequestMediaTypeInterface, ResponseMediaT
                 return [];
             }
             libxml_use_internal_errors(true);
-            $xml = simplexml_load_string($data,
-                "SimpleXMLElement", LIBXML_NOBLANKS | LIBXML_NOCDATA | LIBXML_COMPACT);
+            $xml = simplexml_load_string(
+                $data,
+                "SimpleXMLElement",
+                LIBXML_NOBLANKS | LIBXML_NOCDATA | LIBXML_COMPACT
+            );
             if (false === $xml) {
                 $error = libxml_get_last_error();
-                throw new Exception(400, 'Malformed XML. '
-                    . trim($error->message, "\r\n") . ' at line ' . $error->line);
+                throw new Exception(
+                    400, 'Malformed XML. '
+                       . trim($error->message, "\r\n") . ' at line ' . $error->line
+                );
             }
             libxml_clear_errors();
             if (static::$importSettingsFromXml) {
@@ -238,9 +245,11 @@ class Xml extends MediaType implements RequestMediaTypeInterface, ResponseMediaT
             }
 
             return $data;
-        } catch (\RuntimeException $e) {
-            throw new Exception(400,
-                "Error decoding request. " . $e->getMessage());
+        } catch (RuntimeException $e) {
+            throw new Exception(
+                400,
+                "Error decoding request. " . $e->getMessage()
+            );
         }
     }
 

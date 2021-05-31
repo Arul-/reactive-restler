@@ -6,8 +6,7 @@ use Luracast\Restler\Contracts\{AuthenticationInterface,
     ComposerInterface,
     DownloadableFileMediaTypeInterface,
     ExplorableAuthenticationInterface,
-    ProvidesMultiVersionApiInterface
-};
+    ProvidesMultiVersionApiInterface};
 use Luracast\Restler\Core;
 use Luracast\Restler\Data\{Param, Returns, Route, Type};
 use Luracast\Restler\Defaults;
@@ -26,7 +25,7 @@ use stdClass;
 
 class Explorer implements ProvidesMultiVersionApiInterface
 {
-    const OPEN_API_SPEC_VERSION = '3.0.3';
+    public const OPEN_API_SPEC_VERSION = '3.0.3';
     public static $infoClass = Info::class;
     public static $excludedPaths = ['_'];
     public static $excludedHttpMethods = ['OPTIONS'];
@@ -408,7 +407,7 @@ class Explorer implements ProvidesMultiVersionApiInterface
                 if (!is_null($max = self::$defaultMaximumValues['array'] ?? null)) {
                     $schema->maxItems = $max;
                 }
-                $schema->items = new stdClass;
+                $schema->items = new stdClass();
                 $this->scalarProperties($schema->items, $param);
             } else {
                 $this->scalarProperties($schema, $param);
@@ -420,7 +419,7 @@ class Explorer implements ProvidesMultiVersionApiInterface
                 $schema->additionalProperties = false;
             } else { //'indexed == $param->format
                 $schema->type = 'array';
-                $schema->items = new stdClass;
+                $schema->items = new stdClass();
                 if (!is_null($min = $param->min ?? self::$defaultMinimumValues['array'] ?? null)) {
                     $schema->minItems = $min;
                 }
@@ -432,7 +431,7 @@ class Explorer implements ProvidesMultiVersionApiInterface
             $target = $schema;
             if ($param->multiple) {
                 $schema->type = 'array';
-                $schema->items = new stdClass;
+                $schema->items = new stdClass();
                 $target = $schema->items;
                 if (!is_null($min = self::$defaultMinimumValues['array'] ?? null)) {
                     $schema->minItems = $min;
@@ -449,7 +448,7 @@ class Explorer implements ProvidesMultiVersionApiInterface
             $target->type = 'object';
             $target->additionalProperties = false;
             if (!empty($param->properties)) {
-                $target->properties = new stdClass;
+                $target->properties = new stdClass();
                 foreach ($param->properties as $name => $child) {
                     $sch = $target->properties->{$name} = new stdClass();
                     $this->setProperties($child, $sch);

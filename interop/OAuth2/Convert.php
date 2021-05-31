@@ -5,14 +5,13 @@ namespace OAuth2;
 
 use Luracast\Restler\Utils\ClassName;
 use Luracast\Restler\Utils\Text;
+use Psr\Http\Message\ResponseInterface as PSRResponse;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\UploadedFileInterface;
-use Psr\Http\Message\ResponseInterface as PSRResponse;
-use Throwable;
 
 class Convert
 {
-    public final static function fromPSR7(ServerRequestInterface $psrRequest): Request
+    final public static function fromPSR7(ServerRequestInterface $psrRequest): Request
     {
         $body = $psrRequest->getBody();
         $contents = $body->getContents();
@@ -30,7 +29,7 @@ class Convert
                 $data = (array)$psrRequest->getParsedBody();
                 if (empty($data)) {
                     if (Text::beginsWith($type, 'application/json')) {
-                        $data = json_decode($contents,true);
+                        $data = json_decode($contents, true);
                     } elseif (Text::beginsWith($type, 'multipart/form-data')) {
                         $data = static::multipartFormData($contents, $type);
                     } else {
@@ -53,7 +52,7 @@ class Convert
         );
     }
 
-    public final static function toPSR7(Response $oauthrResponse): PSRResponse
+    final public static function toPSR7(Response $oauthrResponse): PSRResponse
     {
         $headers = [];
         foreach ($oauthrResponse->getHttpHeaders() as $key => $value) {

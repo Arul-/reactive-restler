@@ -1,4 +1,5 @@
-<?php namespace Luracast\Restler\Filters;
+<?php
+namespace Luracast\Restler\Filters;
 
 
 use InvalidArgumentException;
@@ -66,7 +67,7 @@ class RateLimiter implements FilterInterface, SelectivePathsInterface, UsesAuthe
         $this->user = $user;
         $class = ClassName::get($rateLimiter->cacheClass ?? CacheInterface::class);
         /** @var CacheInterface cache */
-        $this->cache = new $class;
+        $this->cache = new $class();
     }
 
     /**
@@ -124,7 +125,8 @@ class RateLimiter implements FilterInterface, SelectivePathsInterface, UsesAuthe
                 $responseHeaders['X-RateLimit-Remaining'] = '0';
                 $wait = $timeUnit - $diff;
                 sleep(1);
-                throw new HttpException(429,
+                throw new HttpException(
+                    429,
                     'Rate limit of ' . $maxPerUnit . ' request' .
                     ($maxPerUnit > 1 ? 's' : '') . ' per '
                     . $unit . ' exceeded. Please wait for '

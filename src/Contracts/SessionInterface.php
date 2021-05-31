@@ -9,33 +9,33 @@ use SessionIdInterface;
 
 interface SessionInterface extends Iterator
 {
-    function get(string $name);
+    public function get(string $name);
 
-    function has(string $name): bool;
+    public function has(string $name): bool;
 
-    function set(string $name, $value): bool;
+    public function set(string $name, $value): bool;
 
-    function unset(string $name): bool;
+    public function unset(string $name): bool;
 
-    function flash(string $name);
+    public function flash(string $name);
 
-    function hasFlash(string $name): bool;
+    public function hasFlash(string $name): bool;
 
-    function setFlash(string $name, $value): bool;
+    public function setFlash(string $name, $value): bool;
 
-    function unsetFlash(string $name): bool;
+    public function unsetFlash(string $name): bool;
 
-    function __construct(SessionHandlerInterface $handler, SessionIdInterface $sessionId, string $id = '');
+    public function __construct(SessionHandlerInterface $handler, SessionIdInterface $sessionId, string $id = '');
 
-    function getId(): string;
+    public function getId(): string;
 
-    function start(array $options = []): bool;
+    public function start(array $options = []): bool;
 
-    function regenerateId(): bool;
+    public function regenerateId(): bool;
 
-    function commit(): bool;
+    public function commit(): bool;
 
-    function save(): bool;
+    public function save(): bool;
 
     /**
      * @return int
@@ -44,7 +44,7 @@ interface SessionInterface extends Iterator
      * PHP_SESSION_NONE if sessions are enabled, but none exists.
      * PHP_SESSION_ACTIVE if sessions are enabled, and one exists.
      */
-    function status(): int;
+    public function status(): int;
 
-    function destroy(): bool;
+    public function destroy(): bool;
 }

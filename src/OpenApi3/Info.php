@@ -1,4 +1,5 @@
-<?php namespace Luracast\Restler\OpenApi3;
+<?php
+namespace Luracast\Restler\OpenApi3;
 
 
 class Info
@@ -17,30 +18,38 @@ class Info
         $swaggerVersion = (int)$swaggerVersion;
         switch ($swaggerVersion) {
             case 1:
-                return array_filter([
-                    'title' => static::$title,
-                    'description' => static::$description,
-                    'termsOfServiceUrl' => static::$termsOfServiceUrl,
-                    'contact' => static::$contactEmail,
-                    'license' => static::$license,
-                    'licenseUrl' => static::$licenseUrl,
-                ]);
+                return array_filter(
+                    [
+                        'title' => static::$title,
+                        'description' => static::$description,
+                        'termsOfServiceUrl' => static::$termsOfServiceUrl,
+                        'contact' => static::$contactEmail,
+                        'license' => static::$license,
+                        'licenseUrl' => static::$licenseUrl,
+                    ]
+                );
             case 2:
             case 3:
-                return array_filter([
-                    'title' => static::$title,
-                    'description' => static::$description,
-                    'termsOfService' => static::$termsOfServiceUrl,
-                    'contact' => array_filter([
-                        'name' => static::$contactName,
-                        'email' => static::$contactEmail,
-                        'url' => static::$contactUrl,
-                    ]),
-                    'license' => array_filter([
-                        'name' => static::$license,
-                        'url' => static::$licenseUrl,
-                    ]),
-                ]);
+                return array_filter(
+                    [
+                        'title' => static::$title,
+                        'description' => static::$description,
+                        'termsOfService' => static::$termsOfServiceUrl,
+                        'contact' => array_filter(
+                            [
+                                'name' => static::$contactName,
+                                'email' => static::$contactEmail,
+                                'url' => static::$contactUrl,
+                            ]
+                        ),
+                        'license' => array_filter(
+                            [
+                                'name' => static::$license,
+                                'url' => static::$licenseUrl,
+                            ]
+                        ),
+                    ]
+                );
         }
         return [];
     }

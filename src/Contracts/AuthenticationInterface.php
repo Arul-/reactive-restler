@@ -1,7 +1,5 @@
-<?php namespace Luracast\Restler\Contracts;
-
-use Luracast\Restler\Exceptions\InvalidAuthCredentials;
-use Psr\Http\Message\ServerRequestInterface;
+<?php
+namespace Luracast\Restler\Contracts;
 
 /**
  * Interface for creating authentication classes

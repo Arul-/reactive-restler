@@ -11,7 +11,7 @@ use Psr\Http\Message\ServerRequestInterface;
 
 class Convert
 {
-    public final static function toPSR7(Request $request): ServerRequestInterface
+    final public static function toPSR7(Request $request): ServerRequestInterface
     {
         $rawContent = (string)$request->rawcontent();
         $implementation = ClassName::get(ServerRequestInterface::class);
@@ -83,7 +83,7 @@ class Convert
         return $return;
     }
 
-    public final static function fromPSR7(ResponseInterface $psr7Response, Response $response): void
+    final public static function fromPSR7(ResponseInterface $psr7Response, Response $response): void
     {
         $response->status($psr7Response->getStatusCode());
         static::populateHeaders($psr7Response, $response);

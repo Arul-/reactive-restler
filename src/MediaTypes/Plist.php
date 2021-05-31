@@ -1,4 +1,5 @@
-<?php namespace Luracast\Restler\MediaTypes;
+<?php
+namespace Luracast\Restler\MediaTypes;
 
 
 use CFPropertyList\CFPropertyList;
@@ -44,8 +45,10 @@ class Plist extends Dependent implements RequestMediaTypeInterface, ResponseMedi
         if (!isset(self::$compact)) {
             self::$compact = !$humanReadable;
         }
-        $plist = new CFPropertyList (); /** @phpstan-ignore-line */
-        $td = new CFTypeDetector (); /** @phpstan-ignore-line */
+        $plist = new CFPropertyList ();
+        /** @phpstan-ignore-line */
+        $td = new CFTypeDetector ();
+        /** @phpstan-ignore-line */
         $guessedStructure = $td->toCFType(
             $this->convert->toArray($data)
         );
@@ -58,7 +61,8 @@ class Plist extends Dependent implements RequestMediaTypeInterface, ResponseMedi
 
     public function decode(string $data)
     {
-        $plist = new CFPropertyList (); /** @phpstan-ignore-line */
+        $plist = new CFPropertyList ();
+        /** @phpstan-ignore-line */
         $plist->parse($data);
 
         return $plist->toArray();

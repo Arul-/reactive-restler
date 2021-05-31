@@ -1,8 +1,8 @@
-<?php namespace Luracast\Restler;
+<?php
+namespace Luracast\Restler;
 
 
 use Luracast\Restler\Contracts\ComposerInterface;
-use Luracast\Restler\Contracts\ResponseMediaTypeInterface;
 use Luracast\Restler\Data\ErrorResponse;
 use Luracast\Restler\Exceptions\HttpException;
 

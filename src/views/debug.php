@@ -9,7 +9,6 @@ use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
 if (!function_exists('exceptions')) {
-
     function exceptions(Restler $r, $path)
     {
         if ($source = $r->exception) {
@@ -22,7 +21,6 @@ if (!function_exists('exceptions')) {
         } else {
             return parse_backtrace(debug_backtrace(), $path);
         }
-
     }
 
     function parse_backtrace($raw, $path, $skip = 1)

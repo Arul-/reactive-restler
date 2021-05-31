@@ -48,12 +48,12 @@ class Session implements SessionInterface
         }
     }
 
-    function getId(): string
+    public function getId(): string
     {
         return $this->id;
     }
 
-    function get(string $name)
+    public function get(string $name)
     {
         $key = mb_strtolower($name);
         if (isset($this->contents[$key])) {
@@ -62,13 +62,13 @@ class Session implements SessionInterface
         throw new InvalidArgumentException("$name does not exist");
     }
 
-    function has(string $name): bool
+    public function has(string $name): bool
     {
         $key = mb_strtolower($name);
         return isset($this->contents[$key]);
     }
 
-    function set(string $name, $value): bool
+    public function set(string $name, $value): bool
     {
         if ($this->status !== PHP_SESSION_ACTIVE) {
             $this->start();
@@ -78,7 +78,7 @@ class Session implements SessionInterface
         return true;
     }
 
-    function unset(string $name): bool
+    public function unset(string $name): bool
     {
         $key = mb_strtolower($name);
         if (isset($this->contents[$key])) {
@@ -88,7 +88,7 @@ class Session implements SessionInterface
         return false;
     }
 
-    function flash(string $name)
+    public function flash(string $name)
     {
         $key = mb_strtolower($name);
         if (isset($this->flash_out[$key])) {
@@ -100,13 +100,13 @@ class Session implements SessionInterface
         throw new InvalidArgumentException("$name does not exist");
     }
 
-    function hasFlash(string $name): bool
+    public function hasFlash(string $name): bool
     {
         $key = mb_strtolower($name);
         return isset($this->flash_in[$key]) || isset($this->flash_out[$key]);
     }
 
-    function setFlash(string $name, $value): bool
+    public function setFlash(string $name, $value): bool
     {
         if ($this->status !== PHP_SESSION_ACTIVE) {
             $this->start();
@@ -116,7 +116,7 @@ class Session implements SessionInterface
         return true;
     }
 
-    function unsetFlash(string $name): bool
+    public function unsetFlash(string $name): bool
     {
         $key = mb_strtolower($name);
         if (isset($this->flash_in[$key])) {
@@ -126,7 +126,7 @@ class Session implements SessionInterface
         return false;
     }
 
-    function start(array $options = []): bool
+    public function start(array $options = []): bool
     {
         if ($this->status === PHP_SESSION_ACTIVE) {
             return true;
@@ -143,7 +143,7 @@ class Session implements SessionInterface
         return true;
     }
 
-    function regenerateId(): bool
+    public function regenerateId(): bool
     {
         if ($this->status !== PHP_SESSION_ACTIVE) {
             return false;
@@ -155,7 +155,7 @@ class Session implements SessionInterface
         return true;
     }
 
-    function commit(): bool
+    public function commit(): bool
     {
         if ($this->status !== PHP_SESSION_ACTIVE) {
             return false;
@@ -164,7 +164,7 @@ class Session implements SessionInterface
         return $this->handler->write($this->id, serialize($data));
     }
 
-    function save(): bool
+    public function save(): bool
     {
         return $this->commit();
     }
@@ -176,12 +176,12 @@ class Session implements SessionInterface
      * PHP_SESSION_NONE if sessions are enabled, but none exists.
      * PHP_SESSION_ACTIVE if sessions are enabled, and one exists.
      */
-    function status(): int
+    public function status(): int
     {
         return $this->status;
     }
 
-    function destroy(): bool
+    public function destroy(): bool
     {
         if ($this->status === PHP_SESSION_NONE) {
             return true;
