@@ -67,37 +67,31 @@ abstract class Type extends ValueObject
     /**
      * @var bool is it a list?
      */
-    public $multiple = false;
+    public bool $multiple = false;
 
     /**
      * @var bool can it hold null value?
      */
-    public $nullable = true;
+    public bool $nullable = true;
 
     /**
      * @var bool does it hold scalar data or object data
      */
-    public $scalar = true;
+    public bool $scalar = true;
 
     /**
      * @var string|null if the given data can be classified to sub types it will be specified here
      */
-    public $format = null;
+    public ?string $format = null;
 
     /**
      * @var array|null of children to be validated. used only for non scalar type
      */
     public $properties = null;
 
-    /**
-     * @var string
-     */
-    public $description = '';
+    public string $description = '';
 
-    /**
-     * @var string|null
-     */
-    public $reference = null;
+    public ?string $reference = null;
     // ==================================================================
     //
     // REGEX VALIDATION
@@ -175,7 +169,7 @@ abstract class Type extends ValueObject
         if (!$this->scalar && $qualified = ClassName::resolve($this->type, $scope)) {
             $this->type = $qualified;
             $class = new ReflectionClass($qualified);
-            $isParameter = Param::class === get_called_class();
+            $isParameter = Param::class === static::class;
             $interface = $isParameter ? GenericRequestInterface::class : GenericResponseInterface::class;
             $method = $isParameter ? 'requests' : 'responds';
 
@@ -203,7 +197,7 @@ abstract class Type extends ValueObject
         array $selectedProperties = [],
         array $requiredProperties = []
     ) {
-        $isParameter = Param::class === get_called_class();
+        $isParameter = Param::class === static::class;
         $filter = !empty($selectedProperties);
         $properties = [];
         $scope = Router::scope($reflectionClass);
@@ -255,7 +249,7 @@ abstract class Type extends ValueObject
 
     public static function fromClass(ReflectionClass $reflectionClass)
     {
-        $isParameter = Param::class === get_called_class();
+        $isParameter = Param::class === static::class;
         $interface = $isParameter ? GenericRequestInterface::class : GenericResponseInterface::class;
         $method = $isParameter ? 'requests' : 'responds';
         if ($reflectionClass->implementsInterface($interface)) {
@@ -389,7 +383,7 @@ abstract class Type extends ValueObject
         if ($this->multiple) {
             $str .= '[]';
         }
-        $str .= '; // ' . get_called_class();
+        $str .= '; // ' . static::class;
         if (!$this->scalar) {
             $str = 'new ' . $str;
         }

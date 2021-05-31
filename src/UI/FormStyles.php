@@ -15,7 +15,7 @@ namespace Luracast\Restler\UI;
  */
 class FormStyles
 {
-    public static $html = [
+    public static array $html = [
         'form' => 'form[role=form id=$id# name=$name# method=$method# action=$action# enctype=$enctype#]',
         'input' => '.row>section>label{$label#}^input[id=$id# name=$name# value=$value# type=$type# required=$required# autofocus=$autofocus# placeholder=$default# accept=$accept# disabled=$disabled#]',
         'textarea' => '.row>label{$label#}^textarea[id=$id# name=$name# required=$required# autofocus=$autofocus# placeholder=$default# rows=3 disabled=$disabled#]{$value#}',
@@ -28,7 +28,7 @@ class FormStyles
         'checkbox-array' => 'fieldset>legend{$label#}+section*options>label>input[name=$name# value=$value# type=checkbox checked=$selected# required=$required# autofocus=$autofocus# accept=$accept#]+{ $text#}',
         'select-array' => 'label{$label#}+select[name=$name# required=$required# multiple style="height: auto;background-image: none; outline: inherit;"]>option[value=$value# selected=$selected#]{$text#}*options',
     ];
-    public static $bootstrap3 = [
+    public static array $bootstrap3 = [
         'form' => 'form[role=form id=$id# name=$name# method=$method# action=$action# enctype=$enctype#]',
         'input' => '.form-group.$error#>label{$label#}+input.form-control[id=$id# name=$name# value=$value# type=$type# required=$required# autofocus=$autofocus# placeholder=$default# accept=$accept# disabled=$disabled#]+small.help-block>{$message#}',
         'textarea' => '.form-group>label{$label#}+textarea.form-control[id=$id# name=$name# required=$required# autofocus=$autofocus# placeholder=$default# rows=3 disabled=$disabled#]{$value#}+small.help-block>{$message#}',
@@ -43,7 +43,7 @@ class FormStyles
         //------------- CUSTOM STYLES ---------------------//
         'radio-inline' => '.form-group>label{$label# : &nbsp;}+label.radio-inline*options>input.radio[name=$name# value=$value# type=radio checked=$selected# required=$required#]+{$text#}',
     ];
-    public static $bootstrap4 = [
+    public static array $bootstrap4 = [
         'form' => 'form[role=form id=$id# name=$name# method=$method# action=$action# enctype=$enctype#]',
         'input' => '.form-group.$error#>label{$label#}+input.form-control[id=$id# name=$name# value=$value# type=$type# required=$required# autofocus=$autofocus# placeholder=$default# accept=$accept# disabled=$disabled#]+small.help-block>{$message#}',
         'textarea' => '.form-group>label{$label#}+textarea.form-control[id=$id# name=$name# required=$required# autofocus=$autofocus# placeholder=$default# rows=3 disabled=$disabled#]{$value#}+small.help-block>{$message#}',
@@ -58,7 +58,7 @@ class FormStyles
         //------------- CUSTOM STYLES ---------------------//
         'radio-inline' => '.form-group>label{$label# : &nbsp;}+label.radio-inline*options>input.radio[name=$name# value=$value# type=radio checked=$selected# required=$required#]+{$text#}',
     ];
-    public static $foundation5 = [
+    public static array $foundation5 = [
         'form' => 'form[id=$id# name=$name# method=$method# action=$action# enctype=$enctype#]',
         'input' => 'label{$label#}+input[id=$id# name=$name# value=$value# type=$type# required=$required# autofocus=$autofocus# placeholder=$default# accept=$accept# disabled=$disabled#]',
         'textarea' => 'label{$label#}+textarea[id=$id# name=$name# required=$required# autofocus=$autofocus# placeholder=$default# rows=3 disabled=$disabled#]{$value#}',

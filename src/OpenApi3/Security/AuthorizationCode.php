@@ -6,14 +6,8 @@ namespace Luracast\Restler\OpenApi3\Security;
 
 class AuthorizationCode extends OAuth2Flow
 {
-    /**
-     * @var string
-     */
-    protected $authorizationUrl;
-    /**
-     * @var string
-     */
-    protected $tokenUrl;
+    protected string $authorizationUrl;
+    protected string $tokenUrl;
 
     /**
      * AuthorizationCode OAuth2 Flow.

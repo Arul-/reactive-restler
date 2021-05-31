@@ -14,7 +14,7 @@ trait DependentTrait
             if (!class_exists($className, true)) {
                 throw new HttpException(
                     500,
-                    get_called_class() . ' has external dependency. Please run `composer require ' .
+                    static::class . ' has external dependency. Please run `composer require ' .
                     $package . '` from the project root. Read https://getcomposer.org for more info'
                 );
             }

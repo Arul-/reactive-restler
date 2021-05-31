@@ -12,7 +12,7 @@ use Psr\Http\Message\UploadedFileInterface;
 
 class Validator implements ValidationInterface
 {
-    public static $preFilters = [
+    public static array $preFilters = [
         //'*'             => 'some_global_filter', //applied to all parameters
         'string' => 'trim', //apply filter function by type (string)
         //'string'       => 'strip_tags',
@@ -23,8 +23,8 @@ class Validator implements ValidationInterface
         //                  please note that you wont get an instance
         //                  of CustomClass. you will get an array instead
     ];
-    public static $holdException = false;
-    public static $exceptions = [];
+    public static bool $holdException = false;
+    public static array $exceptions = [];
 
     public static function validate($input, ?Param $param)
     {
@@ -158,7 +158,7 @@ class Validator implements ValidationInterface
             }
 
             if ('string' == $param->type && method_exists(
-                    $class = get_called_class(),
+                    $class = static::class,
                     $param->format
                 ) && $param->format != 'validate') {
                 if (!$param->required && empty($input)) {

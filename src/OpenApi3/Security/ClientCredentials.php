@@ -6,10 +6,7 @@ namespace Luracast\Restler\OpenApi3\Security;
 
 class ClientCredentials extends OAuth2Flow
 {
-    /**
-     * @var string
-     */
-    protected $tokenUrl;
+    protected string $tokenUrl;
 
     /**
      * AuthorizationCode OAuth2 Flow.

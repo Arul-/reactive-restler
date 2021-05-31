@@ -18,14 +18,8 @@ class Container implements ContainerInterface
 {
     /** @var callable|null */
     private $initiateProperties = null;
-    /**
-     * @var array
-     */
-    private $instances;
-    /**
-     * @var array
-     */
-    private $config;
+    private ?array $instances = null;
+    private ?array $config = null;
 
     public function __construct(&$config = [])
     {

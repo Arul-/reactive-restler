@@ -13,7 +13,7 @@ class HumanReadable extends Base
     /**
      * @var string path of the folder to hold cache files
      */
-    public static $cacheDirectory;
+    public static ?string $cacheDirectory = null;
 
     public function __construct()
     {

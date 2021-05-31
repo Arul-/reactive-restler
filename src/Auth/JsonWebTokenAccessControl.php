@@ -11,11 +11,11 @@ use Psr\Http\Message\ServerRequestInterface;
 
 class JsonWebTokenAccessControl extends JsonWebToken implements AccessControlInterface
 {
-    public static $rolesAccessor = ['realm_access', 'roles'];
-    public static $scopesAccessor = ['scope'];
-    public static $permissionsAccessor = ['resource_access', 'account', 'roles'];
+    public static array $rolesAccessor = ['realm_access', 'roles'];
+    public static array $scopesAccessor = ['scope'];
+    public static array $permissionsAccessor = ['resource_access', 'account', 'roles'];
     //
-    public $role = 'user';
+    public string $role = 'user';
     public $roleRequired = null;
     //
     public $scope = null;

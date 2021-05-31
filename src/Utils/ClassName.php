@@ -15,7 +15,7 @@ class ClassName
     /**
      * @var array class => [ package, used by class ]
      */
-    public static $dependencies = [
+    public static array $dependencies = [
         'ZendAmf\Parser\Amf3\Deserializer' => ['zendframework/zendamf', Amf::class],
         'CFPropertyList\CFPropertyList' => ['rodneyrehm/plist', Plist::class],
         'Symfony\Component\Yaml\Yaml' => ['symfony/yaml', Yaml::class],

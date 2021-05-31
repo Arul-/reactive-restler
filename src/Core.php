@@ -12,7 +12,8 @@ use Luracast\Restler\Contracts\{AuthenticationInterface,
     ResponseMediaTypeInterface,
     SelectivePathsInterface,
     UsesAuthenticationInterface,
-    ValidationInterface};
+    ValidationInterface
+};
 use Luracast\Restler\Data\{Param, Route};
 use Luracast\Restler\Exceptions\{HttpException, InvalidAuthCredentials};
 use Luracast\Restler\MediaTypes\{Json, UrlEncoded, Xml};
@@ -50,20 +51,14 @@ abstract class Core
      * @var RequestMediaTypeInterface
      */
     public $requestFormat;
-    protected $_authenticated = false;
-    protected $_authVerified = false;
-    protected $_requestMethod = 'GET';
-    /**
-     * @var bool
-     */
-    protected $requestFormatDiffered = false;
-    /**
-     * @var Route
-     */
-    protected $_route;
-    protected $_path = '';
-    protected $body = [];
-    protected $query = [];
+    protected bool $_authenticated = false;
+    protected bool $_authVerified = false;
+    protected string $_requestMethod = 'GET';
+    protected bool $requestFormatDiffered = false;
+    protected ?Route $_route = null;
+    protected string $_path = '';
+    protected array $body = [];
+    protected array $query = [];
 
     /**
      * @var ResponseHeaders
@@ -78,23 +73,15 @@ abstract class Core
      * @var StaticProperties
      */
     protected $config;
-    /**
-     * @var StaticProperties
-     */
-    protected $defaults;
-    /**
-     * @var StaticProperties
-     */
-    protected $router;
+    protected ?\Luracast\Restler\StaticProperties $defaults = null;
+    protected ?\Luracast\Restler\StaticProperties $router = null;
     /**
      * @var int for calculating execution time
      */
-    protected $startTime;
-    /** @var HttpException */
-    protected $_exception;
-    /** @var UriInterface */
-    private $_baseUrl;
-    private $initPendingObjects = [];
+    protected int $startTime;
+    protected ?Throwable $_exception = null;
+    private ?\Psr\Http\Message\UriInterface $_baseUrl = null;
+    private array $initPendingObjects = [];
 
     /**
      * Core constructor.

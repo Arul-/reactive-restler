@@ -49,64 +49,48 @@ class Html extends MediaType implements ResponseMediaTypeInterface
         'mustache' => ['Mustache_Engine', 'mustache/mustache:^2"'],
     ];
 
-    public static $view;
-    public static $errorView = 'debug.php';
+    public static ?string $view = null;
+    public static string $errorView = 'debug.php';
     /** @var string Choose manual if you want to compute the html in your api method */
-    public static $template = 'php';
-    public static $handleSession = true;
-    public static $convertResponseToArray = false;
-    public static $useSmartViews = true;
+    public static string $template = 'php';
+    public static bool $handleSession = true;
+    public static bool $convertResponseToArray = false;
+    public static bool $useSmartViews = true;
     /**
      * @var null|string defaults to template named folder in Defaults::$cacheDirectory
      */
-    public static $cacheDirectory = null;
+    public static ?string $cacheDirectory = null;
     /**
      * @var array global key value pair to be supplied to the templates. All
      * keys added here will be available as a variable inside the template
      */
-    public static $data = [];
+    public static array $data = [];
     /**
      * @var string set it to the location of your the view files. Defaults to
      * views folder which is same level as vendor directory.
      */
-    public static $viewPath;
+    public static ?string $viewPath = null;
     /**
      * @var array template and its custom extension key value pair
      */
-    public static $customTemplateExtensions = ['blade' => 'blade.php'];
+    public static array $customTemplateExtensions = ['blade' => 'blade.php'];
     /**
      * @var bool used internally for error handling
      */
-    protected $parseViewMetadata = true;
+    protected bool $parseViewMetadata = true;
     /**
      * /**
-     * @var Restler
      */
-    private $restler;
+    private \Luracast\Restler\Restler $restler;
     /**
      * @var StaticProperties
      */
     private $html;
-    /**
-     * @var StaticProperties
-     */
-    private $defaults;
-    /**
-     * @var ContainerInterface
-     */
-    private $container;
-    /**
-     * @var SessionInterface
-     */
-    private $session;
-    /**
-     * @var ServerRequestInterface
-     */
-    private $request;
-    /**
-     * @var Route
-     */
-    private $route;
+    private \Luracast\Restler\StaticProperties $defaults;
+    private \Luracast\Restler\Contracts\ContainerInterface $container;
+    private \Luracast\Restler\Contracts\SessionInterface $session;
+    private \Psr\Http\Message\ServerRequestInterface $request;
+    private \Luracast\Restler\Data\Route $route;
 
     public function __construct(
         Restler $restler,
@@ -221,13 +205,13 @@ class Html extends MediaType implements ResponseMediaTypeInterface
                     );
                 }
             }
-            if (method_exists($class = get_called_class(), $template)) {
+            if (method_exists($class = static::class, $template)) {
                 if (isset(self::DEPENDENCIES[$template])) {
                     [$className, $package] = self::DEPENDENCIES[$template];
                     if (!class_exists($className, true)) {
                         throw new HttpException(
                             500,
-                            get_called_class() . ' has external dependency. Please run `composer require ' .
+                            static::class . ' has external dependency. Please run `composer require ' .
                             $package . '` from the project root. Read https://getcomposer.org for more info'
                         );
                     }
@@ -283,20 +267,16 @@ class Html extends MediaType implements ResponseMediaTypeInterface
         $path = $this->html->viewPath . DIRECTORY_SEPARATOR;
         $template = function ($view) use ($data, $path) {
             if (!isset($data['form'])) {
-                $data['form'] = function () {
-                    return call_user_func_array(
-                        [$this->container->make(Forms::class), 'get'],
-                        func_get_args()
-                    );
-                };
+                $data['form'] = fn() => call_user_func_array(
+                    [$this->container->make(Forms::class), 'get'],
+                    func_get_args()
+                );
             }
             if (!isset($data['nav'])) {
-                $data['nav'] = function () {
-                    return call_user_func_array(
-                        [$this->container->make(Nav::class), 'get'],
-                        func_get_args()
-                    );
-                };
+                $data['nav'] = fn() => call_user_func_array(
+                    [$this->container->make(Nav::class), 'get'],
+                    func_get_args()
+                );
             }
             $_ = function () use ($data, $path) {
                 extract($data->getArrayCopy());
@@ -452,9 +432,7 @@ class Html extends MediaType implements ResponseMediaTypeInterface
                         $params
                     );
                 },
-                'title' => function ($text, Mustache_LambdaHelper $m) {
-                    return Text::title($m->render($text));
-                },
+                'title' => fn($text, Mustache_LambdaHelper $m) => Text::title($m->render($text)),
 
             ]
         ];
@@ -473,16 +451,12 @@ class Html extends MediaType implements ResponseMediaTypeInterface
         $engine = new CompilerEngine($compiler);
         $resolver->register(
             'blade',
-            function () use ($engine) {
-                return $engine;
-            }
+            fn() => $engine
         );
         $phpEngine = new PhpEngine($filesystem);
         $resolver->register(
             'php',
-            function () use ($phpEngine) {
-                return $phpEngine;
-            }
+            fn() => $phpEngine
         );
         $restler = $this->restler;
         //Lets expose shortcuts for our classes
@@ -503,18 +477,14 @@ class Html extends MediaType implements ResponseMediaTypeInterface
         $viewFinder = new FileViewFinder($filesystem, [$this->html->viewPath]);
         $factory = new Factory($resolver, $viewFinder, new Dispatcher());
         $path = $viewFinder->find($this->html->view);
-        $data->form = function () {
-            return call_user_func_array(
-                [$this->container->make(Forms::class), 'get'],
-                func_get_args()
-            );
-        };
-        $data->nav = function () {
-            return call_user_func_array(
-                [$this->container->make(Nav::class), 'get'],
-                func_get_args()
-            );
-        };
+        $data->form = fn() => call_user_func_array(
+            [$this->container->make(Forms::class), 'get'],
+            func_get_args()
+        );
+        $data->nav = fn() => call_user_func_array(
+            [$this->container->make(Nav::class), 'get'],
+            func_get_args()
+        );
         $view = new View($factory, $engine, $this->html->view, $path, $data);
         $factory->callCreator($view);
         return $view->render();

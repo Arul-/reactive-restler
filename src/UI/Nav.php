@@ -20,45 +20,36 @@ use Psr\Http\Message\ServerRequestInterface;
  */
 class Nav
 {
-    public static $root = 'home';
+    public static string $root = 'home';
     public static $style;
     /**
      * @var array all paths beginning with any of the following will be excluded
      * from documentation. if an empty string is given it will exclude the root
      */
-    public static $excludedPaths = [''];
+    public static array $excludedPaths = [''];
     /**
      * @var array prefix additional menu items with one of the following syntax
      *            [$path => $text]
      *            [$path]
      *            [$path => ['text' => $text, 'url' => $url, 'trail'=> $trail]]
      */
-    public static $prepends = [];
+    public static array $prepends = [];
     /**
      * @var array suffix additional menu items with one of the following syntax
      *            [$path => $text]
      *            [$path]
      *            [$path => ['text' => $text, 'url' => $url, 'trail'=> $trail]]
      */
-    public static $appends = [];
-    public static $addExtension = true;
-    public static $excludedHttpMethods = ['POST', 'DELETE', 'PUT', 'PATCH'];
-    protected static $tree = [];
-    protected static $extension = '';
-    protected static $activeTrail = '';
+    public static array $appends = [];
+    public static bool $addExtension = true;
+    public static array $excludedHttpMethods = ['POST', 'DELETE', 'PUT', 'PATCH'];
+    protected static array $tree = [];
+    protected static string $extension = '';
+    protected static string $activeTrail = '';
     protected static $url;
-    /**
-     * @var Restler
-     */
-    private $restler;
-    /**
-     * @var ServerRequestInterface
-     */
-    private $request;
-    /**
-     * @var Route
-     */
-    private $route;
+    private \Luracast\Restler\Core $restler;
+    private \Psr\Http\Message\ServerRequestInterface $request;
+    private \Luracast\Restler\Data\Route $route;
 
     public function __construct(ServerRequestInterface $request, Route $route, Core $restler)
     {

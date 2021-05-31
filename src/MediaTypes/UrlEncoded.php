@@ -14,10 +14,7 @@ class UrlEncoded extends MediaType implements RequestMediaTypeInterface, Respons
 
     public const MIME = 'application/x-www-form-urlencoded';
     public const EXTENSION = 'post';
-    /**
-     * @var ServerRequestInterface
-     */
-    private $request;
+    private \Psr\Http\Message\ServerRequestInterface $request;
 
     public function __construct(Convert $convert, ServerRequestInterface $request)
     {

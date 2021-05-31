@@ -10,10 +10,7 @@ use Throwable;
 
 class Error extends Exception implements ClientAware
 {
-    /**
-     * @var string
-     */
-    private $category;
+    private string $category;
 
     public function __construct(string $category, Throwable $previous = null)
     {

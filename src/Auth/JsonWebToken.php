@@ -26,19 +26,19 @@ class JsonWebToken implements ExplorableAuthenticationInterface, SelectivePathsI
     use DependentTrait;
     use SelectivePathsTrait;
 
-    public static $publicKey = '';
-    public static $userIdentifierProperty = 'sub';
+    public static string $publicKey = '';
+    public static string $userIdentifierProperty = 'sub';
 
     /** @var null|string Issuer */
-    public static $matchedIssuer = null;
+    public static ?string $matchedIssuer = null;
     /** @var null|string Audience */
-    public static $matchedAudience = null;
+    public static ?string $matchedAudience = null;
     /** @var null|string Authorized party - the party to which the ID Token was issued */
-    public static $matchedAuthorizedParty = null;
+    public static ?string $matchedAuthorizedParty = null;
     /** @var null|string Client Identifier */
-    public static $matchedClientIdentifier = null;
+    public static ?string $matchedClientIdentifier = null;
 
-    public $token;
+    public ?object $token = null;
 
     /**
      * WebToken constructor.

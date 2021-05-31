@@ -4,14 +4,14 @@ namespace Luracast\Restler\OpenApi3;
 
 class Info
 {
-    public static $title = 'Restler API Explorer';
-    public static $description = 'Example api documentation brought to you by **restler team**';
+    public static string $title = 'Restler API Explorer';
+    public static string $description = 'Example api documentation brought to you by **restler team**';
     public static $termsOfServiceUrl = null;
-    public static $contactName = 'Restler Support';
-    public static $contactEmail = 'arul@luracast.com';
-    public static $contactUrl = 'https://luracast.com/products/restler';
-    public static $license = 'LGPL-2.1';
-    public static $licenseUrl = 'https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html';
+    public static string $contactName = 'Restler Support';
+    public static string $contactEmail = 'arul@luracast.com';
+    public static string $contactUrl = 'https://luracast.com/products/restler';
+    public static string $license = 'LGPL-2.1';
+    public static string $licenseUrl = 'https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html';
 
     public static function format($swaggerVersion)
     {

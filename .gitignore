@@ -16,3 +16,5 @@ carbon
 ecs
 phpstan
 rector
+yaml-lint
+phpstan.phar

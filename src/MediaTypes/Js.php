@@ -10,10 +10,10 @@ class Js extends MediaType implements ResponseMediaTypeInterface
     public const MIME = 'text/javascript';
     public const EXTENSION = 'js';
 
-    public static $encodeOptions = 0;
-    public static $callbackMethodName = 'parseResponse';
-    public static $callbackOverrideQueryString = 'callback';
-    public static $includeHeaders = true;
+    public static int $encodeOptions = 0;
+    public static string $callbackMethodName = 'parseResponse';
+    public static string $callbackOverrideQueryString = 'callback';
+    public static bool $includeHeaders = true;
 
     /**
      * @param $data

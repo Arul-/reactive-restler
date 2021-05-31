@@ -12,7 +12,7 @@ class OAuth2 extends Scheme
     /**
      * @var OAuth2Flow[]
      */
-    protected $flows = [];
+    protected array $flows = [];
 
     public function __construct(OAuth2Flow ...$flows)
     {

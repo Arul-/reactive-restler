@@ -12,7 +12,7 @@ class Composer implements ComposerInterface
      * @var bool When restler is not running in production mode, this value will
      * be checked to include the debug information on error response
      */
-    public static $includeDebugInfo = true;
+    public static bool $includeDebugInfo = true;
 
     /**
      * Result of an api call is passed to this method

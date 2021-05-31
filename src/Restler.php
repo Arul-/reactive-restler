@@ -20,12 +20,9 @@ use function GuzzleHttp\Psr7\stream_for;
 
 class Restler extends Core
 {
-    public static $middleware = [];
-    /**
-     * @var ServerRequestInterface
-     */
-    protected $request;
-    protected $rawRequestBody = "";
+    public static array $middleware = [];
+    protected ?\Psr\Http\Message\ServerRequestInterface $request = null;
+    protected string $rawRequestBody = "";
 
     public function handle(ServerRequestInterface $request = null): PromiseInterface
     {
@@ -108,9 +105,7 @@ class Restler extends Core
         }
 
         $that = $this;
-        $next = function (ServerRequestInterface $request) use ($that, $middleware, $position) {
-            return $that->handleMiddleware($middleware, $request, $position + 1);
-        };
+        $next = fn(ServerRequestInterface $request) => $that->handleMiddleware($middleware, $request, $position + 1);
 
         // invoke middleware request handler with next handler
         $handler = $middleware[$position];
@@ -148,7 +143,7 @@ class Restler extends Core
         if ($throttle = $this->defaults->throttle ?? 0) {
             $elapsed = time() - $this->startTime;
             if ($throttle / 1e3 > $elapsed) {
-                usleep(1e6 * ($throttle / 1e3 - $elapsed));
+                usleep(1_000_000.0 * ($throttle / 1e3 - $elapsed));
             }
         }
         if ($this->_responseCode == 401 && !isset($this->_responseHeaders['WWW-Authenticate'])) {

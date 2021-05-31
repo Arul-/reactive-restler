@@ -19,7 +19,7 @@ class ValueObject implements ValueObjectInterface
      */
     public static function __set_state(array $properties)
     {
-        $class = get_called_class();
+        $class = static::class;
         /** @var ValueObject $instance */
         $instance = new $class ();
         $instance->applyProperties($properties);
@@ -58,7 +58,7 @@ class ValueObject implements ValueObjectInterface
 
     public function __toString()
     {
-        return ' new ' . get_called_class() . '() ';
+        return ' new ' . static::class . '() ';
     }
 
     public function __debugInfo()

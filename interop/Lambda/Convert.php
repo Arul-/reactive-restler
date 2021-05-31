@@ -17,7 +17,7 @@ use stdClass;
 
 class Convert
 {
-    public static $binaryTypes = [
+    public static array $binaryTypes = [
         'image/png',
         'image/jpeg',
         'image/gif',

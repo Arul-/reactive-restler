@@ -23,11 +23,8 @@ abstract class MediaType implements MediaTypeInterface, SelectivePathsInterface
 
     protected $mime;
     protected $extension;
-    protected $charset = 'utf-8';
-    /**
-     * @var Convert
-     */
-    protected $convert;
+    protected string $charset = 'utf-8';
+    protected \Luracast\Restler\Utils\Convert $convert;
 
     public function __construct(Convert $convert)
     {

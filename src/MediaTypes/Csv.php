@@ -130,7 +130,7 @@ class Csv extends MediaType implements StreamingRequestMediaTypeInterface, Respo
         $fp = fopen('php://temp', 'r+');
         fputcsv($fp, $data, static::$delimiter, static::$enclosure);
         rewind($fp);
-        $data = fread($fp, 1048576);
+        $data = fread($fp, 1_048_576);
         fclose($fp);
 
         return rtrim($data, PHP_EOL);

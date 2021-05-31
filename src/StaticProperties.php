@@ -8,12 +8,9 @@ use ReflectionException;
 
 class StaticProperties implements ArrayAccess
 {
-    private $allowed = [];
-    private $properties = [];
-    /**
-     * @var string
-     */
-    private $className;
+    private array $allowed = [];
+    private array $properties = [];
+    private string $className;
 
     /**
      * StaticProperties constructor.

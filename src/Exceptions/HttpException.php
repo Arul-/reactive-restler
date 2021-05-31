@@ -7,10 +7,8 @@ class HttpException extends Exception
 {
     /**
      * HTTP status codes
-     *
-     * @var array
      */
-    public static $codes = [
+    public static array $codes = [
         100 => 'Continue',
         101 => 'Switching Protocols',
         200 => 'OK',
@@ -54,8 +52,8 @@ class HttpException extends Exception
         504 => 'Gateway Timeout',
         505 => 'HTTP Version Not Supported'
     ];
-    public $emptyMessageBody = false;
-    private $details = [];
+    public bool $emptyMessageBody = false;
+    private array $details = [];
     private $headers = [];
 
     /**
@@ -71,7 +69,7 @@ class HttpException extends Exception
         array $details = [],
         $previous = null
     ) {
-        $errorMessage = $errorMessage ?? static::$codes[$httpStatusCode] ?? null;
+        $errorMessage ??= static::$codes[$httpStatusCode] ?? null;
         $this->details = $details;
         parent::__construct($errorMessage, $httpStatusCode, $previous);
     }

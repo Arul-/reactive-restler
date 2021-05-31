@@ -10,7 +10,7 @@ use Throwable;
 
 class ErrorResponse implements GenericResponseInterface
 {
-    public $response = [];
+    public array $response = [];
 
     public function __construct(Throwable $exception, bool $debug = false)
     {

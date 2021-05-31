@@ -72,109 +72,83 @@ class Route extends ValueObject
     public $query;
     public $mutation;
 
-    public $httpMethod = 'GET';
+    public string $httpMethod = 'GET';
     /**
-     * @var string target uri. human readable, for documentation
+     * @var string|null target uri. human readable, for documentation
      */
-    public $url;
+    public ?string $url = null;
 
     /**
-     * @var string path used for routing
+     * @var string|null path used for routing
      */
-    public $path;
+    public ?string $path = null;
 
-    /**
-     * @var string
-     */
-    public $summary = '';
+    public string $summary = '';
 
-    /**
-     * @var string
-     */
-    public $description = '';
+    public string $description = '';
 
-    /**
-     * @var callable
-     */
-    public $action;
+    public ?array $action = null;
 
     /**
      * @var Param[]
      */
-    public $parameters = [];
+    public array $parameters = [];
 
-    /**
-     * @var Returns
-     */
-    public $return;
+    public ?\Luracast\Restler\Data\Returns $return = null;
 
     /**
      * @var int http status
      */
-    public $status = 200;
+    public int $status = 200;
 
     /**
      * @var array headers set through comments
      */
-    public $header = [];
+    public array $header = [];
 
     /**
      * @var string[] cache setting from comments
      */
-    public $cache = [];
+    public array $cache = [];
 
-    /**
-     * @var int|null
-     */
-    public $expires;
+    public ?int $expires = null;
 
-    /**
-     * @var int|null
-     */
-    public $throttle;
+    public ?int $throttle = null;
 
-    /**
-     * @var bool
-     */
-    public $deprecated = false;
+    public bool $deprecated = false;
 
 
-    public $resource = ['path' => '', 'summary' => '', 'description' => ''];
+    public array $resource = ['path' => '', 'summary' => '', 'description' => ''];
 
-    /**
-     * @var array
-     */
-    public $throws = [];
+    public array $throws = [];
 
     /**
      * @var int access level
      */
-    public $access = self::ACCESS_PUBLIC;
+    public int $access = self::ACCESS_PUBLIC;
 
-    public $requestMediaTypes = [];
+    public array $requestMediaTypes = [];
 
-    public $responseMediaTypes = [];
-
-    /**
-     * @var array
-     * @internal
-     */
-    public $requestFormatMap = [];
+    public array $responseMediaTypes = [];
 
     /**
-     * @var array
      * @internal
      */
-    public $responseFormatMap = [];
+    public array $requestFormatMap = [];
 
-    public $authClasses = [];
-    public $preAuthFilterClasses = [];
-    public $postAuthFilterClasses = [];
+    /**
+     * @internal
+     */
+    public array $responseFormatMap = [];
+
+    public array $authClasses = [];
+    public array $preAuthFilterClasses = [];
+    public array $postAuthFilterClasses = [];
     /**
      * @var array [class => [property => $value ...]...]
      * values to set on initialization of classes
      */
-    public $set = [];
+    public array $set = [];
 
     /**
      * @var array
@@ -297,9 +271,7 @@ class Route extends ValueObject
     {
         return array_filter(
             $this->parameters,
-            function ($v) use ($from, $include) {
-                return $include ? $from === $v->from : $from !== $v->from;
-            }
+            fn($v) => $include ? $from === $v->from : $from !== $v->from
         );
     }
 
@@ -340,9 +312,7 @@ class Route extends ValueObject
     public function __clone()
     {
         $this->parameters = array_map(
-            function ($param) {
-                return clone $param;
-            },
+            fn($param) => clone $param,
             $this->parameters
         );
         $this->return = clone $this->return;
@@ -440,9 +410,7 @@ class Route extends ValueObject
     public function call(array $arguments, bool $authenticated = false, bool $validate = true, callable $maker = null)
     {
         if (!$maker) {
-            $maker = function ($class) {
-                return new $class();
-            };
+            $maker = fn($class) => new $class();
         }
         $this->apply($arguments, $authenticated);
         if ($validate) {

@@ -9,7 +9,7 @@ use Luracast\Restler\Utils\Text;
 
 class TagByBasePath implements Tagger
 {
-    public static $descriptions = [
+    public static array $descriptions = [
         'root' => 'main api'
     ];
 

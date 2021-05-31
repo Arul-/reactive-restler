@@ -21,9 +21,9 @@ use function time;
 
 class SessionMiddleware implements MiddlewareInterface
 {
-    public static $cookieName = 'RESTLER_SESSION';
+    public static string $cookieName = 'RESTLER_SESSION';
 
-    public static $cookieParameters = [
+    public static array $cookieParameters = [
         0,
         '',
         '',

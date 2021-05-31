@@ -6,7 +6,7 @@ namespace Luracast\Restler\Cache;
 
 class InMemory extends Base
 {
-    private $store = [];
+    private array $store = [];
 
     public function get($key, $default = null)
     {

@@ -20,32 +20,23 @@ class RateLimiter implements FilterInterface, SelectivePathsInterface, UsesAuthe
     use SelectivePathsTrait;
 
     /** @var string class that implements CacheInterface */
-    public static $cacheClass = null;
+    public static ?string $cacheClass = null;
 
-    /**
-     * @var int
-     */
-    public static $usagePerUnit = 1200;
-    /**
-     * @var int
-     */
-    public static $authenticatedUsagePerUnit = 5000;
-    /**
-     * @var string
-     */
-    public static $unit = 'hour';
+    public static int $usagePerUnit = 1200;
+    public static int $authenticatedUsagePerUnit = 5000;
+    public static string $unit = 'hour';
     /**
      * @var string group the current api belongs to
      */
-    public static $group = 'common';
+    public static string $group = 'common';
 
-    protected static $units = [
+    protected static array $units = [
         'second' => 1,
         'minute' => 60,
         'hour' => 3600, // 60*60 seconds
         'day' => 86400, // 60*60*24 seconds
         'week' => 604800, // 60*60*24*7 seconds
-        'month' => 2592000, // 60*60*24*30 seconds
+        'month' => 2_592_000, // 60*60*24*30 seconds
     ];
     /**
      * @var CacheInterface
@@ -54,12 +45,9 @@ class RateLimiter implements FilterInterface, SelectivePathsInterface, UsesAuthe
     /**
      * @var bool current auth status
      */
-    protected $authenticated = false;
-    private $runtimeValues;
-    /**
-     * @var UserIdentificationInterface
-     */
-    private $user;
+    protected bool $authenticated = false;
+    private \Luracast\Restler\StaticProperties $runtimeValues;
+    private \Luracast\Restler\Contracts\UserIdentificationInterface $user;
 
     public function __construct(StaticProperties $rateLimiter, UserIdentificationInterface $user)
     {

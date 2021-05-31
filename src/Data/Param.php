@@ -63,16 +63,16 @@ class Param extends Type
      * @var string|null html element that can be used to represent the parameter for
      *      input
      */
-    public $field;
+    public ?string $field = null;
     /**
      * @var array with hasDefault boolean as the first value and default value for the parameter as second
      */
-    public $default = [false, null];
+    public array $default = [false, null];
 
     /**
      * @var bool is it required or not
      */
-    public $required;
+    public ?bool $required = null;
 
     /**
      * @var string body or header or query where this parameter is coming from
@@ -83,7 +83,7 @@ class Param extends Type
     /**
      * @var bool variadic parameter, so needs expansion of array
      */
-    public $variadic = false;
+    public bool $variadic = false;
 
     /**
      * Should we attempt to fix the value?
@@ -94,7 +94,7 @@ class Param extends Type
      *
      * @var bool true or false
      */
-    public $fix = false;
+    public bool $fix = false;
 
     // ==================================================================
     //
@@ -168,9 +168,9 @@ class Param extends Type
      *
      * @var string validation method name
      */
-    public $method;
+    public string $method;
 
-    public $access = self::ACCESS_PUBLIC;
+    public int $access = self::ACCESS_PUBLIC;
 
     /**
      * Instance of the API class currently being called. It will be null most of
@@ -179,7 +179,7 @@ class Param extends Type
      *
      * @var null|object will be null or api class instance
      */
-    public $apiClassInstance = null;
+    public ?object $apiClassInstance = null;
 
     public static function fromMethod(ReflectionMethod $method, ?array $doc = null, array $scope = []): array
     {

@@ -13,8 +13,8 @@ use function random_bytes;
 
 class FileSessionHandler implements SessionHandlerInterface, SessionIdInterface
 {
-    private $savePath;
-    private $data = [];
+    private ?string $savePath = null;
+    private array $data = [];
 
     public function __construct(string $savePath)
     {

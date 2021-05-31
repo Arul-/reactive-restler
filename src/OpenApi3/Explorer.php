@@ -26,20 +26,19 @@ use stdClass;
 class Explorer implements ProvidesMultiVersionApiInterface
 {
     public const OPEN_API_SPEC_VERSION = '3.0.3';
-    public static $infoClass = Info::class;
-    public static $excludedPaths = ['_'];
-    public static $excludedHttpMethods = ['OPTIONS'];
-    public static $hideProtected = false;
-    public static $allowScalarValueOnRequestBody = false;
-    public static $servers = [];
-    public static $defaultErrorCode = 404;
-    public static $defaultErrorMessage = 'Not Found';
-    public static $defaultErrorDescription = 'Unexpected Error';
+    public static string $infoClass = Info::class;
+    public static array $excludedPaths = ['_'];
+    public static array $excludedHttpMethods = ['OPTIONS'];
+    public static bool $hideProtected = false;
+    public static bool $allowScalarValueOnRequestBody = false;
+    public static array $servers = [];
+    public static int $defaultErrorCode = 404;
+    public static string $defaultErrorMessage = 'Not Found';
+    public static string $defaultErrorDescription = 'Unexpected Error';
     /**
-     * @var array
      * @link https://swagger.io/docs/open-source-tools/swagger-ui/usage/configuration
      */
-    public static $uiConfig = [
+    public static array $uiConfig = [
         'deepLinking' => false,
         'displayOperationId' => false,
         'syntaxHighlight' => [
@@ -49,7 +48,7 @@ class Explorer implements ProvidesMultiVersionApiInterface
         'validatorUrl' => null //disables validation change to "https://validator.swagger.io/validator" to enable
     ];
 
-    public static $minimumAliases = [
+    public static array $minimumAliases = [
         'int' => 'minimum',
         'number' => 'minimum',
         'float' => 'minimum',
@@ -57,7 +56,7 @@ class Explorer implements ProvidesMultiVersionApiInterface
         'array' => 'minItems'
     ];
 
-    public static $maximumAliases = [
+    public static array $maximumAliases = [
         'int' => 'maximum',
         'number' => 'maximum',
         'float' => 'maximum',
@@ -65,14 +64,14 @@ class Explorer implements ProvidesMultiVersionApiInterface
         'array' => 'maxItems'
     ];
 
-    public static $defaultMinimumValues = [
+    public static array $defaultMinimumValues = [
         'int' => 0,
         'number' => PHP_FLOAT_MIN,
         'string' => 1,
         'array' => 0
     ];
 
-    public static $defaultMaximumValues = [
+    public static array $defaultMaximumValues = [
         'int' => PHP_INT_MAX,
         'number' => PHP_FLOAT_MAX,
         'string' => 256,
@@ -82,7 +81,7 @@ class Explorer implements ProvidesMultiVersionApiInterface
     /**
      * @var array mapping PHP types to JS
      */
-    public static $dataTypeAlias = [
+    public static array $dataTypeAlias = [
         'string' => 'string',
         'int' => 'integer',
         'number' => 'number',
@@ -99,7 +98,7 @@ class Explorer implements ProvidesMultiVersionApiInterface
         'time' => 'string',
         'timestamp' => 'string',
     ];
-    protected static $prefixes = [
+    protected static array $prefixes = [
         'get' => 'retrieve',
         'index' => 'list',
         'post' => 'create',
@@ -110,26 +109,17 @@ class Explorer implements ProvidesMultiVersionApiInterface
 
     protected static $tagger = TagByBasePath::class;
 
-    protected $tags = [];
-    protected $models = [];
-    protected $requestBodies = [];
-    /**
-     * @var ServerRequestInterface
-     */
-    private $request;
-    /**
-     * @var Core
-     */
-    private $restler;
-    /**
-     * @var Route
-     */
-    private $route;
+    protected array $tags = [];
+    protected array $models = [];
+    protected array $requestBodies = [];
+    private \Psr\Http\Message\ServerRequestInterface $request;
+    private \Luracast\Restler\Core $restler;
+    private \Luracast\Restler\Data\Route $route;
 
     /**
      * @var AuthenticationInterface[]
      */
-    private $authClasses = [];
+    private array $authClasses = [];
 
     public function __construct(ServerRequestInterface $request, Route $route, Core $restler)
     {
@@ -464,7 +454,7 @@ class Explorer implements ProvidesMultiVersionApiInterface
         } else {
             $s->type = $param->type;
         }
-        $has64bit = PHP_INT_MAX > 2147483647;
+        $has64bit = PHP_INT_MAX > 2_147_483_647;
         if ($s->type == 'integer') {
             $s->format = $has64bit
                 ? 'int64'

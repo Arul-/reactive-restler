@@ -13,14 +13,8 @@ class ApiKeyAuth extends Scheme
     public const IN_COOKIE = 'cookie';
 
     protected $type = Scheme::TYPE_API_KEY;
-    /**
-     * @var string
-     */
-    protected $name;
-    /**
-     * @var string
-     */
-    protected $in;
+    protected string $name;
+    protected string $in;
 
     /**
      * ApiKeyAuth constructor.

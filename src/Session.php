@@ -11,28 +11,18 @@ use SessionIdInterface;
 
 class Session implements SessionInterface
 {
-    private $oldIds = [];
-    private $status = PHP_SESSION_NONE;
+    private array $oldIds = [];
+    private int $status = PHP_SESSION_NONE;
     /**
      * @var array
      */
     private $contents = [];
-    /** @var array */
-    private $flash_in = [];
+    private array $flash_in = [];
     /** @var array */
     private $flash_out = [];
-    /**
-     * @var SessionHandlerInterface
-     */
-    private $handler;
-    /**
-     * @var SessionIdInterface
-     */
-    private $sessionId;
-    /**
-     * @var string
-     */
-    private $id;
+    private \SessionHandlerInterface $handler;
+    private \SessionIdInterface $sessionId;
+    private string $id;
 
     public function __construct(SessionHandlerInterface $handler, SessionIdInterface $sessionId, string $id = '')
     {

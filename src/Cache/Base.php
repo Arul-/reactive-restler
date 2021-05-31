@@ -14,9 +14,7 @@ abstract class Base implements CacheInterface
     public function getMultiple($keys, $default = null)
     {
         return array_map(
-            function ($key) use ($default) {
-                return $this->get($key, $default);
-            },
+            fn($key) => $this->get($key, $default),
             (array)$keys
         );
     }
@@ -27,9 +25,7 @@ abstract class Base implements CacheInterface
     public function setMultiple($values, $ttl = null)
     {
         return array_map(
-            function ($key, $value) use ($ttl) {
-                return $this->set($key, $value, $ttl);
-            },
+            fn($key, $value) => $this->set($key, $value, $ttl),
             array_keys((array)$values),
             $values
         );

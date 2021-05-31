@@ -32,14 +32,14 @@ use RingCentral\Psr7\ServerRequest;
 
 class Defaults
 {
-    public static $productionMode = false;
+    public static bool $productionMode = false;
 
     /**
      * @var string full path of the directory where all the generated files will
      * be kept. When set to null (default) it will use the cache folder that is
      * in the same folder as index.php (gateway)
      */
-    public static $cacheDirectory;
+    public static string $cacheDirectory;
 
     // ==================================================================
     //
@@ -52,7 +52,7 @@ class Defaults
      * should be enabled by default or not. Set this to false to get
      * Restler 1.0 style behavior
      */
-    public static $autoRoutingEnabled = true;
+    public static bool $autoRoutingEnabled = true;
 
     /**
      * @var bool avoids creating multiple routes that can increase the
@@ -61,13 +61,13 @@ class Defaults
      * query string `/resource?id=value`. When a parameter is required and is
      * scalar, it will be mapped as part of the url `/resource/{id}`
      */
-    public static $smartAutoRouting = true;
+    public static bool $smartAutoRouting = true;
 
     /**
      * @var bool enables more ways of finding the parameter data in the request.
      * If you need backward compatibility with Restler 2 or below turn this off
      */
-    public static $smartParameterParsing = true;
+    public static bool $smartParameterParsing = true;
 
     // ==================================================================
     //
@@ -82,23 +82,23 @@ class Defaults
      *
      * Keep this null if you do not want to use vendor MIME for specifying api version
      */
-    public static $apiVendor = null;
+    public static ?string $apiVendor = null;
 
     /**
      * @var bool set it to true to force vendor specific MIME for versioning.
      * It will be automatically set to true when Defaults::$vendor is not
      * null and client is requesting for the custom MIME type
      */
-    public static $useVendorMIMEVersioning = false;
+    public static bool $useVendorMIMEVersioning = false;
     /**
      * @var string template used for setting the vendor specific media type
      */
-    public static $vendorMIMETemplate = ' application/vnd.{vendor}-v{version}+json';
+    public static string $vendorMIMETemplate = ' application/vnd.{vendor}-v{version}+json';
 
     /**
      * @var bool set it to true to use enableUrl based versioning
      */
-    public static $useUrlBasedVersioning = false;
+    public static bool $useUrlBasedVersioning = false;
 
     // ==================================================================
     //
@@ -110,7 +110,7 @@ class Defaults
      * @var string name to be used for the method parameter to capture the
      *             entire request data
      */
-    public static $fullRequestDataName = 'request_data';
+    public static string $fullRequestDataName = 'request_data';
 
     /**
      * @var string name of the property that can sent through $_GET or $_POST to
@@ -118,7 +118,7 @@ class Defaults
      *             blank string to disable http method override through request
      *             parameters.
      */
-    public static $httpMethodOverrideProperty = '_method';
+    public static string $httpMethodOverrideProperty = '_method';
 
     /**
      * @var string name of the header that can be set to override the http
@@ -126,9 +126,9 @@ class Defaults
      *             disable http method override through request
      *             parameters.
      */
-    public static $httpMethodOverrideHeader = 'X-HTTP-Method-Override';
+    public static string $httpMethodOverrideHeader = 'X-HTTP-Method-Override';
 
-    public static $httpMethodAllowedOverrides = [
+    public static array $httpMethodAllowedOverrides = [
         'POST' => ['PUT', 'PATCH', "DELETE"]
     ];
 
@@ -136,7 +136,7 @@ class Defaults
      * @var bool should auto validating api parameters should be enabled by
      *           default or not. Set this to false to avoid validation.
      */
-    public static $autoValidationEnabled = true;
+    public static bool $autoValidationEnabled = true;
 
     // ==================================================================
     //
@@ -153,35 +153,34 @@ class Defaults
      * even when errors occur. If you suppress status codes, look for an error
      * response to determine if an error occurred.
      */
-    public static $suppressResponseCode = false;
+    public static bool $suppressResponseCode = false;
 
-    public static $supportedCharsets = ['utf-8', 'iso-8859-1'];
-    public static $supportedLanguages = ['en', 'en-US'];
+    public static array $supportedCharsets = ['utf-8', 'iso-8859-1'];
+    public static array $supportedLanguages = ['en', 'en-US'];
 
-    public static $charset = 'utf-8';
-    public static $language = 'en';
+    public static string $charset = 'utf-8';
+    public static string $language = 'en';
 
     /**
      * @var bool when set to true, it will exclude the response body
      */
-    public static $emptyBodyForNullResponse = true;
+    public static bool $emptyBodyForNullResponse = true;
 
     /**
-     * @var null|bool
      * If set to true, Restler::handle() will return the response as a string.
      * If set to false, Restler::handle() will echo the response and die.
      * When set to null, it will try to be smart so that
      * Restler::handle() will return the response when request is provided else e
      * cho and die
      */
-    public static $returnResponse = null;
+    public static ?bool $returnResponse = null;
 
     /**
      * @var bool enables CORS support
      */
-    public static $crossOriginResourceSharing = false;
-    public static $accessControlAllowOrigin = '*';
-    public static $accessControlAllowMethods =
+    public static bool $crossOriginResourceSharing = false;
+    public static string $accessControlAllowOrigin = '*';
+    public static string $accessControlAllowMethods =
         'GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD';
 
     // ==================================================================
@@ -197,7 +196,7 @@ class Defaults
      * value specified. When only one value is specified it will be used for
      * both cases
      */
-    public static $headerCacheControl = [
+    public static array $headerCacheControl = [
         'no-cache, must-revalidate',
 
         /* "public, " or "private, " will be prepended based on api method
@@ -213,7 +212,7 @@ class Defaults
      * expire. This setting can be altered at api level using php doc comment
      * with @expires numOfSeconds
      */
-    public static $headerExpires = 0;
+    public static int $headerExpires = 0;
 
     // ==================================================================
     //
@@ -228,7 +227,7 @@ class Defaults
      *      value of 2 = protected api using `@access protected` comment
      *      value of 3 = protected api using `protected function` method
      */
-    public static $apiAccessLevel = 0;
+    public static int $apiAccessLevel = 0;
 
     /**
      * @var int time in milliseconds for bandwidth throttling,
@@ -236,7 +235,7 @@ class Defaults
      * change it per api method by setting `@throttle 3000` in php doc
      * comment either at the method level or class level
      */
-    public static $throttle = 0;
+    public static int $throttle = 0;
 
 // ==================================================================
     //
@@ -248,7 +247,7 @@ class Defaults
      * @var array determines what are the query string names that will
      * override the properties here with their values
      */
-    public static $fromQuery = [
+    public static array $fromQuery = [
         /**
          * suppress_response_codes=true as an URL parameter to force
          * a HTTP 200 status code on all responses
@@ -260,7 +259,7 @@ class Defaults
      * @var array contains validation details for defaults to be used when
      * set through URL parameters
      */
-    public static $propertyValidations = [
+    public static array $propertyValidations = [
         'suppressResponseCode' => ['type' => 'bool'],
         'headerExpires' => ['type' => 'int', 'min' => 0],
     ];
@@ -275,7 +274,7 @@ class Defaults
      * @var array determines what are the phpdoc comment tags that will
      * override the Defaults here with their values
      */
-    public static $fromComments = [
+    public static array $fromComments = [
 
         /**
          * use PHPDoc comments such as the following
@@ -313,7 +312,7 @@ class Defaults
      *
      * @var array {@type associative}
      */
-    public static $implementations = [
+    public static array $implementations = [
         CacheInterface::class => [HumanReadable::class],
         ValidationInterface::class => [Validator::class],
         UserIdentificationInterface::class => [UserIdentifier::class],
@@ -336,7 +335,7 @@ class Defaults
      *
      * @var array {@type associative}
      */
-    public static $aliases = [
+    public static array $aliases = [
         // Core
         'Application' => Restler::class,
         'Session' => Session::class,

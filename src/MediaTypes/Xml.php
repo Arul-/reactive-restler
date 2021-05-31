@@ -20,36 +20,34 @@ class Xml extends MediaType implements RequestMediaTypeInterface, ResponseMediaT
     // Properties related to reading/parsing/decoding xml
     //
     // ------------------------------------------------------------------
-    public static $importSettingsFromXml = false;
-    public static $parseAttributes = true;
-    public static $parseNamespaces = true;
-    public static $parseTextNodeAsProperty = true;
+    public static bool $importSettingsFromXml = false;
+    public static bool $parseAttributes = true;
+    public static bool $parseNamespaces = true;
+    public static bool $parseTextNodeAsProperty = true;
 
     // ==================================================================
     //
     // Properties related to writing/encoding xml
     //
     // ------------------------------------------------------------------
-    public static $useTextNodeProperty = true;
-    public static $useNamespaces = true;
-    public static $cdataNames = [];
+    public static bool $useTextNodeProperty = true;
+    public static bool $useNamespaces = true;
+    public static array $cdataNames = [];
 
     // ==================================================================
     //
     // Common Properties
     //
     // ------------------------------------------------------------------
-    public static $attributeNames = [];
-    public static $textNodeName = 'text';
-    public static $namespaces = [];
-    public static $namespacedProperties = [];
+    public static array $attributeNames = [];
+    public static string $textNodeName = 'text';
+    public static array $namespaces = [];
+    public static array $namespacedProperties = [];
     /**
      * Default name for the root node.
-     *
-     * @var string $rootNodeName
      */
-    public static $rootName = 'response';
-    public static $defaultTagName = 'item';
+    public static string $rootName = 'response';
+    public static string $defaultTagName = 'item';
 
     /**
      * When you decode an XML its structure is copied to the static vars

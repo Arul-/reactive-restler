@@ -8,7 +8,7 @@ use Psr\Http\Message\ResponseInterface;
 
 class PassThrough
 {
-    public static $mimeTypes = array(
+    public static array $mimeTypes = array(
         'js' => 'text/javascript',
         'css' => 'text/css',
         'png' => 'image/png',

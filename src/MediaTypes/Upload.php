@@ -14,7 +14,7 @@ class Upload extends MediaType implements RequestMediaTypeInterface
 {
     public const MIME = 'multipart/form-data';
     public const EXTENSION = 'post';
-    public static $errors = [
+    public static array $errors = [
         UPLOAD_ERR_OK => false,
         UPLOAD_ERR_INI_SIZE => 'The uploaded file exceeds the maximum allowed size',
         UPLOAD_ERR_FORM_SIZE => 'The uploaded file exceeds the maximum allowed size',
@@ -28,10 +28,8 @@ class Upload extends MediaType implements RequestMediaTypeInterface
      * use it if you need to restrict uploads based on file type
      * setting it as an empty array allows all file types
      * default is to allow only png and jpeg images
-     *
-     * @var array
      */
-    public static $allowedMimeTypes = array('image/jpeg', 'image/png');
+    public static array $allowedMimeTypes = array('image/jpeg', 'image/png');
     /**
      * use it to restrict uploads based on file size
      * set it to 0 to allow all sizes
@@ -39,10 +37,8 @@ class Upload extends MediaType implements RequestMediaTypeInterface
      * takes precedence so it has to be lower than or equal to that
      * default value is 1MB (1024x1024)bytes
      * usual value for the server is 8388608
-     *
-     * @var int
      */
-    public static $maximumFileSize = 1048576;
+    public static int $maximumFileSize = 1_048_576;
     /**
      * Your own validation function for validating each uploaded file
      * it can return false or throw an exception for invalid file
@@ -54,14 +50,9 @@ class Upload extends MediaType implements RequestMediaTypeInterface
     public static $customValidationFunction;
     /**
      * Since exceptions are triggered way before at the `get` stage
-     *
-     * @var bool
      */
-    public static $suppressExceptionsAsError = false;
-    /**
-     * @var ServerRequestInterface
-     */
-    private $request;
+    public static bool $suppressExceptionsAsError = false;
+    private \Psr\Http\Message\ServerRequestInterface $request;
 
     public function __construct(Convert $convert, ServerRequestInterface $request)
     {

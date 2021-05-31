@@ -25,11 +25,11 @@ use Throwable;
 
 class Router
 {
-    public static $prefixingParameterNames = [
+    public static array $prefixingParameterNames = [
         'id',
     ];
 
-    public static $formatsByName = [
+    public static array $formatsByName = [
         'email' => 'email',
         'password' => 'password',
         'phone' => 'tel',
@@ -48,68 +48,60 @@ class Router
     ];
 
     /**
-     * @var array
      * @internal
      */
-    public static $authClasses = [];
+    public static array $authClasses = [];
     /**
-     * @var array
      * @internal
      */
-    public static $preAuthFilterClasses = [];
+    public static array $preAuthFilterClasses = [];
     /**
-     * @var array
      * @internal
      */
-    public static $postAuthFilterClasses = [];
+    public static array $postAuthFilterClasses = [];
 
     /**
-     * @var array
      * @internal
      */
-    public static $requestFormatMap = [
+    public static array $requestFormatMap = [
         'default' => Json::class,
         Json::MIME => Json::class,
     ];
     /**
-     * @var array
      * @internal
      */
-    public static $responseFormatMap = [
+    public static array $responseFormatMap = [
         'default' => Json::class,
         Json::EXTENSION => Json::class,
         Json::MIME => Json::class,
         'extensions' => ['.json'],
     ];
     /**
-     * @var array
      * @internal
      */
-    public static $requestFormatOverridesMap = [];
-    public static $responseFormatOverridesMap = ['extensions' => []];
+    public static array $requestFormatOverridesMap = [];
+    public static array $responseFormatOverridesMap = ['extensions' => []];
     /**
-     * @var array
      * @internal
      */
-    public static $minimumVersion = 1;
+    public static int $minimumVersion = 1;
     /**
-     * @var int
      * @internal
      */
-    public static $maximumVersion = 1;
+    public static int $maximumVersion = 1;
 
-    public static $requestMediaTypes = [Json::MIME];
-    public static $responseMediaTypes = [Json::MIME];
+    public static array $requestMediaTypes = [Json::MIME];
+    public static array $responseMediaTypes = [Json::MIME];
 
-    public static $requestMediaTypeOverrides = [];
-    public static $responseMediaTypeOverrides = [];
-    public static $models = [];
+    public static array $requestMediaTypeOverrides = [];
+    public static array $responseMediaTypeOverrides = [];
+    public static array $models = [];
     /**
      * @var null|string class to use for caching purpose, uses Defaults when null
      */
-    public static $cacheClass = null;
-    protected static $routes = [];
-    private static $parsedScopes = [];
+    public static ?string $cacheClass = null;
+    protected static array $routes = [];
+    private static array $parsedScopes = [];
 
     public static function setApiVersion(int $maximum = 1, int $minimum = 1)
     {
@@ -476,9 +468,7 @@ class Router
                 $pathParams = $allowAmbiguity
                     ? array_filter(
                         $route->parameters,
-                        function (Param $p) {
-                            return $p->scalar && !$p->multiple;
-                        }
+                        fn(Param $p) => $p->scalar && !$p->multiple
                     )
                     : $route->filterParams(true, Param::FROM_PATH);
                 if (empty($pathParams) || $allowAmbiguity) {
@@ -817,9 +807,7 @@ class Router
             //================== wildcard routes ========================
             uksort(
                 $p['*'],
-                function ($a, $b) {
-                    return strlen($b) - strlen($a);
-                }
+                fn($a, $b) => strlen($b) - strlen($a)
             );
             foreach ($p['*'] as $key => $value) {
                 if (empty($key)) {

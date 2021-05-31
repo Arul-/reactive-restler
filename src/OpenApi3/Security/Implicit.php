@@ -6,10 +6,7 @@ namespace Luracast\Restler\OpenApi3\Security;
 
 class Implicit extends OAuth2Flow
 {
-    /**
-     * @var string
-     */
-    private $authorizationUrl;
+    private string $authorizationUrl;
 
     /**
      * Implicit OAuth2 Flow.

@@ -39,19 +39,19 @@ class GraphQL
     public const UI_GRAPHQL_PLAYGROUND = 'graphql-playground';
     public const UI_GRAPHIQL = 'graphiql';
     public const INVALID_TYPES = ['mixed', 'array'];
-    public static $UI = self::UI_GRAPHQL_PLAYGROUND;
+    public static string $UI = self::UI_GRAPHQL_PLAYGROUND;
 
-    public static $serverConfig = [
+    public static array $serverConfig = [
         'rootValue' => ['prefix' => 'You said: '],
         'queryBatching' => true,
         'debugFlag' => DebugFlag::NONE,
     ];
 
-    public static $context = [];
-    public static $definitions = [];
-    public static $mutations = [];
-    public static $queries = [];
-    public static $showDescriptions = false;
+    public static array $context = [];
+    public static array $definitions = [];
+    public static array $mutations = [];
+    public static array $queries = [];
+    public static bool $showDescriptions = false;
     /**
      * Access Control - uses Defaults::$apiAccessLevel when set to null
      *
@@ -61,23 +61,11 @@ class GraphQL
      *      value of 2 = protected api using `@access protected` comment
      *      value of 3 = protected api using `protected function` method
      */
-    public static $apiAccessLevel = null;
-    /**
-     * @var array
-     */
-    private static $authClasses;
-    /**
-     * @var Restler
-     */
-    private $restler;
-    /**
-     * @var StaticProperties
-     */
-    private $graphQL;
-    /**
-     * @var ServerRequestInterface
-     */
-    private $request;
+    public static ?int $apiAccessLevel = null;
+    private static ?array $authClasses = null;
+    private \Luracast\Restler\Restler $restler;
+    private \Luracast\Restler\StaticProperties $graphQL;
+    private \Psr\Http\Message\ServerRequestInterface $request;
 
     public function __construct(Restler $restler, StaticProperties $graphQL, ServerRequestInterface $request)
     {

@@ -10,7 +10,7 @@ use Luracast\Restler\ResponseHeaders;
 
 class Plist extends Dependent implements RequestMediaTypeInterface, ResponseMediaTypeInterface
 {
-    public static $compact = null;
+    public static ?bool $compact = null;
 
     /**
      * @return array {@type associative}

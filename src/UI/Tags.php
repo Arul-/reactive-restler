@@ -26,15 +26,15 @@ use Countable;
  */
 class Tags implements ArrayAccess, Countable
 {
-    public static $humanReadable = true;
+    public static bool $humanReadable = true;
     public static $initializer = null;
-    protected static $instances = [];
-    public $prefix = '';
-    public $indent = '    ';
+    protected static array $instances = [];
+    public string $prefix = '';
+    public string $indent = '    ';
     public $tag;
-    protected $attributes = [];
+    protected array $attributes = [];
     protected $children = [];
-    protected $_parent;
+    protected ?self $_parent = null;
 
     final public function __construct($name = null, array $children = [])
     {

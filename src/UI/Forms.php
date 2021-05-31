@@ -39,13 +39,13 @@ class Forms implements FilterInterface, SelectivePathsInterface
 
     public const FORM_KEY = 'form_key';
 
-    public static $filterFormRequestsOnly = false;
+    public static bool $filterFormRequestsOnly = false;
     public static $style;
     /**
      * @var bool should we fill up the form using given data?
      */
-    public static $preFill = true;
-    protected $inputTypes = [
+    public static bool $preFill = true;
+    protected array $inputTypes = [
         'hidden',
         'password',
         'button',
@@ -72,32 +72,17 @@ class Forms implements FilterInterface, SelectivePathsInterface
         'url',
         'week',
     ];
-    protected $fileUpload = false;
-    private $key = [];
+    protected bool $fileUpload = false;
+    private array $key = [];
     /**
      * @var Route;
      */
-    private $route;
-    /**
-     * @var Route
-     */
-    private $currentRoute;
-    /**
-     * @var Restler
-     */
-    private $restler;
-    /**
-     * @var StaticProperties
-     */
-    private $forms;
-    /**
-     * @var SessionInterface
-     */
-    private $session;
-    /**
-     * @var UserIdentificationInterface
-     */
-    private $user;
+    private ?\Luracast\Restler\Data\Route $route = null;
+    private \Luracast\Restler\Data\Route $currentRoute;
+    private \Luracast\Restler\Restler $restler;
+    private \Luracast\Restler\StaticProperties $forms;
+    private \Luracast\Restler\Contracts\SessionInterface $session;
+    private \Luracast\Restler\Contracts\UserIdentificationInterface $user;
 
     public function __construct(
         Restler $restler,

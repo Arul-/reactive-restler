@@ -8,7 +8,7 @@ use Luracast\Restler\Utils\Text;
 
 abstract class OAuth2Flow
 {
-    protected $scopes = [];
+    protected array $scopes = [];
     protected $refreshUrl;
 
     public function toArray(string $basePath = '/')

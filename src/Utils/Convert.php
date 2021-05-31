@@ -15,7 +15,7 @@ class Convert
      *                          will be converted to integers intval function
      *      'password'=> null   will remove all the password entries
      */
-    public static $fix = array();
+    public static array $fix = array();
     /**
      * @var bool|callable
      */
@@ -38,20 +38,17 @@ class Convert
      *    'my'=>array('object'=>true)
      * );
      */
-    public static $separatorChar = null;
+    public static ?string $separatorChar = null;
     /**
      * @var bool set it to true when empty arrays, blank strings, null values
      * to be automatically removed from response
      */
-    public static $removeEmpty = false;
+    public static bool $removeEmpty = false;
     /**
      * @var bool set it to true to remove all null values from the result
      */
-    public static $removeNull = false;
-    /**
-     * @var StaticProperties
-     */
-    private $convert;
+    public static bool $removeNull = false;
+    private \Luracast\Restler\StaticProperties $convert;
 
     public function __construct(StaticProperties $convert)
     {

@@ -16,15 +16,9 @@ use function React\Promise\resolve;
 
 class StaticFiles implements MiddlewareInterface
 {
-    /**
-     * @var string
-     */
-    private $webRoot;
+    private string $webRoot;
 
-    /**
-     * @var string
-     */
-    private static $basePath = '';
+    private static string $basePath = '';
 
     public function __construct(string $webRoot)
     {
