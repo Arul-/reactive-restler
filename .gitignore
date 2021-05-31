@@ -11,3 +11,8 @@ psysh
 behat-guzzle-cookie-data.json
 /build/
 /enc/
+bref
+carbon
+ecs
+phpstan
+rector
