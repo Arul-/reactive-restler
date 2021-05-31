@@ -62,13 +62,13 @@ class UserIdentifier implements UserIdentificationInterface, JsonSerializable
         'Googlebot' => 'Googlebot',
     ];
 
-    public static $headersToInspect = self::HEADERS_COMMON;
-    public static $attributesToInspect = ['client_ip', 'ip'];
-    protected $id = null;
-    protected $cacheId = null;
-    protected $ipAddress;
-    protected $browser = 'Unknown';
-    protected $platform = 'Unknown';
+    public static array $headersToInspect = self::HEADERS_COMMON;
+    public static array $attributesToInspect = ['client_ip', 'ip'];
+    protected ?string $id = null;
+    protected ?string $cacheId = null;
+    protected ?string $ipAddress;
+    protected string $browser = 'Unknown';
+    protected string $platform = 'Unknown';
     /**
      * @var ServerRequestInterface
      */
