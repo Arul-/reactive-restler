@@ -1,4 +1,5 @@
 <?php
+
 namespace Luracast\Restler\Contracts;
 
 /**
@@ -40,18 +41,18 @@ interface UserIdentificationInterface
      *
      * @return void
      */
-    public function setUniqueIdentifier(string $id);
+    public function setUniqueIdentifier(string $id): void;
 
     /**
      * User identity for caching purpose
      *
      * In a role based access control system this will be based on role
      *
-     * @param $id
+     * @param string $id
      *
      * @return void
      */
-    public function setCacheIdentifier(string $id);
+    public function setCacheIdentifier(string $id): void;
 
     public function getPlatform(): ?string;
 

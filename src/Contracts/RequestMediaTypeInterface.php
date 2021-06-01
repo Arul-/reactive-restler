@@ -1,4 +1,5 @@
 <?php
+
 namespace Luracast\Restler\Contracts;
 
 interface RequestMediaTypeInterface extends MediaTypeInterface

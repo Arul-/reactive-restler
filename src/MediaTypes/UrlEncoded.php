@@ -27,7 +27,7 @@ class UrlEncoded extends MediaType implements RequestMediaTypeInterface, Respons
         return http_build_query(static::encoderTypeFix($data));
     }
 
-    public function decode(string $data)
+    public function decode(string $data): array
     {
         $r = $this->request->getParsedBody();
         if (empty($r)) {
@@ -36,7 +36,7 @@ class UrlEncoded extends MediaType implements RequestMediaTypeInterface, Respons
         return self::decoderTypeFix($r);
     }
 
-    public static function encoderTypeFix(array $data)
+    public static function encoderTypeFix(array $data): array
     {
         foreach ($data as $k => $v) {
             if (is_bool($v)) {
@@ -48,7 +48,7 @@ class UrlEncoded extends MediaType implements RequestMediaTypeInterface, Respons
         return $data;
     }
 
-    public static function decoderTypeFix(array $data)
+    public static function decoderTypeFix(array $data): array
     {
         foreach ($data as $k => $v) {
             if ($v === 'true' || $v === 'false') {

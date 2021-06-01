@@ -1,4 +1,5 @@
 <?php
+
 namespace Luracast\Restler\MediaTypes;
 
 
@@ -23,7 +24,7 @@ class Plist extends Dependent implements RequestMediaTypeInterface, ResponseMedi
         ];
     }
 
-    public static function supportedMediaTypes()
+    public static function supportedMediaTypes(): array
     {
         return [
             'application/xml' => 'plist',

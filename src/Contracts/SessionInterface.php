@@ -9,6 +9,8 @@ use SessionIdInterface;
 
 interface SessionInterface extends Iterator
 {
+    public function __construct(SessionHandlerInterface $handler, SessionIdInterface $sessionId, string $id = '');
+
     public function get(string $name);
 
     public function has(string $name): bool;
@@ -24,8 +26,6 @@ interface SessionInterface extends Iterator
     public function setFlash(string $name, $value): bool;
 
     public function unsetFlash(string $name): bool;
-
-    public function __construct(SessionHandlerInterface $handler, SessionIdInterface $sessionId, string $id = '');
 
     public function getId(): string;
 

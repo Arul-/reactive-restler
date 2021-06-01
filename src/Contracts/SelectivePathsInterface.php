@@ -15,7 +15,7 @@ interface SelectivePathsInterface
 
     /**
      * Paths to be excluded from the process
-     * @param string[] ...$excluded
+     * @param string[] $excluded
      * @return void
      * @private
      */

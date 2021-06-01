@@ -7,13 +7,13 @@ trait SelectivePathsTrait
     /**
      * @var array paths where rate limit has to be applied
      */
-    private static $includedPaths = [''];
+    private static array $includedPaths = [''];
 
     /**
      * @var array all paths beginning with any of the following will be excluded
      * from rate limiting
      */
-    private static $excludedPaths = [];
+    private static array $excludedPaths = [];
 
     public static function isPathSelected(string $path): bool
     {

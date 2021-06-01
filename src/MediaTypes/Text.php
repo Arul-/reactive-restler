@@ -16,9 +16,9 @@ class Text extends MediaType implements ResponseMediaTypeInterface
      * @param array|object $data
      * @param ResponseHeaders $responseHeaders
      * @param bool $humanReadable
-     * @return string|resource|StreamInterface
+     * @return string
      */
-    public function encode($data, ResponseHeaders $responseHeaders, bool $humanReadable = false)
+    public function encode($data, ResponseHeaders $responseHeaders, bool $humanReadable = false): string
     {
         if (!is_string($data) || (is_object($data) && !method_exists($data, '__toString'))) {
             $data = json_encode($data);

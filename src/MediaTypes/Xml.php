@@ -56,7 +56,7 @@ class Xml extends MediaType implements RequestMediaTypeInterface, ResponseMediaT
      *
      * @return string PHP source code to reproduce the configuration
      */
-    public static function exportCurrentSettings()
+    public static function exportCurrentSettings(): string
     {
         $s = 'XmlMediaType::$rootName = "' . (self::$rootName) . "\";\n";
         $s .= 'XmlMediaType::$attributeNames = ' .

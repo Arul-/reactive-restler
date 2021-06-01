@@ -10,10 +10,10 @@ class Csv extends MediaType implements StreamingRequestMediaTypeInterface, Respo
 {
     public const MIME = 'text/csv';
     public const EXTENSION = 'csv';
-    public static $delimiter = ',';
-    public static $enclosure = '"';
-    public static $escape = '\\';
-    public static $haveHeaders = null;
+    public static string $delimiter = ',';
+    public static string $enclosure = '"';
+    public static string $escape = '\\';
+    public static ?bool $haveHeaders = null;
 
     public function decode(string $data)
     {

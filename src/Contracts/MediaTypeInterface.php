@@ -10,7 +10,7 @@ interface MediaTypeInterface
      * @return array list of mime strings for the format
      * @example array('application/json'=>'json');
      */
-    public static function supportedMediaTypes();
+    public static function supportedMediaTypes(): array;
 
     public function mediaType(string $type = null);
 

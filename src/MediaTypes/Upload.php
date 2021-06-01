@@ -45,14 +45,14 @@ class Upload extends MediaType implements RequestMediaTypeInterface
      * use anonymous function / closure in PHP 5.3 and above
      * use function name in other cases
      *
-     * @var Callable
+     * @var Callable|null
      */
     public static $customValidationFunction;
     /**
      * Since exceptions are triggered way before at the `get` stage
      */
     public static bool $suppressExceptionsAsError = false;
-    private \Psr\Http\Message\ServerRequestInterface $request;
+    private ServerRequestInterface $request;
 
     public function __construct(Convert $convert, ServerRequestInterface $request)
     {
@@ -68,7 +68,7 @@ class Upload extends MediaType implements RequestMediaTypeInterface
     public function decode(string $data)
     {
         $doMimeCheck = !empty(self::$allowedMimeTypes);
-        $doSizeCheck = self::$maximumFileSize ? true : false;
+        $doSizeCheck = (bool)self::$maximumFileSize;
         $result = UrlEncoded::decoderTypeFix($this->request->getParsedBody() ?? []);
         //validate
         $files = $this->request->getUploadedFiles();
@@ -89,8 +89,8 @@ class Upload extends MediaType implements RequestMediaTypeInterface
      */
     protected static function checkFile(
         UploadedFileInterface $file,
-        $doMimeCheck = false,
-        $doSizeCheck = false
+        bool $doMimeCheck = false,
+        bool $doSizeCheck = false
     ): UploadedFileInterface {
         try {
             if ($error = $file->getError()) {

@@ -1,4 +1,5 @@
 <?php
+
 namespace Luracast\Restler\MediaTypes;
 
 use Luracast\Restler\Contracts\MediaTypeInterface;
@@ -21,10 +22,10 @@ abstract class MediaType implements MediaTypeInterface, SelectivePathsInterface
      */
     public const EXTENSION = 'txt';
 
-    protected $mime;
-    protected $extension;
+    protected ?string $mime = null;
+    protected ?string $extension = null;
     protected string $charset = 'utf-8';
-    protected \Luracast\Restler\Utils\Convert $convert;
+    protected Convert $convert;
 
     public function __construct(Convert $convert)
     {
@@ -32,16 +33,8 @@ abstract class MediaType implements MediaTypeInterface, SelectivePathsInterface
     }
 
     /**
-     * Get MIME type => Extension mappings as an associative array
-     *
-     * @return array list of mime strings for the MediaType
-     * @example array('application/json'=>'json');
+     * @throws HttpException
      */
-    public static function supportedMediaTypes()
-    {
-        return [static::MIME => static::EXTENSION];
-    }
-
     public function mediaType(string $type = null)
     {
         if (is_null($type)) {
@@ -64,6 +57,20 @@ abstract class MediaType implements MediaTypeInterface, SelectivePathsInterface
         throw new HttpException(500, "Invalid Media Type `$type`");
     }
 
+    /**
+     * Get MIME type => Extension mappings as an associative array
+     *
+     * @return array list of mime strings for the MediaType
+     * @example array('application/json'=>'json');
+     */
+    public static function supportedMediaTypes(): array
+    {
+        return [static::MIME => static::EXTENSION];
+    }
+
+    /**
+     * @throws HttpException
+     */
     public function extension(string $extension = null)
     {
         if (is_null($extension)) {

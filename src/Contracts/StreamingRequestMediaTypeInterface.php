@@ -1,4 +1,5 @@
 <?php
+
 namespace Luracast\Restler\Contracts;
 
 
@@ -9,5 +10,5 @@ interface StreamingRequestMediaTypeInterface extends RequestMediaTypeInterface
      *
      * @return array {@type associative}
      */
-    public function streamDecode($resource);
+    public function streamDecode($resource): array;
 }

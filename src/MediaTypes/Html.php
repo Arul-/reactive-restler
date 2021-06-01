@@ -66,8 +66,8 @@ class Html extends MediaType implements ResponseMediaTypeInterface
      */
     public static array $data = [];
     /**
-     * @var string set it to the location of your the view files. Defaults to
-     * views folder which is same level as vendor directory.
+     * @var string|null set it to the location of your the view files.
+     * Defaults to views folder which is same level as vendor directory.
      */
     public static ?string $viewPath = null;
     /**
@@ -81,13 +81,13 @@ class Html extends MediaType implements ResponseMediaTypeInterface
     /**
      * /**
      */
-    private \Luracast\Restler\Restler $restler;
-    private \Luracast\Restler\StaticProperties $html;
-    private \Luracast\Restler\StaticProperties $defaults;
-    private \Luracast\Restler\Contracts\ContainerInterface $container;
-    private \Luracast\Restler\Contracts\SessionInterface $session;
-    private \Psr\Http\Message\ServerRequestInterface $request;
-    private \Luracast\Restler\Data\Route $route;
+    private Restler $restler;
+    private StaticProperties $html;
+    private StaticProperties $defaults;
+    private ContainerInterface $container;
+    private SessionInterface $session;
+    private ServerRequestInterface $request;
+    private Route $route;
 
     public function __construct(
         Restler $restler,

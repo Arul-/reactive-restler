@@ -8,7 +8,10 @@ use Luracast\Restler\Exceptions\HttpException;
 
 trait DependentTrait
 {
-    protected static function checkDependencies()
+    /**
+     * @throws HttpException
+     */
+    protected static function checkDependencies(): void
     {
         foreach (static::dependencies() as $className => $package) {
             if (!class_exists($className, true)) {

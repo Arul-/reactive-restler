@@ -37,6 +37,14 @@ class Spreadsheet extends Dependent implements DownloadableFileMediaTypeInterfac
 
     /**
      * @inheritDoc
+     * @param $data
+     * @param ResponseHeaders $responseHeaders
+     * @param bool $humanReadable
+     * @return false|string
+     * @throws HttpException
+     * @throws \Box\Spout\Common\Exception\IOException
+     * @throws \Box\Spout\Common\Exception\UnsupportedTypeException
+     * @throws \Box\Spout\Writer\Exception\WriterNotOpenedException
      */
     public function encode($data, ResponseHeaders $responseHeaders, bool $humanReadable = false)
     {
