@@ -3,6 +3,7 @@
 namespace OAuth2;
 
 
+use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\Utils\ClassName;
 use Luracast\Restler\Utils\Text;
 use Psr\Http\Message\ResponseInterface as PSRResponse;
@@ -52,24 +53,7 @@ class Convert
         );
     }
 
-    final public static function toPSR7(Response $oauthrResponse): PSRResponse
-    {
-        $headers = [];
-        foreach ($oauthrResponse->getHttpHeaders() as $key => $value) {
-            $headers[$key] = explode(', ', $value);
-        }
-        $body = '';
-
-        if (!empty($oauthrResponse->getParameters())) {
-            $body = $oauthrResponse->getResponseBody();
-        }
-        $class = ClassName::get(PSRResponse::class);
-        $response = new $class($oauthrResponse->getStatusCode(), $headers, (string)$body);
-
-        return $response;
-    }
-
-    public static function multipartFormData(string $rawBody, string $contentType)
+    public static function multipartFormData(string $rawBody, string $contentType): array
     {
         $post = [];
         $files = [];
@@ -108,12 +92,8 @@ class Convert
                                 'file_size' => strlen($boundary_value),
                             );
                             continue 2;
-                        } // Is post field.
-                        else {
-                            // Parse $_POST.
-                            if (preg_match('/name="(.*?)"$/', $header_value, $match)) {
-                                $post[$match[1]] = $boundary_value;
-                            }
+                        } elseif (preg_match('/name="(.*?)"$/', $header_value, $match)) {
+                            $post[$match[1]] = $boundary_value;
                         }
                         break;
                     case "content-type":
@@ -127,7 +107,41 @@ class Convert
         return $post;
     }
 
-    private static function serverParameters(ServerRequestInterface $psrRequest)
+    /**
+     * Convert a PSR-7 uploaded files structure to a $_FILES structure.
+     *
+     * @param array $uploadedFiles Array of file objects.
+     *
+     * @return array
+     */
+    private static function convertUploadedFiles(array $uploadedFiles): array
+    {
+        $files = [];
+        foreach ($uploadedFiles as $name => $uploadedFile) {
+            if (!is_array($uploadedFile)) {
+                $files[$name] = self::convertUploadedFile($uploadedFile);
+                continue;
+            }
+            $files[$name] = [];
+            foreach ($uploadedFile as $file) {
+                $files[$name][] = self::convertUploadedFile($file);
+            }
+        }
+        return $files;
+    }
+
+    private static function convertUploadedFile(UploadedFileInterface $uploadedFile): array
+    {
+        return [
+            'name' => $uploadedFile->getClientFilename(),
+            'type' => $uploadedFile->getClientMediaType(),
+            'size' => $uploadedFile->getSize(),
+            'tmp_name' => $uploadedFile->getStream()->getMetadata('uri'),
+            'error' => $uploadedFile->getError(),
+        ];
+    }
+
+    private static function serverParameters(ServerRequestInterface $psrRequest): array
     {
         $params = $psrRequest->getServerParams();
         if (!isset($params['REQUEST_METHOD'])) {
@@ -150,7 +164,7 @@ class Convert
      *
      * @return array The cleaned headers
      */
-    private static function cleanupHeaders(array $uncleanHeaders = [])
+    private static function cleanupHeaders(array $uncleanHeaders = []): array
     {
         $cleanHeaders = [];
         $headerMap = [
@@ -170,37 +184,21 @@ class Convert
     }
 
     /**
-     * Convert a PSR-7 uploaded files structure to a $_FILES structure.
-     *
-     * @param array $uploadedFiles Array of file objects.
-     *
-     * @return array
+     * @throws HttpException
      */
-    private static function convertUploadedFiles(array $uploadedFiles)
+    final public static function toPSR7(Response $oauthResponse): PSRResponse
     {
-        $files = [];
-        foreach ($uploadedFiles as $name => $uploadedFile) {
-            if (!is_array($uploadedFile)) {
-                $files[$name] = self::convertUploadedFile($uploadedFile);
-                continue;
-            }
-            $files[$name] = [];
-            foreach ($uploadedFile as $file) {
-                $files[$name][] = self::convertUploadedFile($file);
-            }
+        $headers = [];
+        foreach ($oauthResponse->getHttpHeaders() as $key => $value) {
+            $headers[$key] = explode(', ', $value);
         }
-        return $files;
-    }
+        $body = '';
 
-    private static function convertUploadedFile(UploadedFileInterface $uploadedFile)
-    {
-        return [
-            'name' => $uploadedFile->getClientFilename(),
-            'type' => $uploadedFile->getClientMediaType(),
-            'size' => $uploadedFile->getSize(),
-            'tmp_name' => $uploadedFile->getStream()->getMetadata('uri'),
-            'error' => $uploadedFile->getError(),
-        ];
+        if (!empty($oauthResponse->getParameters())) {
+            $body = $oauthResponse->getResponseBody();
+        }
+        $class = ClassName::get(PSRResponse::class);
+        return new $class($oauthResponse->getStatusCode(), $headers, (string)$body);
     }
 
 }

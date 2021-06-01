@@ -96,7 +96,7 @@ class Restler extends Core
     public function handleMiddleware(
         array $middleware,
         ServerRequestInterface $request,
-        $position = 0
+        int $position = 0
     ): PromiseInterface {
         // final request handler will be invoked without a next handler
         if (!isset($middleware[$position + 1])) {

@@ -170,8 +170,8 @@ class Defaults
      * If set to true, Restler::handle() will return the response as a string.
      * If set to false, Restler::handle() will echo the response and die.
      * When set to null, it will try to be smart so that
-     * Restler::handle() will return the response when request is provided else e
-     * cho and die
+     * Restler::handle() will return the response when request is provided else
+     * echo and die
      */
     public static ?bool $returnResponse = null;
 

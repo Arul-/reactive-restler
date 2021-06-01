@@ -22,7 +22,6 @@ class Psr7 extends Http
      */
     public static function decode($recv_buffer, TcpConnection $connection)
     {
-        /** @var Request $r */
         $r = parent::decode($recv_buffer, $connection);
         $class = ClassName::get(ServerRequestInterface::class);
         /** @var ServerRequestInterface $request */

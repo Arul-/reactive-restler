@@ -7,6 +7,7 @@ namespace Lambda;
 
 use Bref\Context\Context;
 use Bref\Event\Http\HttpRequestEvent;
+use Bref\Event\InvalidLambdaEvent;
 use GuzzleHttp\Psr7\ServerRequest;
 use GuzzleHttp\Psr7\UploadedFile;
 use Luracast\Restler\Utils\Text;
@@ -23,6 +24,9 @@ class Convert
         'image/gif',
     ];
 
+    /**
+     * @throws InvalidLambdaEvent
+     */
     final public static function toPSR7(array $payload, array $headers): ServerRequestInterface
     {
         $event = new HttpRequestEvent($payload);
@@ -34,7 +38,7 @@ class Convert
         );
 
         [$files, $parsedBody] = self::parseBodyAndUploadedFiles($event);
-        $reqContect = $event->getRequestContext();
+        $reqContext = $event->getRequestContext();
         $server = [
             'SERVER_PROTOCOL' => $event->getProtocolVersion(),
             'REQUEST_METHOD' => $event->getMethod(),
@@ -42,8 +46,8 @@ class Convert
             'REQUEST_TIME_FLOAT' => microtime(true),
             'QUERY_STRING' => $event->getQueryString(),
             'DOCUMENT_ROOT' => getcwd(),
-            'REQUEST_URI' => $reqContect['path'], //'/dev' . $event->getUri(),
-            'SCRIPT_NAME' => '/' . $reqContect['stage'] . '/index.php', //'/dev/index.php'
+            'REQUEST_URI' => $reqContext['path'], //'/dev' . $event->getUri(),
+            'SCRIPT_NAME' => '/' . $reqContext['stage'] . '/index.php', //'/dev/index.php'
         ];
 
         $headers = $event->getHeaders();
@@ -57,9 +61,9 @@ class Convert
             $headers['x-forwarded-proto'][0] ?? 'https',
             $event->getServerName(),
             $event->getServerPort(),
-            Text::beginsWith($event->getUri(), '/' . $reqContect['stage'])
+            Text::beginsWith($event->getUri(), '/' . $reqContext['stage'])
                 ? $event->getUri()
-                : $reqContect['path']
+                : $reqContext['path']
         );
 
 
