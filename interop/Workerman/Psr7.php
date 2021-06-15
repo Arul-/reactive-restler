@@ -15,14 +15,14 @@ class Psr7 extends Http
     /**
      * Parse $_POST、$_GET、$_COOKIE.
      *
-     * @param string $recv_buffer
+     * @param string $buffer
      * @param TcpConnection $connection
      * @return ServerRequestInterface
      * @throws HttpException
      */
-    public static function decode($recv_buffer, TcpConnection $connection)
+    public static function decode($buffer, TcpConnection $connection)
     {
-        $r = parent::decode($recv_buffer, $connection);
+        $r = parent::decode($buffer, $connection);
         $class = ClassName::get(ServerRequestInterface::class);
         /** @var ServerRequestInterface $request */
         $request = new $class(
