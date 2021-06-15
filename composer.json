@@ -91,11 +91,11 @@
     "process-timeout": 0
   },
   "scripts": {
-    "test": "behat --stop-on-failure --profile=default --colors",
-    "serve": "php -S 0.0.0.0:8080 -t public server.php",
-    "react-server": "php public/index_react.php",
-    "swoole-server": "php public/index_swoole.php",
-    "workerman-server": "php public/index_workerman.php start",
+    "test": "@php behat --stop-on-failure --profile=default --colors",
+    "serve": "@php -S 0.0.0.0:8080 -t public server.php",
+    "react-server": "@php public/index_react.php",
+    "swoole-server": "@php public/index_swoole.php",
+    "workerman-server": "@php public/index_workerman.php start",
     "permissions": "sudo chmod -R 0777 api/common/store"
   },
   "scripts-descriptions": {
