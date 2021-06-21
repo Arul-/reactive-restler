@@ -167,7 +167,7 @@ class UserIdentifier implements UserIdentificationInterface, JsonSerializable
      *
      * In a role based access control system this will be based on role
      *
-     * @param $id
+     * @param string $id
      *
      * @return void
      */
@@ -183,7 +183,7 @@ class UserIdentifier implements UserIdentificationInterface, JsonSerializable
 
     public function getBrowser(): ?string
     {
-        $this->browser;
+        return $this->browser;
     }
 
     public function jsonSerialize()

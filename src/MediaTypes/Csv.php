@@ -1,4 +1,5 @@
 <?php
+
 namespace Luracast\Restler\MediaTypes;
 
 use Luracast\Restler\Contracts\ResponseMediaTypeInterface;
@@ -44,12 +45,46 @@ class Csv extends MediaType implements StreamingRequestMediaTypeInterface, Respo
         return $decoded;
     }
 
+    protected static function getRow($data, $keys = false)
+    {
+        if (empty($data)) {
+            return false;
+        }
+        $line = str_getcsv(
+            $data,
+            static::$delimiter,
+            static::$enclosure,
+            static::$escape
+        );
+
+        $row = array();
+        foreach ($line as $key => $value) {
+            if (is_numeric($value)) {
+                $value = floatval($value);
+            }
+            if ($keys) {
+                if (isset($keys [$key])) {
+                    $row [$keys [$key]] = $value;
+                }
+            } else {
+                $row [$key] = $value;
+            }
+        }
+        if ($keys) {
+            for ($i = count($row); $i < count($keys); $i++) {
+                $row[$keys[$i]] = null;
+            }
+        }
+
+        return $row;
+    }
+
     /**
      * @param $resource resource for a data stream
      *
      * @return array {@type associative}
      */
-    public function streamDecode($resource)
+    public function streamDecode($resource): array
     {
         $decoded = array();
 
@@ -89,40 +124,6 @@ class Csv extends MediaType implements StreamingRequestMediaTypeInterface, Respo
             return implode(PHP_EOL, $lines) . PHP_EOL;
         }
         throw new HttpException(500, 'Unsupported data for ' . strtoupper(static::EXTENSION) . ' MediaType');
-    }
-
-    protected static function getRow($data, $keys = false)
-    {
-        if (empty($data)) {
-            return false;
-        }
-        $line = str_getcsv(
-            $data,
-            static::$delimiter,
-            static::$enclosure,
-            static::$escape
-        );
-
-        $row = array();
-        foreach ($line as $key => $value) {
-            if (is_numeric($value)) {
-                $value = floatval($value);
-            }
-            if ($keys) {
-                if (isset($keys [$key])) {
-                    $row [$keys [$key]] = $value;
-                }
-            } else {
-                $row [$key] = $value;
-            }
-        }
-        if ($keys) {
-            for ($i = count($row); $i < count($keys); $i++) {
-                $row[$keys[$i]] = null;
-            }
-        }
-
-        return $row;
     }
 
     protected static function putRow($data)
