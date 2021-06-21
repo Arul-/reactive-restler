@@ -3,14 +3,14 @@
 
 use Luracast\Restler\OpenApi3\Explorer;
 use Luracast\Restler\Restler;
-use Luracast\Restler\Router;
+use Luracast\Restler\Routes;
 
 define('BASE', __DIR__ . '/../../..');
 include BASE . "/vendor/autoload.php";
 
-Router::addAuthenticator(AccessControl::class);
+Routes::addAuthenticator(AccessControl::class);
 
-Router::mapApiClasses([
+Routes::mapApiClasses([
     '' => Access::class,
     Explorer::class
 ]);

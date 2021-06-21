@@ -18,7 +18,7 @@ use Luracast\Restler\Data\Route;
 use Luracast\Restler\Defaults;
 use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\Restler;
-use Luracast\Restler\Router;
+use Luracast\Restler\Routes;
 use Luracast\Restler\StaticProperties;
 use Luracast\Restler\Utils\ClassName;
 use Luracast\Restler\Utils\CommentParser;
@@ -154,7 +154,7 @@ class GraphQL
                         }
                     }
                     if (is_null($scope)) {
-                        $scope = Router::scope($class);
+                        $scope = Routes::scope($class);
                     }
                     static::addMethod($method, $name, $metadata, $scope);
                 }

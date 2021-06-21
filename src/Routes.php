@@ -23,7 +23,7 @@ use ReflectionClass;
 use ReflectionMethod;
 use Throwable;
 
-class Router
+class Routes
 {
     public static array $prefixingParameterNames = [
         'id',
@@ -622,7 +622,7 @@ class Router
                 function ($matches) use ($route): string {
                     $match = trim($matches[0], '{}:');
                     $param = $route->parameters[$match];
-                    return '{' . Router::typeChar($param->type) . $param->index . '}';
+                    return '{' . Routes::typeChar($param->type) . $param->index . '}';
                 },
                 $route->url
             );

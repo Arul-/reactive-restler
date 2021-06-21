@@ -73,8 +73,8 @@ abstract class Core
      * @var StaticProperties
      */
     protected $config;
-    protected ?\Luracast\Restler\StaticProperties $defaults = null;
-    protected ?\Luracast\Restler\StaticProperties $router = null;
+    protected ?StaticProperties $defaults = null;
+    protected ?StaticProperties $routes = null;
     /**
      * @var int for calculating execution time
      */
@@ -105,7 +105,7 @@ abstract class Core
         $this->config = &$config;
 
         $this->config['defaults'] = $this->defaults = new StaticProperties(Defaults::class);
-        $this->config['router'] = $this->router = new StaticProperties(Router::class);
+        $this->config['routes'] = $this->routes = new StaticProperties(Routes::class);
 
         if ($container) {
             $container->init($config);
@@ -196,8 +196,8 @@ abstract class Core
         $path = $uri->getPath();
         $path = str_replace(
             array_merge(
-                $this->router->responseFormatMap['extensions'],
-                $this->router->responseFormatOverridesMap['extensions']
+                $this->routes->responseFormatMap['extensions'],
+                $this->routes->responseFormatOverridesMap['extensions']
             ),
             '',
             trim($path, $slash)
@@ -214,13 +214,13 @@ abstract class Core
         }
         if (Defaults::$useUrlBasedVersioning && strlen($path) && $path[0] == 'v') {
             $version = intval(substr($path, 1));
-            if ($version && $version <= $this->router->maximumVersion) {
+            if ($version && $version <= $this->routes->maximumVersion) {
                 $this->requestedApiVersion = $version;
                 $path = explode($slash, $path, 2);
                 $path = count($path) == 2 ? $path[1] : '';
             }
         } else {
-            $this->requestedApiVersion = $this->router->minimumVersion;
+            $this->requestedApiVersion = $this->routes->minimumVersion;
         }
         return $path;
     }
@@ -280,14 +280,14 @@ abstract class Core
             $mime = strtok($contentType, ';');
             if ($mime == UrlEncoded::MIME) {
                 $format = $this->make(UrlEncoded::class, null);
-            } elseif (isset($this->router->requestFormatMap[$mime])) {
-                $format = $this->make($this->router->requestFormatMap[$mime], null);
+            } elseif (isset($this->routes->requestFormatMap[$mime])) {
+                $format = $this->make($this->routes->requestFormatMap[$mime], null);
                 $format->mediaType($mime);
-            } elseif (!$this->requestFormatDiffered && isset($this->router->requestFormatOverridesMap[$mime])) {
+            } elseif (!$this->requestFormatDiffered && isset($this->routes->requestFormatOverridesMap[$mime])) {
                 //if our api method is not using an @format comment
                 //to point to this $mime, we need to throw 403 as in below
                 //but since we don't know that yet, we need to defer that here
-                $format = $this->make($this->router->requestFormatOverridesMap[$mime], null);
+                $format = $this->make($this->routes->requestFormatOverridesMap[$mime], null);
                 $format->mediaType($mime);
                 $this->requestFormatDiffered = true;
             } else {
@@ -298,7 +298,7 @@ abstract class Core
             }
         }
         if (!$format) {
-            $format = $this->make($this->router->requestFormatMap['default'], null);
+            $format = $this->make($this->routes->requestFormatMap['default'], null);
         }
         return $format;
     }
@@ -338,7 +338,7 @@ abstract class Core
      */
     protected function route(ServerRequestInterface $request): void
     {
-        $this->_route = $o = Router::find(
+        $this->_route = $o = Routes::find(
             $this->_path,
             $this->_requestMethod,
             $request,
@@ -369,7 +369,7 @@ abstract class Core
      */
     protected function negotiateResponseMediaType(string $path, string $acceptHeader = ''): ResponseMediaTypeInterface
     {
-        $map = $this->_route->responseFormatMap ?? $this->router->responseFormatMap;
+        $map = $this->_route->responseFormatMap ?? $this->routes->responseFormatMap;
         // check if client has specified an extension
         /** @var $format ResponseMediaTypeInterface */
         $format = null;
@@ -404,8 +404,8 @@ abstract class Core
                             //check the MIME and extract version
                             $version = intval(substr($mime, strlen($vendor)));
 
-                            if ($version >= $this->router->minimumVersion &&
-                                $version <= $this->router->maximumVersion) {
+                            if ($version >= $this->routes->minimumVersion &&
+                                $version <= $this->routes->maximumVersion) {
                                 $this->requestedApiVersion = $version;
                                 $format = $this->make($map[$extension], null);
                                 $mediatype = str_replace(

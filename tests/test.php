@@ -3,13 +3,13 @@
 use Luracast\Restler\Defaults;
 use Luracast\Restler\Core;
 use Luracast\Restler\Restler;
-use Luracast\Restler\Router;
+use Luracast\Restler\Routes;
 
 include __DIR__ . "/../vendor/autoload.php";
 
 Defaults::$apiVendor = 'SomeVendor';
-Router::setApiVersion(2);
-Router::$responseFormatMap = [
+Routes::setApiVersion(2);
+Routes::$responseFormatMap = [
     'default' => 'Luracast\\Restler\\MediaTypes\\Json',
     'json' => 'Luracast\\Restler\\MediaTypes\\Json',
     'application/json' => 'Luracast\\Restler\\MediaTypes\\Json',

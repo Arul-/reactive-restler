@@ -5,7 +5,7 @@ namespace Luracast\Restler\UI;
 use Luracast\Restler\Core;
 use Luracast\Restler\Data\Route;
 use Luracast\Restler\Restler;
-use Luracast\Restler\Router;
+use Luracast\Restler\Routes;
 use Luracast\Restler\Utils\Text;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -78,7 +78,7 @@ class Nav
                 : $activeTrail;
             static::addUrls(static::$prepends);
             $version = $this->restler->requestedApiVersion;
-            $map = Router::findAll(
+            $map = Routes::findAll(
                 $this->request,
                 [$this->restler, 'make'],
                 static::$excludedPaths,

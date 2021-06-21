@@ -9,7 +9,7 @@ use GraphQL\Type\Definition\ObjectType;
 use GraphQL\Type\Definition\Type as GraphQLType;
 use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\GraphQL\GraphQL;
-use Luracast\Restler\Router;
+use Luracast\Restler\Routes;
 use Luracast\Restler\Utils\ClassName;
 use Luracast\Restler\Utils\CommentParser;
 use ReflectionNamedType;
@@ -50,7 +50,7 @@ class Returns extends Type
                     foreach ($this->properties as $name => $property) {
                         $subType = $property->type !== 'bool' && in_array(
                             $name,
-                            Router::$prefixingParameterNames
+                            Routes::$prefixingParameterNames
                         )
                             ? GraphQLType::id()
                             : $property->toGraphQL();

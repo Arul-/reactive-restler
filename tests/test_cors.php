@@ -2,7 +2,7 @@
 
 use Luracast\Restler\Defaults;
 use Luracast\Restler\Restler;
-use Luracast\Restler\Router;
+use Luracast\Restler\Routes;
 use Luracast\Restler\Utils\Dump;
 use RingCentral\Psr7\ServerRequest;
 
@@ -17,7 +17,7 @@ class Home
 }
 
 Defaults::$crossOriginResourceSharing = true;
-Router::addAPI(Home::class, '');
+Routes::addAPI(Home::class, '');
 
 $h = new Restler();
 

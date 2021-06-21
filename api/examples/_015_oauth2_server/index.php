@@ -8,7 +8,7 @@ use Luracast\Restler\MediaTypes\Json;
 use Luracast\Restler\MediaTypes\Upload;
 use Luracast\Restler\Middleware\SessionMiddleware;
 use Luracast\Restler\Restler;
-use Luracast\Restler\Router;
+use Luracast\Restler\Routes;
 
 define('BASE', __DIR__ . '/../../..');
 include BASE . "/vendor/autoload.php";
@@ -16,10 +16,10 @@ include BASE . "/vendor/autoload.php";
 Defaults::$cacheDirectory = BASE . '/api/common/store';
 Html::$template = 'blade'; //'handlebar'; //'twig'; //'php';
 Restler::$middleware[] = new SessionMiddleware();
-Router::setOverridingRequestMediaTypes(Json::class, Upload::class);
-Router::setOverridingResponseMediaTypes(Json::class, Html::class);
-Router::addAuthenticator(Server::class);
-Router::mapApiClasses([
+Routes::setOverridingRequestMediaTypes(Json::class, Upload::class);
+Routes::setOverridingResponseMediaTypes(Json::class, Html::class);
+Routes::addAuthenticator(Server::class);
+Routes::mapApiClasses([
     '' => Server::class
 ]);
 

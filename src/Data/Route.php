@@ -17,7 +17,7 @@ use Luracast\Restler\GraphQL\Error;
 use Luracast\Restler\GraphQL\GraphQL;
 use Luracast\Restler\ResponseHeaders;
 use Luracast\Restler\Restler;
-use Luracast\Restler\Router;
+use Luracast\Restler\Routes;
 use Luracast\Restler\Utils\{ClassName, CommentParser, Convert, Type, Validator};
 use Psr\Http\Message\ServerRequestInterface;
 use ReflectionFunctionAbstract;
@@ -163,7 +163,7 @@ class Route extends ValueObject
     public static function fromMethod(ReflectionMethod $method, ?array $metadata = null, array $scope = []): self
     {
         if (empty($scope)) {
-            $scope = Router::scope($method->getDeclaringClass());
+            $scope = Routes::scope($method->getDeclaringClass());
         }
         if (is_null($metadata)) {
             $metadata = CommentParser::parse($method->getDocComment());
@@ -209,18 +209,18 @@ class Route extends ValueObject
             call_user_func([$route, $func], $key, $metadata[$key] ?? null, $method, $metadata, $scope);
         }
         if (empty($route->responseMediaTypes)) {
-            $route->responseMediaTypes = Router::$responseMediaTypes;
+            $route->responseMediaTypes = Routes::$responseMediaTypes;
         }
         if (empty($route->requestFormatMap)) {
-            $route->requestFormatMap = Router::$requestFormatMap;
+            $route->requestFormatMap = Routes::$requestFormatMap;
         } elseif (empty($route->requestFormatMap['default'])) {
             $route->requestFormatMap['default'] = array_values($route->requestFormatMap)[0];
         }
         if (empty($route->requestMediaTypes)) {
-            $route->requestMediaTypes = Router::$requestMediaTypes;
+            $route->requestMediaTypes = Routes::$requestMediaTypes;
         }
         if (empty($route->responseFormatMap)) {
-            $route->responseFormatMap = Router::$responseFormatMap;
+            $route->responseFormatMap = Routes::$responseFormatMap;
         } elseif (empty($route->responseFormatMap['default'])) {
             $route->responseFormatMap['default'] = array_values($route->responseFormatMap)[0];
         }
@@ -245,7 +245,7 @@ class Route extends ValueObject
                 $param->from = Param::FROM_PATH;
                 $param->required = true;
                 $pathParams[$match] = $param;
-                return '{' . Router::typeChar($param->type) . $param->index . '}';
+                return '{' . Routes::typeChar($param->type) . $param->index . '}';
             },
             $instance->url
         );
@@ -277,7 +277,7 @@ class Route extends ValueObject
 
     private function setAuthAndFilters(): void
     {
-        foreach (Router::$preAuthFilterClasses as $preFilter) {
+        foreach (Routes::$preAuthFilterClasses as $preFilter) {
             if (Type::implements($preFilter, SelectivePathsInterface::class)) {
                 if (!$preFilter::isPathSelected($this->path)) {
                     continue;
@@ -285,7 +285,7 @@ class Route extends ValueObject
             }
             $this->preAuthFilterClasses[] = $preFilter;
         }
-        foreach (Router::$authClasses as $authClass) {
+        foreach (Routes::$authClasses as $authClass) {
             if (Type::implements($authClass, SelectivePathsInterface::class)) {
                 if (!$authClass::isPathSelected($this->path)) {
                     continue;
@@ -293,7 +293,7 @@ class Route extends ValueObject
             }
             $this->authClasses[] = $authClass;
         }
-        foreach (Router::$postAuthFilterClasses as $postFilter) {
+        foreach (Routes::$postAuthFilterClasses as $postFilter) {
             if (Type::implements($postFilter, SelectivePathsInterface::class)) {
                 if (!$postFilter::isPathSelected($this->path)) {
                     continue;
@@ -574,8 +574,8 @@ class Route extends ValueObject
             return $value;
         };
         $overrides = [
-            'Request' => Router::$requestMediaTypeOverrides,
-            'Response' => Router::$responseMediaTypeOverrides,
+            'Request' => Routes::$requestMediaTypeOverrides,
+            'Response' => Routes::$responseMediaTypeOverrides,
         ];
         switch ($name) {
             case 'request-format':
@@ -597,7 +597,7 @@ class Route extends ValueObject
 
     public function setRequestMediaTypes(string ...$types): void
     {
-        Router::_setMediaTypes(
+        Routes::_setMediaTypes(
             RequestMediaTypeInterface::class,
             $types,
             $this->requestFormatMap,
@@ -607,7 +607,7 @@ class Route extends ValueObject
 
     public function setResponseMediaTypes(string ...$types): void
     {
-        Router::_setMediaTypes(
+        Routes::_setMediaTypes(
             ResponseMediaTypeInterface::class,
             $types,
             $this->responseFormatMap,

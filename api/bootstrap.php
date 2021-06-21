@@ -15,7 +15,7 @@ use Luracast\Restler\MediaTypes\Xml;
 use Luracast\Restler\Middleware\SessionMiddleware;
 use Luracast\Restler\OpenApi3\Explorer;
 use Luracast\Restler\Restler;
-use Luracast\Restler\Router;
+use Luracast\Restler\Routes;
 use Luracast\Restler\UI\Forms;
 use ratelimited\Authors as RateLimitedAuthors;
 use SomeVendor\v1\BMI as VendorBMI1;
@@ -30,7 +30,7 @@ Defaults::$useUrlBasedVersioning = true;
 Defaults::$apiVendor = "SomeVendor";
 Defaults::$useVendorMIMEVersioning = true;
 Defaults::$implementations[HttpClientInterface::class] = [SimpleHttpClient::class];
-Router::setApiVersion(2);
+Routes::setApiVersion(2);
 Html::$template = 'blade'; //'handlebar'; //'twig'; //'php';
 Restler::$middleware[] = new SessionMiddleware();
 
@@ -39,12 +39,12 @@ try {
     //
     //---------------------------- MEDIA TYPES -----------------------------
     //
-    Router::setOverridingResponseMediaTypes(
+    Routes::setOverridingResponseMediaTypes(
         Json::class,
         Xml::class,
         Html::class
     );
-    Router::setOverridingRequestMediaTypes(
+    Routes::setOverridingRequestMediaTypes(
         Json::class,
         Upload::class
     );
@@ -52,27 +52,27 @@ try {
     //---------------------------- AUTH CLASSES ----------------------------
     //
     SimpleAuth::setIncludedPaths('examples/_005_protected_api');
-    Router::addAuthenticator(SimpleAuth::class);
+    Routes::addAuthenticator(SimpleAuth::class);
     //
     KeyAuth::setIncludedPaths('examples/_009_rate_limiting');
-    Router::addAuthenticator(KeyAuth::class);
+    Routes::addAuthenticator(KeyAuth::class);
     //
     AccessControl::setIncludedPaths('examples/_010_access_control');
-    Router::addAuthenticator(AccessControl::class);
+    Routes::addAuthenticator(AccessControl::class);
     //
     Server::setIncludedPaths('examples/_015_oauth2_server');
-    Router::addAuthenticator(Server::class);
+    Routes::addAuthenticator(Server::class);
     //
     //------------------------------ FILTERS ------------------------------
     //
     RateLimiter::setLimit('hour', 10);
     RateLimiter::setIncludedPaths('examples/_009_rate_limiting');
     Forms::setIncludedPaths('examples/_016_forms');
-    Router::setFilters(RateLimiter::class, Forms::class);
+    Routes::setFilters(RateLimiter::class, Forms::class);
     //
     //---------------------------- API CLASSES ----------------------------
     //
-    Router::mapApiClasses(
+    Routes::mapApiClasses(
         [
             //utility api for running behat tests
             'examples/-storage-' => Storage::class,

@@ -16,7 +16,7 @@ use Luracast\Restler\MediaTypes\Upload;
 use Luracast\Restler\MediaTypes\UrlEncoded;
 use Luracast\Restler\ResponseHeaders;
 use Luracast\Restler\Restler;
-use Luracast\Restler\Router;
+use Luracast\Restler\Routes;
 use Luracast\Restler\StaticProperties;
 use Luracast\Restler\UI\Tags as T;
 use Luracast\Restler\Utils\Text;
@@ -134,7 +134,7 @@ class Forms implements FilterInterface, SelectivePathsInterface
                 /** @var Route route */
                 $this->route = $route = $this->currentRoute;
             } else {
-                $this->route = $route = Router::find(
+                $this->route = $route = Routes::find(
                     trim($action, '/'),
                     $method,
                     null,

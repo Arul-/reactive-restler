@@ -3,7 +3,7 @@
 
 use Luracast\Restler\Defaults;
 use Luracast\Restler\Restler;
-use Luracast\Restler\Router;
+use Luracast\Restler\Routes;
 use Luracast\Restler\Utils\ClassName;
 use Luracast\Restler\Utils\Text;
 use Psr\Http\Message\ServerRequestInterface;
@@ -44,7 +44,7 @@ class Storage
 
     public function routes()
     {
-        return Router::toArray();
+        return Routes::toArray();
     }
 
     public function pack()

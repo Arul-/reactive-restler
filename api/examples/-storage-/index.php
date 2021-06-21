@@ -2,7 +2,7 @@
 
 use Luracast\Restler\Defaults;
 use Luracast\Restler\Restler;
-use Luracast\Restler\Router;
+use Luracast\Restler\Routes;
 
 define('BASE', __DIR__ . '/../../..');
 
@@ -12,7 +12,7 @@ Defaults::$cacheDirectory = BASE . '/api/common/store';
 Defaults::$implementations[DataProviderInterface::class] = [SerializedFileDataProvider::class];
 Defaults::$implementations[HttpClientInterface::class] = [SimpleHttpClient::class];
 
-Router::mapApiClasses([
+Routes::mapApiClasses([
     '' => Storage::class
 ]);
 

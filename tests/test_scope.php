@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 
 use Luracast\Restler\Core;
-use Luracast\Restler\Router;
+use Luracast\Restler\Routes;
 
 include __DIR__ . "/../vendor/autoload.php";
 
-print_r(Router::scope(new ReflectionClass(Core::class)));
+print_r(Routes::scope(new ReflectionClass(Core::class)));

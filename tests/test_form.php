@@ -6,22 +6,22 @@ use Luracast\Restler\MediaTypes\Html;
 use Luracast\Restler\MediaTypes\Json;
 use Luracast\Restler\MediaTypes\Upload;
 use Luracast\Restler\Restler;
-use Luracast\Restler\Router;
+use Luracast\Restler\Routes;
 use Luracast\Restler\StaticProperties;
 use Luracast\Restler\UI\Forms;
 
 include __DIR__ . "/../vendor/autoload.php";
 
-Router::setOverridingRequestMediaTypes(Upload::class);
-Router::setOverridingResponseMediaTypes(Json::class, Html::class);
-Router::mapApiClasses(
+Routes::setOverridingRequestMediaTypes(Upload::class);
+Routes::setOverridingResponseMediaTypes(Json::class, Html::class);
+Routes::mapApiClasses(
     [
         'tests/upload/files' => Files::class,
         'examples/_016_forms/users' => Users::class,
     ]
 );
 
-$routes = Router::toArray();
+$routes = Routes::toArray();
 $route = $routes['v1']['tests/upload/files']['GET'];
 
 $restler = new Restler();

@@ -8,7 +8,7 @@ use GraphQL\Type\Definition\Type as GraphQLType;
 use Luracast\Restler\Defaults;
 use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\GraphQL\GraphQL;
-use Luracast\Restler\Router;
+use Luracast\Restler\Routes;
 use Luracast\Restler\Utils\ClassName;
 use Luracast\Restler\Utils\CommentParser;
 use Luracast\Restler\Utils\Text;
@@ -184,7 +184,7 @@ class Param extends Type
     public static function fromMethod(ReflectionMethod $method, ?array $doc = null, array $scope = []): array
     {
         if (empty($scope)) {
-            $scope = Router::scope($method->getDeclaringClass());
+            $scope = Routes::scope($method->getDeclaringClass());
         }
         return static::fromAbstract($method, $doc, $scope);
     }
@@ -295,13 +295,13 @@ class Param extends Type
 
         $instance->from = $properties['from']
             ?? (
-            in_array($instance->name, Router::$prefixingParameterNames)
+            in_array($instance->name, Routes::$prefixingParameterNames)
                 ? self::FROM_PATH
                 : self::FROM_BODY
             );
         if (!$instance->format) {
             $instance->format = $properties['format']
-                ?? Router::$formatsByName[$instance->name]
+                ?? Routes::$formatsByName[$instance->name]
                 ?? null;
         }
         if ($access = self::ACCESS[$properties['access'] ?? ''] ?? false) {
@@ -327,7 +327,7 @@ class Param extends Type
     public static function fromFunction(ReflectionFunction $function, ?array $doc = null, array $scope = []): array
     {
         if (empty($scope)) {
-            $scope = Router::scope($function->getClosureScopeClass());
+            $scope = Routes::scope($function->getClosureScopeClass());
         }
         return static::fromAbstract($function, $doc, $scope);
     }
@@ -359,7 +359,7 @@ class Param extends Type
                 ]
             );
         } elseif ($this->scalar) {
-            $type = $this->type !== 'bool' && in_array($this->name, Router::$prefixingParameterNames)
+            $type = $this->type !== 'bool' && in_array($this->name, Routes::$prefixingParameterNames)
                 ? GraphQLType::id()
                 : call_user_func([GraphQLType::class, $this->type]);
             if (!$this->required && $this->default[0]) {

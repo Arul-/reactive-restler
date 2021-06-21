@@ -5,12 +5,12 @@ declare(strict_types=1);
 
 use GraphQL\Type\Definition\Type as GraphQLType;
 use Luracast\Restler\GraphQL\GraphQL;
-use Luracast\Restler\Router;
+use Luracast\Restler\Routes;
 use ratelimited\Authors as RateLimitedAuthors;
 use v2\BodyMassIndex as BMI2;
 
 
-Router::mapApiClasses([GraphQL::class]);
+Routes::mapApiClasses([GraphQL::class]);
 GraphQL::addAuthenticator(AccessControl::class);
 GraphQL::$mutations['sum'] = [
     'type' => GraphQLType::int(),

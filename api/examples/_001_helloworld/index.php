@@ -1,11 +1,11 @@
 <?php
 
 use Luracast\Restler\Restler;
-use Luracast\Restler\Router;
+use Luracast\Restler\Routes;
 
 require __DIR__ . '/../../../vendor/autoload.php';
 
-Router::mapApiClasses([
+Routes::mapApiClasses([
     Say::class
 ]);
 

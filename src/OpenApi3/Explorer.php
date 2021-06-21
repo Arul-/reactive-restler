@@ -15,7 +15,7 @@ use Luracast\Restler\Exceptions\Redirect;
 use Luracast\Restler\MediaTypes\Json;
 use Luracast\Restler\OpenApi3\Tags\TagByBasePath;
 use Luracast\Restler\OpenApi3\Tags\Tagger;
-use Luracast\Restler\Router;
+use Luracast\Restler\Routes;
 use Luracast\Restler\Utils\{ClassName, PassThrough, Text, Type as TypeUtil};
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -130,7 +130,7 @@ class Explorer implements ProvidesMultiVersionApiInterface
 
     public static function getMaximumSupportedVersion(): int
     {
-        return Router::$maximumVersion;
+        return Routes::$maximumVersion;
     }
 
     /**
@@ -188,12 +188,12 @@ class Explorer implements ProvidesMultiVersionApiInterface
 
         $r = $this->restler;
         if (Defaults::$useUrlBasedVersioning) {
-            $s->info = $this->info(Router::$maximumVersion);
+            $s->info = $this->info(Routes::$maximumVersion);
             $s->servers = $this->servers();
             $s->paths = [];
             for (
-                $version = max(Router::$minimumVersion, $r->requestedApiVersion);
-                $version <= Router::$maximumVersion;
+                $version = max(Routes::$minimumVersion, $r->requestedApiVersion);
+                $version <= Routes::$maximumVersion;
                 $version++
             ) {
                 $paths = $this->paths($version);
@@ -251,7 +251,7 @@ class Explorer implements ProvidesMultiVersionApiInterface
         array_pop($self);
         $self = implode('/', $self);
         $selfExclude = empty($self) ? ['', '{s0}', 'docs', 'config'] : [$self];
-        $map = Router::findAll(
+        $map = Routes::findAll(
             $this->request,
             [$this->restler, 'make'],
             array_merge(static::$excludedPaths, $selfExclude),

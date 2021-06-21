@@ -9,7 +9,7 @@ use Exception;
 use Luracast\Restler\Contracts\GenericRequestInterface;
 use Luracast\Restler\Contracts\GenericResponseInterface;
 use Luracast\Restler\Exceptions\Invalid;
-use Luracast\Restler\Router;
+use Luracast\Restler\Routes;
 use Luracast\Restler\Utils\ClassName;
 use Luracast\Restler\Utils\CommentParser;
 use Luracast\Restler\Utils\Type as TypeUtil;
@@ -200,7 +200,7 @@ abstract class Type extends ValueObject
         $isParameter = Param::class === static::class;
         $filter = !empty($selectedProperties);
         $properties = [];
-        $scope = Router::scope($reflectionClass);
+        $scope = Routes::scope($reflectionClass);
         //When Magic properties exist
         if ($c = CommentParser::parse($reflectionClass->getDocComment())) {
             $p = 'property';

@@ -2,12 +2,12 @@
 
 
 use Luracast\Restler\Restler;
-use Luracast\Restler\Router;
+use Luracast\Restler\Routes;
 
 require __DIR__ . '/../../../vendor/autoload.php';
 
-Router::addAuthenticator(SimpleAuth::class);
-Router::mapApiClasses([
+Routes::addAuthenticator(SimpleAuth::class);
+Routes::mapApiClasses([
     '' => Simple::class,
     Secured::class
 ]);

@@ -1,7 +1,7 @@
 <?php declare(strict_types=1);
 
 
-use Luracast\Restler\Router;
+use Luracast\Restler\Routes;
 
 include __DIR__ . "/../vendor/autoload.php";
 
@@ -17,6 +17,6 @@ class Api
     }
 }
 
-Router::addAPI('Api');
+Routes::addAPI('Api');
 
-print_r(Router::toArray());
+print_r(Routes::toArray());
