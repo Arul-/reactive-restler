@@ -63,9 +63,9 @@ class GraphQL
      */
     public static ?int $apiAccessLevel = null;
     private static ?array $authClasses = null;
-    private \Luracast\Restler\Restler $restler;
-    private \Luracast\Restler\StaticProperties $graphQL;
-    private \Psr\Http\Message\ServerRequestInterface $request;
+    private Restler $restler;
+    private StaticProperties $graphQL;
+    private ServerRequestInterface $request;
 
     public function __construct(Restler $restler, StaticProperties $graphQL, ServerRequestInterface $request)
     {
@@ -174,14 +174,16 @@ class GraphQL
         string $baseName = '',
         ?array $metadata = null,
         array $scope = []
-    ) {
+    ): void {
         $route = Route::fromMethod($method, $metadata, $scope);
         $route->authClasses = static::$authClasses;
         if ($mutation = $route->mutation ?? false) {
-            return static::addRoute($mutation, $route, true);
+            static::addRoute($mutation, $route, true);
+            return;
         }
         if ($query = $route->query ?? false) {
-            return static::addRoute($query, $route, false);
+            static::addRoute($query, $route, false);
+            return;
         }
         if (!empty($route->url)) {
             $name = empty($baseName) ? lcfirst($route->url) : lcfirst($baseName) . ucfirst($route->url);
@@ -204,7 +206,7 @@ class GraphQL
                         : lcfirst($baseName);
             }
         }
-        return static::addRoute($name, $route, 'GET' !== $route->httpMethod);
+        static::addRoute($name, $route, 'GET' !== $route->httpMethod);
     }
 
     public static function addRoute(string $name, Route $route, bool $isMutation = false): void
@@ -242,7 +244,7 @@ class GraphQL
      * loads graphql client
      * @param string $query
      * @param array $variables
-     * @return ResponseInterface
+     * @return ResponseInterface|array
      * @throws HttpException
      */
     public function get(string $query = '', array $variables = [])
