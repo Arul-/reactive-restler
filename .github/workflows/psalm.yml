@@ -16,12 +16,11 @@ jobs:
           php-version: '8.0'
           extensions: "json, memcached, pcntl, intl, swoole, zip, mbstring"
           ini-values: "memory_limit=-1"
+          tools: phpstan, psalm
           coverage: none
 
-      - name: Psalm Security Scan
-        uses: docker://ghcr.io/psalm/psalm-security-scan
+      - name: Run PHPStan
+        run: phpstan analyse src
 
-      - name: Upload Security Analysis results to GitHub
-        uses: github/codeql-action/upload-sarif@v1
-        with:
-          sarif_file: results.sarif
+      - name: Run Psalm
+        run: psalm --output-format=github
