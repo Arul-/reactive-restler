@@ -19,6 +19,9 @@ jobs:
           tools: phpstan, psalm
           coverage: none
 
+      - name: Install dependencies
+        run: composer install --prefer-dist
+
       - name: Run PHPStan
         run: phpstan analyse src
 
