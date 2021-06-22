@@ -435,12 +435,12 @@ class Forms implements FilterInterface, SelectivePathsInterface
      * Get the form key
      *
      * @param string $method http method for form key
-     * @param string $action relative path from the web root. When set to null
+     * @param string|null $action relative path from the web root. When set to null
      *                         it uses the current api method's path
      *
      * @return string generated form key
      */
-    public function key($method = 'POST', $action = null): string
+    public function key(string $method = 'POST', string $action = null): string
     {
         if (is_null($action)) {
             $action = $this->restler->path;
