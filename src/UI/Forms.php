@@ -73,21 +73,18 @@ class Forms implements FilterInterface, SelectivePathsInterface
         'week',
     ];
     protected bool $fileUpload = false;
+    protected UserIdentificationInterface $userIdentifier;
+
     private array $key = [];
-    /**
-     * @var Route;
-     */
-    private ?\Luracast\Restler\Data\Route $route = null;
-    private \Luracast\Restler\Data\Route $currentRoute;
-    private \Luracast\Restler\Restler $restler;
-    private \Luracast\Restler\StaticProperties $forms;
-    private \Luracast\Restler\Contracts\SessionInterface $session;
-    private \Luracast\Restler\Contracts\UserIdentificationInterface $user;
+    private ?Route $route = null;
+    private Route $currentRoute;
+    private Restler $restler;
+    private StaticProperties $forms;
+    private SessionInterface $session;
 
     public function __construct(
         Restler $restler,
         Route $route,
-        UserIdentificationInterface $user,
         StaticProperties $forms,
         SessionInterface $session
     ) {
@@ -95,14 +92,13 @@ class Forms implements FilterInterface, SelectivePathsInterface
         $this->currentRoute = $route;
         $this->forms = $forms;
         $this->session = $session;
-        $this->user = $user;
     }
 
     /**
      * Get the form
      *
      * @param string $method http method to submit the form
-     * @param string $action relative path from the web root. When set to null
+     * @param string|null $action relative path from the web root. When set to null
      *                         it uses the current api method's path
      * @param bool $dataOnly if you want to render the form yourself use this
      *                         option
@@ -114,8 +110,13 @@ class Forms implements FilterInterface, SelectivePathsInterface
      *
      * @throws HttpException
      */
-    public function get($method = 'POST', $action = null, $dataOnly = false, $prefix = '', $indent = '    ')
-    {
+    public function get(
+        string $method = 'POST',
+        string $action = null,
+        bool $dataOnly = false,
+        string $prefix = '',
+        string $indent = '    '
+    ) {
         if (!$this->forms->style) {
             $this->forms->style = FormStyles::$html;
         }
@@ -318,9 +319,7 @@ class Forms implements FilterInterface, SelectivePathsInterface
         if ($p->choice) {
             foreach ($p->choice as $i => $choice) {
                 $option = ['name' => $name, 'value' => $choice];
-                $option['text'] = isset($p->rules['select'][$i])
-                    ? $p->rules['select'][$i]
-                    : $choice;
+                $option['text'] = $p->rules['select'][$i] ?? $choice;
                 if ($choice == $value) {
                     $option['selected'] = true;
                 }
@@ -448,7 +447,7 @@ class Forms implements FilterInterface, SelectivePathsInterface
         }
         $target = "$method $action";
         if (empty($this->key[$target])) {
-            $this->key[$target] = md5($target . $this->user->getCacheIdentifier() . uniqid(mt_rand()));
+            $this->key[$target] = md5($target . $this->userIdentifier->getCacheIdentifier() . uniqid(mt_rand()));
         }
         $this->session->set(static::FORM_KEY, $this->key);
         return $this->key[$target];
@@ -472,6 +471,7 @@ class Forms implements FilterInterface, SelectivePathsInterface
         UserIdentificationInterface $userIdentifier,
         ResponseHeaders $responseHeaders
     ): bool {
+        $this->userIdentifier = $userIdentifier;
         if ('GET' === $request->getMethod()) {
             return true;
         }
