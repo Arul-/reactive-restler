@@ -22,8 +22,8 @@ jobs:
       - name: Install dependencies
         run: composer install --prefer-dist
 
-      - name: Run PHPStan
-        run: phpstan analyse src
-
       - name: Run Psalm
         run: psalm --output-format=github
+
+      - name: Run PHPStan
+        run: phpstan analyse src
