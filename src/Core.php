@@ -11,6 +11,7 @@ use Luracast\Restler\Contracts\{AuthenticationInterface,
     RequestMediaTypeInterface,
     ResponseMediaTypeInterface,
     SelectivePathsInterface,
+    UserIdentificationInterface,
     UsesAuthenticationInterface,
     ValidationInterface
 };
@@ -305,7 +306,6 @@ abstract class Core
 
     public function make($className, Route $route = null, bool $recreate = false)
     {
-        $fullName = $className;
         if (!$route) {
             $route = $this->_route;
         }
@@ -550,8 +550,9 @@ abstract class Core
         $name = $postAuth ? 'postAuthFilterClasses' : 'preAuthFilterClasses';
         foreach ($this->_route->{$name} as $i => $filerClass) {
             /** @var FilterInterface $filter */
-            $filter = $this->make($filerClass, null);
-            if (!$filter->_isAllowed($request, $this->_responseHeaders)) {
+            $filter = $this->make($filerClass);
+            $userIdentifier = $this->make(UserIdentificationInterface::class);
+            if (!$filter->_isAllowed($request, $userIdentifier, $this->_responseHeaders)) {
                 throw new HttpException(403);
             }
         }
@@ -579,8 +580,9 @@ abstract class Core
             foreach ($o->authClasses as $i => $authClass) {
                 try {
                     /** @var AuthenticationInterface $auth */
-                    $auth = $this->make($authClass, null);
-                    if (!$auth->_isAllowed($request, $this->_responseHeaders)) {
+                    $auth = $this->make($authClass);
+                    $userIdentifier = $this->make(UserIdentificationInterface::class);
+                    if (!$auth->_isAllowed($request, $userIdentifier, $this->_responseHeaders)) {
                         throw new HttpException(401, null, ['from' => $authClass]);
                     }
                     $unauthorized = false;

@@ -14,16 +14,6 @@ class KeyAuth implements ExplorableAuthenticationInterface, SelectivePathsInterf
     use SelectivePathsTrait;
 
     /**
-     * @var UserIdentificationInterface
-     */
-    private $user;
-
-    public function __construct(UserIdentificationInterface $user)
-    {
-        $this->user = $user;
-    }
-
-    /**
      * @return string string to be used with WWW-Authenticate header
      * @example Basic
      * @example Digest
@@ -39,14 +29,17 @@ class KeyAuth implements ExplorableAuthenticationInterface, SelectivePathsInterf
         return new ApiKeyAuth('api_key', ApiKeyAuth::IN_QUERY);
     }
 
-    public function _isAllowed(ServerRequestInterface $request, ResponseHeaders $responseHeaders): bool
-    {
+    public function _isAllowed(
+        ServerRequestInterface $request,
+        UserIdentificationInterface $userIdentifier,
+        ResponseHeaders $responseHeaders
+    ): bool {
         $query = $request->getQueryParams();
         if ('r4rocks' === ($query['api_key'] ?? '')) {
             // if api key is unique for each user
             // we can use that to identify and track the user
             // for rate limiting and more
-            $this->user->setUniqueIdentifier($query['api_key']);
+            $userIdentifier->setUniqueIdentifier($query['api_key']);
             return true;
         }
         return false;

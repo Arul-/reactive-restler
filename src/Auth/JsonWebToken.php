@@ -14,7 +14,6 @@ use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\OpenApi3\Security\BearerAuth;
 use Luracast\Restler\OpenApi3\Security\Scheme;
 use Luracast\Restler\ResponseHeaders;
-use Luracast\Restler\Utils\ClassName;
 use Psr\Http\Message\ServerRequestInterface;
 use Throwable;
 
@@ -67,8 +66,11 @@ class JsonWebToken implements ExplorableAuthenticationInterface, SelectivePathsI
         ];
     }
 
-    public function _isAllowed(ServerRequestInterface $request, ResponseHeaders $responseHeaders): bool
-    {
+    public function _isAllowed(
+        ServerRequestInterface $request,
+        UserIdentificationInterface $userIdentifier,
+        ResponseHeaders $responseHeaders
+    ): bool {
         if ($request->hasHeader('authorization') === false) {
             return false;
         }
@@ -91,9 +93,7 @@ class JsonWebToken implements ExplorableAuthenticationInterface, SelectivePathsI
             if (!($id = ($token->{static::$userIdentifierProperty} ?? null))) {
                 $this->accessDenied('Invalid User Identifier.');
             }
-            /** @var UserIdentificationInterface $userClass */
-            $userClass = ClassName::get(UserIdentificationInterface::class);
-            $userClass::setUniqueIdentifier($id);
+            $userIdentifier->setUniqueIdentifier($id);
             return true;
         } catch (HttpException $httpException) {
             throw $httpException;

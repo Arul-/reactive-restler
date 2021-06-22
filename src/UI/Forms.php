@@ -460,14 +460,18 @@ class Forms implements FilterInterface, SelectivePathsInterface
      * API access will be denied when this method returns false
      *
      * @param ServerRequestInterface $request
+     * @param UserIdentificationInterface $userIdentifier
      * @param ResponseHeaders $responseHeaders
      *
      * @return bool true when api access is allowed false otherwise
      *
      * @throws HttpException 403 security violation
      */
-    public function _isAllowed(ServerRequestInterface $request, ResponseHeaders $responseHeaders): bool
-    {
+    public function _isAllowed(
+        ServerRequestInterface $request,
+        UserIdentificationInterface $userIdentifier,
+        ResponseHeaders $responseHeaders
+    ): bool {
         if ('GET' === $request->getMethod()) {
             return true;
         }
@@ -476,9 +480,9 @@ class Forms implements FilterInterface, SelectivePathsInterface
         }
         $restler = $this->restler;
         $url = $restler->path;
-        $check = static::$filterFormRequestsOnly
-            ? $restler->requestFormat instanceof UrlEncoded || $restler->requestFormat instanceof Upload
-            : true;
+        $check = !static::$filterFormRequestsOnly
+            || $restler->requestFormat instanceof UrlEncoded
+            || $restler->requestFormat instanceof Upload;
         $post = $request->getParsedBody();
         if (!empty($post) && $check) {
             if (

@@ -24,15 +24,6 @@ class AccessControl implements AccessControlInterface, SelectivePathsInterface, 
     public $requires = 'user';
     public $role = 'user';
     public $id = null;
-    /**
-     * @var UserIdentificationInterface
-     */
-    private $user;
-
-    public function __construct(UserIdentificationInterface $user)
-    {
-        $this->user = $user;
-    }
 
     public static function getWWWAuthenticateString(): string
     {
@@ -66,21 +57,25 @@ class AccessControl implements AccessControlInterface, SelectivePathsInterface, 
 
     /**
      * @param ServerRequestInterface $request
+     * @param UserIdentificationInterface $userIdentifier
      * @param ResponseHeaders $responseHeaders
      * @return bool
      * @throws HttpException 401
      */
-    public function _isAllowed(ServerRequestInterface $request, ResponseHeaders $responseHeaders): bool
-    {
+    public function _isAllowed(
+        ServerRequestInterface $request,
+        UserIdentificationInterface $userIdentifier,
+        ResponseHeaders $responseHeaders
+    ): bool {
         if (!$api_key = $request->getQueryParams()['api_key'] ?? $request->getHeaderLine('api_key') ?? false) {
             return false;
         }
         if (!$user = (self::$users[$api_key] ?? null)) {
-            $this->user->setCacheIdentifier($api_key);
+            $userIdentifier->setCacheIdentifier($api_key);
             return false;
         }
         [$id, $role] = $user;
-        $this->user->setCacheIdentifier($id);
+        $userIdentifier->setCacheIdentifier($id);
         $this->role = $role;
         $this->id = $id;
         //Role-based access control (RBAC)

@@ -5,6 +5,7 @@ namespace Auth;
 use Luracast\Restler\Contracts\ExplorableAuthenticationInterface;
 use Luracast\Restler\Contracts\SelectivePathsInterface;
 use Luracast\Restler\Contracts\SelectivePathsTrait;
+use Luracast\Restler\Contracts\UserIdentificationInterface;
 use Luracast\Restler\Defaults;
 use Luracast\Restler\OpenApi3\Security\AuthorizationCode as AuthorizationCodeFlow;
 use Luracast\Restler\OpenApi3\Security\OAuth2;
@@ -158,10 +159,15 @@ class Server implements ExplorableAuthenticationInterface, SelectivePathsInterfa
      *
      * @param ServerRequestInterface $request
      *
+     * @param UserIdentificationInterface $userIdentifier
      * @param ResponseHeaders $responseHeaders
-     * @return boolean true when api access is allowed false otherwise
+     * @return bool true when api access is allowed false otherwise
      */
-    public function _isAllowed(ServerRequestInterface $request, ResponseHeaders $responseHeaders): bool
+    public function _isAllowed(
+        ServerRequestInterface $request,
+        UserIdentificationInterface $userIdentifier,
+        ResponseHeaders $responseHeaders
+    ): bool
     {
         $authRequest = Convert::fromPSR7($request);
         return self::$server->verifyResourceRequest($authRequest);

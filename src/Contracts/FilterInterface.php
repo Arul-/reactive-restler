@@ -22,11 +22,15 @@ interface FilterInterface
      * @abstract
      *
      * @param ServerRequestInterface $request
-     *
+     * @param UserIdentificationInterface $userIdentifier
      * @param ResponseHeaders $responseHeaders
      * @return bool true when api access is allowed false otherwise
      *
      * @throws HttpException
      */
-    public function _isAllowed(ServerRequestInterface $request, ResponseHeaders $responseHeaders): bool;
+    public function _isAllowed(
+        ServerRequestInterface $request,
+        UserIdentificationInterface $userIdentifier,
+        ResponseHeaders $responseHeaders
+    ): bool;
 }

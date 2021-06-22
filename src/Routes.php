@@ -11,6 +11,7 @@ use Luracast\Restler\Contracts\{AccessControlInterface,
     ProvidesMultiVersionApiInterface,
     RequestMediaTypeInterface,
     ResponseMediaTypeInterface,
+    UserIdentificationInterface,
     UsesAuthenticationInterface};
 use Luracast\Restler\Data\Param;
 use Luracast\Restler\Data\Route;
@@ -1064,7 +1065,8 @@ class Routes
                         ->withUri($request->getUri()->withPath($route->path));
                     /** @var AuthenticationInterface $instance */
                     $instance = $maker($class, $route, true);
-                    $allowed = $instance->_isAllowed($req, $ignore);
+                    $userIdentifier = $maker(UserIdentificationInterface::class, $route);
+                    $allowed = $instance->_isAllowed($req, $userIdentifier, $ignore);
                     if ($accessControl) {
                         return $allowed;
                     }

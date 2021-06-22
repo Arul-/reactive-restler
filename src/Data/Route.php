@@ -9,7 +9,9 @@ use Luracast\Restler\Contracts\{AuthenticationInterface,
     RequestMediaTypeInterface,
     ResponseMediaTypeInterface,
     SelectivePathsInterface,
-    ValidationInterface};
+    UserIdentificationInterface,
+    ValidationInterface
+};
 use Luracast\Restler\Defaults;
 use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\Exceptions\InvalidAuthCredentials;
@@ -149,16 +151,14 @@ class Route extends ValueObject
      * values to set on initialization of classes
      */
     public array $set = [];
-
-    /**
-     * @var array
-     */
-    protected $arguments = [];
     /**
      * @var array|mixed|string[]
      */
     public $scope;
-
+    /**
+     * @var array
+     */
+    protected $arguments = [];
 
     public static function fromMethod(ReflectionMethod $method, ?array $metadata = null, array $scope = []): self
     {
@@ -385,7 +385,8 @@ class Route extends ValueObject
             try {
                 /** @var AuthenticationInterface $auth */
                 $auth = call_user_func($maker, $authClass, $this);
-                if (!$auth->_isAllowed($request, $responseHeaders)) {
+                $userIdentifier = $maker(UserIdentificationInterface::class);
+                if (!$auth->_isAllowed($request, $userIdentifier, $responseHeaders)) {
                     throw new HttpException(401, null, ['from' => $authClass]);
                 }
                 $unauthorized = false;

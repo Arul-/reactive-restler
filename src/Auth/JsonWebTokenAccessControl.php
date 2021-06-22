@@ -5,6 +5,7 @@ namespace Luracast\Restler\Auth;
 
 
 use Luracast\Restler\Contracts\AccessControlInterface;
+use Luracast\Restler\Contracts\UserIdentificationInterface;
 use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\ResponseHeaders;
 use Psr\Http\Message\ServerRequestInterface;
@@ -26,9 +27,12 @@ class JsonWebTokenAccessControl extends JsonWebToken implements AccessControlInt
     //
     public $id = null;
 
-    public function _isAllowed(ServerRequestInterface $request, ResponseHeaders $responseHeaders): bool
-    {
-        if (!parent::_isAllowed($request, $responseHeaders)) {
+    public function _isAllowed(
+        ServerRequestInterface $request,
+        UserIdentificationInterface $userIdentifier,
+        ResponseHeaders $responseHeaders
+    ): bool {
+        if (!parent::_isAllowed($request, $userIdentifier, $responseHeaders)) {
             return false;
         }
         $this->check('role');

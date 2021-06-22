@@ -46,13 +46,11 @@ class RateLimiter implements FilterInterface, SelectivePathsInterface, UsesAuthe
      * @var bool current auth status
      */
     protected bool $authenticated = false;
-    private \Luracast\Restler\StaticProperties $runtimeValues;
-    private \Luracast\Restler\Contracts\UserIdentificationInterface $user;
+    private StaticProperties $runtimeValues;
 
-    public function __construct(StaticProperties $rateLimiter, UserIdentificationInterface $user)
+    public function __construct(StaticProperties $rateLimiter)
     {
         $this->runtimeValues = $rateLimiter;
-        $this->user = $user;
         $class = ClassName::get($rateLimiter->cacheClass ?? CacheInterface::class);
         /** @var CacheInterface cache */
         $this->cache = new $class();
@@ -81,12 +79,17 @@ class RateLimiter implements FilterInterface, SelectivePathsInterface, UsesAuthe
 
     /**
      * @param ServerRequestInterface $request
+     * @param UserIdentificationInterface $userIdentifier
      * @param ResponseHeaders $responseHeaders
      * @return bool
      * @throws HttpException
      * @throws \Psr\SimpleCache\InvalidArgumentException
      */
-    public function _isAllowed(ServerRequestInterface $request, ResponseHeaders $responseHeaders): bool
+    public function _isAllowed(
+        ServerRequestInterface $request,
+        UserIdentificationInterface $userIdentifier,
+        ResponseHeaders $responseHeaders
+    ): bool
     {
         $authenticated = $this->authenticated;
         $responseHeaders['X-Auth-Status'] = $authenticated ? 'true' : 'false';
@@ -100,7 +103,7 @@ class RateLimiter implements FilterInterface, SelectivePathsInterface, UsesAuthe
         if ($maxPerUnit) {
             $id = "RateLimit_" . $maxPerUnit . '_per_' . $unit
                 . '_for_' . $group
-                . '_' . $this->user->getUniqueIdentifier();
+                . '_' . $userIdentifier->getUniqueIdentifier();
             $lastRequest = $this->cache->get($id, ['time' => 0, 'used' => 0]);
             $time = $lastRequest['time'];
             $diff = time() - $time; # in seconds
