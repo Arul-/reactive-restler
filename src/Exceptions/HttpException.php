@@ -2,6 +2,7 @@
 namespace Luracast\Restler\Exceptions;
 
 use Exception;
+use Throwable;
 
 class HttpException extends Exception
 {
@@ -58,16 +59,16 @@ class HttpException extends Exception
 
     /**
      * HttpException constructor.
-     * @param string $httpStatusCode
+     * @param int $httpStatusCode
      * @param null|string $errorMessage
      * @param array $details
-     * @param null $previous
+     * @param ?Throwable $previous
      */
     public function __construct(
         int $httpStatusCode = 500,
         ?string $errorMessage = null,
         array $details = [],
-        $previous = null
+        ?Throwable $previous = null
     ) {
         $errorMessage ??= static::$codes[$httpStatusCode] ?? null;
         $this->details = $details;
