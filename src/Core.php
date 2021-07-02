@@ -13,8 +13,7 @@ use Luracast\Restler\Contracts\{AuthenticationInterface,
     SelectivePathsInterface,
     UserIdentificationInterface,
     UsesAuthenticationInterface,
-    ValidationInterface
-};
+    ValidationInterface};
 use Luracast\Restler\Data\{Param, Route};
 use Luracast\Restler\Exceptions\{HttpException, InvalidAuthCredentials};
 use Luracast\Restler\MediaTypes\{Json, UrlEncoded, Xml};
@@ -210,7 +209,7 @@ abstract class Core
             $path = Text::removeCommon($path, ltrim($scriptName, $slash));
             $base = empty($path) ? $fullPath : substr($fullPath, 0, -strlen($path));
             $this->_baseUrl = $uri
-                ->withPath($base)
+                ->withPath('/' . $base)
                 ->withQuery('');
         }
         if (Defaults::$useUrlBasedVersioning && strlen($path) && $path[0] == 'v') {

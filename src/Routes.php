@@ -1062,7 +1062,7 @@ class Routes
             if ($accessControl || !array_key_exists($class, $verifiedClasses)) {
                 try {
                     $req = $request->withMethod($route->httpMethod)
-                        ->withUri($request->getUri()->withPath($route->path));
+                        ->withUri($request->getUri()->withPath('/' . $route->path));
                     /** @var AuthenticationInterface $instance */
                     $instance = $maker($class, $route, true);
                     $userIdentifier = $maker(UserIdentificationInterface::class, $route);
