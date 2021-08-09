@@ -3,6 +3,7 @@
 use Luracast\Restler\Contracts\ContainerInterface;
 use Luracast\Restler\Contracts\UserIdentificationInterface;
 use Luracast\Restler\Core;
+use Luracast\Restler\Exceptions\HttpException;
 use Luracast\Restler\Exceptions\Redirect;
 use Luracast\Restler\Utils\ClassName;
 use Psr\Http\Message\ServerRequestInterface;
@@ -15,8 +16,9 @@ if (!function_exists('instance')) {
      * @param string|null $make
      * @param array $parameters
      * @return mixed|ContainerInterface
+     * @throws HttpException
      */
-    function instance($make = null, array $parameters = [])
+    function instance(string $make = null, array $parameters = [])
     {
         /** @var ContainerInterface $container */
         static $container = null;
@@ -36,12 +38,13 @@ if (!function_exists('instance')) {
 
 if (!function_exists('base_path')) {
     /**
-     * Get the path to the base of the install.
+     * Get the path to the base of the application.
      *
      * @param string $path
      * @return string
+     * @throws HttpException
      */
-    function base_path($path = '')
+    function base_path(string $path = ''): string
     {
         /** @var UriInterface $url */
         $url = instance(Core::class)->baseUrl;
@@ -93,6 +96,7 @@ if (!function_exists('request')) {
      * @param array|string|null $key
      * @param mixed $default
      * @return ServerRequestInterface|array|mixed
+     * @throws HttpException
      */
     function request($key = null, $default = null)
     {
@@ -116,6 +120,9 @@ if (!function_exists('request')) {
 }
 
 if (!function_exists('user')) {
+    /**
+     * @throws HttpException
+     */
     function user(): ?UserIdentificationInterface
     {
         return instance(UserIdentificationInterface::class);
