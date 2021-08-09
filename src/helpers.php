@@ -8,7 +8,7 @@ use Luracast\Restler\Utils\ClassName;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\UriInterface;
 
-if (!function_exists('app')) {
+if (!function_exists('instance')) {
     /**
      * Get the available container instance.
      *
@@ -16,7 +16,7 @@ if (!function_exists('app')) {
      * @param array $parameters
      * @return mixed|ContainerInterface
      */
-    function app($make = null, array $parameters = [])
+    function instance($make = null, array $parameters = [])
     {
         /** @var ContainerInterface $container */
         static $container = null;
@@ -25,8 +25,7 @@ if (!function_exists('app')) {
         }
         if (ContainerInterface::class === $make) {
             $class = ClassName::get(ContainerInterface::class);
-            $container = new $class(...$parameters);
-            return $container;
+            return new $class(...$parameters);
         }
         if (!$container) {
             return null;
@@ -45,7 +44,7 @@ if (!function_exists('base_path')) {
     function base_path($path = '')
     {
         /** @var UriInterface $url */
-        $url = app(Core::class)->baseUrl;
+        $url = instance(Core::class)->baseUrl;
         return (string)($path ? $url->withPath($path) : $url);
     }
 }
@@ -98,10 +97,10 @@ if (!function_exists('request')) {
     function request($key = null, $default = null)
     {
         if (is_null($key)) {
-            return app(ServerRequestInterface::class);
+            return instance(ServerRequestInterface::class);
         }
         /** @var Core $core */
-        if (!$core = app(Core::class)) {
+        if (!$core = instance(Core::class)) {
             return $default;
         }
         $data = $core->getRequestData() ?? [];
@@ -119,7 +118,7 @@ if (!function_exists('request')) {
 if (!function_exists('user')) {
     function user(): ?UserIdentificationInterface
     {
-        return app(UserIdentificationInterface::class);
+        return instance(UserIdentificationInterface::class);
     }
 }
 
@@ -130,8 +129,9 @@ if (!function_exists('redirect')) {
      * @param string|UriInterface $to
      * @param int $status
      * @param array $headers
+     * @throws Redirect
      */
-    function redirect($to = '/', $status = 302, $headers = [])
+    function redirect($to = '/', int $status = 302, array $headers = [])
     {
         throw new Redirect((string)$to, $status, $headers);
     }

@@ -110,7 +110,7 @@ abstract class Core
         if ($container) {
             $container->init($config);
         } else {
-            $container = app(ContainerInterface::class, [&$config]);
+            $container = instance(ContainerInterface::class, [&$config]);
         }
         $container->setPropertyInitializer([$this, 'initiateProperties']);
         $container->instance(Core::class, $this);
