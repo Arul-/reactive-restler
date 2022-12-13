@@ -247,10 +247,10 @@ class Routes
      *
      *
      * All the public methods that do not start with _ (underscore)
-     * will be will be exposed as the public api by default.
+     * will be exposed as the public api by default.
      *
      * All the protected methods that do not start with _ (underscore)
-     * will exposed as protected api which will require authentication
+     * will be exposed as protected api which will require authentication
      *
      * @param array $map [$resourcePath => $className, $className2 ...]
      *                   array of associative arrays containing the
@@ -787,7 +787,7 @@ class Routes
         if (empty(static::$routes)) {
             throw new HttpException(
                 500,
-                'No routes defined. Please call `Router::mapApiClasses` or `Router::addApi` first.'
+                'No routes defined. Please call `Routes::mapApiClasses` or `Routes::addApi` first.'
             );
         }
         if (!$p = static::$routes["v$version"] ?? false) {
