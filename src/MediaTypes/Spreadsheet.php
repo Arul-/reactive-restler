@@ -14,7 +14,7 @@ use Luracast\Restler\Utils\Convert;
 
 class Spreadsheet extends Dependent implements DownloadableFileMediaTypeInterface
 {
-    public const MIME = 'application/application/vnd.ms-excel';
+    public const MIME = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
     public const EXTENSION = 'xlsx';
 
     public $firstRowHasFormats = false;
