@@ -1,4 +1,5 @@
 <?php
+
 namespace Luracast\Restler;
 
 use Exception;
@@ -237,7 +238,7 @@ class Container implements ContainerInterface
      *
      * @return bool
      */
-    public function has($id)
+    public function has(string $id): bool
     {
         if (isset($this->instances[$id])) {
             return true;
